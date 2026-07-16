@@ -17,25 +17,7 @@ setup:
 
 # 重建 data 目录结构（data/ 已 gitignored，克隆仓库后需要重新创建）
 init-data:
-	mkdir -p data/sources/api/arxiv/metadata
-	mkdir -p data/sources/api/arxiv/pdfs
-	mkdir -p data/sources/api/github/releases
-	mkdir -p data/sources/api/github/repos
-	mkdir -p data/sources/api/zenodo/records
-	mkdir -p data/sources/api/huggingface/models
-	mkdir -p data/sources/web/paperswithcode/papers
-	mkdir -p data/sources/web/franka/panda
-	mkdir -p data/sources/web/robotiq/grippers
-	mkdir -p data/sources/web/allegro/hand
-	mkdir -p data/sources/web/mujoco/examples
-	mkdir -p data/sources/web/isaac/examples
-	mkdir -p data/sources/datasets/ycb/models
-	mkdir -p data/sources/datasets/graspnet
-	mkdir -p data/sources/datasets/dexgraspnet/data
-	mkdir -p data/sources/datasets/google_scanned/models
-	mkdir -p data/experience_db
-	mkdir -p data/output_packages
-	@echo "data/ 目录结构已创建"
+	uv run python scripts/init_data_dirs.py
 
 # 一键跑测试 + lint + type check
 test:
