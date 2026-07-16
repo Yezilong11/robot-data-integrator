@@ -1,5 +1,5 @@
 [project]
-name = "robot-data-integrator
+name = "robot-data-integrator"
 version = "0.1.0"
 description = "面向机器人操作与抓取领域的多源异构数据智能整合系统"
 readme = "README.md"
@@ -76,7 +76,7 @@ indent-style = "space"
 
 # ─── mypy 配置 ───
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 mypy_path = "src"
 strict = true
 warn_return_any = true

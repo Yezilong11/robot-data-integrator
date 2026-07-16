@@ -29,12 +29,8 @@ htmlcov/
 .ruff_cache/
 
 # 数据
-data/experience_db/
-data/output_packages/
+data/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# uv
-uv.lock
