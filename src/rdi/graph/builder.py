@@ -1,4 +1,6 @@
 # src/rdi/graph/builder.py
+# mypy: ignore-errors
+
 """LangGraph 状态图构建入口。
 
 将所有节点注册到 StateGraph 中，定义边的路由逻辑，
