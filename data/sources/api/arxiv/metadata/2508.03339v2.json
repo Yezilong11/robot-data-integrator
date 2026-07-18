@@ -1,0 +1,24 @@
+{
+  "arxiv_id": "2508.03339v2",
+  "title": "UniFucGrasp: Human-Hand-Inspired Unified Functional Grasp Annotation Strategy and Dataset for Diverse Dexterous Hands",
+  "authors": [
+    "Haoran Lin",
+    "Wenrui Chen",
+    "Xianchi Chen",
+    "Fan Yang",
+    "Qiang Diao",
+    "Wenxin Xie",
+    "Sijie Wu",
+    "Kailun Yang",
+    "Maojun Li",
+    "Yaonan Wang"
+  ],
+  "summary": "Dexterous grasp datasets are vital for embodied intelligence, but mostly emphasize grasp stability, ignoring functional grasps needed for tasks like opening bottle caps or holding cup handles. Most rely on bulky, costly, and hard-to-control high-DOF Shadow Hands. Inspired by the human hand's underactuated mechanism, we establish UniFucGrasp, a universal functional grasp annotation strategy and dataset for multiple dexterous hand types. Based on biomimicry, it maps natural human motions to diverse hand structures and uses geometry-based force closure to ensure functional, stable, human-like grasps. This method supports low-cost, efficient collection of diverse, high-quality functional grasps. Finally, we establish the first multi-hand functional grasp dataset and provide a synthesis model to validate its effectiveness. Experiments on the UFG dataset, IsaacSim, and complex robotic tasks show that our method improves functional manipulation accuracy and grasp stability, demonstrates improved adaptability across multiple robotic hands, helping to alleviate annotation cost and generalization challenges in dexterous grasping. The project page is at https://haochen611.github.io/UFG.",
+  "published": "2025-08-05T11:37:38Z",
+  "categories": [
+    "cs.RO",
+    "cs.CV",
+    "eess.IV"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2508.03339v2"
+}

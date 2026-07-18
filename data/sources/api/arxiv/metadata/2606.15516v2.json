@@ -1,0 +1,15 @@
+{
+  "arxiv_id": "2606.15516v2",
+  "title": "Transferring Contact, Not Just Motion: Compliant Grasping Across Dexterous Hands",
+  "authors": [
+    "Soofiyan Atar",
+    "Yao-Ting Huang",
+    "Michael Yip"
+  ],
+  "summary": "Dexterous grasping depends on contact regulation, not motion alone. Stable manipulation requires fingers to maintain appropriate object loading as contacts slip, deform, or become visually occluded. Existing cross-embodiment dexterous policies unify motion through retargeted hand poses or latent actions, but force feedback remains tied to each hand's sensing and actuation, limiting transfer. This work introduces a cross-embodiment force-position interface for contact-aware manipulation across heterogeneous dexterous hands. Motion intent is represented in a shared hand-pose latent, while each hand's effort signal is calibrated through system identification into physical joint torque in N.m. These torques are mapped to fingertip forces and compact per-finger load descriptors, giving the policy comparable observations of where the hand should move and how the object is loaded. Using this interface, a flow-matching visuomotor policy is trained on vision, proprioception, and calibrated contact, with structured visual masking that encourages reliance on force under grasp-relevant occlusion. The same calibrated signal drives a hybrid force-position controller for demonstration collection and execution, keeping force targets consistent across training and deployment. Experiments across structurally different hands show that calibrated contact feedback enables transferable compliant grasping, with learned primitives reusable in long-horizon manipulation pipelines.",
+  "published": "2026-06-14T00:01:36Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2606.15516v2"
+}

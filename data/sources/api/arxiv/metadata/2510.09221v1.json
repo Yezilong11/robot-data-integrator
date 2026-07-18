@@ -1,0 +1,21 @@
+{
+  "arxiv_id": "2510.09221v1",
+  "title": "HANDO: Hierarchical Autonomous Navigation and Dexterous Omni-loco-manipulation",
+  "authors": [
+    "Jingyuan Sun",
+    "Chaoran Wang",
+    "Mingyu Zhang",
+    "Cui Miao",
+    "Hongyu Ji",
+    "Zihan Qu",
+    "Han Sun",
+    "Bing Wang",
+    "Qingyi Si"
+  ],
+  "summary": "Seamless loco-manipulation in unstructured environments requires robots to leverage autonomous exploration alongside whole-body control for physical interaction. In this work, we introduce HANDO (Hierarchical Autonomous Navigation and Dexterous Omni-loco-manipulation), a two-layer framework designed for legged robots equipped with manipulators to perform human-centered mobile manipulation tasks. The first layer utilizes a goal-conditioned autonomous exploration policy to guide the robot to semantically specified targets, such as a black office chair in a dynamic environment. The second layer employs a unified whole-body loco-manipulation policy to coordinate the arm and legs for precise interaction tasks-for example, handing a drink to a person seated on the chair. We have conducted an initial deployment of the navigation module, and will continue to pursue finer-grained deployment of whole-body loco-manipulation.",
+  "published": "2025-10-10T10:04:30Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2510.09221v1"
+}

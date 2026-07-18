@@ -1,0 +1,15 @@
+{
+  "arxiv_id": "2505.07259v1",
+  "title": "A Framework for Joint Grasp and Motion Planning in Confined Spaces",
+  "authors": [
+    "Martin Rudorfer",
+    "Jiří Hartvich",
+    "Vojtěch Vonásek"
+  ],
+  "summary": "Robotic grasping is a fundamental skill across all domains of robot applications. There is a large body of research for grasping objects in table-top scenarios, where finding suitable grasps is the main challenge. In this work, we are interested in scenarios where the objects are in confined spaces and hence particularly difficult to reach. Planning how the robot approaches the object becomes a major part of the challenge, giving rise to methods for joint grasp and motion planning. The framework proposed in this paper provides 20 benchmark scenarios with systematically increasing difficulty, realistic objects with precomputed grasp annotations, and tools to create and share more scenarios. We further provide two baseline planners and evaluate them on the scenarios, demonstrating that the proposed difficulty levels indeed offer a meaningful progression. We invite the research community to build upon this framework by making all components publicly available as open source.",
+  "published": "2025-05-12T06:21:42Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2505.07259v1"
+}

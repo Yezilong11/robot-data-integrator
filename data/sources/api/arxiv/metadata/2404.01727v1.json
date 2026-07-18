@@ -1,0 +1,17 @@
+{
+  "arxiv_id": "2404.01727v1",
+  "title": "Generalizing 6-DoF Grasp Detection via Domain Prior Knowledge",
+  "authors": [
+    "Haoxiang Ma",
+    "Modi Shi",
+    "Boyang Gao",
+    "Di Huang"
+  ],
+  "summary": "We focus on the generalization ability of the 6-DoF grasp detection method in this paper. While learning-based grasp detection methods can predict grasp poses for unseen objects using the grasp distribution learned from the training set, they often exhibit a significant performance drop when encountering objects with diverse shapes and structures. To enhance the grasp detection methods' generalization ability, we incorporate domain prior knowledge of robotic grasping, enabling better adaptation to objects with significant shape and structure differences. More specifically, we employ the physical constraint regularization during the training phase to guide the model towards predicting grasps that comply with the physical rule on grasping. For the unstable grasp poses predicted on novel objects, we design a contact-score joint optimization using the projection contact map to refine these poses in cluttered scenarios. Extensive experiments conducted on the GraspNet-1billion benchmark demonstrate a substantial performance gain on the novel object set and the real-world grasping experiments also demonstrate the effectiveness of our generalizing 6-DoF grasp detection method.",
+  "published": "2024-04-02T08:33:21Z",
+  "categories": [
+    "cs.RO",
+    "cs.CV"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2404.01727v1"
+}

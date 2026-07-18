@@ -1,0 +1,17 @@
+{
+  "id": 21275163,
+  "doi": "10.5281/zenodo.21275163",
+  "title": "RAFCON",
+  "description": "",
+  "creators": [],
+  "publication_date": "",
+  "files": [
+    {
+      "key": "DLR-RM/RAFCON-2.5.0.zip",
+      "size": 49535028,
+      "type": "",
+      "download_url": "https://zenodo.org/api/records/21275163/files/DLR-RM/RAFCON-2.5.0.zip/content"
+    }
+  ],
+  "url": "https://zenodo.org/api/records/21275163"
+}

@@ -1,0 +1,15 @@
+{
+  "arxiv_id": "2108.13580v1",
+  "title": "Planning for Dexterous Ungrasping: Secure Ungrasping through Dexterous Manipulation",
+  "authors": [
+    "Chung Hee Kim",
+    "Ka Hei Mak",
+    "Jungwon Seo"
+  ],
+  "summary": "This paper presents a robotic manipulation technique for dexterous ungrasping. It refers to the capability of securely transferring a grasped object from the gripper to the robot's environment, i.e. the inverse of grasping or picking, through dexterous manipulation. The game of Go offers an example: consider how the player would typically place an initially pinch-grasped stone onto the board through the dexterous interaction between the fingers, the stone, and the board. Likewise, dexterous ungrasping addresses the necessity of changing the object's configuration relative to the gripper or the environment in order to securely keep hold of the object. In particular, we present a planning framework for determining a feasible minimum-cost motion path that completes dexterous ungrasping. Digit asymmetry in a gripper, i.e. difference in digit lengths, is discovered as the key to feasible and secure ungrasping. A set of experiments show the effectiveness of dexterous ungrasping in practical placement tasks.",
+  "published": "2021-08-31T01:57:14Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2108.13580v1"
+}

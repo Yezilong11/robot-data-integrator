@@ -1,0 +1,20 @@
+{
+  "arxiv_id": "2404.04643v2",
+  "title": "Constrained 6-DoF Grasp Generation on Complex Shapes for Improved Dual-Arm Manipulation",
+  "authors": [
+    "Gaurav Singh",
+    "Sanket Kalwar",
+    "Md Faizal Karim",
+    "Bipasha Sen",
+    "Nagamanikandan Govindan",
+    "Srinath Sridhar",
+    "K Madhava Krishna"
+  ],
+  "summary": "Efficiently generating grasp poses tailored to specific regions of an object is vital for various robotic manipulation tasks, especially in a dual-arm setup. This scenario presents a significant challenge due to the complex geometries involved, requiring a deep understanding of the local geometry to generate grasps efficiently on the specified constrained regions. Existing methods only explore settings involving table-top/small objects and require augmented datasets to train, limiting their performance on complex objects. We propose CGDF: Constrained Grasp Diffusion Fields, a diffusion-based grasp generative model that generalizes to objects with arbitrary geometries, as well as generates dense grasps on the target regions. CGDF uses a part-guided diffusion approach that enables it to get high sample efficiency in constrained grasping without explicitly training on massive constraint-augmented datasets. We provide qualitative and quantitative comparisons using analytical metrics and in simulation, in both unconstrained and constrained settings to show that our method can generalize to generate stable grasps on complex objects, especially useful for dual-arm manipulation settings, while existing methods struggle to do so.",
+  "published": "2024-04-06T14:28:01Z",
+  "categories": [
+    "cs.RO",
+    "cs.CV"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2404.04643v2"
+}

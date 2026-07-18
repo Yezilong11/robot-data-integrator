@@ -1,0 +1,22 @@
+{
+  "arxiv_id": "2309.09556v2",
+  "title": "Affordance-Driven Next-Best-View Planning for Robotic Grasping",
+  "authors": [
+    "Xuechao Zhang",
+    "Dong Wang",
+    "Sun Han",
+    "Weichuang Li",
+    "Bin Zhao",
+    "Zhigang Wang",
+    "Xiaoming Duan",
+    "Chongrong Fang",
+    "Xuelong Li",
+    "Jianping He"
+  ],
+  "summary": "Grasping occluded objects in cluttered environments is an essential component in complex robotic manipulation tasks. In this paper, we introduce an AffordanCE-driven Next-Best-View planning policy (ACE-NBV) that tries to find a feasible grasp for target object via continuously observing scenes from new viewpoints. This policy is motivated by the observation that the grasp affordances of an occluded object can be better-measured under the view when the view-direction are the same as the grasp view. Specifically, our method leverages the paradigm of novel view imagery to predict the grasps affordances under previously unobserved view, and select next observation view based on the highest imagined grasp quality of the target object. The experimental results in simulation and on a real robot demonstrate the effectiveness of the proposed affordance-driven next-best-view planning policy. Project page: https://sszxc.net/ace-nbv/.",
+  "published": "2023-09-18T08:09:52Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2309.09556v2"
+}

@@ -1,0 +1,21 @@
+{
+  "arxiv_id": "2507.01857v1",
+  "title": "TypeTele: Releasing Dexterity in Teleoperation by Dexterous Manipulation Types",
+  "authors": [
+    "Yuhao Lin",
+    "Yi-Lin Wei",
+    "Haoran Liao",
+    "Mu Lin",
+    "Chengyi Xing",
+    "Hao Li",
+    "Dandan Zhang",
+    "Mark Cutkosky",
+    "Wei-Shi Zheng"
+  ],
+  "summary": "Dexterous teleoperation plays a crucial role in robotic manipulation for real-world data collection and remote robot control. Previous dexterous teleoperation mostly relies on hand retargeting to closely mimic human hand postures. However, these approaches may fail to fully leverage the inherent dexterity of dexterous hands, which can execute unique actions through their structural advantages compared to human hands. To address this limitation, we propose TypeTele, a type-guided dexterous teleoperation system, which enables dexterous hands to perform actions that are not constrained by human motion patterns. This is achieved by introducing dexterous manipulation types into the teleoperation system, allowing operators to employ appropriate types to complete specific tasks. To support this system, we build an extensible dexterous manipulation type library to cover comprehensive dexterous postures used in manipulation tasks. During teleoperation, we employ a MLLM (Multi-modality Large Language Model)-assisted type retrieval module to identify the most suitable manipulation type based on the specific task and operator commands. Extensive experiments of real-world teleoperation and imitation learning demonstrate that the incorporation of manipulation types significantly takes full advantage of the dexterous robot's ability to perform diverse and complex tasks with higher success rates.",
+  "published": "2025-07-02T16:16:39Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2507.01857v1"
+}

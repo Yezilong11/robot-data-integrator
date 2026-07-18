@@ -1,0 +1,18 @@
+{
+  "arxiv_id": "2502.00396v2",
+  "title": "Dexterous Cable Manipulation: Taxonomy, Multi-Fingered Hand Design, and Long-Horizon Manipulation",
+  "authors": [
+    "Sun Zhaole",
+    "Xiao Gao",
+    "Xiaofeng Mao",
+    "Jihong Zhu",
+    "Aude Billard",
+    "Robert B. Fisher"
+  ],
+  "summary": "Existing research that addressed cable manipulation relied on two-fingered grippers, which make it difficult to perform similar cable manipulation tasks that humans perform. However, unlike dexterous manipulation of rigid objects, the development of dexterous cable manipulation skills in robotics remains underexplored due to the unique challenges posed by a cable's deformability and inherent uncertainty. In addition, using a dexterous hand introduces specific difficulties in tasks, such as cable grasping, pulling, and in-hand bending, for which no dedicated task definitions, benchmarks, or evaluation metrics exist. Furthermore, we observed that most existing dexterous hands are designed with structures identical to humans', typically featuring only one thumb, which often limits their effectiveness during dexterous cable manipulation. Lastly, existing non-task-specific methods did not have enough generalization ability to solve these cable manipulation tasks or are unsuitable due to the designed hardware. We have three contributions in real-world dexterous cable manipulation in the following steps: (1) We first defined and organized a set of dexterous cable manipulation tasks into a comprehensive taxonomy, covering most short-horizon action primitives and long-horizon tasks for one-handed cable manipulation. This taxonomy revealed that coordination between the thumb and the index finger is critical for cable manipulation, which decomposes long-horizon tasks into simpler primitives. (2) We designed a novel five-fingered hand with 25 degrees of freedom (DoF), featuring two symmetric thumb-index configurations and a rotatable joint on each fingertip, which enables dexterous cable manipulation. (3) We developed a demonstration collection pipeline for this non-anthropomorphic hand, which is difficult to operate by previous motion capture methods.",
+  "published": "2025-02-01T11:01:42Z",
+  "categories": [
+    "cs.RO"
+  ],
+  "pdf_url": "https://arxiv.org/pdf/2502.00396v2"
+}
