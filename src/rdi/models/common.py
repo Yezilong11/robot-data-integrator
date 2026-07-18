@@ -6,7 +6,7 @@
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # ─── 枚举定义 ───
 
 
-class DataSource(str, Enum):
+class DataSource(StrEnum):
     """数据源类型枚举。"""
 
     ARXIV = "arxiv"
@@ -34,33 +34,33 @@ class DataSource(str, Enum):
     ISAAC = "isaac"
 
 
-class DataReqType(str, Enum):
+class DataReqType(StrEnum):
     """数据需求类型枚举，对应六类异构数据。"""
 
-    PAPER = "paper"  # 论文元数据/PDF
-    CODE = "code"  # 代码仓库
-    DATASET = "dataset"  # 数据集
-    ROBOT_URDF = "robot_urdf"  # 机器人描述文件
-    MESH = "mesh"  # 3D 几何数据
-    GRASP = "grasp"  # 抓取姿态数据
-    SIM_CONFIG = "sim_config"  # 仿真环境配置
-    POLICY_MODEL = "policy_model"  # 策略模型
-    SENSOR_DATA = "sensor_data"  # 传感器与实验数据
+    PAPER = "paper"
+    CODE = "code"
+    DATASET = "dataset"
+    ROBOT_URDF = "robot_urdf"
+    MESH = "mesh"
+    GRASP = "grasp"
+    SIM_CONFIG = "sim_config"
+    POLICY_MODEL = "policy_model"
+    SENSOR_DATA = "sensor_data"
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """数据需求优先级。"""
 
-    REQUIRED = "required"  # 必需：缺少则实验无法复现
-    RECOMMENDED = "recommended"  # 推荐：显著影响实验效果
-    OPTIONAL = "optional"  # 可选：辅助参考
+    REQUIRED = "required"
+    RECOMMENDED = "recommended"
+    OPTIONAL = "optional"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """校验问题严重程度。"""
 
-    ERROR = "error"  # 阻断性问题，必须修复
-    WARNING = "warning"  # 警告，建议修复但不阻断
+    ERROR = "error"
+    WARNING = "warning"
 
 
 # ─── 数据模型 ───
