@@ -5,6 +5,8 @@
 编译生成可执行的应用实例。
 """
 
+from typing import Any
+
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -22,7 +24,7 @@ from rdi.graph.nodes import (
 from rdi.graph.state import SystemState
 
 
-def build_graph() -> CompiledStateGraph:
+def build_graph() -> CompiledStateGraph[Any, None, Any, Any]:  # ← 改这里
     """构建并编译 LangGraph 状态图。
 
     Returns:
