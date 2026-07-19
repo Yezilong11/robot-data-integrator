@@ -84,7 +84,7 @@
 - **THEN** `uv sync` 可以正常执行
 
 #### Scenario: settings.py 修复
-- **WHEN** `qwen_api_key` 添加 `default=""` 
+- **WHEN** `qwen_api_key` 添加 `default=""`
 - **THEN** 无 `.env` 文件时 `Settings()` 也能实例化
 - **AND** 添加 `ieee_api_key` 配置项
 
