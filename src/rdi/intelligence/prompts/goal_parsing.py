@@ -73,7 +73,7 @@ def build_goal_parsing_prompt(user_goal: str, paper_text: str | None = None) -> 
         ``(GOAL_PARSING_SYSTEM, rendered_user_prompt)`` 二元组。
     """
     paper_section = paper_text if paper_text else "（未提供论文 PDF，仅根据用户描述推断）"
-    user_prompt = GOAL_PARSING_USER_TEMPLATE.replace("{user_goal}", user_goal).replace(
-        "{paper_text}", paper_section
+    user_prompt = GOAL_PARSING_USER_TEMPLATE.format(
+        user_goal=user_goal, paper_text=paper_section
     )
     return GOAL_PARSING_SYSTEM, user_prompt

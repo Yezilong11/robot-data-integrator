@@ -57,3 +57,12 @@ def test_returned_tuple_has_two_strings() -> None:
     assert isinstance(result, tuple)
     assert len(result) == 2
     assert all(isinstance(x, str) for x in result)
+
+
+def test_build_prompt_with_placeholder_literal_in_input() -> None:
+    """用户输入含{user_goal}等字面量时不应被错误替换（str.replace安全隐患）。"""
+    goal = "研究 {user_goal} 这个主题"
+    _system, user = build_goal_parsing_prompt(goal, paper_text="{paper_text}")
+    assert "{user_goal}" in user  # 作为用户输入的原始文本应保留
+    assert "{paper_text}" in user  # paper_text中的字面量应保留
+    assert "研究" in user
