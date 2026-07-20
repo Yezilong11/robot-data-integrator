@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+      xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <title>ArXiv Query: search_query=all:robot+grasping</title>
+  <id>http://arxiv.org/api/query?search_query=all:robot+grasping&amp;max_results=10</id>
+  <opensearch:totalResults>2</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
+  <entry>
+    <id>http://arxiv.org/abs/2304.06524v1</id>
+    <title>Robot Grasping Survey: A Deep Learning Perspective</title>
+    <summary>A comprehensive survey of deep learning methods for robot grasping.</summary>
+    <published>2023-04-12T10:00:00Z</published>
+    <author><name>Alice Smith</name></author>
+    <author><name>Bob Jones</name></author>
+    <link title="pdf" href="http://arxiv.org/pdf/2304.06524v1" rel="related" type="application/pdf"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2203.13251v1</id>
+    <title>6-DOF GraspNet: Variational Grasp Generation</title>
+    <summary>A variational approach to 6-DOF grasp pose generation.</summary>
+    <published>2022-03-24T15:30:00Z</published>
+    <author><name>Charlie Brown</name></author>
+    <link title="pdf" href="http://arxiv.org/pdf/2203.13251v1" rel="related" type="application/pdf"/>
+  </entry>
+</feed>
