@@ -10,7 +10,7 @@ authors = [
 ]
 dependencies = [
     # LLM
-    "dashscope>=1.0.0",
+    "openai>=1.50.0",
     # 编排
     "langgraph>=0.2.0",
     "langchain-core>=0.3.0",
@@ -93,7 +93,11 @@ module = "chromadb.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "dashscope.*"
+module = "openai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fitz.*"
 ignore_missing_imports = true
 
 # ─── pytest 配置 ───

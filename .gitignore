@@ -31,6 +31,9 @@ htmlcov/
 # 数据
 data/
 
+# 脚本
+scripts/download_*.py
+
 # OS
 .DS_Store
 Thumbs.db
