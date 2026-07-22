@@ -72,25 +72,37 @@ def select_adapter(req_type: DataReqType) -> list[type]:
     names = ADAPTER_REGISTRY.get(req_type, [])
 
     # 延迟导入，避免循环依赖
+    from rdi.adapters.allegro import AllegroAdapter
     from rdi.adapters.arxiv import ArxivAdapter
+    from rdi.adapters.dexgrasp import DexGraspAdapter
+    from rdi.adapters.franka import FrankaAdapter
     from rdi.adapters.github import GitHubAdapter
+    from rdi.adapters.google_scanned import GoogleScannedAdapter
+    from rdi.adapters.graspnet import GraspNetAdapter
+    from rdi.adapters.huggingface import HuggingFaceAdapter
+    from rdi.adapters.ieee import IEEEXploreAdapter
+    from rdi.adapters.isaac import IsaacSimAdapter
+    from rdi.adapters.mujoco import MuJoCoAdapter
+    from rdi.adapters.paperswithcode import PapersWithCodeAdapter
+    from rdi.adapters.robotiq import RobotiqAdapter
+    from rdi.adapters.ycb import YCBAdapter
+    from rdi.adapters.zenodo import ZenodoAdapter
 
     adapters_map: dict[str, type] = {
         "ArxivAdapter": ArxivAdapter,
         "GitHubAdapter": GitHubAdapter,
-        # 其他 Adapter 随着开发逐步注册：
-        # "IEEEXploreAdapter": IEEEXploreAdapter,
-        # "PapersWithCodeAdapter": PapersWithCodeAdapter,
-        # "GraspNetAdapter": GraspNetAdapter,
-        # "DexGraspAdapter": DexGraspAdapter,
-        # "YCBAdapter": YCBAdapter,
-        # "GoogleScannedAdapter": GoogleScannedAdapter,
-        # "FrankaAdapter": FrankaAdapter,
-        # "AllegroAdapter": AllegroAdapter,
-        # "RobotiqAdapter": RobotiqAdapter,
-        # "MuJoCoAdapter": MuJoCoAdapter,
-        # "IsaacSimAdapter": IsaacSimAdapter,
-        # "HuggingFaceAdapter": HuggingFaceAdapter,
-        # "ZenodoAdapter": ZenodoAdapter,
+        "GraspNetAdapter": GraspNetAdapter,
+        "YCBAdapter": YCBAdapter,
+        "FrankaAdapter": FrankaAdapter,
+        "HuggingFaceAdapter": HuggingFaceAdapter,
+        "ZenodoAdapter": ZenodoAdapter,
+        "DexGraspAdapter": DexGraspAdapter,
+        "GoogleScannedAdapter": GoogleScannedAdapter,
+        "RobotiqAdapter": RobotiqAdapter,
+        "AllegroAdapter": AllegroAdapter,
+        "MuJoCoAdapter": MuJoCoAdapter,
+        "IsaacSimAdapter": IsaacSimAdapter,
+        "IEEEXploreAdapter": IEEEXploreAdapter,
+        "PapersWithCodeAdapter": PapersWithCodeAdapter,
     }
     return [adapters_map[name] for name in names if name in adapters_map]

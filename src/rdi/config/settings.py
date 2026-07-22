@@ -74,6 +74,50 @@ class Settings(BaseSettings):
         description="缓存 TTL 秒数",
     )
 
+    # ─── 数据源 URL 配置 ───
+    huggingface_api_url: str = Field(
+        default="https://huggingface.co/api",
+        description="HuggingFace API 基础 URL",
+    )
+    zenodo_api_url: str = Field(
+        default="https://zenodo.org/api",
+        description="Zenodo API 基础 URL",
+    )
+    google_scanned_api_url: str = Field(
+        default="https://fuel.gazebosim.org/1.0/GoogleResearch",
+        description="Google Scanned Objects (Gazebo Fuel) API URL",
+    )
+    robotiq_base_url: str = Field(
+        default="https://robotiq.com",
+        description="Robotiq 官网基础 URL",
+    )
+    allegro_base_url: str = Field(
+        default="https://www.wonikrobotics.com",
+        description="Allegro 灵巧手官网基础 URL",
+    )
+    mujoco_base_url: str = Field(
+        default="https://mujoco.org",
+        description="MuJoCo 官网基础 URL",
+    )
+    isaac_base_url: str = Field(
+        default="https://docs.isaacsim.omniverse.nvidia.com",
+        description="Isaac Sim 文档基础 URL",
+    )
+
+    # ─── 数据源 URL 配置（可通过环境变量覆盖） ───
+    graspnet_base_url: str = Field(
+        default="",
+        description="GraspNet 数据集 API 地址，留空则使用默认值",
+    )
+    ycb_base_url: str = Field(
+        default="",
+        description="YCB Objects 数据集 API 地址，留空则使用默认值",
+    )
+    franka_base_url: str = Field(
+        default="",
+        description="Franka 机器人模型 API 地址，留空则使用默认值",
+    )
+
     # ─── ChromaDB 配置 ───
     chromadb_path: str = Field(
         default="./data/experience_db",

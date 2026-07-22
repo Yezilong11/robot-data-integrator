@@ -1,9 +1,45 @@
 # tests/unit/adapters/test_registry.py
 """Adapter 注册表单元测试。"""
 
+import pytest
+
+from rdi.adapters.allegro import AllegroAdapter
+from rdi.adapters.arxiv import ArxivAdapter
 from rdi.adapters.base import BaseAdapter
+from rdi.adapters.dexgrasp import DexGraspAdapter
+from rdi.adapters.franka import FrankaAdapter
+from rdi.adapters.github import GitHubAdapter
+from rdi.adapters.google_scanned import GoogleScannedAdapter
+from rdi.adapters.graspnet import GraspNetAdapter
+from rdi.adapters.huggingface import HuggingFaceAdapter
+from rdi.adapters.ieee import IEEEXploreAdapter
+from rdi.adapters.isaac import IsaacSimAdapter
+from rdi.adapters.mujoco import MuJoCoAdapter
+from rdi.adapters.paperswithcode import PapersWithCodeAdapter
 from rdi.adapters.registry import ADAPTER_REGISTRY, select_adapter
-from rdi.models.common import DataReqType
+from rdi.adapters.robotiq import RobotiqAdapter
+from rdi.adapters.ycb import YCBAdapter
+from rdi.adapters.zenodo import ZenodoAdapter
+from rdi.models.common import DataReqType, DataSource
+
+# 所有 14 个 Adapter 类及其对应的 DataSource
+ALL_ADAPTERS: list[tuple[type[BaseAdapter], DataSource]] = [
+    (ArxivAdapter, DataSource.ARXIV),
+    (GitHubAdapter, DataSource.GITHUB),
+    (GraspNetAdapter, DataSource.GRASPNET),
+    (YCBAdapter, DataSource.YCB),
+    (FrankaAdapter, DataSource.FRANKA),
+    (HuggingFaceAdapter, DataSource.HUGGINGFACE),
+    (ZenodoAdapter, DataSource.ZENODO),
+    (DexGraspAdapter, DataSource.DEXGRASP),
+    (GoogleScannedAdapter, DataSource.GOOGLE_SCANNED),
+    (RobotiqAdapter, DataSource.ROBOTIQ),
+    (AllegroAdapter, DataSource.ALLEGRO),
+    (MuJoCoAdapter, DataSource.MUJOCO),
+    (IsaacSimAdapter, DataSource.ISAAC),
+    (IEEEXploreAdapter, DataSource.IEEE),
+    (PapersWithCodeAdapter, DataSource.PAPERSWITHCODE),
+]
 
 
 class TestAdapterRegistry:
@@ -31,15 +67,11 @@ class TestSelectAdapter:
 
     def test_select_paper_returns_arxiv(self) -> None:
         """正常情况：PAPER 返回 ArxivAdapter 类。"""
-        from rdi.adapters.arxiv import ArxivAdapter
-
         adapters = select_adapter(DataReqType.PAPER)
         assert ArxivAdapter in adapters
 
     def test_select_code_returns_github(self) -> None:
         """正常情况：CODE 返回 GitHubAdapter 类。"""
-        from rdi.adapters.github import GitHubAdapter
-
         adapters = select_adapter(DataReqType.CODE)
         assert GitHubAdapter in adapters
 
@@ -52,7 +84,27 @@ class TestSelectAdapter:
 
     def test_select_sensor_data_returns_github(self) -> None:
         """正常情况：SENSOR_DATA 返回 GitHubAdapter。"""
-        from rdi.adapters.github import GitHubAdapter
-
         adapters = select_adapter(DataReqType.SENSOR_DATA)
         assert GitHubAdapter in adapters
+
+    def test_all_adapters_available_via_select(self) -> None:
+        """正常情况：所有 14 个 Adapter 都能通过 select_adapter 返回。"""
+        all_returned: set[type[BaseAdapter]] = set()
+        for req_type in DataReqType:
+            all_returned.update(select_adapter(req_type))
+        adapter_classes = {cls for cls, _ in ALL_ADAPTERS}
+        assert adapter_classes.issubset(all_returned), (
+            f"Missing adapters: {adapter_classes - all_returned}"
+        )
+
+    @pytest.mark.parametrize(
+        "adapter_cls,expected_source",
+        ALL_ADAPTERS,
+        ids=[cls.__name__ for cls, _ in ALL_ADAPTERS],
+    )
+    def test_each_adapter_source_matches(
+        self, adapter_cls: type[BaseAdapter], expected_source: DataSource
+    ) -> None:
+        """正常情况：每个 Adapter 实例化后 source 属性与 DataSource 枚举对应。"""
+        adapter = adapter_cls()
+        assert adapter.source == expected_source
