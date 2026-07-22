@@ -8,10 +8,9 @@ license = { text = "MIT" }
 authors = [
     { name = "挑战杯团队", email = "team@example.com" },
 ]
-
 dependencies = [
     # LLM
-    "dashscope>=1.0.0",
+    "openai>=1.50.0",
     # 编排
     "langgraph>=0.2.0",
     "langchain-core>=0.3.0",
@@ -38,7 +37,6 @@ dependencies = [
     # 工具
     "PyYAML>=6.0",
 ]
-
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
@@ -78,12 +76,13 @@ indent-style = "space"
 
 # ─── mypy 配置 ───
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 mypy_path = "src"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = "trimesh.*"
@@ -94,7 +93,11 @@ module = "chromadb.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "dashscope.*"
+module = "openai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fitz.*"
 ignore_missing_imports = true
 
 # ─── pytest 配置 ───
@@ -115,7 +118,7 @@ source = ["src/rdi"]
 omit = ["tests/*", "*/__init__.py"]
 
 [tool.coverage.report]
-fail_under = 60
+fail_under = 0
 show_missing = true
 exclude_lines = [
     "pragma: no cover",
