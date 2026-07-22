@@ -12,14 +12,48 @@ from rdi.models.common import DataReqType  # noqa: I001 — 模块级导入，�
 ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
     DataReqType.PAPER: ["ArxivAdapter", "IEEEXploreAdapter"],
     DataReqType.CODE: ["GitHubAdapter", "PapersWithCodeAdapter"],
-    DataReqType.DATASET: ["GraspNetAdapter", "DexGraspAdapter", "YCBAdapter"],
-    DataReqType.ROBOT_URDF: ["FrankaAdapter", "AllegroAdapter", "RobotiqAdapter"],
-    DataReqType.MESH: ["GraspNetAdapter", "YCBAdapter"],
-    DataReqType.GRASP: ["GraspNetAdapter", "DexGraspAdapter"],
+    DataReqType.DATASET: [
+        "GitHubAdapter", "HuggingFaceAdapter", "ZenodoAdapter",
+        "GraspNetAdapter", "DexGraspAdapter", "YCBAdapter",
+    ],
+    DataReqType.ROBOT_URDF: [
+        "FrankaAdapter", "AllegroAdapter", "RobotiqAdapter", "GitHubAdapter",
+    ],
+    DataReqType.MESH: ["YCBAdapter", "GoogleScannedAdapter", "GraspNetAdapter"],
+    DataReqType.GRASP: ["GraspNetAdapter", "DexGraspAdapter", "YCBAdapter"],
     DataReqType.SIM_CONFIG: ["MuJoCoAdapter", "IsaacSimAdapter"],
-    DataReqType.POLICY_MODEL: ["GitHubAdapter", "HuggingFaceAdapter"],
-    DataReqType.SENSOR_DATA: ["GitHubAdapter"],
+    DataReqType.POLICY_MODEL: ["HuggingFaceAdapter", "GitHubAdapter"],
+    DataReqType.SENSOR_DATA: ["GitHubAdapter", "ZenodoAdapter"],
 }
+
+
+# ─── DataSource 优先级映射（供 Hermes 策略演化查询） ───
+def get_sources_for_type(req_type: DataReqType) -> list[str]:
+    """返回指定需求类型的候选数据源名称（按优先级排序）。
+
+    供 Hermes 策略演化模块查询候选数据源。
+    """
+    from rdi.models.common import DataSource
+
+    source_name_map: dict[str, str] = {
+        "ArxivAdapter": DataSource.ARXIV,
+        "IEEEXploreAdapter": DataSource.IEEE,
+        "GitHubAdapter": DataSource.GITHUB,
+        "PapersWithCodeAdapter": DataSource.PAPERSWITHCODE,
+        "HuggingFaceAdapter": DataSource.HUGGINGFACE,
+        "ZenodoAdapter": DataSource.ZENODO,
+        "GraspNetAdapter": DataSource.GRASPNET,
+        "DexGraspAdapter": DataSource.DEXGRASP,
+        "YCBAdapter": DataSource.YCB,
+        "GoogleScannedAdapter": DataSource.GOOGLE_SCANNED,
+        "FrankaAdapter": DataSource.FRANKA,
+        "AllegroAdapter": DataSource.ALLEGRO,
+        "RobotiqAdapter": DataSource.ROBOTIQ,
+        "MuJoCoAdapter": DataSource.MUJOCO,
+        "IsaacSimAdapter": DataSource.ISAAC,
+    }
+    names = ADAPTER_REGISTRY.get(req_type, [])
+    return [source_name_map[n] for n in names if n in source_name_map]
 
 
 def select_adapter(req_type: DataReqType) -> list[type]:
@@ -43,6 +77,7 @@ def select_adapter(req_type: DataReqType) -> list[type]:
         # "GraspNetAdapter": GraspNetAdapter,
         # "DexGraspAdapter": DexGraspAdapter,
         # "YCBAdapter": YCBAdapter,
+        # "GoogleScannedAdapter": GoogleScannedAdapter,
         # "FrankaAdapter": FrankaAdapter,
         # "AllegroAdapter": AllegroAdapter,
         # "RobotiqAdapter": RobotiqAdapter,
