@@ -28,18 +28,12 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# 数据 - 大文件排除
-data/experience_db/
-data/output_packages/
-data/sources/datasets/
-data/sources/api/arxiv.rar
-data/sources/api/arxiv/pdfs/
-data/sources/api/zenodo.rar
-data/sources/api/zenodo/records/*/
+# 数据
+data/
+
+# 脚本
+scripts/download_*.py
 
 # OS
 .DS_Store
 Thumbs.db
-
-# uv
-uv.lock

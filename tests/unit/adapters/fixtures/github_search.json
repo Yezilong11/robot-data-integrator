@@ -1,0 +1,24 @@
+{
+  "total_count": 2,
+  "incomplete_results": false,
+  "items": [
+    {
+      "full_name": "NVlabs/6-DOF-GraspNet",
+      "name": "6-DOF-GraspNet",
+      "html_url": "https://github.com/NVlabs/6-DOF-GraspNet",
+      "stargazers_count": 420,
+      "description": "6-DOF Grasp Pose Generation",
+      "language": "Python",
+      "topics": ["grasping", "deep-learning", "robotics"]
+    },
+    {
+      "full_name": "graspnet/graspnetAPI",
+      "name": "graspnetAPI",
+      "html_url": "https://github.com/graspnet/graspnetAPI",
+      "stargazers_count": 310,
+      "description": "GraspNet API for robot grasping",
+      "language": "Python",
+      "topics": ["grasping", "robot"]
+    }
+  ]
+}

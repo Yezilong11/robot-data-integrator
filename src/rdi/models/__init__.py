@@ -1,5 +1,8 @@
 # src/rdi/models/__init__.py
-"""数据模型统一导出。"""
+"""全局 Pydantic 数据模型。
+
+所有模块通过此包导入模型，禁止从子模块直接导入。
+"""
 
 from .common import (
     DataReqType,
@@ -12,30 +15,35 @@ from .common import (
     ValIssue,
 )
 from .goal import DataReq, GoalSpec, PaperInfo
-from .package import MissingItem, PackageManifest, ParsedItem
+from .manifest import ManifestFile, ManifestMissingItem, PackageManifest, QualityReport
+from .parsed import MissingItem, ParsedItem
 from .retrieval import RawData, RetrievalError, RetrievalResult, SearchResult
 
 __all__ = [
     # common
-    "DataReqType",
     "DataSource",
+    "DataReqType",
     "Priority",
     "ProvenanceEntry",
     "Severity",
-    "StandardResult",
     "ValIssue",
     "ValidationReport",
+    "StandardResult",
     # goal
-    "DataReq",
     "GoalSpec",
+    "DataReq",
     "PaperInfo",
-    # package
-    "MissingItem",
-    "PackageManifest",
-    "ParsedItem",
     # retrieval
-    "RawData",
-    "RetrievalError",
-    "RetrievalResult",
     "SearchResult",
+    "RawData",
+    "RetrievalResult",
+    "RetrievalError",
+    # parsed
+    "ParsedItem",
+    "MissingItem",
+    # manifest
+    "PackageManifest",
+    "ManifestFile",
+    "ManifestMissingItem",
+    "QualityReport",
 ]
