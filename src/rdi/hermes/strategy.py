@@ -7,7 +7,7 @@ from typing import Any
 
 from rdi.adapters.registry import get_sources_for_type
 from rdi.hermes.experience_db import ExperienceDB
-from rdi.models import DataReqType, DataSource
+from rdi.models import DataReqType
 
 _LOG_PATH = "data/hermes_evolution.log"
 
