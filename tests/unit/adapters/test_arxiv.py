@@ -83,6 +83,7 @@ class TestArxivAdapter:
         assert second.metadata["authors"] == ["Charlie Brown"]
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_search_retries_on_429(self) -> None:
         """异常情况：遇到限流时自动重试（通过 _request 基类实现）。
 

@@ -46,6 +46,7 @@ class TestGitHubAdapter:
         assert adapter.headers["Authorization"].startswith("token ")
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_search_retries_on_failure(self) -> None:
         """异常情况：请求失败时抛出 AdapterError。"""
         adapter = GitHubAdapter()
@@ -55,6 +56,7 @@ class TestGitHubAdapter:
         assert exc_info.value.source == "github"
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_fetch_retries_on_failure(self) -> None:
         """异常情况：fetch 失败时抛出 AdapterError。"""
         adapter = GitHubAdapter()
