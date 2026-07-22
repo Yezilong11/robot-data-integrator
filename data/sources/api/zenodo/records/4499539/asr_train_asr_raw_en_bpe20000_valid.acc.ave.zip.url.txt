@@ -1,1 +1,0 @@
-https://zenodo.org/api/records/4499539/files/asr_train_asr_raw_en_bpe20000_valid.acc.ave.zip/content
