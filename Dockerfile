@@ -4,7 +4,7 @@
 FROM python:3.13-slim AS builder
 WORKDIR /app
 RUN pip install uv
-COPY pyproject.toml .
+COPY pyproject.toml README.md .
 RUN uv sync --no-dev
 COPY src/ src/
 
