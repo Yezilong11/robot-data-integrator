@@ -5,9 +5,9 @@ import datetime
 import os
 from typing import Any
 
-from rdi.adapters.registry import ADAPTER_REGISTRY
+from rdi.adapters.registry import get_sources_for_type
 from rdi.hermes.experience_db import ExperienceDB
-from rdi.models import DataSource
+from rdi.models import DataReqType
 
 _LOG_PATH = "data/hermes_evolution.log"
 
@@ -49,14 +49,19 @@ class StrategyEvolver:
     def get_source_priority(self, req_type: str) -> list[str]:
         """按成功率降序返回 req_type 候选数据源名称列表。
 
-        候选源来自 ADAPTER_REGISTRY；统计中缺失或 total_requests 为 0 的源默认成功率 0.5。
+        候选源通过 get_sources_for_type() 查询；
+        统计中缺失或 total_requests 为 0 的源默认成功率 0.5。
         """
-        candidates = ADAPTER_REGISTRY.get(req_type, [])
+        try:
+            req_enum = DataReqType(req_type)
+        except ValueError:
+            return []
+        candidates = get_sources_for_type(req_enum)
         stats = self.db.get_source_stats()
         stat_map: dict[str, dict[str, Any]] = {stat.get("source_name", ""): stat for stat in stats}
 
-        def rate(source: DataSource) -> float:
-            stat = stat_map.get(source.value)
+        def rate(source_name: str) -> float:
+            stat = stat_map.get(source_name)
             if stat is None:
                 return 0.5
             total = int(stat.get("total_requests", 0))
@@ -65,7 +70,7 @@ class StrategyEvolver:
             return float(stat.get("success_count", 0)) / total
 
         ordered = sorted(candidates, key=rate, reverse=True)
-        return [s.value for s in ordered]
+        return ordered
 
     def _log_evolution(self, source: str, action: str, reason: str) -> None:
         """追加演化日志到 _LOG_PATH。"""

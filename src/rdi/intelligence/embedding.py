@@ -46,7 +46,7 @@ class EmbeddingClient:
                 model=self._model,
                 input=text,
             )
-            return response.data[0].embedding
+            return response.data[0].embedding  # type: ignore[no-any-return]
         except OpenAIError as e:
             raise LLMUnavailableError(
                 f"Embedding 调用失败: {e}",
