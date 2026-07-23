@@ -1,0 +1,27 @@
+[
+  {
+    "filename": "45_2_scratch/checkpoints/epoch=19-step=32000.ckpt",
+    "size_bytes": 0,
+    "download_url": "https://huggingface.co/saic3d/graspnet_ckpt/resolve/main/45_2_scratch/checkpoints/epoch=19-step=32000.ckpt"
+  },
+  {
+    "filename": "45_2_scratch/checkpoints/epoch=21-step=34400.ckpt",
+    "size_bytes": 0,
+    "download_url": "https://huggingface.co/saic3d/graspnet_ckpt/resolve/main/45_2_scratch/checkpoints/epoch=21-step=34400.ckpt"
+  },
+  {
+    "filename": "45_2_scratch/checkpoints/epoch=22-step=36000.ckpt",
+    "size_bytes": 0,
+    "download_url": "https://huggingface.co/saic3d/graspnet_ckpt/resolve/main/45_2_scratch/checkpoints/epoch=22-step=36000.ckpt"
+  },
+  {
+    "filename": "45_2_scratch/checkpoints/epoch=32-step=51600.ckpt",
+    "size_bytes": 0,
+    "download_url": "https://huggingface.co/saic3d/graspnet_ckpt/resolve/main/45_2_scratch/checkpoints/epoch=32-step=51600.ckpt"
+  },
+  {
+    "filename": "45_2_scratch/checkpoints/last.ckpt",
+    "size_bytes": 0,
+    "download_url": "https://huggingface.co/saic3d/graspnet_ckpt/resolve/main/45_2_scratch/checkpoints/last.ckpt"
+  }
+]
