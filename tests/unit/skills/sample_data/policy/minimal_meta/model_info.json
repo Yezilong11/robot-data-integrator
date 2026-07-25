@@ -1,0 +1,10 @@
+{
+  "id": "x",
+  "modelId": "test/model",
+  "tags": ["grasp"],
+  "siblings": [{"rfilename": "model.safetensors"}],
+  "downloads": 0,
+  "likes": 0,
+  "lastModified": "",
+  "usedStorage": 0
+}

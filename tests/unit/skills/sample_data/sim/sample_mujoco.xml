@@ -1,0 +1,8 @@
+<mujoco model="sample">
+  <worldbody>
+    <geom name="floor" type="plane" size="5 5 0.01" pos="0 0 0"/>
+    <geom name="cube" type="box" size="0.1 0.1 0.1" pos="0 0 0.1"/>
+    <camera name="back" pos="-3 0 1" fovy="45"/>
+    <camera name="egocentric" pos="0.09 0 0" fovy="80"/>
+  </worldbody>
+</mujoco>
