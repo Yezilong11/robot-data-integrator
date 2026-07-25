@@ -1,0 +1,934 @@
+{
+  "_id": "69372bdc427bea99bf050cc6",
+  "id": "saic3d/graspnet_ckpt",
+  "private": false,
+  "tags": [
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 0,
+  "modelId": "saic3d/graspnet_ckpt",
+  "author": "saic3d",
+  "sha": "d14f8f4665d68f609c7d45f438aa400bfc054331",
+  "lastModified": "2025-12-08T20:08:26.000Z",
+  "gated": false,
+  "disabled": false,
+  "config": {},
+  "siblings": [
+    {
+      "rfilename": ".gitattributes"
+    },
+    {
+      "rfilename": "45_2_scratch/.hydra/config.yaml"
+    },
+    {
+      "rfilename": "45_2_scratch/.hydra/hydra.yaml"
+    },
+    {
+      "rfilename": "45_2_scratch/.hydra/overrides.yaml"
+    },
+    {
+      "rfilename": "45_2_scratch/checkpoints/epoch=19-step=32000.ckpt"
+    },
+    {
+      "rfilename": "45_2_scratch/checkpoints/epoch=21-step=34400.ckpt"
+    },
+    {
+      "rfilename": "45_2_scratch/checkpoints/epoch=22-step=36000.ckpt"
+    },
+    {
+      "rfilename": "45_2_scratch/checkpoints/epoch=32-step=51600.ckpt"
+    },
+    {
+      "rfilename": "45_2_scratch/checkpoints/last.ckpt"
+    },
+    {
+      "rfilename": "45_2_scratch/main.log"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_0.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_1000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_10000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_10200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_10400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_10600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_10800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_11000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_11200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_11400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_11600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_11800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_1200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_12000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_12200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_12400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_12600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_12800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_13000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_13200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_13400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_13600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_13800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_1400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_14000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_14200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_14400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_14600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_14800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_15000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_15200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_15400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_15600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_15800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_1600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_16000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_16200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_16400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_16600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_16800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_17000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_17200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_17400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_17600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_17800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_1800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_18000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_18200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_18400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_18600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_18800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_19000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_19200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_19400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_19600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_19800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_2000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_20000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_20200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_20400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_20600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_20800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_21000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_21200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_21400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_21600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_21800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_2200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_22000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_22200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_22400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_22600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_22800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_23000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_23200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_23400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_23600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_23800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_2400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_24000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_24200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_24400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_24600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_24800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_25000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_25200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_25400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_25600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_25800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_2600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_26000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_26200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_26400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_26600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_26800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_27000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_27200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_27400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_27600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_27800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_2800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_28000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_28200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_28400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_28600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_28800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_29000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_29200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_29400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_29600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_29800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_3000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_30000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_30200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_30400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_30600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_30800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_31000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_31200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_31400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_31600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_31800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_3200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_32000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_32200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_32400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_32600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_32800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_33000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_33200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_33400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_33600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_33800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_3400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_34000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_34200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_34400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_34600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_34800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_35000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_35200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_35400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_35600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_35800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_3600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_36000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_36200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_36400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_36600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_36800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_37000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_37200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_37400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_37600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_37800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_3800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_38000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_38200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_38400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_38600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_38800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_39000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_39200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_39400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_39600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_39800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_4000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_40000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_40200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_40400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_40600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_40800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_41000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_41200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_41400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_41600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_41800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_4200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_42000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_42200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_42400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_42600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_42800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_43000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_43200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_43400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_43600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_43800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_4400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_44000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_44200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_44400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_44600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_44800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_45000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_45200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_45400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_45600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_45800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_4600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_46000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_46200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_46400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_46600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_46800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_47000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_47200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_47400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_47600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_47800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_4800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_48000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_48200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_48400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_48600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_48800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_49000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_49200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_49400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_49600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_49800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_5000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_50000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_50200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_50400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_50600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_50800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_51000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_51200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_51400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_51600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_51800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_5200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_52000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_52200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_52400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_52600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_52800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_53000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_53200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_53400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_53600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_53800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_5400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_54000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_54200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_54400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_54600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_54800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_55000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_55200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_55400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_55600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_55800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_5600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_56000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_56200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_56400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_5800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_6000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_6200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_6400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_6600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_6800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_7000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_7200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_7400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_7600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_7800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_8000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_8200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_8400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_8600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_8800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_9000.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_9200.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_9400.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_9600.png"
+    },
+    {
+      "rfilename": "45_2_scratch/train/val_predictions_9800.png"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/debug-internal.log"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/debug.log"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/files/conda-environment.yaml"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/files/config.yaml"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/files/output.log"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/files/requirements.txt"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/files/wandb-metadata.json"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/files/wandb-summary.json"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/logs/debug-internal.log"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/logs/debug.log"
+    },
+    {
+      "rfilename": "45_2_scratch/wandb/run-20251126_182725-shygb0f5/run-shygb0f5.wandb"
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2025-12-08T19:49:48.000Z",
+  "usedStorage": 10396847586
+}

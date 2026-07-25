@@ -149,9 +149,19 @@ class StandardResult(BaseModel):
         le=100.0,
         description="完整度百分比",
     )
+    confidence_score: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="置信度：1.0=直接解析原始数据，<1.0=含推断/降级（如缺时间戳、Isaac 描述性解析、元数据-only）",
+    )
     errors: list[str] = Field(default_factory=list, description="错误列表")
     warnings: list[str] = Field(default_factory=list, description="警告列表")
     provenance: ProvenanceEntry | None = Field(default=None, description="溯源信息")
+    data: Any = Field(
+        default=None,
+        description="处理后的内存中间表示对象（CanonicalRobot/Trimesh/...），供节点装配 ParsedItem 与校验引擎读取",
+    )
 
     def has_errors(self) -> bool:
         """是否包含错误。"""
