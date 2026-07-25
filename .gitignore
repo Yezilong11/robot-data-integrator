@@ -29,12 +29,11 @@ htmlcov/
 .ruff_cache/
 
 # 数据
-data/experience_db/
-data/output_packages/
+data/
+
+# 脚本
+scripts/download_*.py
 
 # OS
 .DS_Store
 Thumbs.db
-
-# uv
-uv.lock
