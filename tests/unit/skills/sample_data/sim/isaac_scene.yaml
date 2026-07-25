@@ -1,9 +1,0 @@
-objects:
-  - name: cube
-    type: box
-    pos: [0.0, 0.0, 0.0]
-    size: [0.1, 0.1, 0.1]
-cameras:
-  - name: front
-    pos: [1.0, 0.0, 0.5]
-    fov: 60.0

@@ -5,6 +5,8 @@
 API key、路径或 URL。
 """
 
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -22,124 +24,42 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ─── LLM 配置（OpenAI 兼容） ───
-    llm_api_key: str = Field(
-        default="",
-        description="LLM 服务 API Key（OpenAI 兼容）",
+    # ─── 千问模型配置 ───
+    qwen_api_key: str = Field(description="阿里云百炼平台 API Key")
+    qwen_model: str = Field(default="qwen-plus", description="千问模型名称")
+    qwen_embedding_model: str = Field(
+        default="text-embedding-v3", description="Embedding 模型"
     )
-    llm_base_url: str = Field(
-        default="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        description="LLM 服务 OpenAI 兼容端点，切换厂商改这一项",
-    )
-    llm_model: str = Field(
-        default="qwen-plus",
-        description="LLM 模型名称",
-    )
-    llm_embedding_model: str = Field(
-        default="text-embedding-v3",
-        description="Embedding 模型",
-    )
-    llm_max_retries: int = Field(
-        default=3,
-        description="LLM 调用最大重试次数",
-    )
-    llm_temperature: float = Field(
-        default=0.3,
-        description="LLM 生成温度，目标解析用低温度",
+    qwen_max_retries: int = Field(default=3, description="LLM 调用最大重试次数")
+    qwen_temperature: float = Field(
+        default=0.3, description="LLM 生成温度，目标解析用低温度"
     )
 
     # ─── 数据源配置 ───
-    github_token: str = Field(
-        default="",
-        description="GitHub API Token",
-    )
-    ieee_api_key: str = Field(
-        default="",
-        description="IEEE Xplore API Key",
-    )
-    adapter_timeout: float = Field(
-        default=30.0,
-        description="HTTP 请求超时秒数",
-    )
-    adapter_max_retry: int = Field(
-        default=3,
-        description="Adapter 最大重试次数",
-    )
+    github_token: str = Field(default="", description="GitHub API Token")
+    adapter_timeout: float = Field(default=30.0, description="HTTP请求超时秒数")
+    adapter_max_retry: int = Field(default=3, description="Adapter最大重试次数")
     adapter_rate_limit: int = Field(
-        default=10,
-        description="每秒最大并发请求数",
+        default=10, description="每秒最大并发请求数"
     )
-    adapter_cache_ttl: int = Field(
-        default=3600,
-        description="缓存 TTL 秒数",
-    )
-
-    # ─── 数据源 URL 配置 ───
-    huggingface_api_url: str = Field(
-        default="https://huggingface.co/api",
-        description="HuggingFace API 基础 URL",
-    )
-    zenodo_api_url: str = Field(
-        default="https://zenodo.org/api",
-        description="Zenodo API 基础 URL",
-    )
-    google_scanned_api_url: str = Field(
-        default="https://fuel.gazebosim.org/1.0/GoogleResearch",
-        description="Google Scanned Objects (Gazebo Fuel) API URL",
-    )
-    robotiq_base_url: str = Field(
-        default="https://robotiq.com",
-        description="Robotiq 官网基础 URL",
-    )
-    allegro_base_url: str = Field(
-        default="https://www.wonikrobotics.com",
-        description="Allegro 灵巧手官网基础 URL",
-    )
-    mujoco_base_url: str = Field(
-        default="https://mujoco.org",
-        description="MuJoCo 官网基础 URL",
-    )
-    isaac_base_url: str = Field(
-        default="https://docs.isaacsim.omniverse.nvidia.com",
-        description="Isaac Sim 文档基础 URL",
-    )
-
-    # ─── 数据源 URL 配置（可通过环境变量覆盖） ───
-    graspnet_base_url: str = Field(
-        default="",
-        description="GraspNet 数据集 API 地址，留空则使用默认值",
-    )
-    ycb_base_url: str = Field(
-        default="",
-        description="YCB Objects 数据集 API 地址，留空则使用默认值",
-    )
-    franka_base_url: str = Field(
-        default="",
-        description="Franka 机器人模型 API 地址，留空则使用默认值",
-    )
+    adapter_cache_ttl: int = Field(default=3600, description="缓存TTL秒数")
 
     # ─── ChromaDB 配置 ───
     chromadb_path: str = Field(
-        default="./data/experience_db",
-        description="ChromaDB 持久化路径",
+        default="./data/experience_db", description="ChromaDB持久化路径"
     )
 
     # ─── 输出配置 ───
     output_dir: str = Field(
-        default="./data/output_packages",
-        description="数据包输出目录",
+        default="./data/output_packages", description="数据包输出目录"
     )
 
     # ─── 日志配置 ───
-    log_level: str = Field(
-        default="INFO",
-        description="日志级别",
-    )
+    log_level: str = Field(default="INFO", description="日志级别")
     log_format: str = Field(
-        default="json",
-        description="日志格式：json 或 console",
+        default="json", description="日志格式：json 或 console"
     )
 
 
 # 全局单例
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]
