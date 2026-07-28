@@ -1,14 +1,17 @@
 # src/rdi/adapters/allegro.py
 """Allegro 灵巧手 URDF 模型源 Adapter。
 
-从配置的 Allegro 仓库获取灵巧手 URDF 模型文件。
-需配置 ALLEGRO_BASE_URL 环境变量指向可用的 URDF 仓库。
+从 GitHub 仓库获取灵巧手 URDF 模型文件。
+无需 API Key，直接 HTTP 下载。
 """
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
+
+# 默认基础 URL，指向 GitHub raw 仓库
+_DEFAULT_BASE_URL = "https://raw.githubusercontent.com/simlabor/allegro_hand_ros/main"
 
 
 class AllegroAdapter(BaseAdapter):
@@ -18,7 +21,9 @@ class AllegroAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.allegro_base_url,
+            base_url=settings.allegro_base_url
+            if settings.allegro_base_url != "https://www.wonikrobotics.com"
+            else _DEFAULT_BASE_URL,
             rate_limit=5,
         )
 
@@ -31,7 +36,6 @@ class AllegroAdapter(BaseAdapter):
         Returns:
             SearchResult 列表
         """
-        # 预定义的 Allegro 手模型列表
         known_models = [
             {
                 "id": "allegro_hand_v4",
@@ -63,7 +67,7 @@ class AllegroAdapter(BaseAdapter):
                         item_id=model["id"],
                         title=model["title"],
                         source=DataSource.ALLEGRO,
-                        url=f"{self.base_url}/{model['id']}",
+                        url=f"{self.base_url}/allegro_hand_description/urdf/{model['id']}",
                         metadata={"description": model["desc"]},
                     )
                 )
@@ -75,7 +79,7 @@ class AllegroAdapter(BaseAdapter):
                         item_id=model["id"],
                         title=model["title"],
                         source=DataSource.ALLEGRO,
-                        url=f"{self.base_url}/{model['id']}",
+                        url=f"{self.base_url}/allegro_hand_description/urdf/{model['id']}",
                         metadata={"description": model["desc"]},
                     )
                 )
@@ -93,7 +97,7 @@ class AllegroAdapter(BaseAdapter):
         Raises:
             AdapterError: 下载失败
         """
-        urdf_url = f"{self.base_url}/{item_id}/{item_id}.urdf"
+        urdf_url = f"{self.base_url}/allegro_hand_description/urdf/{item_id}.urdf"
         content = await self._download_bytes(urdf_url)
         return RawData(
             source=DataSource.ALLEGRO,
@@ -101,4 +105,5 @@ class AllegroAdapter(BaseAdapter):
             format="urdf",
             data=content,
             url=urdf_url,
+            size_bytes=len(content),
         )

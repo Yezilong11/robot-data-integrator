@@ -1,14 +1,17 @@
 # src/rdi/adapters/isaac.py
 """Isaac Sim 仿真配置示例源 Adapter。
 
-从配置的 Isaac Sim 仓库获取 USD 场景配置文件。
-需配置 ISAAC_BASE_URL 环境变量指向可用的模型仓库。
+从 GitHub 仓库获取 USD 场景配置文件。
+无需 API Key，直接 HTTP 下载。
 """
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
+
+# 默认基础 URL，指向 GitHub raw 仓库
+_DEFAULT_BASE_URL = "https://raw.githubusercontent.com/NVIDIA-Omniverse/IsaacSim/main"
 
 
 class IsaacSimAdapter(BaseAdapter):
@@ -18,7 +21,9 @@ class IsaacSimAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.isaac_base_url,
+            base_url=settings.isaac_base_url
+            if settings.isaac_base_url != "https://docs.isaacsim.omniverse.nvidia.com"
+            else _DEFAULT_BASE_URL,
             rate_limit=5,
         )
 
@@ -31,7 +36,6 @@ class IsaacSimAdapter(BaseAdapter):
         Returns:
             SearchResult 列表
         """
-        # 预定义的 Isaac Sim 示例列表
         known_examples = [
             {
                 "id": "franka_cabinet",
@@ -65,7 +69,7 @@ class IsaacSimAdapter(BaseAdapter):
                         item_id=example["id"],
                         title=example["title"],
                         source=DataSource.ISAAC,
-                        url=f"{self.base_url}/{example['id']}",
+                        url=f"{self.base_url}/examples/{example['id']}",
                         metadata={"description": example["desc"]},
                     )
                 )
@@ -77,7 +81,7 @@ class IsaacSimAdapter(BaseAdapter):
                         item_id=example["id"],
                         title=example["title"],
                         source=DataSource.ISAAC,
-                        url=f"{self.base_url}/{example['id']}",
+                        url=f"{self.base_url}/examples/{example['id']}",
                         metadata={"description": example["desc"]},
                     )
                 )
@@ -95,7 +99,7 @@ class IsaacSimAdapter(BaseAdapter):
         Raises:
             AdapterError: 下载失败
         """
-        usd_url = f"{self.base_url}/{item_id}/{item_id}.usd"
+        usd_url = f"{self.base_url}/examples/{item_id}/{item_id}.usd"
         content = await self._download_bytes(usd_url)
         return RawData(
             source=DataSource.ISAAC,
@@ -103,4 +107,5 @@ class IsaacSimAdapter(BaseAdapter):
             format="usd",
             data=content,
             url=usd_url,
+            size_bytes=len(content),
         )

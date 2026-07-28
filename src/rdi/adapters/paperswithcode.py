@@ -28,9 +28,7 @@ class PapersWithCodeAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.paperswithcode_base_url
-            if hasattr(settings, "paperswithcode_base_url") and settings.paperswithcode_base_url
-            else "https://paperswithcode.com/api/v1",
+            base_url=settings.paperswithcode_base_url,
             rate_limit=5,
         )
 
@@ -85,6 +83,7 @@ class PapersWithCodeAdapter(BaseAdapter):
             format="json",
             data=raw_bytes,
             url=f"{self.base_url}/papers/{paper_id}",
+            size_bytes=len(raw_bytes),
         )
 
     @staticmethod

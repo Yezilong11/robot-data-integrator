@@ -105,6 +105,14 @@ class Settings(BaseSettings):
     )
 
     # ─── 数据源 URL 配置（可通过环境变量覆盖） ───
+    paperswithcode_base_url: str = Field(
+        default="https://paperswithcode.com/api/v1",
+        description="Papers with Code API 基础 URL",
+    )
+    ieee_base_url: str = Field(
+        default="https://ieeexploreapi.ieee.org/api/v1/search",
+        description="IEEE Xplore API 基础 URL",
+    )
     graspnet_base_url: str = Field(
         default="",
         description="GraspNet 数据集 API 地址，留空则使用默认值",

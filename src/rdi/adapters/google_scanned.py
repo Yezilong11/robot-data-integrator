@@ -70,4 +70,5 @@ class GoogleScannedAdapter(BaseAdapter):
             format="obj",
             data=content,
             url=mesh_url,
+            size_bytes=len(content),
         )

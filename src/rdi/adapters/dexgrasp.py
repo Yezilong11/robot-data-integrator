@@ -75,4 +75,5 @@ class DexGraspAdapter(BaseAdapter):
             format="npz",
             data=content,
             url=file_url,
+            size_bytes=len(content),
         )

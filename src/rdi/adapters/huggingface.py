@@ -74,4 +74,5 @@ class HuggingFaceAdapter(BaseAdapter):
             format="json",
             data=content,
             url=config_url,
+            size_bytes=len(content),
         )

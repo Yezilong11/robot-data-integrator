@@ -154,6 +154,62 @@ class BaseAdapter(ABC):
                 source=self.source.value,
             )
 
+    async def _request_text(
+        self,
+        method: str,
+        path: str,
+        **kwargs: Any,
+    ) -> str:
+        """带重试的 HTTP 请求，返回文本响应（用于 XML 等）。
+
+        Args:
+            method: HTTP 方法
+            path: API 路径
+            **kwargs: 传递给 aiohttp 的额外参数
+
+        Returns:
+            响应文本字符串
+
+        Raises:
+            AdapterError: 重试耗尽
+        """
+        cache_key = self._make_cache_key(method, path, kwargs)
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+
+        url = f"{self.base_url}{path}"
+        headers = kwargs.pop("headers", {})
+
+        async with self.semaphore:
+            for attempt in range(self.max_retry):
+                try:
+                    async with (
+                        aiohttp.ClientSession() as session,
+                        session.request(
+                            method,
+                            url,
+                            headers=headers,
+                            timeout=aiohttp.ClientTimeout(total=self.timeout),
+                            **kwargs,
+                        ) as resp,
+                    ):
+                        resp.raise_for_status()
+                        text = await resp.text()
+                        self.cache[cache_key] = text
+                        return text
+                except (aiohttp.ClientError, TimeoutError) as e:
+                    if attempt == self.max_retry - 1:
+                        raise AdapterError(
+                            message=f"Failed {method} {path}: {e}",
+                            source=self.source.value,
+                            status_code=getattr(e, "status", None),
+                        ) from e
+                    await asyncio.sleep(2**attempt)
+            raise AdapterError(
+                message=f"Failed {method} {path}: exhausted retries",
+                source=self.source.value,
+            )
+
     async def _download_bytes(self, url: str) -> bytes:
         """下载二进制文件（如 PDF、mesh文件）。"""
         async with self.semaphore:

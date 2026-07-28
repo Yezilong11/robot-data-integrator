@@ -1,14 +1,17 @@
 # src/rdi/adapters/mujoco.py
 """MuJoCo 仿真配置示例源 Adapter。
 
-从配置的 MuJoCo 仓库获取 MJCF XML 场景配置文件。
-需配置 MUJOCO_BASE_URL 环境变量指向可用的模型仓库。
+从 GitHub 仓库（google-deepmind/mujoco_menagerie）获取 MJCF XML 场景配置文件。
+无需 API Key，直接 HTTP 下载。
 """
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
+
+# 默认基础 URL，指向 GitHub raw 仓库
+_DEFAULT_BASE_URL = "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/main"
 
 
 class MuJoCoAdapter(BaseAdapter):
@@ -18,7 +21,9 @@ class MuJoCoAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.mujoco_base_url,
+            base_url=settings.mujoco_base_url
+            if settings.mujoco_base_url != "https://mujoco.org"
+            else _DEFAULT_BASE_URL,
             rate_limit=5,
         )
 
@@ -31,7 +36,6 @@ class MuJoCoAdapter(BaseAdapter):
         Returns:
             SearchResult 列表
         """
-        # 预定义的 MuJoCo 示例场景列表
         known_scenes = [
             {"id": "ant", "title": "Ant", "desc": "MuJoCo Ant 四足机器人场景"},
             {"id": "humanoid", "title": "Humanoid", "desc": "MuJoCo 人形机器人场景"},
@@ -87,4 +91,5 @@ class MuJoCoAdapter(BaseAdapter):
             format="xml",
             data=content,
             url=xml_url,
+            size_bytes=len(content),
         )

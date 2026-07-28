@@ -4,7 +4,6 @@
 import pytest
 
 from rdi.adapters.ycb import YCBAdapter
-from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
 
@@ -19,7 +18,7 @@ class TestYCBAdapter:
     def test_adapter_base_url(self) -> None:
         """正常情况：base_url 设置正确。"""
         adapter = YCBAdapter()
-        assert adapter.base_url == "https://rse-lab.cs.washington.edu"
+        assert adapter.base_url == "https://huggingface.co"
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 5。"""
@@ -29,9 +28,35 @@ class TestYCBAdapter:
     @pytest.mark.asyncio
     @pytest.mark.integration
     async def test_search_retries_on_failure(self) -> None:
-        """异常情况：请求失败时抛出 AdapterError。"""
+        """正常情况：硬编码列表 Adapter 的 search 不会抛出异常。"""
         adapter = YCBAdapter()
-        adapter.max_retry = 1
-        with pytest.raises(AdapterError) as exc_info:
-            await adapter.search("mug")
-        assert exc_info.value.source == "ycb"
+        results = await adapter.search("mug")
+        assert len(results) > 0
+
+
+# ── Mock 驱动的 search / fetch 测试 ──
+
+
+@pytest.mark.asyncio
+async def test_ycb_search_returns_results() -> None:
+    """正常情况：search 直接调用硬编码列表，返回结果包含 YCB 源。"""
+    adapter = YCBAdapter()
+    results = await adapter.search("mug")
+    assert len(results) > 0
+    assert results[0].source == DataSource.YCB
+
+
+@pytest.mark.asyncio
+async def test_ycb_fetch_with_mock() -> None:
+    """正常情况：mock _download_bytes 后 fetch 返回 RawData，format 为 stl。"""
+    from unittest.mock import AsyncMock, patch
+
+    adapter = YCBAdapter()
+    fake_stl = b"OBJ mesh data"
+    with patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_stl):
+        raw = await adapter.fetch("025_mug")
+        assert raw.source == DataSource.YCB
+        assert raw.format == "stl"
+        assert raw.data == fake_stl
+        assert raw.size_bytes == len(fake_stl)
+        assert raw.size_bytes > 0

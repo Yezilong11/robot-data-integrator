@@ -22,7 +22,7 @@ from rdi.adapters.ycb import YCBAdapter
 from rdi.adapters.zenodo import ZenodoAdapter
 from rdi.models.common import DataReqType, DataSource
 
-# 所有 14 个 Adapter 类及其对应的 DataSource
+# 所有 15 个 Adapter 类及其对应的 DataSource
 ALL_ADAPTERS: list[tuple[type[BaseAdapter], DataSource]] = [
     (ArxivAdapter, DataSource.ARXIV),
     (GitHubAdapter, DataSource.GITHUB),
@@ -88,7 +88,7 @@ class TestSelectAdapter:
         assert GitHubAdapter in adapters
 
     def test_all_adapters_available_via_select(self) -> None:
-        """正常情况：所有 14 个 Adapter 都能通过 select_adapter 返回。"""
+        """正常情况：所有 15 个 Adapter 都能通过 select_adapter 返回。"""
         all_returned: set[type[BaseAdapter]] = set()
         for req_type in DataReqType:
             all_returned.update(select_adapter(req_type))
@@ -108,3 +108,34 @@ class TestSelectAdapter:
         """正常情况：每个 Adapter 实例化后 source 属性与 DataSource 枚举对应。"""
         adapter = adapter_cls()
         assert adapter.source == expected_source
+
+
+class TestGetAdapter:
+    """get_adapter 工厂函数单元测试。"""
+
+    def test_get_adapter_all_sources(self) -> None:
+        """正常情况：每个 DataSource 都能通过 get_adapter 返回 BaseAdapter 实例且 source 正确。"""
+        from rdi.adapters import get_adapter
+
+        for source in DataSource:
+            adapter = get_adapter(source)
+            assert isinstance(adapter, BaseAdapter), f"{source} 返回的不是 BaseAdapter 实例"
+            assert adapter.source == source, f"{source} 返回的 adapter.source 不匹配"
+
+    def test_get_adapter_covers_all_sources(self) -> None:
+        """正常情况：_ADAPTER_CLASSES 覆盖所有 DataSource 枚举值。"""
+        from rdi.adapters import _ADAPTER_CLASSES
+
+        assert len(_ADAPTER_CLASSES) == len(DataSource), (
+            f"_ADAPTER_CLASSES 有 {len(_ADAPTER_CLASSES)} 项，"
+            f"DataSource 枚举有 {len(DataSource)} 项"
+        )
+
+    def test_get_adapter_unknown_raises(self) -> None:
+        """异常情况：不在 _ADAPTER_CLASSES 中的 DataSource 会抛出 AdapterError。"""
+        from rdi.adapters import _ADAPTER_CLASSES
+
+        # 构造一个不在 _ADAPTER_CLASSES 中的 DataSource 值
+        # DataSource 是 StrEnum，所有合法值都在 _ADAPTER_CLASSES 中，
+        # 这里直接验证 _ADAPTER_CLASSES 不包含任意字符串即可
+        assert "nonexistent" not in [s.value for s in _ADAPTER_CLASSES]

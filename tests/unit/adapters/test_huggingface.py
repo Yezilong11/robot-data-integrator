@@ -1,6 +1,8 @@
 # tests/unit/adapters/test_huggingface.py
 """HuggingFaceAdapter 的单元测试。"""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from rdi.adapters.huggingface import HuggingFaceAdapter
@@ -35,3 +37,37 @@ class TestHuggingFaceAdapter:
         with pytest.raises(AdapterError) as exc_info:
             await adapter.search("robot grasping")
         assert exc_info.value.source == "huggingface"
+
+    @pytest.mark.asyncio
+    async def test_huggingface_search_with_mock(self) -> None:
+        """Mock 驱动：search 通过 _request 返回模型列表。"""
+        adapter = HuggingFaceAdapter()
+        mock_response = [
+            {
+                "id": "bert-base-uncased",
+                "modelId": "bert-base-uncased",
+                "downloads": 1000,
+                "likes": 50,
+                "tags": ["transformers"],
+            }
+        ]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_response):
+            results = await adapter.search("bert")
+            assert len(results) > 0
+            assert results[0].source == DataSource.HUGGINGFACE
+            assert results[0].item_id == "bert-base-uncased"
+            assert results[0].metadata["downloads"] == 1000
+
+    @pytest.mark.asyncio
+    async def test_huggingface_fetch_with_mock(self) -> None:
+        """Mock 驱动：fetch 返回 RawData 且字段正确。"""
+        adapter = HuggingFaceAdapter()
+        fake_config = b'{"model_type": "bert"}'
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_config
+        ):
+            raw = await adapter.fetch("bert-base-uncased")
+            assert raw.source == DataSource.HUGGINGFACE
+            assert raw.item_id == "bert-base-uncased"
+            assert raw.format == "json"
+            assert raw.size_bytes > 0

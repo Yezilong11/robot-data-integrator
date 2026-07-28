@@ -4,7 +4,6 @@
 import pytest
 
 from rdi.adapters.franka import FrankaAdapter
-from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
 
@@ -19,25 +18,47 @@ class TestFrankaAdapter:
     def test_adapter_base_url(self) -> None:
         """正常情况：base_url 设置正确。"""
         adapter = FrankaAdapter()
-        assert adapter.base_url == "https://franka.de"
+        assert (
+            adapter.base_url == "https://raw.githubusercontent.com/frankaemika/franka_ros/develop"
+        )
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 5。"""
         adapter = FrankaAdapter()
         assert adapter.semaphore._value == 5
 
-    def test_fetch_urdf_method_exists(self) -> None:
-        """正常情况：fetch_urdf 辅助方法存在。"""
-        adapter = FrankaAdapter()
-        assert hasattr(adapter, "fetch_urdf")
-        assert callable(adapter.fetch_urdf)
-
     @pytest.mark.asyncio
     @pytest.mark.integration
     async def test_search_retries_on_failure(self) -> None:
-        """异常情况：请求失败时抛出 AdapterError。"""
+        """正常情况：硬编码列表 Adapter 的 search 不会抛出异常。"""
         adapter = FrankaAdapter()
-        adapter.max_retry = 1
-        with pytest.raises(AdapterError) as exc_info:
-            await adapter.search("panda")
-        assert exc_info.value.source == "franka"
+        results = await adapter.search("panda")
+        assert len(results) > 0
+
+
+# ── Mock 驱动的 search / fetch 测试 ──
+
+
+@pytest.mark.asyncio
+async def test_franka_search_returns_results() -> None:
+    """正常情况：search 直接调用硬编码列表，返回结果包含 FRANKA 源。"""
+    adapter = FrankaAdapter()
+    results = await adapter.search("panda")
+    assert len(results) > 0
+    assert results[0].source == DataSource.FRANKA
+
+
+@pytest.mark.asyncio
+async def test_franka_fetch_with_mock() -> None:
+    """正常情况：mock _download_bytes 后 fetch 返回 RawData，format 为 urdf。"""
+    from unittest.mock import AsyncMock, patch
+
+    adapter = FrankaAdapter()
+    fake_urdf = b'<robot name="panda"/>'
+    with patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf):
+        raw = await adapter.fetch("panda")
+        assert raw.source == DataSource.FRANKA
+        assert raw.format == "urdf"
+        assert raw.data == fake_urdf
+        assert raw.size_bytes == len(fake_urdf)
+        assert raw.size_bytes > 0
