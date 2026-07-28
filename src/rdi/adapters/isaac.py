@@ -10,9 +10,6 @@ from rdi.config.settings import settings
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 默认基础 URL，指向 GitHub raw 仓库
-_DEFAULT_BASE_URL = "https://raw.githubusercontent.com/NVIDIA-Omniverse/IsaacSim/main"
-
 
 class IsaacSimAdapter(BaseAdapter):
     """Isaac Sim 仿真 Adapter，搜索和下载 USD 配置文件。"""
@@ -21,9 +18,7 @@ class IsaacSimAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.isaac_base_url
-            if settings.isaac_base_url != "https://docs.isaacsim.omniverse.nvidia.com"
-            else _DEFAULT_BASE_URL,
+            base_url=settings.isaac_base_url,
             rate_limit=5,
         )
 

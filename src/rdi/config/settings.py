@@ -88,20 +88,20 @@ class Settings(BaseSettings):
         description="Google Scanned Objects (Gazebo Fuel) API URL",
     )
     robotiq_base_url: str = Field(
-        default="https://robotiq.com",
-        description="Robotiq 官网基础 URL",
+        default="https://raw.githubusercontent.com/ros-industrial/robotiq/kinetic-devel",
+        description="Robotiq URDF 模型仓库基础 URL",
     )
     allegro_base_url: str = Field(
-        default="https://www.wonikrobotics.com",
-        description="Allegro 灵巧手官网基础 URL",
+        default="https://raw.githubusercontent.com/simlabor/allegro_hand_ros/main",
+        description="Allegro 灵巧手 URDF 模型仓库基础 URL",
     )
     mujoco_base_url: str = Field(
-        default="https://mujoco.org",
-        description="MuJoCo 官网基础 URL",
+        default="https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/main",
+        description="MuJoCo MJCF 模型仓库基础 URL",
     )
     isaac_base_url: str = Field(
-        default="https://docs.isaacsim.omniverse.nvidia.com",
-        description="Isaac Sim 文档基础 URL",
+        default="https://raw.githubusercontent.com/NVIDIA-Omniverse/IsaacSim/main",
+        description="Isaac Sim USD 模型仓库基础 URL",
     )
 
     # ─── 数据源 URL 配置（可通过环境变量覆盖） ───

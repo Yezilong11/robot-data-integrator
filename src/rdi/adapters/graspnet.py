@@ -100,6 +100,7 @@ class GraspNetAdapter(BaseAdapter):
         Raises:
             AdapterError: 下载失败
         """
+        # TODO: 验证 HuggingFace 镜像 URL 是否可解析，若不可用需切换到 graspnet.net 官方下载
         url = f"{self.base_url}/datasets/graspnet/{item_id}/resolve/main/data.npz"
         data_bytes = await self._download_bytes(url)
         return RawData(

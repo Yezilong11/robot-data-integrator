@@ -20,6 +20,7 @@ from rdi.adapters.registry import ADAPTER_REGISTRY, select_adapter
 from rdi.adapters.robotiq import RobotiqAdapter
 from rdi.adapters.ycb import YCBAdapter
 from rdi.adapters.zenodo import ZenodoAdapter
+from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
 
 # 所有 15 个 Adapter 类及其对应的 DataSource
@@ -133,9 +134,17 @@ class TestGetAdapter:
 
     def test_get_adapter_unknown_raises(self) -> None:
         """异常情况：不在 _ADAPTER_CLASSES 中的 DataSource 会抛出 AdapterError。"""
-        from rdi.adapters import _ADAPTER_CLASSES
+        from rdi.adapters import _ADAPTER_CLASSES, get_adapter
 
-        # 构造一个不在 _ADAPTER_CLASSES 中的 DataSource 值
-        # DataSource 是 StrEnum，所有合法值都在 _ADAPTER_CLASSES 中，
-        # 这里直接验证 _ADAPTER_CLASSES 不包含任意字符串即可
-        assert "nonexistent" not in [s.value for s in _ADAPTER_CLASSES]
+        # 临时从 _ADAPTER_CLASSES 删除一个键，验证 get_adapter 抛出 AdapterError
+        test_source = DataSource.ARXIV
+        original = _ADAPTER_CLASSES.pop(test_source)
+        try:
+            with pytest.raises(AdapterError) as exc_info:
+                get_adapter(test_source)
+            assert (
+                test_source.value in exc_info.value.source
+                or exc_info.value.source == test_source.value
+            )
+        finally:
+            _ADAPTER_CLASSES[test_source] = original

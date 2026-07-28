@@ -10,9 +10,6 @@ from rdi.config.settings import settings
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 默认基础 URL，指向 GitHub raw 仓库
-_DEFAULT_BASE_URL = "https://raw.githubusercontent.com/ros-industrial/robotiq/kinetic-devel"
-
 
 class RobotiqAdapter(BaseAdapter):
     """Robotiq 夹爪 Adapter，搜索和下载 URDF 模型文件。"""
@@ -21,9 +18,7 @@ class RobotiqAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.robotiq_base_url
-            if settings.robotiq_base_url != "https://robotiq.com"
-            else _DEFAULT_BASE_URL,
+            base_url=settings.robotiq_base_url,
             rate_limit=5,
         )
 

@@ -28,9 +28,8 @@ class TestAllegroAdapter:
         assert adapter.semaphore._value == 5
 
     @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_search_retries_on_failure(self) -> None:
-        """正常情况：硬编码列表 Adapter 的 search 不会抛出异常。"""
+    async def test_search_returns_results(self) -> None:
+        """正常情况：硬编码列表 Adapter 的 search 返回结果。"""
         adapter = AllegroAdapter()
         results = await adapter.search("allegro")
         assert len(results) > 0

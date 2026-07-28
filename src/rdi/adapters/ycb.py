@@ -111,6 +111,7 @@ class YCBAdapter(BaseAdapter):
         Raises:
             AdapterError: 下载失败
         """
+        # TODO: 验证 HuggingFace 镜像 URL 是否可解析，若不可用需切换到华盛顿大学官方源
         url = f"{self.base_url}/datasets/ycb/{item_id}/resolve/main/textured.obj"
         data_bytes = await self._download_bytes(url)
         return RawData(

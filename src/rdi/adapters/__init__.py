@@ -1,5 +1,7 @@
 """数据连接层：数据源 Adapter 与注册表。"""
 
+from collections.abc import Callable
+
 from rdi.adapters.allegro import AllegroAdapter
 from rdi.adapters.arxiv import ArxivAdapter
 from rdi.adapters.base import BaseAdapter
@@ -21,7 +23,8 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
 # 方案 A：静态工厂字典（SOP 2.2.1 决策）
-_ADAPTER_CLASSES: dict[DataSource, type[BaseAdapter]] = {
+# 使用 Callable[[], BaseAdapter] 而非 type[BaseAdapter]，因为子类 __init__(self) 无参
+_ADAPTER_CLASSES: dict[DataSource, Callable[[], BaseAdapter]] = {
     DataSource.ARXIV: ArxivAdapter,
     DataSource.IEEE: IEEEXploreAdapter,
     DataSource.GITHUB: GitHubAdapter,

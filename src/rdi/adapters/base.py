@@ -9,7 +9,7 @@ import asyncio
 import hashlib
 import time
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 
@@ -175,7 +175,7 @@ class BaseAdapter(ABC):
         """
         cache_key = self._make_cache_key(method, path, kwargs)
         if cache_key in self.cache:
-            return self.cache[cache_key]
+            return cast("str", self.cache[cache_key])
 
         url = f"{self.base_url}{path}"
         headers = kwargs.pop("headers", {})

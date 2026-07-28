@@ -10,9 +10,6 @@ from rdi.config.settings import settings
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 默认基础 URL，指向 GitHub raw 仓库
-_DEFAULT_BASE_URL = "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/main"
-
 
 class MuJoCoAdapter(BaseAdapter):
     """MuJoCo 仿真 Adapter，搜索和下载 MJCF XML 配置文件。"""
@@ -21,9 +18,7 @@ class MuJoCoAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.mujoco_base_url
-            if settings.mujoco_base_url != "https://mujoco.org"
-            else _DEFAULT_BASE_URL,
+            base_url=settings.mujoco_base_url,
             rate_limit=5,
         )
 
