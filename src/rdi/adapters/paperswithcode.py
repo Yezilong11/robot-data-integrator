@@ -7,6 +7,7 @@
 """
 
 import json
+from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -87,7 +88,7 @@ class PapersWithCodeAdapter(BaseAdapter):
         )
 
     @staticmethod
-    def _parse_search_results(data: dict) -> list[SearchResult]:
+    def _parse_search_results(data: dict[str, Any]) -> list[SearchResult]:
         """解析 Papers with Code 搜索返回的 JSON 数据。"""
         results: list[SearchResult] = []
         for item in data.get("results", []):

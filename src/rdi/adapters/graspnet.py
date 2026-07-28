@@ -6,7 +6,7 @@
 无需 API Key，但需遵守速率限制。
 """
 
-from typing import Any
+from typing import Any, cast
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -90,7 +90,7 @@ class GraspNetAdapter(BaseAdapter):
             "/api/models",
             params={"offset": str(offset), "limit": str(limit)},
         )
-        return data.get("models", [])
+        return cast("list[dict[str, Any]]", data.get("models", []))
 
     async def fetch_grasps(self, model_id: str) -> list[dict[str, Any]]:
         """获取指定物体的抓取标注。
@@ -108,7 +108,7 @@ class GraspNetAdapter(BaseAdapter):
                 message=f"未找到模型 {model_id} 的抓取标注",
                 source=self.source.value,
             )
-        return grasps
+        return cast("list[dict[str, Any]]", grasps)
 
     @staticmethod
     def _parse_search_results(data: dict[str, Any]) -> list[SearchResult]:
