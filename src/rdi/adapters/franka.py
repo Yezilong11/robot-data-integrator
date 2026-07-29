@@ -35,7 +35,7 @@ class FrankaAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.franka_base_url or _FALLBACK_BASE_URL,
+            base_url=settings.franka_base_url,
             rate_limit=5,
         )
         self._web_url = settings.franka_web_url

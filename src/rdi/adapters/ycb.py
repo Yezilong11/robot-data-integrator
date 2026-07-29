@@ -12,9 +12,6 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：HuggingFace 镜像基础 URL
-_FALLBACK_BASE_URL = "https://huggingface.co"
-
 # 降级回退：YCB 已知物体列表
 _FALLBACK_OBJECTS: list[dict[str, str]] = [
     {"id": "002_master_chef_can", "title": "Master Chef Can", "category": "can"},
@@ -52,7 +49,7 @@ class YCBAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.ycb_base_url or _FALLBACK_BASE_URL,
+            base_url=settings.ycb_base_url,
             rate_limit=5,
         )
         self._web_url = settings.ycb_web_url

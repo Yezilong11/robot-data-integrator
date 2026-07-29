@@ -12,9 +12,6 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：HuggingFace 镜像基础 URL
-_FALLBACK_BASE_URL = "https://huggingface.co"
-
 # 降级回退：GraspNet 已知数据集
 _FALLBACK_DATASETS: list[dict[str, str]] = [
     {
@@ -52,7 +49,7 @@ class GraspNetAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.graspnet_base_url or _FALLBACK_BASE_URL,
+            base_url=settings.graspnet_base_url,
             rate_limit=5,
         )
         self._web_url = settings.graspnet_web_url

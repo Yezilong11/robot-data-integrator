@@ -114,16 +114,16 @@ class Settings(BaseSettings):
         description="IEEE Xplore API 基础 URL",
     )
     graspnet_base_url: str = Field(
-        default="",
-        description="GraspNet 数据集 API 地址，留空则使用默认值",
+        default="https://huggingface.co",
+        description="GraspNet 数据集镜像基础 URL（降级回退下载地址）",
     )
     ycb_base_url: str = Field(
-        default="",
-        description="YCB Objects 数据集 API 地址，留空则使用默认值",
+        default="https://huggingface.co",
+        description="YCB Objects 数据集镜像基础 URL（降级回退下载地址）",
     )
     franka_base_url: str = Field(
-        default="",
-        description="Franka 机器人模型 API 地址，留空则使用默认值",
+        default="https://raw.githubusercontent.com/frankaemika/franka_ros/develop",
+        description="Franka 机器人模型仓库基础 URL（降级回退下载地址）",
     )
 
     # ─── 数据源网页 URL 配置（文档原始对接方式） ───

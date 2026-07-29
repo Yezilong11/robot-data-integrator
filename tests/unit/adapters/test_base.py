@@ -2,8 +2,10 @@
 """BaseAdapter 和 TTLCache 的单元测试。"""
 
 import time
+from unittest.mock import AsyncMock, patch
 
 import pytest
+from bs4 import BeautifulSoup
 
 from rdi.adapters.base import BaseAdapter, TTLCache
 from rdi.exceptions import AdapterError
@@ -142,3 +144,72 @@ class TestBaseAdapter:
         assert raw.format == "pdf"
         assert raw.data == b"fake"
         assert raw.source == DataSource.ARXIV
+
+
+# ─── BaseAdapter 新增辅助方法测试 ───
+
+
+class TestBaseAdapterHelpers:
+    """BaseAdapter 新增辅助方法（_attr_str / _scrape_html / _request_text_full_url）的单元测试。"""
+
+    def test_attr_str_returns_string_value(self) -> None:
+        """_attr_str 对字符串属性返回原值。"""
+        soup = BeautifulSoup('<a href="/paper/abc">link</a>', "lxml")
+        tag = soup.find("a")
+        assert BaseAdapter._attr_str(tag, "href") == "/paper/abc"
+
+    def test_attr_str_missing_attr_returns_default(self) -> None:
+        """_attr_str 对缺失属性返回默认值。"""
+        soup = BeautifulSoup("<a>link</a>", "lxml")
+        tag = soup.find("a")
+        assert BaseAdapter._attr_str(tag, "href") == ""
+        assert BaseAdapter._attr_str(tag, "href", "fallback") == "fallback"
+
+    def test_attr_str_multivalue_returns_default(self) -> None:
+        """_attr_str 对多值属性（AttributeValueList）返回默认值。"""
+        soup = BeautifulSoup('<p class="a b c">text</p>', "lxml")
+        tag = soup.find("p")
+        # class 是多值属性，bs4 返回列表而非 str，应返回默认值
+        result = BaseAdapter._attr_str(tag, "class", "")
+        assert isinstance(result, str)
+        assert result == ""
+
+    @pytest.mark.asyncio
+    async def test_scrape_html_returns_beautifulsoup(self) -> None:
+        """_scrape_html 成功返回 BeautifulSoup 对象。"""
+        adapter = _StubAdapter()
+        with patch.object(
+            adapter,
+            "_request_text_full_url",
+            new_callable=AsyncMock,
+            return_value="<html><body><a href='/x'>X</a></body></html>",
+        ):
+            soup = await adapter._scrape_html("http://example.com")
+        assert soup.find("a") is not None
+        assert soup.find("a").get_text() == "X"
+
+    @pytest.mark.asyncio
+    async def test_scrape_html_raises_on_parse_error(self) -> None:
+        """_scrape_html 解析失败抛 AdapterError（异常收窄生效）。"""
+        adapter = _StubAdapter()
+        with (
+            patch.object(
+                adapter,
+                "_request_text_full_url",
+                new_callable=AsyncMock,
+                return_value="dummy-html",
+            ),
+            patch("rdi.adapters.base.BeautifulSoup", side_effect=ValueError("parse error")),
+            pytest.raises(AdapterError) as exc_info,
+        ):
+            await adapter._scrape_html("http://example.com")
+        assert "HTML parsing failed" in exc_info.value.message
+
+    @pytest.mark.asyncio
+    async def test_request_text_full_url_retries_on_failure(self) -> None:
+        """_request_text_full_url 重试耗尽后抛 AdapterError。"""
+        adapter = _StubAdapter()
+        adapter.max_retry = 2
+        with pytest.raises(AdapterError) as exc_info:
+            await adapter._request_text_full_url("GET", "http://localhost:9999/nonexistent")
+        assert "Failed" in exc_info.value.message
