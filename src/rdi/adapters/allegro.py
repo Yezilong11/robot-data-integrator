@@ -14,10 +14,26 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # 降级回退：Allegro 手已知型号
 _FALLBACK_MODELS: list[dict[str, str]] = [
-    {"id": "allegro_hand_v4", "title": "Allegro Hand v4", "description": "Allegro 4 指灵巧手 v4 版本"},
-    {"id": "allegro_hand_v3", "title": "Allegro Hand v3", "description": "Allegro 4 指灵巧手 v3 版本"},
-    {"id": "allegro_hand_right", "title": "Allegro Hand Right", "description": "Allegro 右手 URDF 模型"},
-    {"id": "allegro_hand_left", "title": "Allegro Hand Left", "description": "Allegro 左手 URDF 模型"},
+    {
+        "id": "allegro_hand_v4",
+        "title": "Allegro Hand v4",
+        "description": "Allegro 4 指灵巧手 v4 版本",
+    },
+    {
+        "id": "allegro_hand_v3",
+        "title": "Allegro Hand v3",
+        "description": "Allegro 4 指灵巧手 v3 版本",
+    },
+    {
+        "id": "allegro_hand_right",
+        "title": "Allegro Hand Right",
+        "description": "Allegro 右手 URDF 模型",
+    },
+    {
+        "id": "allegro_hand_left",
+        "title": "Allegro Hand Left",
+        "description": "Allegro 左手 URDF 模型",
+    },
 ]
 
 

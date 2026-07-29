@@ -15,8 +15,16 @@ from rdi.models.retrieval import RawData, SearchResult
 # 降级回退：Robotiq 夹爪已知型号
 _FALLBACK_MODELS: list[dict[str, str]] = [
     {"id": "robotiq_2f_85", "title": "Robotiq 2F-85", "description": "Robotiq 2 指夹爪 85mm 行程"},
-    {"id": "robotiq_2f_140", "title": "Robotiq 2F-140", "description": "Robotiq 2 指夹爪 140mm 行程"},
-    {"id": "robotiq_3f_gripper", "title": "Robotiq 3F-Gripper", "description": "Robotiq 3 指自适应夹爪"},
+    {
+        "id": "robotiq_2f_140",
+        "title": "Robotiq 2F-140",
+        "description": "Robotiq 2 指夹爪 140mm 行程",
+    },
+    {
+        "id": "robotiq_3f_gripper",
+        "title": "Robotiq 3F-Gripper",
+        "description": "Robotiq 3 指自适应夹爪",
+    },
     {"id": "robotiq_epick", "title": "Robotiq EPick", "description": "Robotiq 真空吸盘"},
 ]
 

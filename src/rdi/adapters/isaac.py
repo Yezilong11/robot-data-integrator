@@ -14,10 +14,22 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # 降级回退：Isaac Sim 已知示例
 _FALLBACK_EXAMPLES: list[dict[str, str]] = [
-    {"id": "franka_cabinet", "title": "Franka Cabinet", "description": "Isaac Sim Franka 开柜门任务"},
-    {"id": "franka_pick_place", "title": "Franka Pick Place", "description": "Isaac Sim Franka 抓放任务"},
+    {
+        "id": "franka_cabinet",
+        "title": "Franka Cabinet",
+        "description": "Isaac Sim Franka 开柜门任务",
+    },
+    {
+        "id": "franka_pick_place",
+        "title": "Franka Pick Place",
+        "description": "Isaac Sim Franka 抓放任务",
+    },
     {"id": "ur10_bin_pick", "title": "UR10 Bin Pick", "description": "Isaac Sim UR10 箱体拾取场景"},
-    {"id": "allegro_grasp", "title": "Allegro Grasp", "description": "Isaac Sim Allegro 手灵巧抓取"},
+    {
+        "id": "allegro_grasp",
+        "title": "Allegro Grasp",
+        "description": "Isaac Sim Allegro 手灵巧抓取",
+    },
     {"id": "multi_robot", "title": "Multi Robot", "description": "Isaac Sim 多机器人协作场景"},
     {"id": "rl_games", "title": "RL Games", "description": "Isaac Sim 强化学习训练示例"},
 ]
