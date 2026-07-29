@@ -126,6 +126,40 @@ class Settings(BaseSettings):
         description="Franka 机器人模型 API 地址，留空则使用默认值",
     )
 
+    # ─── 数据源网页 URL 配置（文档原始对接方式） ───
+    paperswithcode_web_url: str = Field(
+        default="https://paperswithcode.com",
+        description="Papers with Code 网页地址（网页解析方式）",
+    )
+    graspnet_web_url: str = Field(
+        default="https://graspnet.net",
+        description="GraspNet 官方网页地址（官方下载方式）",
+    )
+    ycb_web_url: str = Field(
+        default="https://rse-lab.cs.washington.edu/projects/3d-object-reconstruction/",
+        description="YCB Objects 官方网页地址（官方下载方式）",
+    )
+    franka_web_url: str = Field(
+        default="https://franka.de",
+        description="Franka 官方网页地址（网页抓取方式）",
+    )
+    allegro_web_url: str = Field(
+        default="https://www.wonikrobotics.com",
+        description="Allegro 官方网页地址（网页抓取方式）",
+    )
+    robotiq_web_url: str = Field(
+        default="https://robotiq.com",
+        description="Robotiq 官方网页地址（网页抓取方式）",
+    )
+    mujoco_web_url: str = Field(
+        default="https://mujoco.readthedocs.io",
+        description="MuJoCo 文档地址（文档解析方式）",
+    )
+    isaac_web_url: str = Field(
+        default="https://docs.isaacsim.omniverse.nvidia.com",
+        description="Isaac Sim 文档地址（文档解析方式）",
+    )
+
     # ─── ChromaDB 配置 ───
     chromadb_path: str = Field(
         default="./data/experience_db",

@@ -1,9 +1,12 @@
 # tests/unit/adapters/test_ycb.py
 """YCBAdapter 的单元测试。"""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from rdi.adapters.ycb import YCBAdapter
+from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
 
@@ -26,36 +29,57 @@ class TestYCBAdapter:
         assert adapter.semaphore._value == 5
 
     @pytest.mark.asyncio
-    async def test_search_returns_results(self) -> None:
-        """正常情况：硬编码列表 Adapter 的 search 返回结果。"""
+    async def test_search_fallback_returns_results(self) -> None:
+        """路径 A 失败时降级到路径 B，返回硬编码匹配结果。
+
+        mock _scrape_html 抛 AdapterError 模拟路径 A 失败，验证降级到 fallback。
+        """
         adapter = YCBAdapter()
-        results = await adapter.search("mug")
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.YCB.value
+            )
+            results = await adapter.search("mug")
         assert len(results) > 0
+        assert results[0].source == DataSource.YCB
+        assert "mug" in results[0].item_id
+        mock_scrape.assert_awaited_once()
 
+    @pytest.mark.asyncio
+    async def test_search_fallback_no_match_returns_empty(self) -> None:
+        """路径 B 无匹配时返回空列表（不返回全量）。"""
+        adapter = YCBAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.YCB.value
+            )
+            results = await adapter.search("zzznomatchxyz")
+        assert results == []
 
-# ── Mock 驱动的 search / fetch 测试 ──
-
-
-@pytest.mark.asyncio
-async def test_ycb_search_returns_results() -> None:
-    """正常情况：search 直接调用硬编码列表，返回结果包含 YCB 源。"""
-    adapter = YCBAdapter()
-    results = await adapter.search("mug")
-    assert len(results) > 0
-    assert results[0].source == DataSource.YCB
-
-
-@pytest.mark.asyncio
-async def test_ycb_fetch_with_mock() -> None:
-    """正常情况：mock _download_bytes 后 fetch 返回 RawData，format 为 stl。"""
-    from unittest.mock import AsyncMock, patch
-
-    adapter = YCBAdapter()
-    fake_stl = b"OBJ mesh data"
-    with patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_stl):
-        raw = await adapter.fetch("025_mug")
+    @pytest.mark.asyncio
+    async def test_fetch_primary_success(self) -> None:
+        """路径 A 成功：mock _download_bytes 返回数据，format 为 stl。"""
+        adapter = YCBAdapter()
+        fake_stl = b"OBJ mesh data"
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_stl
+        ):
+            raw = await adapter.fetch("025_mug")
         assert raw.source == DataSource.YCB
         assert raw.format == "stl"
         assert raw.data == fake_stl
         assert raw.size_bytes == len(fake_stl)
         assert raw.size_bytes > 0
+
+    @pytest.mark.asyncio
+    async def test_fetch_both_paths_fail_raises(self) -> None:
+        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+        adapter = YCBAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            mock_dl.side_effect = AdapterError(
+                message="download failed", source=DataSource.YCB.value
+            )
+            with pytest.raises(AdapterError):
+                await adapter.fetch("025_mug")
+        # 路径 A + 路径 B 各一次下载尝试
+        assert mock_dl.await_count == 2
