@@ -78,7 +78,7 @@ class GraspNetAdapter(BaseAdapter):
             link_el = item.select_one("a[href]")
             dataset_id = ""
             if link_el:
-                href = link_el.get("href", "")
+                href = self._attr_str(link_el, "href")
                 dataset_id = href.rstrip("/").split("/")[-1] if href else ""
             if not dataset_id:
                 continue

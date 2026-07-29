@@ -297,6 +297,16 @@ class BaseAdapter(ABC):
                 source=self.source.value,
             )
 
+    @staticmethod
+    def _attr_str(tag: Any, name: str, default: str = "") -> str:
+        """从 bs4 标签安全提取字符串属性。
+
+        bs4 的 ``Tag.get`` 对多值属性返回 AttributeValueList，
+        此方法统一返回 str，便于类型检查与后续处理。
+        """
+        value = tag.get(name, default)
+        return value if isinstance(value, str) else default
+
     async def _download_bytes(self, url: str) -> bytes:
         """下载二进制文件（如 PDF、mesh文件）。"""
         async with self.semaphore:

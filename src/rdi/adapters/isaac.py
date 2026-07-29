@@ -66,7 +66,7 @@ class IsaacSimAdapter(BaseAdapter):
         results: list[SearchResult] = []
         # 解析文档页面中的教程/示例链接
         for link in soup.select("a[href*='tutorial'], a[href*='example'], a[href*='sample']"):
-            example_id = link.get("href", "").rstrip("/").split("/")[-1]
+            example_id = self._attr_str(link, "href").rstrip("/").split("/")[-1]
             if not example_id:
                 continue
             title = link.get_text(strip=True) or example_id

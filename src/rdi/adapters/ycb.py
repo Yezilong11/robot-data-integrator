@@ -70,7 +70,7 @@ class YCBAdapter(BaseAdapter):
         results: list[SearchResult] = []
         # 解析页面中的物体链接
         for link in soup.select("a[href*='ycb'], a[href*='object']"):
-            obj_id = link.get("href", "").rstrip("/").split("/")[-1]
+            obj_id = self._attr_str(link, "href").rstrip("/").split("/")[-1]
             if not obj_id:
                 continue
             title = link.get_text(strip=True) or obj_id

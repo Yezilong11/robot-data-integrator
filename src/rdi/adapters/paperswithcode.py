@@ -55,7 +55,7 @@ class PapersWithCodeAdapter(BaseAdapter):
             if not title_el:
                 continue
             title = title_el.get_text(strip=True)
-            href = title_el.get("href", "")
+            href = self._attr_str(title_el, "href")
             paper_id = href.rstrip("/").split("/")[-1] if href else ""
             if not paper_id:
                 continue
@@ -63,7 +63,7 @@ class PapersWithCodeAdapter(BaseAdapter):
             code_url = ""
             code_el = article.select_one("a[href*='github.com']")
             if code_el:
-                code_url = code_el.get("href", "")
+                code_url = self._attr_str(code_el, "href")
             results.append(
                 SearchResult(
                     item_id=paper_id,
@@ -102,7 +102,7 @@ class PapersWithCodeAdapter(BaseAdapter):
         # 提取代码关联
         implementations: list[dict[str, str]] = []
         for link in soup.select("a[href*='github.com']"):
-            implementations.append({"url": link.get("href", "")})
+            implementations.append({"url": self._attr_str(link, "href")})
         combined = {"paper_title": title, "implementations": implementations}
         raw_bytes = json.dumps(combined, ensure_ascii=False).encode("utf-8")
         return RawData(

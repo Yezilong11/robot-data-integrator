@@ -60,7 +60,7 @@ class RobotiqAdapter(BaseAdapter):
         results: list[SearchResult] = []
         # 解析页面中的夹爪型号链接
         for link in soup.select("a[href*='gripper'], a[href*='2f'], a[href*='urdf']"):
-            model_id = link.get("href", "").rstrip("/").split("/")[-1]
+            model_id = self._attr_str(link, "href").rstrip("/").split("/")[-1]
             if not model_id:
                 continue
             title = link.get_text(strip=True) or model_id

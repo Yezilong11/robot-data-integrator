@@ -54,7 +54,7 @@ class MuJoCoAdapter(BaseAdapter):
         results: list[SearchResult] = []
         # 解析文档页面中的示例链接
         for link in soup.select("a[href*='xml'], a[href*='model'], a[href*='example']"):
-            scene_id = link.get("href", "").rstrip("/").split("/")[-1].replace(".xml", "")
+            scene_id = self._attr_str(link, "href").rstrip("/").split("/")[-1].replace(".xml", "")
             if not scene_id:
                 continue
             title = link.get_text(strip=True) or scene_id

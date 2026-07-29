@@ -54,7 +54,7 @@ class FrankaAdapter(BaseAdapter):
         results: list[SearchResult] = []
         # 解析页面中的机器人型号链接
         for link in soup.select("a[href*='panda'], a[href*='fr3'], a[href*='urdf']"):
-            model_name = link.get("href", "").rstrip("/").split("/")[-1]
+            model_name = self._attr_str(link, "href").rstrip("/").split("/")[-1]
             if not model_name:
                 continue
             title = link.get_text(strip=True) or model_name
