@@ -9,14 +9,19 @@ import asyncio
 import hashlib
 import time
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
+from bs4 import BeautifulSoup
+from bs4.exceptions import FeatureNotFound
 
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
+
+# 默认 User-Agent，避免商业站点拒绝无 UA 请求
+_DEFAULT_USER_AGENT = "rdi-bot/1.0 (+https://github.com/robotics-data)"
 
 
 class TTLCache:
@@ -153,6 +158,154 @@ class BaseAdapter(ABC):
                 message=f"Failed {method} {path}: exhausted retries",
                 source=self.source.value,
             )
+
+    async def _request_text(
+        self,
+        method: str,
+        path: str,
+        **kwargs: Any,
+    ) -> str:
+        """带重试的 HTTP 请求，返回文本响应（用于 XML 等）。
+
+        Args:
+            method: HTTP 方法
+            path: API 路径
+            **kwargs: 传递给 aiohttp 的额外参数
+
+        Returns:
+            响应文本字符串
+
+        Raises:
+            AdapterError: 重试耗尽
+        """
+        cache_key = self._make_cache_key(method, path, kwargs)
+        if cache_key in self.cache:
+            return cast("str", self.cache[cache_key])
+
+        url = f"{self.base_url}{path}"
+        headers = kwargs.pop("headers", {})
+
+        async with self.semaphore:
+            for attempt in range(self.max_retry):
+                try:
+                    async with (
+                        aiohttp.ClientSession() as session,
+                        session.request(
+                            method,
+                            url,
+                            headers=headers,
+                            timeout=aiohttp.ClientTimeout(total=self.timeout),
+                            **kwargs,
+                        ) as resp,
+                    ):
+                        resp.raise_for_status()
+                        text = await resp.text()
+                        self.cache[cache_key] = text
+                        return text
+                except (aiohttp.ClientError, TimeoutError) as e:
+                    if attempt == self.max_retry - 1:
+                        raise AdapterError(
+                            message=f"Failed {method} {path}: {e}",
+                            source=self.source.value,
+                            status_code=getattr(e, "status", None),
+                        ) from e
+                    await asyncio.sleep(2**attempt)
+            raise AdapterError(
+                message=f"Failed {method} {path}: exhausted retries",
+                source=self.source.value,
+            )
+
+    async def _scrape_html(self, url: str) -> BeautifulSoup:
+        """获取网页 HTML 并解析为 BeautifulSoup 对象。
+
+        用于网页抓取类 Adapter 的文档原始对接方式。
+
+        Args:
+            url: 目标网页 URL
+
+        Returns:
+            BeautifulSoup 对象
+
+        Raises:
+            AdapterError: 获取或解析失败
+        """
+        html_text = await self._request_text_full_url("GET", url)
+        try:
+            return BeautifulSoup(html_text, "lxml")
+        except (FeatureNotFound, ValueError, TypeError) as e:
+            raise AdapterError(
+                message=f"HTML parsing failed for {url}: {e}",
+                source=self.source.value,
+            ) from e
+
+    async def _request_text_full_url(
+        self,
+        method: str,
+        url: str,
+        **kwargs: Any,
+    ) -> str:
+        """带重试和缓存的 HTTP 请求，使用完整 URL（非 base_url+path），返回文本响应。
+
+        适用于网页抓取场景，URL 为完整地址而非 API 路径。
+        默认注入 User-Agent，可通过 kwargs["headers"] 覆盖。
+
+        Args:
+            method: HTTP 方法
+            url: 完整 URL
+            **kwargs: 传递给 aiohttp 的额外参数（headers 等）
+
+        Returns:
+            响应文本字符串
+
+        Raises:
+            AdapterError: 重试耗尽
+        """
+        cache_key = self._make_cache_key(method, url, kwargs)
+        if cache_key in self.cache:
+            return cast("str", self.cache[cache_key])
+
+        headers = dict(kwargs.pop("headers", {}))
+        headers.setdefault("User-Agent", _DEFAULT_USER_AGENT)
+
+        async with self.semaphore:
+            for attempt in range(self.max_retry):
+                try:
+                    async with (
+                        aiohttp.ClientSession() as session,
+                        session.request(
+                            method,
+                            url,
+                            headers=headers,
+                            timeout=aiohttp.ClientTimeout(total=self.timeout),
+                            **kwargs,
+                        ) as resp,
+                    ):
+                        resp.raise_for_status()
+                        text = await resp.text()
+                        self.cache[cache_key] = text
+                        return text
+                except (aiohttp.ClientError, TimeoutError) as e:
+                    if attempt == self.max_retry - 1:
+                        raise AdapterError(
+                            message=f"Failed {method} {url}: {e}",
+                            source=self.source.value,
+                            status_code=getattr(e, "status", None),
+                        ) from e
+                    await asyncio.sleep(2**attempt)
+            raise AdapterError(
+                message=f"Failed {method} {url}: exhausted retries",
+                source=self.source.value,
+            )
+
+    @staticmethod
+    def _attr_str(tag: Any, name: str, default: str = "") -> str:
+        """从 bs4 标签安全提取字符串属性。
+
+        bs4 的 ``Tag.get`` 对多值属性返回 AttributeValueList，
+        此方法统一返回 str，便于类型检查与后续处理。
+        """
+        value = tag.get(name, default)
+        return value if isinstance(value, str) else default
 
     async def _download_bytes(self, url: str) -> bytes:
         """下载二进制文件（如 PDF、mesh文件）。"""

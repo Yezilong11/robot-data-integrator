@@ -38,7 +38,7 @@ class ArxivAdapter(BaseAdapter):
             "max_results": "10",
             "sortBy": "relevance",
         }
-        xml_data = await self._request("GET", "/query", params=params)
+        xml_data = await self._request_text("GET", "/query", params=params)
         return self._parse_atom_xml(xml_data)
 
     async def fetch(self, arxiv_id: str) -> RawData:
@@ -58,6 +58,7 @@ class ArxivAdapter(BaseAdapter):
             format="pdf",
             data=pdf_bytes,
             url=pdf_url,
+            size_bytes=len(pdf_bytes),
         )
 
     @staticmethod

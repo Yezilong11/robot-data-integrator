@@ -97,6 +97,7 @@ class GitHubAdapter(BaseAdapter):
             format="markdown",
             data=readme_bytes,
             url=data.get("html_url", ""),
+            size_bytes=len(readme_bytes),
         )
 
     async def fetch_releases(self, repo_name: str) -> list[dict[str, Any]]:
