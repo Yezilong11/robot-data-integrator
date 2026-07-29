@@ -1,6 +1,8 @@
 # tests/unit/adapters/test_arxiv.py
 """ArxivAdapter 的单元测试。"""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from rdi.adapters.arxiv import ArxivAdapter
@@ -96,3 +98,29 @@ class TestArxivAdapter:
         with pytest.raises(AdapterError) as exc_info:
             await adapter.search("robot grasping")
         assert exc_info.value.source == "arxiv"
+
+    @pytest.mark.asyncio
+    async def test_arxiv_search_with_mock(self) -> None:
+        """Mock 驱动：search 通过 _request_text 返回结果。"""
+        adapter = ArxivAdapter()
+        with patch.object(
+            adapter, "_request_text", new_callable=AsyncMock, return_value=ARXIV_ATOM_XML
+        ):
+            results = await adapter.search("robot grasping")
+            assert len(results) > 0
+            assert results[0].source == DataSource.ARXIV
+            assert "Robot Grasping Survey" in results[0].title
+
+    @pytest.mark.asyncio
+    async def test_arxiv_fetch_with_mock(self) -> None:
+        """Mock 驱动：fetch 返回 RawData 且字段正确。"""
+        adapter = ArxivAdapter()
+        fake_pdf = b"%PDF-1.4 fake content"
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_pdf
+        ):
+            raw = await adapter.fetch("2304.06524")
+            assert raw.source == DataSource.ARXIV
+            assert raw.item_id == "2304.06524"
+            assert raw.format == "pdf"
+            assert raw.data == fake_pdf

@@ -88,34 +88,76 @@ class Settings(BaseSettings):
         description="Google Scanned Objects (Gazebo Fuel) API URL",
     )
     robotiq_base_url: str = Field(
-        default="https://robotiq.com",
-        description="Robotiq 官网基础 URL",
+        default="https://raw.githubusercontent.com/ros-industrial/robotiq/kinetic-devel",
+        description="Robotiq URDF 模型仓库基础 URL",
     )
     allegro_base_url: str = Field(
-        default="https://www.wonikrobotics.com",
-        description="Allegro 灵巧手官网基础 URL",
+        default="https://raw.githubusercontent.com/simlabor/allegro_hand_ros/main",
+        description="Allegro 灵巧手 URDF 模型仓库基础 URL",
     )
     mujoco_base_url: str = Field(
-        default="https://mujoco.org",
-        description="MuJoCo 官网基础 URL",
+        default="https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/main",
+        description="MuJoCo MJCF 模型仓库基础 URL",
     )
     isaac_base_url: str = Field(
-        default="https://docs.isaacsim.omniverse.nvidia.com",
-        description="Isaac Sim 文档基础 URL",
+        default="https://raw.githubusercontent.com/NVIDIA-Omniverse/IsaacSim/main",
+        description="Isaac Sim USD 模型仓库基础 URL",
     )
 
     # ─── 数据源 URL 配置（可通过环境变量覆盖） ───
+    paperswithcode_base_url: str = Field(
+        default="https://paperswithcode.com/api/v1",
+        description="Papers with Code API 基础 URL",
+    )
+    ieee_base_url: str = Field(
+        default="https://ieeexploreapi.ieee.org/api/v1/search",
+        description="IEEE Xplore API 基础 URL",
+    )
     graspnet_base_url: str = Field(
-        default="",
-        description="GraspNet 数据集 API 地址，留空则使用默认值",
+        default="https://huggingface.co",
+        description="GraspNet 数据集镜像基础 URL（降级回退下载地址）",
     )
     ycb_base_url: str = Field(
-        default="",
-        description="YCB Objects 数据集 API 地址，留空则使用默认值",
+        default="https://huggingface.co",
+        description="YCB Objects 数据集镜像基础 URL（降级回退下载地址）",
     )
     franka_base_url: str = Field(
-        default="",
-        description="Franka 机器人模型 API 地址，留空则使用默认值",
+        default="https://raw.githubusercontent.com/frankaemika/franka_ros/develop",
+        description="Franka 机器人模型仓库基础 URL（降级回退下载地址）",
+    )
+
+    # ─── 数据源网页 URL 配置（文档原始对接方式） ───
+    paperswithcode_web_url: str = Field(
+        default="https://paperswithcode.com",
+        description="Papers with Code 网页地址（网页解析方式）",
+    )
+    graspnet_web_url: str = Field(
+        default="https://graspnet.net",
+        description="GraspNet 官方网页地址（官方下载方式）",
+    )
+    ycb_web_url: str = Field(
+        default="https://rse-lab.cs.washington.edu/projects/3d-object-reconstruction/",
+        description="YCB Objects 官方网页地址（官方下载方式）",
+    )
+    franka_web_url: str = Field(
+        default="https://franka.de",
+        description="Franka 官方网页地址（网页抓取方式）",
+    )
+    allegro_web_url: str = Field(
+        default="https://www.wonikrobotics.com",
+        description="Allegro 官方网页地址（网页抓取方式）",
+    )
+    robotiq_web_url: str = Field(
+        default="https://robotiq.com",
+        description="Robotiq 官方网页地址（网页抓取方式）",
+    )
+    mujoco_web_url: str = Field(
+        default="https://mujoco.readthedocs.io",
+        description="MuJoCo 文档地址（文档解析方式）",
+    )
+    isaac_web_url: str = Field(
+        default="https://docs.isaacsim.omniverse.nvidia.com",
+        description="Isaac Sim 文档地址（文档解析方式）",
     )
 
     # ─── ChromaDB 配置 ───

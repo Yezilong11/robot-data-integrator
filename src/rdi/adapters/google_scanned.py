@@ -1,7 +1,10 @@
 # src/rdi/adapters/google_scanned.py
 """Google Scanned Objects 3D 模型源 Adapter。
 
-基于 Gazebo Fuel API 搜索和获取 3D 扫描物体模型。
+文档原始对接方式：官方下载
+实际实现方式：Gazebo Fuel REST API（fuel.gazebosim.org）
+说明：Fuel API 是 Google Scanned Objects 的官方下载渠道，
+文档中标注的"官方下载"即指此 API，无需降级回退。
 文档：https://fuel.gazebosim.org/1.0/API
 """
 
@@ -70,4 +73,5 @@ class GoogleScannedAdapter(BaseAdapter):
             format="obj",
             data=content,
             url=mesh_url,
+            size_bytes=len(content),
         )

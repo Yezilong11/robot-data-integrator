@@ -1,6 +1,8 @@
 # tests/unit/adapters/test_graspnet.py
 """GraspNetAdapter 的单元测试。"""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from rdi.adapters.graspnet import GraspNetAdapter
@@ -19,7 +21,7 @@ class TestGraspNetAdapter:
     def test_adapter_base_url(self) -> None:
         """正常情况：base_url 设置正确。"""
         adapter = GraspNetAdapter()
-        assert adapter.base_url == "https://graspnet.net"
+        assert adapter.base_url == "https://huggingface.co"
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 5。"""
@@ -27,11 +29,57 @@ class TestGraspNetAdapter:
         assert adapter.semaphore._value == 5
 
     @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_search_retries_on_failure(self) -> None:
-        """异常情况：请求失败时抛出 AdapterError。"""
+    async def test_search_fallback_returns_results(self) -> None:
+        """路径 A 失败时降级到路径 B，返回硬编码匹配结果。
+
+        mock _scrape_html 抛 AdapterError 模拟路径 A 失败，验证降级到 fallback。
+        """
         adapter = GraspNetAdapter()
-        adapter.max_retry = 1
-        with pytest.raises(AdapterError) as exc_info:
-            await adapter.search("mug")
-        assert exc_info.value.source == "graspnet"
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.GRASPNET.value
+            )
+            results = await adapter.search("graspnet")
+        assert len(results) > 0
+        assert results[0].source == DataSource.GRASPNET
+        assert "graspnet" in results[0].item_id
+        mock_scrape.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_no_match_returns_empty(self) -> None:
+        """路径 B 无匹配时返回空列表（不返回全量）。"""
+        adapter = GraspNetAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.GRASPNET.value
+            )
+            results = await adapter.search("zzznomatchxyz")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_fetch_primary_success(self) -> None:
+        """路径 A 成功：mock _download_bytes 返回数据，format 为 npz。"""
+        adapter = GraspNetAdapter()
+        fake_npz = b"\x93NPZ"
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz
+        ):
+            raw = await adapter.fetch("graspnet-benchmark")
+        assert raw.source == DataSource.GRASPNET
+        assert raw.format == "npz"
+        assert raw.data == fake_npz
+        assert raw.size_bytes == len(fake_npz)
+        assert raw.size_bytes > 0
+
+    @pytest.mark.asyncio
+    async def test_fetch_both_paths_fail_raises(self) -> None:
+        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+        adapter = GraspNetAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            mock_dl.side_effect = AdapterError(
+                message="download failed", source=DataSource.GRASPNET.value
+            )
+            with pytest.raises(AdapterError):
+                await adapter.fetch("graspnet-benchmark")
+        # 路径 A + 路径 B 各一次下载尝试
+        assert mock_dl.await_count == 2
