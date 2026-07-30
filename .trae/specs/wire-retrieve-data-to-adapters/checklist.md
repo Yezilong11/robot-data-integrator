@@ -1,0 +1,10 @@
+- [x] `node_retrieve_single` 改为 `async def`，调用真实 Adapter 的 `search` / `fetch`
+- [x] 候选 Adapter 按 `hermes.get_source_priority(req_type)` 排序后逐个尝试
+- [x] 主源成功时 `is_fallback=False`，fallback 成功时 `is_fallback=True`
+- [x] 全部失败时返回 `status="error"`，无搜索结果时返回 `status="missing"`
+- [x] `inject_experience` 返回值拼入 provenance（非空时追加）
+- [x] `record_experience` 传入真实的 status、sources_used、elapsed_seconds
+- [x] 删除 `placeholder_result` 占位代码和两处 `ponytail:` 注释
+- [x] 现有单元测试 `test_retrieve_data.py` 改为 async 并通过
+- [x] 集成测试覆盖四个场景：主源成功、fallback 成功、全部失败、无搜索结果
+- [x] `uv run pytest tests/unit/graph/test_retrieve_data.py tests/integration/ -q` 全部通过
