@@ -41,9 +41,7 @@ def mock_adapters(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
         url="https://example.com",
     )
     mock_cls = Mock(return_value=mock_adapter)
-    monkeypatch.setattr(
-        "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls]
-    )
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
     return mock_adapter
 
 

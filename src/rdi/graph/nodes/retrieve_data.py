@@ -77,10 +77,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     hermes = _get_hermes_engine()
     experience_hint = hermes.inject_experience(description, req_type)
 
-    provenance = [
-        f"[{datetime.now().isoformat()}] retrieve_data: 查找 {req_id} "
-        f"(type={req_type})"
-    ]
+    provenance = [f"[{datetime.now().isoformat()}] retrieve_data: 查找 {req_id} (type={req_type})"]
     if experience_hint:
         provenance.append(experience_hint)
 
@@ -104,7 +101,9 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         is_fallback = idx > 0
         last_source = adapter_cls.source.value
         try:
-            adapter = adapter_cls()
+            # ponytail: type[BaseAdapter] 的 __init__ 签名包含 base_url，但各子类均为无参构造；
+            # mypy 无法推导子类重载，此处忽略构造参数检查。
+            adapter = adapter_cls()  # type: ignore[call-arg]
             search_results = await adapter.search(query)
             if not search_results:
                 had_empty_search = True

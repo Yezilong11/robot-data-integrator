@@ -67,9 +67,7 @@ class TestRetrieveSingleSuccess:
             fetch_data=_raw_data(),
         )
         cls = make_mock_cls(adapter, source=DataSource.GITHUB)
-        monkeypatch.setattr(
-            "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [cls]
-        )
+        monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [cls])
 
         result = await node_retrieve_single(_payload())
 
@@ -84,9 +82,7 @@ class TestRetrieveSingleFallback:
         """主源失败，fallback 成功。"""
         primary = make_mock_adapter(search_error=AdapterError("fail", source="github"))
         fallback_adapter = make_mock_adapter(
-            search_result=[
-                _search_result(item_id="hf/model", source=DataSource.HUGGINGFACE)
-            ],
+            search_result=[_search_result(item_id="hf/model", source=DataSource.HUGGINGFACE)],
             fetch_data=_raw_data(item_id="hf/model", source=DataSource.HUGGINGFACE),
         )
         primary_cls = make_mock_cls(primary, source=DataSource.GITHUB)
