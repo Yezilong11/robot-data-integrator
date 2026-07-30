@@ -5,8 +5,8 @@
 主源失败自动切换备选源。
 """
 
+from rdi.adapters.base import BaseAdapter
 from rdi.models.common import DataReqType  # noqa: I001 — 模块级导入，延迟导入在函数内
-
 
 # ─── Adapter 注册表 ───
 ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
@@ -63,7 +63,7 @@ def get_sources_for_type(req_type: DataReqType) -> list[str]:
     return [source_name_map[n] for n in names if n in source_name_map]
 
 
-def select_adapter(req_type: DataReqType) -> list[type]:
+def select_adapter(req_type: DataReqType) -> list[type[BaseAdapter]]:
     """根据数据需求类型返回候选 Adapter 列表。
 
     列表按优先级排序：第一个是主源，后续是备选源。
@@ -88,7 +88,7 @@ def select_adapter(req_type: DataReqType) -> list[type]:
     from rdi.adapters.ycb import YCBAdapter
     from rdi.adapters.zenodo import ZenodoAdapter
 
-    adapters_map: dict[str, type] = {
+    adapters_map: dict[str, type[BaseAdapter]] = {
         "ArxivAdapter": ArxivAdapter,
         "GitHubAdapter": GitHubAdapter,
         "GraspNetAdapter": GraspNetAdapter,
