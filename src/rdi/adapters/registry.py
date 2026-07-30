@@ -10,8 +10,17 @@ from rdi.models.common import DataReqType  # noqa: I001 — 模块级导入，�
 
 # ─── Adapter 注册表 ───
 ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
-    DataReqType.PAPER: ["ArxivAdapter", "IEEEXploreAdapter"],
-    DataReqType.CODE: ["GitHubAdapter", "PapersWithCodeAdapter"],
+    DataReqType.PAPER: [
+        "ArxivAdapter",
+        "PapersWithCodeAdapter",
+        "SemanticScholarAdapter",
+        "IEEEXploreAdapter",
+    ],
+    DataReqType.CODE: [
+        "GitHubAdapter",
+        "HuggingFaceAdapter",
+        "PapersWithCodeAdapter",
+    ],
     DataReqType.DATASET: [
         "GitHubAdapter",
         "HuggingFaceAdapter",
@@ -24,6 +33,8 @@ ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
         "FrankaAdapter",
         "AllegroAdapter",
         "RobotiqAdapter",
+        "MuJoCoAdapter",
+        "IsaacSimAdapter",
         "GitHubAdapter",
     ],
     DataReqType.MESH: ["YCBAdapter", "GoogleScannedAdapter", "GraspNetAdapter"],
@@ -58,6 +69,7 @@ def get_sources_for_type(req_type: DataReqType) -> list[str]:
         "RobotiqAdapter": DataSource.ROBOTIQ,
         "MuJoCoAdapter": DataSource.MUJOCO,
         "IsaacSimAdapter": DataSource.ISAAC,
+        "SemanticScholarAdapter": DataSource.SEMANTIC_SCHOLAR,
     }
     names = ADAPTER_REGISTRY.get(req_type, [])
     return [source_name_map[n] for n in names if n in source_name_map]
@@ -85,6 +97,7 @@ def select_adapter(req_type: DataReqType) -> list[type[BaseAdapter]]:
     from rdi.adapters.mujoco import MuJoCoAdapter
     from rdi.adapters.paperswithcode import PapersWithCodeAdapter
     from rdi.adapters.robotiq import RobotiqAdapter
+    from rdi.adapters.semanticscholar import SemanticScholarAdapter
     from rdi.adapters.ycb import YCBAdapter
     from rdi.adapters.zenodo import ZenodoAdapter
 
@@ -104,5 +117,6 @@ def select_adapter(req_type: DataReqType) -> list[type[BaseAdapter]]:
         "IsaacSimAdapter": IsaacSimAdapter,
         "IEEEXploreAdapter": IEEEXploreAdapter,
         "PapersWithCodeAdapter": PapersWithCodeAdapter,
+        "SemanticScholarAdapter": SemanticScholarAdapter,
     }
     return [adapters_map[name] for name in names if name in adapters_map]
