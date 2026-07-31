@@ -109,6 +109,10 @@ class Settings(BaseSettings):
         default="https://paperswithcode.com/api/v1",
         description="Papers with Code API 基础 URL",
     )
+    semanticscholar_base_url: str = Field(
+        default="https://api.semanticscholar.org/graph/v1",
+        description="Semantic Scholar API 基础 URL",
+    )
     ieee_base_url: str = Field(
         default="https://ieeexploreapi.ieee.org/api/v1/search",
         description="IEEE Xplore API 基础 URL",
