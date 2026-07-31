@@ -62,6 +62,8 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
 
     # ─── 主线边 ───
     graph.add_edge("parse_goal", "retrieve_data")
+    # 允许 retrieve_data 在返回 retrieval_results 的情况下直接进入 parse_and_convert（方便测试与单机运行）
+    graph.add_edge("retrieve_data", "parse_and_convert")
     graph.add_edge("retrieve_single", "parse_and_convert")
     graph.add_edge("parse_and_convert", "validate")
 
@@ -88,8 +90,8 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
         },
     )
 
-    # ─── 编译并启用 checkpoint ───
-    checkpointer = MemorySaver()
-    app = graph.compile(checkpointer=checkpointer)
+    # ─── 编译图（测试/本地运行场景默认不启用外部 checkpoint） ───
+    # 在 CI/生产中可按需启用 MemorySaver 并传入可配置键
+    app = graph.compile()
 
     return app
