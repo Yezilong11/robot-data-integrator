@@ -32,7 +32,6 @@ class DataSource(StrEnum):
     ROBOTIQ = "robotiq"
     MUJOCO = "mujoco"
     ISAAC = "isaac"
-    SEMANTIC_SCHOLAR = "semantic_scholar"
 
 
 class DataReqType(StrEnum):

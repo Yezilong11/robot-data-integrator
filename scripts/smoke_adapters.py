@@ -31,7 +31,6 @@ from rdi.models.common import DataSource
 SMOKE_CASES = [
     (DataSource.ARXIV, "robot grasping"),
     (DataSource.GITHUB, "franka robot"),
-    (DataSource.SEMANTIC_SCHOLAR, "robot grasping"),
     (DataSource.ZENODO, "robot grasp dataset"),
     (DataSource.HUGGINGFACE, "robot dataset"),
 ]

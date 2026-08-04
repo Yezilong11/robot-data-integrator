@@ -7,7 +7,6 @@
 编译生成可执行的应用实例。
 """
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 

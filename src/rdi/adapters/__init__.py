@@ -17,7 +17,6 @@ from rdi.adapters.mujoco import MuJoCoAdapter
 from rdi.adapters.paperswithcode import PapersWithCodeAdapter
 from rdi.adapters.registry import ADAPTER_REGISTRY, get_sources_for_type, select_adapter
 from rdi.adapters.robotiq import RobotiqAdapter
-from rdi.adapters.semanticscholar import SemanticScholarAdapter
 from rdi.adapters.ycb import YCBAdapter
 from rdi.adapters.zenodo import ZenodoAdapter
 from rdi.exceptions import AdapterError
@@ -41,7 +40,6 @@ _ADAPTER_CLASSES: dict[DataSource, Callable[[], BaseAdapter]] = {
     DataSource.ROBOTIQ: RobotiqAdapter,
     DataSource.MUJOCO: MuJoCoAdapter,
     DataSource.ISAAC: IsaacSimAdapter,
-    DataSource.SEMANTIC_SCHOLAR: SemanticScholarAdapter,
 }
 
 

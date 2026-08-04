@@ -47,7 +47,10 @@ class MeshSkill(BaseSkill):
         Raises:
             Exception: trimesh 加载失败时抛出，由 ``process`` 捕获降级
         """
-        return trimesh.load(io.BytesIO(mesh_bytes), file_type=fmt, force="mesh")
+        loaded = trimesh.load(io.BytesIO(mesh_bytes), file_type=fmt, force="mesh")
+        if not isinstance(loaded, trimesh.Trimesh):
+            raise ValueError(f"trimesh 加载结果不是 Trimesh: {type(loaded).__name__}")
+        return loaded
 
     def standardize(self, mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, list[str]]:
         """统一到标准坐标系：原点移到质心，单位统一为米。

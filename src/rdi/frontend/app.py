@@ -132,6 +132,8 @@ def build_demo_state(goal: str, review_decision: str, feedback: str) -> dict[str
         "provenance": provenance,
         "errors": [],
     }
+
+
 def build_failure_state(
     goal: str,
     paper_file: Any,
@@ -259,6 +261,7 @@ def build_failure_state(
         "provenance": provenance,
         "errors": [error_message],
     }
+
 
 def run_graph(goal: str, paper_file: Any, review_decision: str, feedback: str) -> dict[str, Any]:
     builder = importlib.import_module("rdi.graph.builder")

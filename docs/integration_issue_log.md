@@ -13,8 +13,8 @@
 
 | 编号 | 时间 | 模块 | 问题 | 根因 | 责任人 | 状态 | 备注 |
 |------|------|------|------|------|--------|------|------|
-| 1 | 2026-07-30 14:20 | Adapter | `GitHubAdapter` search 返回空 | 测试 query 过于泛，mock 测试未覆盖真实 API 行为 | C | 修复中 | 需要补充适配器日志与 fallback 步骤 |
-| 2 | 2026-07-30 15:00 | Graph | `parse_goal` 依赖 LLM，当前环境无法调用 | `.env` 中无 `LLM_API_KEY` | F | 发现 | 使用 mock client 进行集成测试覆盖 |
+| 1 | 2026-07-30 14:20 | Adapter | `GitHubAdapter` search 返回空 | 未配置 `GITHUB_TOKEN`，未认证请求受严格限流（60 次/小时）且部分场景返回 401/空结果 | C | 已验证 | 配置 `GITHUB_TOKEN` 后可正常返回；mock 测试已覆盖 search/fetch 路径 |
+| 2 | 2026-07-30 15:00 | Graph | `parse_goal` 依赖 LLM，当前环境无法调用 | `.env` 中无 `LLM_API_KEY` | F | 关闭 | `.env` 已配置 `LLM_API_KEY`，真实调用可用；集成测试仍使用 mock client 保证 CI 确定性 |
 
 ## 记录模板
 

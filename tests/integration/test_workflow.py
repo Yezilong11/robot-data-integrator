@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
@@ -8,13 +9,17 @@ import trimesh
 
 from rdi.graph.builder import build_graph
 from rdi.graph.nodes import parse_goal
-from rdi.graph.state import SystemState
 from rdi.models import DataReq, DataReqType, DataSource, GoalSpec, Priority
-from rdi.models.retrieval import RawData, SearchResult, RetrievalResult
+from rdi.models.retrieval import RawData, RetrievalResult, SearchResult
+
+if TYPE_CHECKING:
+    from rdi.graph.state import SystemState
 
 
 class _FakeLLMClient:
-    def __init__(self, result: parse_goal._GoalParsingResult | None = None, exc: Exception | None = None) -> None:
+    def __init__(
+        self, result: parse_goal._GoalParsingResult | None = None, exc: Exception | None = None
+    ) -> None:
         self._result = result
         self._exc = exc
         self.last_prompt: str | None = None
@@ -83,11 +88,12 @@ def _patch_full_workflow(monkeypatch: pytest.MonkeyPatch, mesh_bytes: bytes) -> 
     hermes.record_experience = Mock()
     monkeypatch.setattr("rdi.graph.nodes.retrieve_data._get_hermes_engine", lambda: hermes)
 
-    FakeAdapter = _make_mesh_adapter(mesh_bytes)
+    fake_adapter_cls = _make_mesh_adapter(mesh_bytes)
     monkeypatch.setattr(
         "rdi.graph.nodes.retrieve_data.select_adapter",
-        lambda req_type: [FakeAdapter],
+        lambda req_type: [fake_adapter_cls],
     )
+
     # LangGraph 节点要求返回 dict 类型；为了在集成 mock 中跳过 fan-out 实际执行，
     # 将 node_retrieve_data 替换为返回空更新的函数，避免 Send 列表导致的 InvalidUpdateError。
     def _fake_node_retrieve_data(state: dict) -> dict:
@@ -113,9 +119,14 @@ def _patch_full_workflow(monkeypatch: pytest.MonkeyPatch, mesh_bytes: bytes) -> 
                 search_results=[],
                 elapsed_seconds=0.1,
             )
-        return {"retrieval_results": results, "provenance": [f"[{datetime.now().isoformat()}] mock retrieve"]}
+        return {
+            "retrieval_results": results,
+            "provenance": [f"[{datetime.now().isoformat()}] mock retrieve"],
+        }
 
-    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.node_retrieve_data", _fake_node_retrieve_data)
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.node_retrieve_data", _fake_node_retrieve_data
+    )
     # builder 模块在导入时已绑定 node_retrieve_data，需同时替换 builder 中的引用
     monkeypatch.setattr("rdi.graph.builder.node_retrieve_data", _fake_node_retrieve_data)
 

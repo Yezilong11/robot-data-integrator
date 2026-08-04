@@ -18,13 +18,12 @@ from rdi.adapters.mujoco import MuJoCoAdapter
 from rdi.adapters.paperswithcode import PapersWithCodeAdapter
 from rdi.adapters.registry import ADAPTER_REGISTRY, select_adapter
 from rdi.adapters.robotiq import RobotiqAdapter
-from rdi.adapters.semanticscholar import SemanticScholarAdapter
 from rdi.adapters.ycb import YCBAdapter
 from rdi.adapters.zenodo import ZenodoAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
 
-# 所有 16 个 Adapter 类及其对应的 DataSource
+# 所有 15 个 Adapter 类及其对应的 DataSource
 ALL_ADAPTERS: list[tuple[type[BaseAdapter], DataSource]] = [
     (ArxivAdapter, DataSource.ARXIV),
     (GitHubAdapter, DataSource.GITHUB),
@@ -41,7 +40,6 @@ ALL_ADAPTERS: list[tuple[type[BaseAdapter], DataSource]] = [
     (IsaacSimAdapter, DataSource.ISAAC),
     (IEEEXploreAdapter, DataSource.IEEE),
     (PapersWithCodeAdapter, DataSource.PAPERSWITHCODE),
-    (SemanticScholarAdapter, DataSource.SEMANTIC_SCHOLAR),
 ]
 
 
@@ -73,11 +71,10 @@ class TestAdapterRegistry:
         assert "IsaacSimAdapter" in names
 
     def test_paper_contains_all_b_expected(self) -> None:
-        """B 系统预期：PAPER 包含 Arxiv + PapersWithCode + SemanticScholar。"""
+        """B 系统预期：PAPER 包含 Arxiv + PapersWithCode。"""
         names = ADAPTER_REGISTRY[DataReqType.PAPER]
         assert "ArxivAdapter" in names
         assert "PapersWithCodeAdapter" in names
-        assert "SemanticScholarAdapter" in names
 
     def test_code_contains_all_b_expected(self) -> None:
         """B 系统预期：CODE 至少包含 GitHub + HuggingFace。"""
@@ -102,11 +99,10 @@ class TestSelectAdapter:
     """select_adapter 单元测试。"""
 
     def test_select_paper_returns_arxiv(self) -> None:
-        """正常情况：PAPER 返回包含 ArxivAdapter、PapersWithCodeAdapter 和 SemanticScholarAdapter。"""
+        """正常情况：PAPER 返回包含 ArxivAdapter 和 PapersWithCodeAdapter。"""
         adapters = select_adapter(DataReqType.PAPER)
         assert ArxivAdapter in adapters
         assert PapersWithCodeAdapter in adapters
-        assert SemanticScholarAdapter in adapters
 
     def test_select_code_returns_github(self) -> None:
         """正常情况：CODE 返回包含 GitHubAdapter 和 HuggingFaceAdapter。"""
@@ -127,7 +123,7 @@ class TestSelectAdapter:
         assert GitHubAdapter in adapters
 
     def test_all_adapters_available_via_select(self) -> None:
-        """正常情况：所有 16 个 Adapter 都能通过 select_adapter 返回。"""
+        """正常情况：所有 15 个 Adapter 都能通过 select_adapter 返回。"""
         all_returned: set[type[BaseAdapter]] = set()
         for req_type in DataReqType:
             all_returned.update(select_adapter(req_type))
