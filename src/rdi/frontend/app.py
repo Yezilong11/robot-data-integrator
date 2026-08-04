@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 import json
 import os
@@ -280,9 +281,11 @@ def run_graph(goal: str, paper_file: Any, review_decision: str, feedback: str) -
     if pdf_bytes is not None:
         state["paper_pdf"] = pdf_bytes
 
-    result = graph.invoke(
-        state,
-        config={"configurable": {"thread_id": str(uuid.uuid4())}},
+    result = asyncio.run(
+        graph.ainvoke(
+            state,
+            config={"configurable": {"thread_id": str(uuid.uuid4())}},
+        )
     )
 
     if isinstance(result, dict):

@@ -17,7 +17,6 @@ from rdi.graph.nodes import (
     node_parse_convert,
     node_parse_goal,
     node_retrieve_data,
-    node_retrieve_single,
     node_validate,
 )
 from rdi.graph.state import SystemState
@@ -28,12 +27,11 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
 
     工作流节点：
         1. parse_goal       — 解析用户目标和 PDF，生成数据需求清单
-        2. retrieve_data    — 并行查找所有数据需求（Send fan-out）
-        3. retrieve_single  — 单个数据需求查找（被 Send 调用）
-        4. parse_and_convert — 解析并标准化六类异构数据
-        5. validate         — 质量校验，发现问题则回退重试
-        6. assemble_package — 整合打包，生成 Manifest
-        7. human_review     — 用户审查，决定通过或修正
+        2. retrieve_data    — 按数据需求清单逐个查找，汇总结果
+        3. parse_and_convert — 解析并标准化六类异构数据
+        4. validate         — 质量校验，发现问题则回退重试
+        5. assemble_package — 整合打包，生成 Manifest
+        6. human_review     — 用户审查，决定通过或修正
 
     条件路由：
         - validate → 校验通过 → assemble_package
@@ -50,7 +48,6 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
     # ─── 注册所有节点 ───
     graph.add_node("parse_goal", node_parse_goal)
     graph.add_node("retrieve_data", node_retrieve_data)
-    graph.add_node("retrieve_single", node_retrieve_single)
     graph.add_node("parse_and_convert", node_parse_convert)
     graph.add_node("validate", node_validate)
     graph.add_node("assemble_package", node_assemble)
@@ -61,9 +58,7 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
 
     # ─── 主线边 ───
     graph.add_edge("parse_goal", "retrieve_data")
-    # 允许 retrieve_data 在返回 retrieval_results 的情况下直接进入 parse_and_convert（方便测试与单机运行）
     graph.add_edge("retrieve_data", "parse_and_convert")
-    graph.add_edge("retrieve_single", "parse_and_convert")
     graph.add_edge("parse_and_convert", "validate")
 
     # ─── 条件回退：校验不通过则回退重试 ───
