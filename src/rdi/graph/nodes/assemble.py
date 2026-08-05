@@ -145,6 +145,11 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         for m in missing_items
     ]
 
+    total_conf = sum(f.confidence for f in manifest_files)
+    total_comp = sum(f.completeness for f in manifest_files)
+    avg_confidence = total_conf / len(manifest_files) if manifest_files else 0.0
+    avg_completeness = total_comp / len(manifest_files) if manifest_files else 0.0
+
     package = PackageManifest(
         package_info={
             "goal": state.get("user_goal", ""),
@@ -160,8 +165,8 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             fulfilled=len(manifest_files),
             missing=len(manifest_missing),
             validation_issues=len(validation_issues),
-            avg_confidence=1.0,
-            avg_completeness=100.0,
+            avg_confidence=avg_confidence,
+            avg_completeness=avg_completeness,
         ),
         provenance_log=[
             f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
