@@ -6,33 +6,26 @@
 无需 API Key，但需遵守速率限制。
 """
 
+import json
+
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：GraspNet 已知数据集
+# 降级回退：GraspNet 已知数据集（C3 修复：id 改为真实 HF repo）
+# 已 curl 验证：DravenALG/GraspNet-1Billion 公开可达，含 grasp_label.tar/models.tar 等
 _FALLBACK_DATASETS: list[dict[str, str]] = [
     {
-        "id": "graspnet-benchmark",
+        "id": "DravenALG/GraspNet-1Billion",
         "title": "GraspNet-1Billion Benchmark",
-        "description": "GraspNet-1Billion 大规模抓取基准数据集",
+        "description": "GraspNet-1Billion 大规模抓取基准数据集（HF 镜像托管）",
     },
     {
-        "id": "graspnet-scene",
-        "title": "GraspNet Scene Data",
-        "description": "GraspNet 场景数据，包含点云和标注",
-    },
-    {
-        "id": "graspnet-model",
-        "title": "GraspNet Model Library",
-        "description": "GraspNet 物体 3D 模型库",
-    },
-    {
-        "id": "graspnet-grasp",
-        "title": "GraspNet Grasp Label",
-        "description": "GraspNet 抓取标注数据",
+        "id": "hushell/graspnet-h5",
+        "title": "GraspNet H5 Labels",
+        "description": "GraspNet 抓取标注 HDF5 格式",
     },
 ]
 
@@ -125,33 +118,88 @@ class GraspNetAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载数据集。优先官方源，失败降级 HuggingFace 镜像。"""
-        try:
-            return await self._fetch_primary(item_id)
-        except AdapterError:
-            return await self._fetch_fallback(item_id)
+        """下载数据集文件。
 
-    async def _fetch_primary(self, item_id: str) -> RawData:
-        """路径 A：直接 URL 构造（官方下载路径模式）。"""
-        url = f"{self._web_url}/datasets/{item_id}/download/data.npz"
-        data_bytes = await self._download_bytes(url)
-        return RawData(
-            source=DataSource.GRASPNET,
-            item_id=item_id,
-            format="npz",
-            data=data_bytes,
-            url=url,
-            size_bytes=len(data_bytes),
+        C3+C14 修复：原 `_fetch_primary`（graspnet.net/datasets/{id}/download/data.npz）
+        和 `_fetch_fallback`（huggingface.co/datasets/graspnet/{id}/resolve/main/data.npz）
+        均为虚构路径。改为先调 HF 镜像 API 列文件树，再下载首个数据文件。
+        GraspNet-1Billion 实际是 .tar 归档（每个 12-142GB），非 .npz。
+
+        C3 + E1 修复：rect_labels.tar 达 31.8GB，30s 探活超时不可下载。
+        下载前 HEAD 预检 Content-Length，超 max_fetch_bytes 阈值时
+        改返回 metadata JSON（含 url/size_bytes/file_list）。
+        同时补全 target_exts 的 .tar.gz（原仅 .tar，会匹配并下载全量大归档）。
+        """
+        # C3: 通过 HF 镜像 API 列出仓库文件树（base_url 默认 hf-mirror.com）
+        tree = await self._request(
+            "GET",
+            f"/api/datasets/{item_id}/tree/main",
         )
-
-    async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：HuggingFace 镜像降级回退。"""
-        url = f"{self.base_url}/datasets/graspnet/{item_id}/resolve/main/data.npz"
+        # 找首个数据文件（.npz / .tar / .tar.gz / .h5）
+        # E1 修订：补 .tar.gz，避免 .tar 误匹配 .tar.gz 的大归档
+        target_exts = (".npz", ".tar.gz", ".tar", ".h5", ".hdf5")
+        file_path = next(
+            (
+                item.get("path", "")
+                for item in tree
+                if isinstance(item, dict)
+                and item.get("path", "").lower().endswith(target_exts)
+            ),
+            None,
+        )
+        if not file_path:
+            raise AdapterError(
+                message=f"No data file ({target_exts}) found in dataset {item_id}",
+                source=self.source.value,
+            )
+        # 确定格式：.tar.gz → tar.gz，其余取末段扩展名
+        lower_path = file_path.lower()
+        if lower_path.endswith(".tar.gz"):
+            fmt = "tar.gz"
+        else:
+            ext = lower_path.rsplit(".", 1)[-1]
+            fmt = {"npz": "npz", "tar": "tar", "h5": "hdf5", "hdf5": "hdf5"}.get(
+                ext, "binary"
+            )
+        # C3: 下载走 huggingface_download_base_url（默认 hf-mirror.com）
+        download_base = settings.huggingface_download_base_url.rstrip("/")
+        url = (
+            f"{download_base}/datasets/{item_id}/resolve/main/{file_path.lstrip('/')}"
+        )
+        # E1: HEAD 预检体积，超阈值改返回 metadata
+        size = await self._head_content_length(url)
+        if size is not None and size > settings.max_fetch_bytes:
+            file_list = [
+                {
+                    "path": item.get("path", ""),
+                    "size": item.get("size", 0),
+                }
+                for item in tree
+                if isinstance(item, dict)
+            ]
+            payload = {
+                "url": url,
+                "size_bytes": size,
+                "file_path": file_path,
+                "format": fmt,
+                "dataset_id": item_id,
+                "file_list": file_list,
+                "note": "file exceeds max_fetch_bytes; returning metadata only",
+            }
+            data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            return RawData(
+                source=DataSource.GRASPNET,
+                item_id=item_id,
+                format="json",
+                data=data_bytes,
+                url=url,
+                size_bytes=size,
+            )
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.GRASPNET,
             item_id=item_id,
-            format="npz",
+            format=fmt,
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),

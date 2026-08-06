@@ -12,7 +12,7 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：Robotiq 夹爪已知型号
+# 降级回退：Robotiq 夹爪已知型号（C8 修复：id 对应 ros-industrial-attic/robotiq 实际路径）
 _FALLBACK_MODELS: list[dict[str, str]] = [
     {"id": "robotiq_2f_85", "title": "Robotiq 2F-85", "description": "Robotiq 2 指夹爪 85mm 行程"},
     {
@@ -25,8 +25,17 @@ _FALLBACK_MODELS: list[dict[str, str]] = [
         "title": "Robotiq 3F-Gripper",
         "description": "Robotiq 3 指自适应夹爪",
     },
-    {"id": "robotiq_epick", "title": "Robotiq EPick", "description": "Robotiq 真空吸盘"},
+    {"id": "robotiq_ft_sensor", "title": "Robotiq FT Sensor", "description": "Robotiq 力矩传感器"},
 ]
+
+# C8 修复：item_id → ros-industrial-attic/robotiq 仓库 kinetic-devel 分支实际文件路径
+# （已 curl 验证：2f_85/2f_140 是 .xacro，3f_gripper 有 .urdf）
+_FETCH_PATHS: dict[str, str] = {
+    "robotiq_2f_85": "robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+    "robotiq_2f_140": "robotiq_2f_140_gripper_visualization/urdf/robotiq_arg2f_140_model.xacro",
+    "robotiq_3f_gripper": "robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf",
+    "robotiq_ft_sensor": "robotiq_ft_sensor/urdf/robotiq_ft300.urdf.xacro",
+}
 
 
 class RobotiqAdapter(BaseAdapter):
@@ -124,8 +133,19 @@ class RobotiqAdapter(BaseAdapter):
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：GitHub raw URL 降级回退。"""
-        urdf_url = f"{self.base_url}/robotiq_description/urdf/{item_id}.urdf"
+        """路径 B：GitHub raw URL 降级回退。
+
+        C8 修复：ros-industrial/robotiq 已迁至 ros-industrial-attic/robotiq，
+        且文件路径不是 robotiq_description/urdf/{id}.urdf，而是按型号分散在
+        {id}_gripper_visualization/urdf/ 下。使用 _FETCH_PATHS 映射表查实际路径。
+        """
+        rel_path = _FETCH_PATHS.get(item_id)
+        if not rel_path:
+            raise AdapterError(
+                message=f"Unknown robotiq model: {item_id} (no path mapping)",
+                source=self.source.value,
+            )
+        urdf_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(urdf_url)
         return RawData(
             source=DataSource.ROBOTIQ,

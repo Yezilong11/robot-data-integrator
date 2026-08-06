@@ -14,3 +14,7 @@ def test_settings_defaults() -> None:
     assert cfg.llm_model == "qwen-plus"
     assert cfg.log_level == "INFO"
     assert cfg.adapter_timeout == 30.0
+    assert cfg.max_fetch_bytes == 50_000_000
+    assert cfg.arxiv_max_fetch_bytes == 2_000_000
+    assert cfg.github_raw_mirror_base_url == "https://cdn.jsdelivr.net/gh"
+    assert cfg.openalex_base_url == "https://api.openalex.org"

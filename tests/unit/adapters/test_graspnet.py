@@ -19,9 +19,9 @@ class TestGraspNetAdapter:
         assert adapter.source == DataSource.GRASPNET
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 设置正确（C3 修复后默认走 hf-mirror.com）。"""
         adapter = GraspNetAdapter()
-        assert adapter.base_url == "https://huggingface.co"
+        assert adapter.base_url == "https://hf-mirror.com"
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 5。"""
@@ -42,7 +42,7 @@ class TestGraspNetAdapter:
             results = await adapter.search("graspnet")
         assert len(results) > 0
         assert results[0].source == DataSource.GRASPNET
-        assert "graspnet" in results[0].item_id
+        assert "graspnet" in results[0].item_id.lower()
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -58,11 +58,25 @@ class TestGraspNetAdapter:
 
     @pytest.mark.asyncio
     async def test_fetch_primary_success(self) -> None:
-        """路径 A 成功：mock _download_bytes 返回数据，format 为 npz。"""
+        """C3 修复后：mock _request 返回文件树 + _download_bytes 返回数据。
+
+        E1 修复后 fetch 先 HEAD 预检体积；mock _head_content_length 返回 None
+        （大小未知）→ 走原下载流程。
+        """
         adapter = GraspNetAdapter()
         fake_npz = b"\x93NPZ"
-        with patch.object(
-            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "data/grasp_data.npz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz
+            ),
         ):
             raw = await adapter.fetch("graspnet-benchmark")
         assert raw.source == DataSource.GRASPNET
@@ -70,16 +84,75 @@ class TestGraspNetAdapter:
         assert raw.data == fake_npz
         assert raw.size_bytes == len(fake_npz)
         assert raw.size_bytes > 0
+        assert "data/grasp_data.npz" in raw.url
 
     @pytest.mark.asyncio
-    async def test_fetch_both_paths_fail_raises(self) -> None:
-        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+    async def test_fetch_matches_tar_gz(self) -> None:
+        """E1 修订：target_exts 含 .tar.gz，优先匹配 .tar.gz 而非 .tar。
+
+        构造含 .tar.gz 与 .tar 的文件树，验证选中 .tar.gz 且 format=tar.gz。
+        """
         adapter = GraspNetAdapter()
-        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
-            mock_dl.side_effect = AdapterError(
-                message="download failed", source=DataSource.GRASPNET.value
-            )
-            with pytest.raises(AdapterError):
+        fake_bytes = b"tar.gz!"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "rect_labels.tar.gz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_bytes
+            ),
+        ):
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion")
+        assert raw.format == "tar.gz"
+        assert "rect_labels.tar.gz" in raw.url
+
+    @pytest.mark.asyncio
+    async def test_fetch_returns_metadata_when_over_threshold(self) -> None:
+        """C3+E1 修复：HEAD 预检体积超 max_fetch_bytes 时返回 metadata JSON。
+
+        验证：不调用 _download_bytes；返回 format=json，含 url/size_bytes/file_list。
+        """
+        import json as _json
+
+        from rdi.config.settings import settings
+
+        adapter = GraspNetAdapter()
+        big_size = settings.max_fetch_bytes + 1
+        mock_tree = [
+            {"type": "file", "path": "README.md", "size": 100},
+            {"type": "file", "path": "rect_labels.tar", "size": big_size},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter,
+                "_head_content_length",
+                new_callable=AsyncMock,
+                return_value=big_size,
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
+        ):
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion")
+        assert raw.format == "json"
+        assert raw.size_bytes == big_size
+        mock_dl.assert_not_called()
+        payload = _json.loads(raw.data)
+        assert payload["size_bytes"] == big_size
+        assert payload["file_path"] == "rect_labels.tar"
+        assert payload["dataset_id"] == "DravenALG/GraspNet-1Billion"
+        assert any(f["path"] == "rect_labels.tar" for f in payload["file_list"])
+
+    @pytest.mark.asyncio
+    async def test_fetch_no_npz_raises(self) -> None:
+        """C3 修复后：文件树无数据文件时抛 AdapterError。"""
+        adapter = GraspNetAdapter()
+        mock_tree = [{"type": "file", "path": "README.md"}]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
+            with pytest.raises(AdapterError) as exc_info:
                 await adapter.fetch("graspnet-benchmark")
-        # 路径 A + 路径 B 各一次下载尝试
-        assert mock_dl.await_count == 2
+        assert "No data file" in exc_info.value.message

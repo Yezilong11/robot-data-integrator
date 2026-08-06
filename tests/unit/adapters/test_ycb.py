@@ -19,9 +19,9 @@ class TestYCBAdapter:
         assert adapter.source == DataSource.YCB
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 设置正确（C4 修复后默认走 hf-mirror.com）。"""
         adapter = YCBAdapter()
-        assert adapter.base_url == "https://huggingface.co"
+        assert adapter.base_url == "https://hf-mirror.com"
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 5。"""
@@ -58,28 +58,36 @@ class TestYCBAdapter:
 
     @pytest.mark.asyncio
     async def test_fetch_primary_success(self) -> None:
-        """路径 A 成功：mock _download_bytes 返回数据，format 为 stl。"""
+        """C4 修订后：mock _request 返回文件树 + _download_bytes 返回数据。
+
+        C4 修订：ai-habitat/ycb 实测为 .glb 而非 .obj，format 字段取实际扩展名。
+        """
         adapter = YCBAdapter()
-        fake_stl = b"OBJ mesh data"
-        with patch.object(
-            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_stl
+        fake_glb = b"GLB mesh data"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "meshes/025_mug/google_16k/textured.glb"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_glb
+            ),
         ):
             raw = await adapter.fetch("025_mug")
         assert raw.source == DataSource.YCB
-        assert raw.format == "stl"
-        assert raw.data == fake_stl
-        assert raw.size_bytes == len(fake_stl)
+        assert raw.format == "glb"
+        assert raw.data == fake_glb
+        assert raw.size_bytes == len(fake_glb)
         assert raw.size_bytes > 0
+        assert "meshes/025_mug/google_16k/textured.glb" in raw.url
 
     @pytest.mark.asyncio
-    async def test_fetch_both_paths_fail_raises(self) -> None:
-        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+    async def test_fetch_no_mesh_raises(self) -> None:
+        """C4 修订后：文件树无 mesh 文件时抛 AdapterError。"""
         adapter = YCBAdapter()
-        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
-            mock_dl.side_effect = AdapterError(
-                message="download failed", source=DataSource.YCB.value
-            )
-            with pytest.raises(AdapterError):
+        mock_tree = [{"type": "file", "path": "README.md"}]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
+            with pytest.raises(AdapterError) as exc_info:
                 await adapter.fetch("025_mug")
-        # 路径 A + 路径 B 各一次下载尝试
-        assert mock_dl.await_count == 2
+        assert "No mesh file" in exc_info.value.message

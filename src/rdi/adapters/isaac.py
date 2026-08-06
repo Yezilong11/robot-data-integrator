@@ -12,26 +12,14 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：Isaac Sim 已知示例
+# 降级回退：Isaac Sim 已知示例（C11 修复：isaac-sim/IsaacLab 的资产配置是 Python 文件）
 _FALLBACK_EXAMPLES: list[dict[str, str]] = [
-    {
-        "id": "franka_cabinet",
-        "title": "Franka Cabinet",
-        "description": "Isaac Sim Franka 开柜门任务",
-    },
-    {
-        "id": "franka_pick_place",
-        "title": "Franka Pick Place",
-        "description": "Isaac Sim Franka 抓放任务",
-    },
-    {"id": "ur10_bin_pick", "title": "UR10 Bin Pick", "description": "Isaac Sim UR10 箱体拾取场景"},
-    {
-        "id": "allegro_grasp",
-        "title": "Allegro Grasp",
-        "description": "Isaac Sim Allegro 手灵巧抓取",
-    },
-    {"id": "multi_robot", "title": "Multi Robot", "description": "Isaac Sim 多机器人协作场景"},
-    {"id": "rl_games", "title": "RL Games", "description": "Isaac Sim 强化学习训练示例"},
+    {"id": "franka", "title": "Franka Emika Panda", "description": "Franka Panda 机械臂 USD 资产配置"},
+    {"id": "allegro", "title": "Allegro Hand", "description": "Allegro 灵巧手 USD 资产配置"},
+    {"id": "ant", "title": "MuJoCo Ant", "description": "Ant 四足机器人 USD 资产配置"},
+    {"id": "cassie", "title": "Agility Cassie", "description": "Cassie 双足机器人 USD 资产配置"},
+    {"id": "anymal", "title": "ANYmal", "description": "ANYmal 四足机器人 USD 资产配置"},
+    {"id": "cartpole", "title": "Cartpole", "description": "倒立摆经典场景 USD 资产配置"},
 ]
 
 
@@ -110,34 +98,22 @@ class IsaacSimAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载 USD 配置文件。优先文档页面，失败降级 GitHub raw URL。"""
-        try:
-            return await self._fetch_primary(item_id)
-        except AdapterError:
-            return await self._fetch_fallback(item_id)
+        """下载资产配置文件。
 
-    async def _fetch_primary(self, item_id: str) -> RawData:
-        """路径 A：直接 URL 构造（文档静态资源路径）。"""
-        url = f"{self._web_url}/latest/_static/{item_id}.usd"
-        content = await self._download_bytes(url)
-        return RawData(
-            source=DataSource.ISAAC,
-            item_id=item_id,
-            format="usd",
-            data=content,
-            url=url,
-            size_bytes=len(content),
+        C11 修复：NVIDIA-Omniverse/IsaacSim 已 archived 且无资产；
+        改用 isaac-sim/IsaacLab，资产通过 Python 配置文件引用 USD。
+        删除虚构的 _fetch_primary（docs/_static/{id}.usd 不存在），
+        直接走 IsaacLab 的 robots/{id}.py（已 curl 验证 franka.py/allegro.py 可达）。
+        """
+        py_url = (
+            f"{self.base_url}/source/isaaclab_assets/isaaclab_assets/robots/{item_id}.py"
         )
-
-    async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：GitHub raw URL 降级回退。"""
-        usd_url = f"{self.base_url}/examples/{item_id}/{item_id}.usd"
-        content = await self._download_bytes(usd_url)
+        content = await self._download_bytes(py_url)
         return RawData(
             source=DataSource.ISAAC,
             item_id=item_id,
-            format="usd",
+            format="python",
             data=content,
-            url=usd_url,
+            url=py_url,
             size_bytes=len(content),
         )

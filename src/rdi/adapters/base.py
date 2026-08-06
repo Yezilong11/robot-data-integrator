@@ -7,11 +7,13 @@
 
 import asyncio
 import hashlib
+import ssl
 import time
 from abc import ABC, abstractmethod
 from typing import Any, cast
 
 import aiohttp
+import certifi
 from bs4 import BeautifulSoup
 from bs4.exceptions import FeatureNotFound
 
@@ -22,6 +24,16 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # 默认 User-Agent，避免商业站点拒绝无 UA 请求
 _DEFAULT_USER_AGENT = "rdi-bot/1.0 (+https://github.com/robotics-data)"
+
+# ponytail: Anaconda Python 在 Windows 上系统 CA 路径为空，aiohttp 默认 SSL 校验
+# 会 CERTIFICATE_VERIFY_FAILED。统一用 certifi 的 CA bundle（已在依赖中）。
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+
+# E4: raw.githubusercontent.com 主 URL 的快速失败超时。
+# raw CDN 健康时 <2s 响应；挂起时会耗尽探活 30s 外部预算，导致 jsdelivr 镜像
+# 来不及兜底（主 URL 用 self.timeout*2=60s 超时 × 3 次重试，单次挂起即占满预算）。
+# 主镜像 URL 改用 8s 短超时 + 不重试，挂起时快速转镜像；镜像用正常超时+重试。
+_GITHUB_RAW_FAST_TIMEOUT_S = 8.0
 
 
 class TTLCache:
@@ -75,6 +87,8 @@ class BaseAdapter(ABC):
         self.cache = TTLCache(maxsize=500, ttl=settings.adapter_cache_ttl)
         self.timeout = settings.adapter_timeout
         self.max_retry = settings.adapter_max_retry
+        # E4: raw.githubusercontent.com 镜像兜底基础 URL（空字符串则禁用镜像）
+        self._github_mirror_base = settings.github_raw_mirror_base_url
 
     @abstractmethod
     async def search(self, query: str) -> list[SearchResult]:
@@ -139,6 +153,7 @@ class BaseAdapter(ABC):
                             url,
                             headers=headers,
                             timeout=aiohttp.ClientTimeout(total=self.timeout),
+                            ssl=_SSL_CONTEXT,
                             **kwargs,
                         ) as resp,
                     ):
@@ -195,6 +210,7 @@ class BaseAdapter(ABC):
                             url,
                             headers=headers,
                             timeout=aiohttp.ClientTimeout(total=self.timeout),
+                            ssl=_SSL_CONTEXT,
                             **kwargs,
                         ) as resp,
                     ):
@@ -277,6 +293,7 @@ class BaseAdapter(ABC):
                             url,
                             headers=headers,
                             timeout=aiohttp.ClientTimeout(total=self.timeout),
+                            ssl=_SSL_CONTEXT,
                             **kwargs,
                         ) as resp,
                     ):
@@ -308,30 +325,150 @@ class BaseAdapter(ABC):
         return value if isinstance(value, str) else default
 
     async def _download_bytes(self, url: str) -> bytes:
-        """下载二进制文件（如 PDF、mesh文件）。"""
+        """下载二进制文件（如 PDF、mesh文件），含 GitHub raw 镜像兜底。
+
+        C13 修复：4xx 永久错误（除 408 超时、429 限流）立即抛出不重试。
+        E4 修复：raw.githubusercontent.com 主 URL 失败时自动改走 jsdelivr 镜像
+        （Franka/Allegro/Robotiq/MuJoCo/Isaac 等 Adapter 的 URDF/XML/Python
+        配置文件均走 raw.githubusercontent.com，国内 CDN 偶发 30s 超时）。
+        为避免主 URL 挂起耗尽探活外部超时预算，镜像 URL 的主尝试用
+        _GITHUB_RAW_FAST_TIMEOUT_S 短超时 + 不重试，挂起时快速转镜像；
+        镜像本身用正常超时+重试。非 raw.githubusercontent.com URL 不镜像。
+        """
+        mirror_url = self._to_github_mirror_url(url)
+        if mirror_url is None:
+            return await self._download_bytes_single(url)
+        try:
+            return await self._download_bytes_single(
+                url, timeout=_GITHUB_RAW_FAST_TIMEOUT_S, max_retry=1
+            )
+        except AdapterError as primary_err:
+            try:
+                return await self._download_bytes_single(mirror_url)
+            except AdapterError as mirror_err:
+                raise mirror_err from primary_err
+
+    async def _download_bytes_single(
+        self,
+        url: str,
+        *,
+        timeout: float | None = None,
+        max_retry: int | None = None,
+    ) -> bytes:
+        """单 URL 下载（带重试，C13 4xx 不重试）。
+
+        _download_bytes 的内部实现，不含镜像兜底逻辑。
+
+        Args:
+            url: 下载 URL
+            timeout: 单请求总超时秒数；None 用 self.timeout * 2
+            max_retry: 最大重试次数；None 用 self.max_retry
+        """
+        req_timeout = timeout if timeout is not None else self.timeout * 2
+        retries = max_retry if max_retry is not None else self.max_retry
         async with self.semaphore:
-            for attempt in range(self.max_retry):
+            for attempt in range(retries):
                 try:
                     async with (
                         aiohttp.ClientSession() as session,
                         session.get(
                             url,
-                            timeout=aiohttp.ClientTimeout(total=self.timeout * 2),
+                            timeout=aiohttp.ClientTimeout(total=req_timeout),
+                            ssl=_SSL_CONTEXT,
                         ) as resp,
                     ):
                         resp.raise_for_status()
                         return await resp.read()
                 except (aiohttp.ClientError, TimeoutError) as e:
-                    if attempt == self.max_retry - 1:
+                    # C13: 4xx 永久错误（除 408 超时、429 限流）不重试，立即抛
+                    status = getattr(e, "status", None)
+                    if (
+                        isinstance(e, aiohttp.ClientResponseError)
+                        and status is not None
+                        and 400 <= status < 500
+                        and status not in (408, 429)
+                    ):
+                        raise AdapterError(
+                            message=f"Download failed {url}: HTTP {status} (no retry)",
+                            source=self.source.value,
+                            status_code=status,
+                        ) from e
+                    if attempt == retries - 1:
                         raise AdapterError(
                             message=f"Download failed {url}: {e}",
                             source=self.source.value,
+                            status_code=status,
                         ) from e
                     await asyncio.sleep(2**attempt)
             raise AdapterError(
                 message=f"Download failed {url}: exhausted retries",
                 source=self.source.value,
             )
+
+    def _to_github_mirror_url(self, url: str) -> str | None:
+        """将 raw.githubusercontent.com URL 转为 jsdelivr 镜像 URL。
+
+        E4：raw.githubusercontent.com 国内 CDN 不稳（偶发 30s 超时），
+        jsdelivr 作为兜底镜像。
+
+        转换规则：
+            raw.githubusercontent.com/{owner}/{repo}/{ref}/{path...}
+            → {github_raw_mirror_base}/{owner}/{repo}@{ref}/{path...}
+
+        Args:
+            url: 原始下载 URL
+
+        Returns:
+            jsdelivr 镜像 URL；非 raw.githubusercontent.com URL、路径格式不符、
+            或镜像基础 URL 配置为空时返回 None（表示不镜像）
+        """
+        if not self._github_mirror_base:
+            return None
+        prefix = "https://raw.githubusercontent.com/"
+        if not url.startswith(prefix):
+            return None
+        rest = url[len(prefix):]
+        # owner/repo/ref/path（path 可含子目录，故最多分 4 段）
+        parts = rest.split("/", 3)
+        if len(parts) < 4:
+            return None
+        owner, repo, ref, path = parts
+        return f"{self._github_mirror_base}/{owner}/{repo}@{ref}/{path}"
+
+    async def _head_content_length(self, url: str) -> int | None:
+        """通过 HEAD 请求预检文件大小（Content-Length）。
+
+        用于 fetch 下载前的体积预检：若文件超过 ``max_fetch_bytes`` 阈值，
+        应返回 metadata JSON 而非下载全量二进制（避免 30s 超时）。
+
+        约定：
+        - 任何错误（网络/超时/缺 header/4xx/5xx）均返回 None，
+          表示"大小未知"，调用方应回退到正常下载流程。
+        - 不重试，单次请求；HEAD 失败不应阻塞主流程。
+        - 使用独立的短超时（adapter_timeout），避免与下载超时叠加。
+
+        Args:
+            url: 待下载文件的完整 URL
+
+        Returns:
+            Content-Length 字节数；不可得时返回 None
+        """
+        try:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.head(
+                    url,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                    ssl=_SSL_CONTEXT,
+                    allow_redirects=True,
+                ) as resp,
+            ):
+                if resp.status >= 400:
+                    return None
+                length = resp.headers.get("Content-Length")
+                return int(length) if length and length.isdigit() else None
+        except (aiohttp.ClientError, TimeoutError, ValueError):
+            return None
 
     @staticmethod
     def _make_cache_key(method: str, path: str, kwargs: dict[str, Any]) -> str:

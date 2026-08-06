@@ -19,10 +19,10 @@ class TestAllegroAdapter:
         assert adapter.source == DataSource.ALLEGRO
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 设置正确（C7 修复后走 pal-robotics）。"""
         adapter = AllegroAdapter()
         assert (
-            adapter.base_url == "https://raw.githubusercontent.com/simlabor/allegro_hand_ros/main"
+            adapter.base_url == "https://raw.githubusercontent.com/pal-robotics/allegro_hand/main"
         )
 
     def test_adapter_rate_limit(self) -> None:
@@ -59,23 +59,25 @@ class TestAllegroAdapter:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_fetch_primary_success(self) -> None:
-        """路径 A 成功：mock _download_bytes 返回数据，format 为 urdf。"""
+    async def test_fetch_success(self) -> None:
+        """C7 修复后：单路径 fetch，mock _download_bytes 返回数据，format 为 urdf。"""
         adapter = AllegroAdapter()
-        fake_urdf = b'<robot name="allegro_hand_v4"/>'
+        fake_urdf = b'<robot name="allegro_hand"/>'
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
-        ):
+        ) as mock_dl:
             raw = await adapter.fetch("allegro_hand_v4")
         assert raw.source == DataSource.ALLEGRO
         assert raw.format == "urdf"
         assert raw.data == fake_urdf
         assert raw.size_bytes == len(fake_urdf)
-        assert raw.size_bytes > 0
+        assert "allegro_hand.urdf.xacro" in raw.url
+        # C7: 单路径，只调用一次
+        mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_fetch_both_paths_fail_raises(self) -> None:
-        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+    async def test_fetch_fail_raises(self) -> None:
+        """C7 修复后：单路径 fetch 失败直接抛 AdapterError。"""
         adapter = AllegroAdapter()
         with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
             mock_dl.side_effect = AdapterError(
@@ -83,5 +85,5 @@ class TestAllegroAdapter:
             )
             with pytest.raises(AdapterError):
                 await adapter.fetch("allegro_hand_v4")
-        # 路径 A + 路径 B 各一次下载尝试
-        assert mock_dl.await_count == 2
+        # C7: 单路径，只尝试一次
+        mock_dl.assert_awaited_once()

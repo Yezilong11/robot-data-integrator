@@ -42,10 +42,10 @@ class TestMuJoCoAdapter:
             mock_scrape.side_effect = AdapterError(
                 message="primary failed", source=DataSource.MUJOCO.value
             )
-            results = await adapter.search("ant")
+            results = await adapter.search("aloha")
         assert len(results) > 0
         assert results[0].source == DataSource.MUJOCO
-        assert "ant" in results[0].item_id
+        assert "aloha" in results[0].item_id
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -60,29 +60,25 @@ class TestMuJoCoAdapter:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_fetch_primary_success(self) -> None:
-        """路径 A 成功：mock _download_bytes 返回数据，format 为 xml。"""
+    async def test_fetch_success(self) -> None:
+        """C10 修复后：单路径 fetch 走 mujoco_menagerie，mock _download_bytes 返回数据。"""
         adapter = MuJoCoAdapter()
         fake_xml = b"<mujoco><worldbody/></mujoco>"
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_xml
-        ):
-            raw = await adapter.fetch("ant")
+        ) as mock_dl:
+            raw = await adapter.fetch("aloha")
         assert raw.source == DataSource.MUJOCO
         assert raw.format == "xml"
         assert raw.data == fake_xml
         assert raw.size_bytes == len(fake_xml)
-        assert raw.size_bytes > 0
+        assert "aloha/aloha.xml" in raw.url
+        mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_fetch_both_paths_fail_raises(self) -> None:
-        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+    async def test_fetch_unknown_scene_raises(self) -> None:
+        """C10 修复后：未知 scene（无路径映射）直接抛 AdapterError。"""
         adapter = MuJoCoAdapter()
-        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
-            mock_dl.side_effect = AdapterError(
-                message="download failed", source=DataSource.MUJOCO.value
-            )
-            with pytest.raises(AdapterError):
-                await adapter.fetch("ant")
-        # 路径 A + 路径 B 各一次下载尝试
-        assert mock_dl.await_count == 2
+        with pytest.raises(AdapterError) as exc_info:
+            await adapter.fetch("ant")
+        assert "Unknown mujoco scene" in exc_info.value.message
