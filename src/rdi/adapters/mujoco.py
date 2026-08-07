@@ -14,12 +14,32 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # 降级回退：MuJoCo 已知示例场景（C9/C10 修复：使用 mujoco_menagerie 实际存在的机器人）
 _FALLBACK_SCENES: list[dict[str, str]] = [
-    {"id": "franka_emika_panda", "title": "Franka Emika Panda", "description": "Franka Panda 7-DOF 机械臂 MJCF"},
-    {"id": "agility_cassie", "title": "Agility Cassie", "description": "Agility Robotics Cassie 双足机器人"},
+    {
+        "id": "franka_emika_panda",
+        "title": "Franka Emika Panda",
+        "description": "Franka Panda 7-DOF 机械臂 MJCF",
+    },
+    {
+        "id": "agility_cassie",
+        "title": "Agility Cassie",
+        "description": "Agility Robotics Cassie 双足机器人",
+    },
     {"id": "aloha", "title": "ALOHA", "description": "ALOHA 双臂操作系统"},
-    {"id": "anybotics_anymal_b", "title": "ANYmal B", "description": "ANYbotics ANYmal B 四足机器人"},
-    {"id": "boston_dynamics_spot", "title": "BD Spot", "description": "Boston Dynamics Spot 四足机器人"},
-    {"id": "berkeley_humanoid", "title": "Berkeley Humanoid", "description": "UC Berkeley 人形机器人"},
+    {
+        "id": "anybotics_anymal_b",
+        "title": "ANYmal B",
+        "description": "ANYbotics ANYmal B 四足机器人",
+    },
+    {
+        "id": "boston_dynamics_spot",
+        "title": "BD Spot",
+        "description": "Boston Dynamics Spot 四足机器人",
+    },
+    {
+        "id": "berkeley_humanoid",
+        "title": "Berkeley Humanoid",
+        "description": "UC Berkeley 人形机器人",
+    },
 ]
 
 # C10 修复：item_id → mujoco_menagerie 仓库 main 分支实际 XML 路径

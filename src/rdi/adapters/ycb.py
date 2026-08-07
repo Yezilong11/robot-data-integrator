@@ -140,8 +140,7 @@ class YCBAdapter(BaseAdapter):
             (
                 item.get("path", "")
                 for item in subtree
-                if isinstance(item, dict)
-                and item.get("path", "").lower().endswith(mesh_exts)
+                if isinstance(item, dict) and item.get("path", "").lower().endswith(mesh_exts)
             ),
             None,
         )
@@ -154,9 +153,7 @@ class YCBAdapter(BaseAdapter):
         fmt = mesh_path.rsplit(".", 1)[-1].lower()
         # C4: 下载走 huggingface_download_base_url（默认 hf-mirror.com）
         download_base = settings.huggingface_download_base_url.rstrip("/")
-        url = (
-            f"{download_base}/datasets/{repo_id}/resolve/main/{mesh_path.lstrip('/')}"
-        )
+        url = f"{download_base}/datasets/{repo_id}/resolve/main/{mesh_path.lstrip('/')}"
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.YCB,

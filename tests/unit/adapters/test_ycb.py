@@ -70,9 +70,7 @@ class TestYCBAdapter:
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
-            patch.object(
-                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_glb
-            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_glb),
         ):
             raw = await adapter.fetch("025_mug")
         assert raw.source == DataSource.YCB
@@ -87,8 +85,9 @@ class TestYCBAdapter:
         """C4 修订后：文件树无 mesh 文件时抛 AdapterError。"""
         adapter = YCBAdapter()
         mock_tree = [{"type": "file", "path": "README.md"}]
-        with patch.object(
-            adapter, "_request", new_callable=AsyncMock, return_value=mock_tree
-        ), pytest.raises(AdapterError) as exc_info:
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            pytest.raises(AdapterError) as exc_info,
+        ):
             await adapter.fetch("025_mug")
         assert "No mesh file" in exc_info.value.message

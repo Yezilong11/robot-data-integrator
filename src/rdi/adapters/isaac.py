@@ -14,7 +14,11 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # 降级回退：Isaac Sim 已知示例（C11 修复：isaac-sim/IsaacLab 的资产配置是 Python 文件）
 _FALLBACK_EXAMPLES: list[dict[str, str]] = [
-    {"id": "franka", "title": "Franka Emika Panda", "description": "Franka Panda 机械臂 USD 资产配置"},
+    {
+        "id": "franka",
+        "title": "Franka Emika Panda",
+        "description": "Franka Panda 机械臂 USD 资产配置",
+    },
     {"id": "allegro", "title": "Allegro Hand", "description": "Allegro 灵巧手 USD 资产配置"},
     {"id": "ant", "title": "MuJoCo Ant", "description": "Ant 四足机器人 USD 资产配置"},
     {"id": "cassie", "title": "Agility Cassie", "description": "Cassie 双足机器人 USD 资产配置"},
@@ -105,9 +109,7 @@ class IsaacSimAdapter(BaseAdapter):
         删除虚构的 _fetch_primary（docs/_static/{id}.usd 不存在），
         直接走 IsaacLab 的 robots/{id}.py（已 curl 验证 franka.py/allegro.py 可达）。
         """
-        py_url = (
-            f"{self.base_url}/source/isaaclab_assets/isaaclab_assets/robots/{item_id}.py"
-        )
+        py_url = f"{self.base_url}/source/isaaclab_assets/isaaclab_assets/robots/{item_id}.py"
         content = await self._download_bytes(py_url)
         return RawData(
             source=DataSource.ISAAC,

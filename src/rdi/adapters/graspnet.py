@@ -142,8 +142,7 @@ class GraspNetAdapter(BaseAdapter):
             (
                 item.get("path", "")
                 for item in tree
-                if isinstance(item, dict)
-                and item.get("path", "").lower().endswith(target_exts)
+                if isinstance(item, dict) and item.get("path", "").lower().endswith(target_exts)
             ),
             None,
         )
@@ -158,14 +157,10 @@ class GraspNetAdapter(BaseAdapter):
             fmt = "tar.gz"
         else:
             ext = lower_path.rsplit(".", 1)[-1]
-            fmt = {"npz": "npz", "tar": "tar", "h5": "hdf5", "hdf5": "hdf5"}.get(
-                ext, "binary"
-            )
+            fmt = {"npz": "npz", "tar": "tar", "h5": "hdf5", "hdf5": "hdf5"}.get(ext, "binary")
         # C3: 下载走 huggingface_download_base_url（默认 hf-mirror.com）
         download_base = settings.huggingface_download_base_url.rstrip("/")
-        url = (
-            f"{download_base}/datasets/{item_id}/resolve/main/{file_path.lstrip('/')}"
-        )
+        url = f"{download_base}/datasets/{item_id}/resolve/main/{file_path.lstrip('/')}"
         # E1: HEAD 预检体积，超阈值改返回 metadata
         size = await self._head_content_length(url)
         if size is not None and size > settings.max_fetch_bytes:

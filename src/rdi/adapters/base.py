@@ -427,7 +427,7 @@ class BaseAdapter(ABC):
         prefix = "https://raw.githubusercontent.com/"
         if not url.startswith(prefix):
             return None
-        rest = url[len(prefix):]
+        rest = url[len(prefix) :]
         # owner/repo/ref/path（path 可含子目录，故最多分 4 段）
         parts = rest.split("/", 3)
         if len(parts) < 4:

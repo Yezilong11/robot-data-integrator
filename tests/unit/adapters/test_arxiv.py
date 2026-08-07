@@ -124,9 +124,7 @@ class TestArxivAdapter:
             patch.object(
                 adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
             ),
-            patch.object(
-                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_pdf
-            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_pdf),
         ):
             raw = await adapter.fetch("2304.06524")
             assert raw.source == DataSource.ARXIV
@@ -195,9 +193,7 @@ class TestArxivAdapter:
             adapter,
             "_request_text",
             new_callable=AsyncMock,
-            side_effect=AdapterError(
-                message="boom", source=DataSource.ARXIV.value
-            ),
+            side_effect=AdapterError(message="boom", source=DataSource.ARXIV.value),
         ):
             meta = await adapter._fetch_paper_metadata("2304.06524")
         assert meta == {}

@@ -129,13 +129,12 @@ class TestPapersWithCodeAdapter:
             await asyncio.sleep(100)
 
         with (
-            patch.object(
-                adapter, "_request", new_callable=AsyncMock, side_effect=hang_forever
-            ),
+            patch.object(adapter, "_request", new_callable=AsyncMock, side_effect=hang_forever),
             patch(
                 "rdi.adapters.paperswithcode._PWC_REQUEST_TIMEOUT_S",
                 0.1,
-            ),pytest.raises(AdapterError) as exc_info
+            ),
+            pytest.raises(AdapterError) as exc_info,
         ):
             await adapter._pwc_request("GET", "/search/", params={"q": "x"})
         assert "timed out" in exc_info.value.message
@@ -148,9 +147,10 @@ class TestPapersWithCodeAdapter:
         original_err = AdapterError(
             message="not found", source=DataSource.PAPERSWITHCODE.value, status_code=404
         )
-        with patch.object(
-            adapter, "_request", new_callable=AsyncMock, side_effect=original_err
-        ), pytest.raises(AdapterError) as exc_info:
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, side_effect=original_err),
+            pytest.raises(AdapterError) as exc_info,
+        ):
             await adapter._pwc_request("GET", "/papers/abc")
         # 透传的是原异常，不是超时转换的
         assert exc_info.value is original_err
@@ -163,9 +163,7 @@ class TestPapersWithCodeOpenAlexFallback:
     def test_extract_openalex_work_id_from_full_url(self) -> None:
         """从完整 ID URL 提取 work ID。"""
         assert (
-            PapersWithCodeAdapter._extract_openalex_work_id(
-                "https://openalex.org/W1820657498"
-            )
+            PapersWithCodeAdapter._extract_openalex_work_id("https://openalex.org/W1820657498")
             == "W1820657498"
         )
 
@@ -216,9 +214,7 @@ class TestPapersWithCodeOpenAlexFallback:
             ]
         }
         with (
-            patch.object(
-                adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err
-            ),
+            patch.object(adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err),
             patch.object(
                 adapter,
                 "_openalex_request",
@@ -244,12 +240,11 @@ class TestPapersWithCodeOpenAlexFallback:
             source=DataSource.PAPERSWITHCODE.value,
         )
         with (
-            patch.object(
-                adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err
-            ),
+            patch.object(adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err),
             patch.object(
                 adapter, "_openalex_request", new_callable=AsyncMock, side_effect=openalex_err
-            ),pytest.raises(AdapterError) as exc_info
+            ),
+            pytest.raises(AdapterError) as exc_info,
         ):
             await adapter.search("robot grasping")
         # 抛的是 PwC 原异常，不是 OpenAlex 的
@@ -273,9 +268,7 @@ class TestPapersWithCodeOpenAlexFallback:
             "open_access": {"oa_url": None},
         }
         with (
-            patch.object(
-                adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err
-            ),
+            patch.object(adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err),
             patch.object(
                 adapter,
                 "_openalex_request",
@@ -305,8 +298,9 @@ class TestPapersWithCodeOpenAlexFallback:
             message="PwC timed out (Cloudflare)",
             source=DataSource.PAPERSWITHCODE.value,
         )
-        with patch.object(
-            adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err
-        ), pytest.raises(AdapterError) as exc_info:
+        with (
+            patch.object(adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err),
+            pytest.raises(AdapterError) as exc_info,
+        ):
             await adapter.search("robot grasping")
         assert exc_info.value is pwc_err

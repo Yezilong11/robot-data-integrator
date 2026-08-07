@@ -230,9 +230,7 @@ class PapersWithCodeAdapter(BaseAdapter):
         """
         results: list[SearchResult] = []
         for w in data.get("results", []):
-            work_id = PapersWithCodeAdapter._extract_openalex_work_id(
-                w.get("id", "")
-            )
+            work_id = PapersWithCodeAdapter._extract_openalex_work_id(w.get("id", ""))
             title = w.get("title", "")
             doi = w.get("doi", "") or ""
             results.append(
@@ -255,9 +253,7 @@ class PapersWithCodeAdapter(BaseAdapter):
             )
         return results
 
-    def _build_openalex_rawdata(
-        self, data: dict[str, Any], paper_id: str
-    ) -> RawData:
+    def _build_openalex_rawdata(self, data: dict[str, Any], paper_id: str) -> RawData:
         """从 OpenAlex work 数据构建 RawData（fetch fallback）。
 
         OpenAlex 仅提供论文详情，无 code 关联，implementations 为空。
@@ -288,4 +284,3 @@ class PapersWithCodeAdapter(BaseAdapter):
             url=f"{self._openalex_base_url}/works/{paper_id}",
             size_bytes=len(raw_bytes),
         )
-

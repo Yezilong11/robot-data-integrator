@@ -86,8 +86,7 @@ class DexGraspAdapter(BaseAdapter):
             (
                 item.get("path", "")
                 for item in tree
-                if isinstance(item, dict)
-                and item.get("path", "").lower().endswith(target_exts)
+                if isinstance(item, dict) and item.get("path", "").lower().endswith(target_exts)
             ),
             None,
         )

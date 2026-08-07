@@ -263,12 +263,7 @@ class TestBaseAdapterMirrorFallback:
         """路径缺少 owner/repo/ref/path 之一时返回 None。"""
         adapter = _StubAdapter()
         # 只有 owner/repo，缺 ref 和 path
-        assert (
-            adapter._to_github_mirror_url(
-                "https://raw.githubusercontent.com/owner/repo"
-            )
-            is None
-        )
+        assert adapter._to_github_mirror_url("https://raw.githubusercontent.com/owner/repo") is None
 
     @pytest.mark.asyncio
     async def test_download_bytes_falls_back_to_mirror_on_github_raw_failure(
@@ -312,12 +307,15 @@ class TestBaseAdapterMirrorFallback:
         async def fake_single(url: str, **kwargs: object) -> bytes:
             raise primary_err
 
-        with patch.object(
-            adapter,
-            "_download_bytes_single",
-            new_callable=AsyncMock,
-            side_effect=fake_single,
-        ) as mock_single, pytest.raises(AdapterError) as exc_info:
+        with (
+            patch.object(
+                adapter,
+                "_download_bytes_single",
+                new_callable=AsyncMock,
+                side_effect=fake_single,
+            ) as mock_single,
+            pytest.raises(AdapterError) as exc_info,
+        ):
             await adapter._download_bytes(primary_url)
         assert exc_info.value is primary_err
         # 仅主 URL 调用一次，镜像未触发
@@ -332,12 +330,15 @@ class TestBaseAdapterMirrorFallback:
         async def fake_single(url: str, **kwargs: object) -> bytes:
             raise AdapterError(message=f"fail {url}", source="arxiv")
 
-        with patch.object(
-            adapter,
-            "_download_bytes_single",
-            new_callable=AsyncMock,
-            side_effect=fake_single,
-        ), pytest.raises(AdapterError) as exc_info:
+        with (
+            patch.object(
+                adapter,
+                "_download_bytes_single",
+                new_callable=AsyncMock,
+                side_effect=fake_single,
+            ),
+            pytest.raises(AdapterError) as exc_info,
+        ):
             await adapter._download_bytes(primary_url)
         # 镜像错误为最终抛出的异常
         assert "cdn.jsdelivr.net" in exc_info.value.message

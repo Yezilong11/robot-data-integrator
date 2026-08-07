@@ -74,9 +74,7 @@ class TestGraspNetAdapter:
             patch.object(
                 adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
             ),
-            patch.object(
-                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz
-            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
         ):
             raw = await adapter.fetch("graspnet-benchmark")
         assert raw.source == DataSource.GRASPNET
@@ -152,8 +150,9 @@ class TestGraspNetAdapter:
         """C3 修复后：文件树无数据文件时抛 AdapterError。"""
         adapter = GraspNetAdapter()
         mock_tree = [{"type": "file", "path": "README.md"}]
-        with patch.object(
-            adapter, "_request", new_callable=AsyncMock, return_value=mock_tree
-        ), pytest.raises(AdapterError) as exc_info:
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            pytest.raises(AdapterError) as exc_info,
+        ):
             await adapter.fetch("graspnet-benchmark")
         assert "No data file" in exc_info.value.message

@@ -47,11 +47,7 @@ class GoogleScannedAdapter(BaseAdapter):
             if query_lower not in model_name.lower():
                 continue
             owner = item.get("owner", "")
-            self_url = (
-                f"{self.base_url}/models/{model_name}"
-                if owner
-                else item.get("url_name", "")
-            )
+            self_url = f"{self.base_url}/models/{model_name}" if owner else item.get("url_name", "")
             results.append(
                 SearchResult(
                     item_id=model_name,
