@@ -206,27 +206,92 @@ class TestTotalMass:
 # ─── xacro 降级 ───
 
 
-class TestXacroDegrade:
-    def test_xacro_input_degrades(self) -> None:
-        """异常情况：xacro 输入 + fmt=xacro 且模块缺失 → success=False，不抛异常。"""
+class TestXacroFallback:
+    def test_xacro_fallback_without_ros_module(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """无 ROS xacro 模块时：字符串级清理，返回 canonical_format='urdf'。"""
+        monkeypatch.setattr(
+            "rdi.skills.urdf_convert.importlib.import_module",
+            lambda _name, _package=None: (_ for _ in ()).throw(ImportError()),
+        )
         data = _load("fr3.xacro")
+        result = URDFSkill().process(data, fmt="xacro", name="fr3")
+        assert result.success is True
+        assert result.canonical_format == "urdf"
+        assert isinstance(result.data, bytes)
+        assert result.output_path == "robots/fr3.urdf"
+        assert any("降级" in w for w in result.warnings)
+        text = result.data.decode("utf-8")
+        assert "<xacro:" not in text
+        assert "$(find" not in text
+
+    def test_xacro_fallback_replaces_find_placeholder(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """xacro 标签外的 $(find pkg) 占位符被替换为 /mock/pkg。"""
+        monkeypatch.setattr(
+            "rdi.skills.urdf_convert.importlib.import_module",
+            lambda _name, _package=None: (_ for _ in ()).throw(ImportError()),
+        )
+        data = (
+            b'<?xml version="1.0"?><robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="x">'
+            b'<link name="base"><visual><geometry><mesh filename="$(find pkg)/mesh.stl"/></geometry></visual></link>'
+            b'<xacro:arg name="foo" default="1"/></robot>'
+        )
         result = URDFSkill().process(data, fmt="xacro")
-        assert result.success is False
-        assert any("xacro" in e for e in result.errors)
-        assert result.data is None
+        assert result.success is True
+        text = result.data.decode("utf-8")
+        assert "/mock/pkg/mesh.stl" in text
+        assert "<xacro:" not in text
 
-    def test_xacro_detected_by_content_without_fmt(self) -> None:
-        """边界：未传 fmt 但内容含 xacro 标记 → 同样降级。"""
+    def test_xacro_detected_by_content_without_fmt(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """边界：未传 fmt 但内容含 xacro 标记 → 同样走降级路径。"""
+        monkeypatch.setattr(
+            "rdi.skills.urdf_convert.importlib.import_module",
+            lambda _name, _package=None: (_ for _ in ()).throw(ImportError()),
+        )
         data = _load("fr3.xacro")
         result = URDFSkill().process(data)
-        assert result.success is False
-        assert any("xacro" in e for e in result.errors)
+        assert result.success is True
+        assert result.canonical_format == "urdf"
+        assert any("降级" in w for w in result.warnings)
 
-    def test_xacro_degrade_does_not_raise(self) -> None:
+    def test_xacro_fallback_does_not_raise(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """契约：xacro 降级路径不抛异常。"""
-        data = b'<?xml version="1.0"?><robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="x"><xacro:include filename="missing.xacro"/></robot>'
+        monkeypatch.setattr(
+            "rdi.skills.urdf_convert.importlib.import_module",
+            lambda _name, _package=None: (_ for _ in ()).throw(ImportError()),
+        )
+        data = (
+            b'<?xml version="1.0"?><robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="x">'
+            b'<xacro:include filename="$(find pkg)/missing.xacro"/></robot>'
+        )
         result = URDFSkill().process(data)
-        assert result.success is False
+        assert result.success is True
+        assert result.canonical_format == "urdf"
+
+    def test_xacro_module_available_expands_urdf(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """xacro 模块可用时：展开为 URDF 并解析为 CanonicalRobot。"""
+        valid_urdf = (
+            b'<?xml version="1.0"?><robot name="expanded">'
+            b'<link name="base"><inertial><mass value="1.0"/>'
+            b'<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>'
+            b"</inertial></link></robot>"
+        )
+        monkeypatch.setattr(
+            "rdi.skills.urdf_convert.importlib.import_module",
+            lambda _name, _package=None: object(),
+        )
+        monkeypatch.setattr(
+            URDFSkill,
+            "_expand_xacro",
+            staticmethod(lambda _xacro, _data: valid_urdf),
+        )
+        data = b'<?xml version="1.0"?><robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="x"><xacro:foo/></robot>'
+        result = URDFSkill().process(data, fmt="xacro")
+        assert result.success is True
+        assert result.canonical_format == "CanonicalRobot"
+        assert isinstance(result.data, CanonicalRobot)
+        assert result.data.name == "expanded"
 
 
 # ─── validate 报告 ───

@@ -1,10 +1,11 @@
-# src/rdi/adapters/ycb.py
 """YCB Objects 数据集 Adapter。
 
-文档原始对接方式：官方下载（rse-lab.cs.washington.edu 网页解析）
+文档原始对接方式：官方下载（rse-lab... 网页解析）
 降级回退方式：硬编码物体列表 + HuggingFace 镜像下载
 无需 API Key，直接 HTTP 下载。
 """
+
+from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -35,6 +36,15 @@ _FALLBACK_OBJECTS: list[dict[str, str]] = [
     {"id": "051_large_clamp", "title": "Large Clamp", "category": "tool"},
     {"id": "052_extra_large_clamp", "title": "Extra Large Clamp", "category": "tool"},
 ]
+
+# MeshSkill 优先支持的格式（小体积、无额外纹理依赖）
+_PREFERRED_MESH_EXTS = (".obj", ".stl", ".ply", ".dae")
+# 兼容兜底格式
+_FALLBACK_MESH_EXTS = (".glb", ".gltf")
+
+# YCB 在 HF 上的固定网格镜像（ll4ma-lab/ycb-fixed-meshes）
+# 提供 google_16k/textured.obj、nontextured.stl 等 MeshSkill 可直接消化的格式
+_YCB_FIXED_MESHES_REPO = "ll4ma-lab/ycb-fixed-meshes"
 
 
 class YCBAdapter(BaseAdapter):
@@ -79,7 +89,7 @@ class YCBAdapter(BaseAdapter):
                         title=title,
                         source=DataSource.YCB,
                         url=f"{self._web_url}/{obj_id}",
-                        metadata={"object_name": obj_id, "format": "stl"},
+                        metadata={"object_name": obj_id, "format": "obj"},
                     )
                 )
         if not results:
@@ -107,7 +117,7 @@ class YCBAdapter(BaseAdapter):
                 url=f"{self._web_url}/projects/ycb/{obj['id']}",
                 metadata={
                     "object_name": obj["id"],
-                    "format": "stl",
+                    "format": "obj",
                     "category": obj["category"],
                 },
             )
@@ -115,43 +125,31 @@ class YCBAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载物体 mesh 文件。
+        """下载物体 mesh 文件（优先 .obj/.stl）。
 
-        C4 修复：原 `_fetch_primary`（rse-lab.../{id}/textured.obj）和
-        `_fetch_fallback`（huggingface.co/datasets/ycb/{id}/resolve/main/textured.obj）
-        均为虚构路径。YCB 实际托管在 `ai-habitat/ycb` HF repo，mesh 在
-        `meshes/{item_id}/google_16k/` 子目录下，格式为 `.glb`（GLTF Binary）。
-        需两次 API 调用列文件树。
-
-        C4 修订：首轮修复假设文件为 `.obj`，但实测 ai-habitat/ycb 仓库
-        `meshes/{id}/google_16k/` 下实际为 `textured.glb`。改为匹配常见 mesh
-        格式（.glb/.gltf/.obj/.stl/.ply），format 字段取实际扩展名。
+        改为从 ``ll4ma-lab/ycb-fixed-meshes`` 镜像拉取，该镜像提供
+        ``{item_id}/google_16k/textured.obj`` 等 MeshSkill 可直接加载的格式。
+        若 {item_id} 在镜像中不存在（如 005_tomato_soup_can 实际为
+        005_tomato_soup_can-1），尝试 ``{item_id}-1`` 兜底。
         """
-        # C4: YCB 物体托管在 ai-habitat/ycb repo
-        repo_id = "ai-habitat/ycb"
-        # 列出 meshes/{item_id}/google_16k 子目录（YCB 标准 16k 三角网格）
-        subtree = await self._request(
-            "GET",
-            f"/api/datasets/{repo_id}/tree/main/meshes/{item_id}/google_16k",
-        )
-        # C4 修订：匹配常见 mesh 格式（ai-habitat/ycb 实测为 .glb）
-        mesh_exts = (".glb", ".gltf", ".obj", ".stl", ".ply")
-        mesh_path = next(
-            (
-                item.get("path", "")
-                for item in subtree
-                if isinstance(item, dict) and item.get("path", "").lower().endswith(mesh_exts)
-            ),
-            None,
-        )
+        repo_id = _YCB_FIXED_MESHES_REPO
+        subtree = await self._list_mesh_subtree(repo_id, item_id)
+        if subtree is None:
+            subtree = await self._list_mesh_subtree(repo_id, f"{item_id}-1")
+            if subtree is None:
+                raise AdapterError(
+                    message=f"No mesh subtree found for {item_id} in {repo_id}",
+                    source=self.source.value,
+                )
+
+        mesh_path = self._pick_mesh_path(subtree)
         if not mesh_path:
             raise AdapterError(
-                message=f"No mesh file {mesh_exts} found in {repo_id}/meshes/{item_id}/google_16k",
+                message=f"No mesh file found in {repo_id}/{item_id}/google_16k",
                 source=self.source.value,
             )
-        # format 取实际扩展名（去点、小写）
+
         fmt = mesh_path.rsplit(".", 1)[-1].lower()
-        # C4: 下载走 huggingface_download_base_url（默认 hf-mirror.com）
         download_base = settings.huggingface_download_base_url.rstrip("/")
         url = f"{download_base}/datasets/{repo_id}/resolve/main/{mesh_path.lstrip('/')}"
         data_bytes = await self._download_bytes(url)
@@ -163,3 +161,32 @@ class YCBAdapter(BaseAdapter):
             url=url,
             size_bytes=len(data_bytes),
         )
+
+    async def _list_mesh_subtree(self, repo_id: str, item_id: str) -> list[dict[str, Any]] | None:
+        """列出 repo 中 {item_id}/google_16k 子目录；不存在时返回 None。"""
+        try:
+            return await self._request(
+                "GET",
+                f"/api/datasets/{repo_id}/tree/main/{item_id}/google_16k",
+            )
+        except AdapterError as e:
+            status = getattr(e, "status_code", None)
+            if status == 404:
+                return None
+            raise
+
+    def _pick_mesh_path(self, subtree: list[dict[str, Any]]) -> str | None:
+        """按优先级从文件树中挑选一个 mesh 文件路径。"""
+        for ext in _PREFERRED_MESH_EXTS:
+            for item in subtree:
+                if isinstance(item, dict):
+                    path = item.get("path", "")
+                    if path.lower().endswith(ext):
+                        return path
+        for ext in _FALLBACK_MESH_EXTS:
+            for item in subtree:
+                if isinstance(item, dict):
+                    path = item.get("path", "")
+                    if path.lower().endswith(ext):
+                        return path
+        return None

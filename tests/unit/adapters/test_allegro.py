@@ -1,13 +1,27 @@
-# tests/unit/adapters/test_allegro.py
 """AllegroAdapter 的单元测试。"""
 
+import tempfile
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import yourdfpy
 
 from rdi.adapters.allegro import AllegroAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
+
+
+def _assert_urdf_parseable(data: bytes) -> None:
+    """使用 yourdfpy 解析 URDF 字节并断言至少含一个 link。"""
+    with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as f:
+        f.write(data)
+        tmp_path = f.name
+    try:
+        robot = yourdfpy.URDF.load(tmp_path, load_meshes=False)
+        assert robot.link_map
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
 
 
 class TestAllegroAdapter:
@@ -59,10 +73,21 @@ class TestAllegroAdapter:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_fetch_success(self) -> None:
-        """C7 修复后：单路径 fetch，mock _download_bytes 返回数据，format 为 urdf。"""
+    async def test_fetch_v4_plain_urdf(self) -> None:
+        """C2 修复：allegro_hand_v4 返回 dexsuite 已展开纯 URDF。"""
         adapter = AllegroAdapter()
-        fake_urdf = b'<robot name="allegro_hand"/>'
+        fake_urdf = b"""<?xml version="1.0"?>
+<robot name="allegro_right">
+  <link name="base"/>
+  <joint name="j1" type="revolute">
+    <parent link="base"/>
+    <child link="link1"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" lower="-1" upper="1" velocity="1"/>
+  </joint>
+  <link name="link1"/>
+</robot>
+"""
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
         ) as mock_dl:
@@ -70,9 +95,42 @@ class TestAllegroAdapter:
         assert raw.source == DataSource.ALLEGRO
         assert raw.format == "urdf"
         assert raw.data == fake_urdf
-        assert raw.size_bytes == len(fake_urdf)
-        assert "allegro_hand.urdf.xacro" in raw.url
-        # C7: 单路径，只调用一次
+        assert raw.url.endswith("allegro_hand_right.urdf")
+        _assert_urdf_parseable(raw.data)
+        mock_dl.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_left_plain_urdf(self) -> None:
+        """C2 修复：allegro_hand_left 返回 dexsuite 已展开纯 URDF。"""
+        adapter = AllegroAdapter()
+        fake_urdf = b"""<?xml version="1.0"?>
+<robot name="allegro_left">
+  <link name="base"/>
+</robot>
+"""
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
+        ) as mock_dl:
+            raw = await adapter.fetch("allegro_hand_left")
+        assert raw.source == DataSource.ALLEGRO
+        assert raw.format == "urdf"
+        assert raw.url.endswith("allegro_hand_left.urdf")
+        _assert_urdf_parseable(raw.data)
+        mock_dl.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_v3_xacro_format(self) -> None:
+        """C2 修复：allegro_hand_v3 无稳定纯 URDF，返回 xacro 并标记 format="xacro"。"""
+        adapter = AllegroAdapter()
+        fake_xacro = b'<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="allegro_hand"/>'
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_xacro
+        ) as mock_dl:
+            raw = await adapter.fetch("allegro_hand_v3")
+        assert raw.source == DataSource.ALLEGRO
+        assert raw.format == "xacro"
+        assert raw.url.endswith("allegro_hand.urdf.xacro")
+        assert raw.data == fake_xacro
         mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio

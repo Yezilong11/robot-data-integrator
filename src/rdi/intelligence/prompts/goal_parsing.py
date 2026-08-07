@@ -49,6 +49,17 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
 - goal.paper_info 为可选字段；未提供论文时设为 null 或省略整个对象。
 - requirements 数组每项的 req_id 必须从 req_000 起按需递增，确保唯一。
 - req_type 与 fallback_sources 必须严格匹配上述枚举字符串值，禁止自创。
+
+# 类型识别示例
+
+请根据数据内容的本质选择 req_type，而不是来源平台：
+
+- "Franka Panda URDF 机器人描述文件" → req_type="robot_urdf", expected_format="URDF", fallback_sources=["franka","github"]
+- "YCB 香蕉的 3D 网格模型" → req_type="mesh", expected_format="STL", fallback_sources=["ycb","google_scanned"]
+- "抓取姿态 / grasp pose 数据" → req_type="grasp", expected_format="NPZ", fallback_sources=["graspnet","dexgrasp"]
+- "MuJoCo 仿真场景配置" → req_type="sim_config", expected_format="XML", fallback_sources=["mujoco","isaac"]
+- "实现抓取策略的 GitHub 代码仓库" → req_type="code", expected_format="markdown", fallback_sources=["github","huggingface"]
+- "GraspNet 数据集或基准" → req_type="dataset", expected_format="JSON", fallback_sources=["graspnet","zenodo"]
 """
 
 GOAL_PARSING_USER_TEMPLATE: str = """研究目标描述：

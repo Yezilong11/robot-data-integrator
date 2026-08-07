@@ -2,8 +2,7 @@
 """SkillRegistry — 按 DataReqType 分发到对应 Skill 的注册表。
 
 维护 ``DataReqType → BaseSkill`` 单例映射（懒加载），提供 ``get_skill`` 与
-``process_retrieval_result`` 便捷方法。CODE / DATASET 暂不在 Skill 范围内，
-``get_skill`` 返回 None（parse_convert 节点据此跳过并记 warning）。
+``process_retrieval_result`` 便捷方法。所有标准数据类型均已注册对应 Skill。
 
 ``process_retrieval_result`` 把 ``RetrievalResult.data.data`` 字节交给对应 Skill
 处理，按 ``StandardResult`` 装配 ``ParsedItem``（provenance 从 RawData 继承），
@@ -18,6 +17,8 @@ from rdi.models.goal import DataReq
 from rdi.models.parsed import MissingItem, ParsedItem
 from rdi.models.retrieval import RetrievalResult
 from rdi.skills.base import BaseSkill
+from rdi.skills.code_parse import CodeSkill
+from rdi.skills.dataset_parse import DatasetSkill
 from rdi.skills.grasp_parse import GraspSkill
 from rdi.skills.mesh_process import MeshSkill
 from rdi.skills.paper_parse import PaperSkill
@@ -55,6 +56,8 @@ class SkillRegistry:
             DataReqType.POLICY_MODEL: PolicyInterfaceSkill,
             DataReqType.SENSOR_DATA: SensorDataSkill,
             DataReqType.PAPER: PaperSkill,
+            DataReqType.CODE: CodeSkill,
+            DataReqType.DATASET: DatasetSkill,
         }
 
     def get_skill(self, req_type: DataReqType) -> BaseSkill | None:
@@ -104,7 +107,7 @@ class SkillRegistry:
             extra["dataset_name"] = _dataset_name_from_source(src)
 
         try:
-            res = skill.process(raw.data, fmt=fmt, name=name, **extra)
+            res = skill.process(raw.data, fmt=fmt, name=name, url=raw.url, **extra)
         except Exception as exc:  # noqa: BLE001 — 防御性：Skill 应自身降级，但仍兜底
             return MissingItem(
                 req_id=result.req_id,

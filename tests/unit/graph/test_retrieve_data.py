@@ -6,6 +6,7 @@
 3. 返回真实 ``RetrievalResult``（由候选 Adapter 的 search → fetch 链路产生）。
 """
 
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -96,3 +97,71 @@ async def test_retrieve_single_returns_success_result(
     assert retrieval.source == DataSource.GITHUB
     assert retrieval.search_results[0].item_id == "test-1"
     assert "provenance" in result
+
+
+async def test_retrieve_single_uses_fallback_sources_order(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """当 DataReq 提供 fallback_sources 时，按该顺序优先尝试源。"""
+    github_mock = AsyncMock()
+    github_mock.search.return_value = [
+        SearchResult(item_id="gh-1", title="GitHub", source=DataSource.GITHUB)
+    ]
+    github_mock.fetch.return_value = RawData(
+        source=DataSource.GITHUB,
+        item_id="gh-1",
+        format="urdf",
+        data=b"github urdf",
+        url="https://example.com/gh",
+    )
+
+    franka_mock = AsyncMock()
+    franka_mock.search.return_value = [
+        SearchResult(item_id="fr-1", title="Franka", source=DataSource.FRANKA)
+    ]
+    franka_mock.fetch.return_value = RawData(
+        source=DataSource.FRANKA,
+        item_id="fr-1",
+        format="urdf",
+        data=b"franka urdf",
+        url="https://example.com/fr",
+    )
+
+    class FakeGitHubAdapter:
+        source = DataSource.GITHUB
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await github_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await github_mock.fetch(item_id, req_type=req_type)
+
+    class FakeFrankaAdapter:
+        source = DataSource.FRANKA
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await franka_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await franka_mock.fetch(item_id, req_type=req_type)
+
+    # registry 默认顺序是 github 优先；fallback 要求 franka 优先
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter",
+        lambda req_type: [FakeGitHubAdapter, FakeFrankaAdapter],
+    )
+
+    payload = {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Franka URDF",
+        "keywords": [],
+        "fallback_sources": ["franka", "github"],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_000"]
+    assert retrieval.status == "success"
+    assert retrieval.source == DataSource.FRANKA
+    franka_mock.search.assert_called_once()
+    github_mock.search.assert_not_called()

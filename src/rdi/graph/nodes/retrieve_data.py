@@ -48,6 +48,7 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
             "req_type": req.req_type.value,
             "description": req.description,
             "keywords": req.keywords,
+            "fallback_sources": [s.value for s in req.fallback_sources],
         }
         update = await node_retrieve_single(payload)
         retrieval_results.update(update.get("retrieval_results", {}))
@@ -92,9 +93,14 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         adapter_classes = []
     priority_sources = hermes.get_source_priority(req_type)
     priority_index = {src: i for i, src in enumerate(priority_sources)}
+    fallback_sources = payload.get("fallback_sources") or []
+    fallback_index = {src: i for i, src in enumerate(fallback_sources)}
     sorted_adapters = sorted(
         adapter_classes,
-        key=lambda cls: priority_index.get(cls.source.value, len(priority_sources)),
+        key=lambda cls: (
+            fallback_index.get(cls.source.value, len(fallback_sources)),
+            priority_index.get(cls.source.value, len(priority_sources)),
+        ),
     )
 
     had_empty_search = False
@@ -111,7 +117,11 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
             if not search_results:
                 had_empty_search = True
                 continue
-            raw = await adapter.fetch(search_results[0].item_id)
+            try:
+                raw = await adapter.fetch(search_results[0].item_id, req_type=DataReqType(req_type))
+            except TypeError:
+                # 兼容旧 Adapter 的 fetch(item_id) 签名
+                raw = await adapter.fetch(search_results[0].item_id)
             elapsed = time.monotonic() - start
             result = RetrievalResult(
                 req_id=req_id,

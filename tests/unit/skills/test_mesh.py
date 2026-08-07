@@ -10,6 +10,8 @@
 - 处理失败降级（损坏字节）
 """
 
+import io
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -139,3 +141,50 @@ def test_validate_failure_path() -> None:
     report = MeshSkill().validate(result)
     assert report.is_valid is False
     assert any(i.severity.value == "error" for i in report.issues)
+
+
+# ─── glb / zip 支持 ───
+
+
+def _box_glb_bytes() -> bytes:
+    """生成一个最小 glb（box）字节。"""
+    mesh = trimesh.creation.box(extents=[0.1, 0.1, 0.1])
+    return mesh.export(file_type="glb")
+
+
+def test_parse_glb_success() -> None:
+    """glb 输入可被 trimesh 加载并标准化为 Trimesh。"""
+    data = _box_glb_bytes()
+    result = MeshSkill().process(data, fmt="glb", name="box")
+    assert result.success is True
+    assert result.canonical_format == "trimesh.Trimesh"
+    assert isinstance(result.data, trimesh.Trimesh)
+    assert len(result.data.faces) > 0
+    assert result.output_path == "objects/box.stl"
+
+
+def test_parse_zip_success() -> None:
+    """zip 输入解压后找到第一个 mesh 文件并加载。"""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("model.config", "<model/>")
+        zf.writestr(
+            "meshes/box.obj", trimesh.creation.box(extents=[0.2, 0.2, 0.2]).export(file_type="obj")
+        )
+    result = MeshSkill().process(buf.getvalue(), fmt="zip", name="zipped_box")
+    assert result.success is True
+    assert result.canonical_format == "trimesh.Trimesh"
+    assert isinstance(result.data, trimesh.Trimesh)
+    assert len(result.data.faces) > 0
+    assert result.output_path == "objects/zipped_box.stl"
+
+
+def test_parse_zip_no_mesh_degrades() -> None:
+    """zip 中无支持 mesh 时降级。"""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("readme.txt", "no mesh")
+    result = MeshSkill().process(buf.getvalue(), fmt="zip")
+    assert result.success is False
+    assert result.data is None
+    assert any("zip" in e for e in result.errors)
