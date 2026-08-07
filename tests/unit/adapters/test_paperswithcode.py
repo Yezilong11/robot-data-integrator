@@ -135,10 +135,9 @@ class TestPapersWithCodeAdapter:
             patch(
                 "rdi.adapters.paperswithcode._PWC_REQUEST_TIMEOUT_S",
                 0.1,
-            ),
+            ),pytest.raises(AdapterError) as exc_info
         ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter._pwc_request("GET", "/search/", params={"q": "x"})
+            await adapter._pwc_request("GET", "/search/", params={"q": "x"})
         assert "timed out" in exc_info.value.message
         assert exc_info.value.source == "paperswithcode"
 
@@ -151,9 +150,8 @@ class TestPapersWithCodeAdapter:
         )
         with patch.object(
             adapter, "_request", new_callable=AsyncMock, side_effect=original_err
-        ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter._pwc_request("GET", "/papers/abc")
+        ), pytest.raises(AdapterError) as exc_info:
+            await adapter._pwc_request("GET", "/papers/abc")
         # 透传的是原异常，不是超时转换的
         assert exc_info.value is original_err
         assert "not found" in exc_info.value.message
@@ -251,10 +249,9 @@ class TestPapersWithCodeOpenAlexFallback:
             ),
             patch.object(
                 adapter, "_openalex_request", new_callable=AsyncMock, side_effect=openalex_err
-            ),
+            ),pytest.raises(AdapterError) as exc_info
         ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter.search("robot grasping")
+            await adapter.search("robot grasping")
         # 抛的是 PwC 原异常，不是 OpenAlex 的
         assert exc_info.value is pwc_err
 
@@ -310,7 +307,6 @@ class TestPapersWithCodeOpenAlexFallback:
         )
         with patch.object(
             adapter, "_pwc_request", new_callable=AsyncMock, side_effect=pwc_err
-        ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter.search("robot grasping")
+        ), pytest.raises(AdapterError) as exc_info:
+            await adapter.search("robot grasping")
         assert exc_info.value is pwc_err

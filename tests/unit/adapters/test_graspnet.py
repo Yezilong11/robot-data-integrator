@@ -152,7 +152,8 @@ class TestGraspNetAdapter:
         """C3 修复后：文件树无数据文件时抛 AdapterError。"""
         adapter = GraspNetAdapter()
         mock_tree = [{"type": "file", "path": "README.md"}]
-        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter.fetch("graspnet-benchmark")
+        with patch.object(
+            adapter, "_request", new_callable=AsyncMock, return_value=mock_tree
+        ), pytest.raises(AdapterError) as exc_info:
+            await adapter.fetch("graspnet-benchmark")
         assert "No data file" in exc_info.value.message

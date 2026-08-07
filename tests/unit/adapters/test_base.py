@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from bs4 import BeautifulSoup
 
-from rdi.adapters.base import BaseAdapter, TTLCache, _GITHUB_RAW_FAST_TIMEOUT_S
+from rdi.adapters.base import _GITHUB_RAW_FAST_TIMEOUT_S, BaseAdapter, TTLCache
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
@@ -317,9 +317,8 @@ class TestBaseAdapterMirrorFallback:
             "_download_bytes_single",
             new_callable=AsyncMock,
             side_effect=fake_single,
-        ) as mock_single:
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter._download_bytes(primary_url)
+        ) as mock_single, pytest.raises(AdapterError) as exc_info:
+            await adapter._download_bytes(primary_url)
         assert exc_info.value is primary_err
         # 仅主 URL 调用一次，镜像未触发
         assert mock_single.await_count == 1
@@ -338,9 +337,8 @@ class TestBaseAdapterMirrorFallback:
             "_download_bytes_single",
             new_callable=AsyncMock,
             side_effect=fake_single,
-        ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter._download_bytes(primary_url)
+        ), pytest.raises(AdapterError) as exc_info:
+            await adapter._download_bytes(primary_url)
         # 镜像错误为最终抛出的异常
         assert "cdn.jsdelivr.net" in exc_info.value.message
         # 主错误作为 __cause__ 链式保留
