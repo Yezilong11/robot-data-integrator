@@ -115,33 +115,50 @@ class YCBAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载物体 mesh。优先官方源，失败降级 HuggingFace 镜像。"""
-        try:
-            return await self._fetch_primary(item_id)
-        except AdapterError:
-            return await self._fetch_fallback(item_id)
+        """下载物体 mesh 文件。
 
-    async def _fetch_primary(self, item_id: str) -> RawData:
-        """路径 A：直接 URL 构造（官方下载路径模式）。"""
-        url = f"{self._web_url}/{item_id}/textured.obj"
-        data_bytes = await self._download_bytes(url)
-        return RawData(
-            source=DataSource.YCB,
-            item_id=item_id,
-            format="stl",
-            data=data_bytes,
-            url=url,
-            size_bytes=len(data_bytes),
+        C4 修复：原 `_fetch_primary`（rse-lab.../{id}/textured.obj）和
+        `_fetch_fallback`（huggingface.co/datasets/ycb/{id}/resolve/main/textured.obj）
+        均为虚构路径。YCB 实际托管在 `ai-habitat/ycb` HF repo，mesh 在
+        `meshes/{item_id}/google_16k/` 子目录下，格式为 `.glb`（GLTF Binary）。
+        需两次 API 调用列文件树。
+
+        C4 修订：首轮修复假设文件为 `.obj`，但实测 ai-habitat/ycb 仓库
+        `meshes/{id}/google_16k/` 下实际为 `textured.glb`。改为匹配常见 mesh
+        格式（.glb/.gltf/.obj/.stl/.ply），format 字段取实际扩展名。
+        """
+        # C4: YCB 物体托管在 ai-habitat/ycb repo
+        repo_id = "ai-habitat/ycb"
+        # 列出 meshes/{item_id}/google_16k 子目录（YCB 标准 16k 三角网格）
+        subtree = await self._request(
+            "GET",
+            f"/api/datasets/{repo_id}/tree/main/meshes/{item_id}/google_16k",
         )
-
-    async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：HuggingFace 镜像降级回退。"""
-        url = f"{self.base_url}/datasets/ycb/{item_id}/resolve/main/textured.obj"
+        # C4 修订：匹配常见 mesh 格式（ai-habitat/ycb 实测为 .glb）
+        mesh_exts = (".glb", ".gltf", ".obj", ".stl", ".ply")
+        mesh_path = next(
+            (
+                item.get("path", "")
+                for item in subtree
+                if isinstance(item, dict) and item.get("path", "").lower().endswith(mesh_exts)
+            ),
+            None,
+        )
+        if not mesh_path:
+            raise AdapterError(
+                message=f"No mesh file {mesh_exts} found in {repo_id}/meshes/{item_id}/google_16k",
+                source=self.source.value,
+            )
+        # format 取实际扩展名（去点、小写）
+        fmt = mesh_path.rsplit(".", 1)[-1].lower()
+        # C4: 下载走 huggingface_download_base_url（默认 hf-mirror.com）
+        download_base = settings.huggingface_download_base_url.rstrip("/")
+        url = f"{download_base}/datasets/{repo_id}/resolve/main/{mesh_path.lstrip('/')}"
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.YCB,
             item_id=item_id,
-            format="stl",
+            format=fmt,
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),

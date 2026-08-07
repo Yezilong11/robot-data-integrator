@@ -119,8 +119,12 @@ class FrankaAdapter(BaseAdapter):
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：GitHub raw URL 降级回退。"""
-        url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf"
+        """路径 B：GitHub raw URL 降级回退。
+
+        C6 修复：frankaemika/franka_ros develop 分支下实际是 .urdf.xacro（xacro 模板），
+        不是 .urdf。已 curl 验证 panda/fr3 路径可达。
+        """
+        url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf.xacro"
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.FRANKA,

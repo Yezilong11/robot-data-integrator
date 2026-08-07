@@ -1,15 +1,13 @@
 # src/rdi/graph/nodes/retrieve_data.py
 """数据查找节点。
 
-负责将数据需求清单分发为并行查找任务，
-使用 LangGraph Send API 实现动态 fan-out。
+按数据需求清单逐个调用 Adapter 执行查找，
+汇总所有结果后返回 state 更新。
 """
 
 import time
 from datetime import datetime
 from typing import Any
-
-from langgraph.types import Send
 
 from rdi.adapters.registry import select_adapter
 from rdi.exceptions import AdapterError
@@ -29,31 +27,36 @@ def _get_hermes_engine() -> HermesEngine:
     return _hermes_engine
 
 
-def node_retrieve_data(state: SystemState) -> list[Send]:
-    """根据数据需求清单动态生成并行查找任务。
+async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
+    """按数据需求清单逐个执行查找，返回合并后的检索结果。
 
-    当前为空骨架实现，每个需求返回一个占位 Send。
-    后续由人员 C（数据工程师）接入真实 Adapter。
-
-    Returns:
-        Send 列表，每个 Send 指向 retrieve_single 节点
+    原实现通过 ``Send`` 做 fan-out，但 LangGraph 要求普通节点只能返回 dict，
+    因此改为在节点内部顺序调用 ``node_retrieve_single`` 并汇总结果。
     """
     requirements = state.get("data_requirements", [])
+    if not requirements:
+        return {
+            "provenance": [f"[{datetime.now().isoformat()}] retrieve_data: 无数据需求，跳过查找"],
+        }
 
-    sends = []
+    retrieval_results: dict[str, RetrievalResult] = {}
+    provenance: list[str] = []
+
     for req in requirements:
-        sends.append(
-            Send(
-                "retrieve_single",
-                {
-                    "req_id": req.req_id,
-                    "req_type": req.req_type.value,
-                    "description": req.description,
-                    "keywords": req.keywords,
-                },
-            )
-        )
-    return sends
+        payload = {
+            "req_id": req.req_id,
+            "req_type": req.req_type.value,
+            "description": req.description,
+            "keywords": req.keywords,
+        }
+        update = await node_retrieve_single(payload)
+        retrieval_results.update(update.get("retrieval_results", {}))
+        provenance.extend(update.get("provenance", []))
+
+    return {
+        "retrieval_results": retrieval_results,
+        "provenance": provenance,
+    }
 
 
 async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:

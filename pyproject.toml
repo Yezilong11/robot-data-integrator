@@ -102,6 +102,10 @@ ignore_missing_imports = true
 module = "fitz.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "lxml.*"
+ignore_missing_imports = true
+
 # ─── pytest 配置 ───
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

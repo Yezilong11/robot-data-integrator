@@ -12,15 +12,46 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：MuJoCo 已知示例场景
+# 降级回退：MuJoCo 已知示例场景（C9/C10 修复：使用 mujoco_menagerie 实际存在的机器人）
 _FALLBACK_SCENES: list[dict[str, str]] = [
-    {"id": "ant", "title": "Ant", "description": "MuJoCo Ant 四足机器人场景"},
-    {"id": "humanoid", "title": "Humanoid", "description": "MuJoCo 人形机器人场景"},
-    {"id": "grasp", "title": "Grasp", "description": "MuJoCo 机械臂抓取场景"},
-    {"id": "manipulation", "title": "Manipulation", "description": "MuJoCo 操作任务场景"},
-    {"id": "hand", "title": "Hand", "description": "MuJoCo 灵巧手场景"},
-    {"id": "cart_pole", "title": "CartPole", "description": "MuJoCo 倒立摆经典场景"},
+    {
+        "id": "franka_emika_panda",
+        "title": "Franka Emika Panda",
+        "description": "Franka Panda 7-DOF 机械臂 MJCF",
+    },
+    {
+        "id": "agility_cassie",
+        "title": "Agility Cassie",
+        "description": "Agility Robotics Cassie 双足机器人",
+    },
+    {"id": "aloha", "title": "ALOHA", "description": "ALOHA 双臂操作系统"},
+    {
+        "id": "anybotics_anymal_b",
+        "title": "ANYmal B",
+        "description": "ANYbotics ANYmal B 四足机器人",
+    },
+    {
+        "id": "boston_dynamics_spot",
+        "title": "BD Spot",
+        "description": "Boston Dynamics Spot 四足机器人",
+    },
+    {
+        "id": "berkeley_humanoid",
+        "title": "Berkeley Humanoid",
+        "description": "UC Berkeley 人形机器人",
+    },
 ]
+
+# C10 修复：item_id → mujoco_menagerie 仓库 main 分支实际 XML 路径
+# （已 curl 验证：mujoco_menagerie 的 XML 文件名不统一，需逐个映射）
+_FETCH_XML: dict[str, str] = {
+    "franka_emika_panda": "franka_emika_panda/panda.xml",
+    "agility_cassie": "agility_cassie/cassie.xml",
+    "aloha": "aloha/aloha.xml",
+    "anybotics_anymal_b": "anybotics_anymal_b/anymal_b.xml",
+    "boston_dynamics_spot": "boston_dynamics_spot/spot.xml",
+    "berkeley_humanoid": "berkeley_humanoid/humanoid.xml",
+}
 
 
 class MuJoCoAdapter(BaseAdapter):
@@ -48,13 +79,20 @@ class MuJoCoAdapter(BaseAdapter):
             return await self._search_fallback(query)
 
     async def _search_primary(self, query: str) -> list[SearchResult]:
-        """路径 A：文档解析方式（文档原始对接方式）— 解析 MuJoCo 文档页面。"""
+        """路径 A：文档解析方式（文档原始对接方式）— 解析 MuJoCo 文档页面。
+
+        C9 修复：CSS 选择器收紧到 a[href$='.xml']（仅 .xml 文件链接），
+        且过滤含 # 的 href（文档锚点如 #Saint_Venant-Kirchhoff_model 不是场景）。
+        """
         url = f"{self._web_url}/en/latest/modeling.html"
         soup = await self._scrape_html(url)
         results: list[SearchResult] = []
-        # 解析文档页面中的示例链接
-        for link in soup.select("a[href*='xml'], a[href*='model'], a[href*='example']"):
-            scene_id = self._attr_str(link, "href").rstrip("/").split("/")[-1].replace(".xml", "")
+        # C9: 仅匹配 .xml 文件链接，过滤文档锚点
+        for link in soup.select("a[href$='.xml']"):
+            href = self._attr_str(link, "href")
+            if "#" in href or not href:
+                continue
+            scene_id = href.rstrip("/").split("/")[-1].replace(".xml", "")
             if not scene_id:
                 continue
             title = link.get_text(strip=True) or scene_id
@@ -98,28 +136,18 @@ class MuJoCoAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载 MJCF XML 配置文件。优先文档页面，失败降级 GitHub raw URL。"""
-        try:
-            return await self._fetch_primary(item_id)
-        except AdapterError:
-            return await self._fetch_fallback(item_id)
+        """下载 MJCF XML 配置文件。
 
-    async def _fetch_primary(self, item_id: str) -> RawData:
-        """路径 A：直接 URL 构造（文档静态资源路径）。"""
-        url = f"{self._web_url}/en/latest/_static/{item_id}.xml"
-        content = await self._download_bytes(url)
-        return RawData(
-            source=DataSource.MUJOCO,
-            item_id=item_id,
-            format="xml",
-            data=content,
-            url=url,
-            size_bytes=len(content),
-        )
-
-    async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：GitHub raw URL 降级回退。"""
-        xml_url = f"{self.base_url}/{item_id}/{item_id}.xml"
+        C10 修复：删除虚构的 _fetch_primary（readthedocs _static/{id}.xml 不存在），
+        直接走 mujoco_menagerie GitHub raw URL。XML 文件名不统一，用 _FETCH_XML 映射。
+        """
+        rel_path = _FETCH_XML.get(item_id)
+        if not rel_path:
+            raise AdapterError(
+                message=f"Unknown mujoco scene: {item_id} (no path mapping)",
+                source=self.source.value,
+            )
+        xml_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(xml_url)
         return RawData(
             source=DataSource.MUJOCO,

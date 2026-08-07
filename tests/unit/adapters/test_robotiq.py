@@ -19,11 +19,11 @@ class TestRobotiqAdapter:
         assert adapter.source == DataSource.ROBOTIQ
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 设置正确（C8 修复后走 ros-industrial-attic）。"""
         adapter = RobotiqAdapter()
         assert (
             adapter.base_url
-            == "https://raw.githubusercontent.com/ros-industrial/robotiq/kinetic-devel"
+            == "https://raw.githubusercontent.com/ros-industrial-attic/robotiq/kinetic-devel"
         )
 
     def test_adapter_rate_limit(self) -> None:

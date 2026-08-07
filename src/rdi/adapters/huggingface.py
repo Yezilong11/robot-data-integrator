@@ -66,7 +66,9 @@ class HuggingFaceAdapter(BaseAdapter):
         Raises:
             AdapterError: 下载失败
         """
-        config_url = f"https://huggingface.co/{item_id}/resolve/main/config.json"
+        # C1: 走可配置的下载镜像（默认 hf-mirror.com），避免硬编码 huggingface.co
+        download_base = settings.huggingface_download_base_url.rstrip("/")
+        config_url = f"{download_base}/{item_id}/resolve/main/config.json"
         content = await self._download_bytes(config_url)
         return RawData(
             source=DataSource.HUGGINGFACE,

@@ -10,8 +10,16 @@ from rdi.models.common import DataReqType  # noqa: I001 — 模块级导入，�
 
 # ─── Adapter 注册表 ───
 ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
-    DataReqType.PAPER: ["ArxivAdapter", "IEEEXploreAdapter"],
-    DataReqType.CODE: ["GitHubAdapter", "PapersWithCodeAdapter"],
+    DataReqType.PAPER: [
+        "ArxivAdapter",
+        "PapersWithCodeAdapter",
+        "IEEEXploreAdapter",
+    ],
+    DataReqType.CODE: [
+        "GitHubAdapter",
+        "HuggingFaceAdapter",
+        "PapersWithCodeAdapter",
+    ],
     DataReqType.DATASET: [
         "GitHubAdapter",
         "HuggingFaceAdapter",
@@ -24,6 +32,8 @@ ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
         "FrankaAdapter",
         "AllegroAdapter",
         "RobotiqAdapter",
+        "MuJoCoAdapter",
+        "IsaacSimAdapter",
         "GitHubAdapter",
     ],
     DataReqType.MESH: ["YCBAdapter", "GoogleScannedAdapter", "GraspNetAdapter"],

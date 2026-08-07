@@ -66,14 +66,15 @@ class TestGoogleScannedAdapter:
 
     @pytest.mark.asyncio
     async def test_google_scanned_fetch_with_mock(self) -> None:
-        """Mock 驱动：fetch 返回 RawData 且字段正确。"""
+        """C5 修复后：fetch 返回 zip 压缩包，format 为 zip。"""
         adapter = GoogleScannedAdapter()
-        fake_obj = b"OBJ mesh data"
+        fake_zip = b"PK\x03\x04zip data"
         with patch.object(
-            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_obj
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_zip
         ):
-            raw = await adapter.fetch("Mug")
+            raw = await adapter.fetch("ACE_Coffee_Mug")
             assert raw.source == DataSource.GOOGLE_SCANNED
-            assert raw.item_id == "Mug"
-            assert raw.format == "obj"
+            assert raw.item_id == "ACE_Coffee_Mug"
+            assert raw.format == "zip"
             assert raw.size_bytes > 0
+            assert raw.url.endswith(".zip")
