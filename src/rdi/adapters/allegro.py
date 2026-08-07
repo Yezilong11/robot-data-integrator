@@ -112,28 +112,15 @@ class AllegroAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载 URDF 文件。优先 wonikrobotics.com，失败降级 GitHub raw URL。"""
-        try:
-            return await self._fetch_primary(item_id)
-        except AdapterError:
-            return await self._fetch_fallback(item_id)
+        """下载 URDF 文件。
 
-    async def _fetch_primary(self, item_id: str) -> RawData:
-        """路径 A：直接 URL 构造（官方页面路径模式）。"""
-        url = f"{self._web_url}/allegro-hand/{item_id}/{item_id}.urdf"
-        content = await self._download_bytes(url)
-        return RawData(
-            source=DataSource.ALLEGRO,
-            item_id=item_id,
-            format="urdf",
-            data=content,
-            url=url,
-            size_bytes=len(content),
-        )
-
-    async def _fetch_fallback(self, item_id: str) -> RawData:
-        """路径 B：GitHub raw URL 降级回退。"""
-        urdf_url = f"{self.base_url}/allegro_hand_description/urdf/{item_id}.urdf"
+        C7 修复：simlabor/allegro_hand_ros 仓库 404 不存在；
+        改用 pal-robotics/allegro_hand（PAL Robotics 官方仓库）。
+        该仓库只有一个 allegro_hand.urdf.xacro（左右手通过 xacro 参数区分），
+        已 curl 验证 allegro_hand_description/urdf/allegro_hand.urdf.xacro 可达。
+        删除虚构的 _fetch_primary（wonikrobotics.com 网页路径不存在）。
+        """
+        urdf_url = f"{self.base_url}/allegro_hand_description/urdf/allegro_hand.urdf.xacro"
         content = await self._download_bytes(urdf_url)
         return RawData(
             source=DataSource.ALLEGRO,

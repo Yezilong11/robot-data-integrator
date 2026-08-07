@@ -53,28 +53,62 @@ class TestAdapterRegistry:
             assert req_type in ADAPTER_REGISTRY, f"Missing {req_type} in ADAPTER_REGISTRY"
 
     def test_paper_primary_is_arxiv(self) -> None:
-        """正常情况：PAPER 主源是 ArxivAdapter。"""
+        """正常情况：PAPER 主源是 ArxivAdapter，且包含 PapersWithCodeAdapter。"""
         names = ADAPTER_REGISTRY[DataReqType.PAPER]
         assert names[0] == "ArxivAdapter"
+        assert "PapersWithCodeAdapter" in names
 
     def test_code_primary_is_github(self) -> None:
-        """正常情况：CODE 主源是 GitHubAdapter。"""
+        """正常情况：CODE 主源是 GitHubAdapter，且包含 HuggingFaceAdapter。"""
         names = ADAPTER_REGISTRY[DataReqType.CODE]
         assert names[0] == "GitHubAdapter"
+        assert "HuggingFaceAdapter" in names
+
+    def test_robot_urdf_contains_sim_adapters(self) -> None:
+        """正常情况：ROBOT_URDF 包含 MuJoCoAdapter 和 IsaacSimAdapter。"""
+        names = ADAPTER_REGISTRY[DataReqType.ROBOT_URDF]
+        assert "MuJoCoAdapter" in names
+        assert "IsaacSimAdapter" in names
+
+    def test_paper_contains_all_b_expected(self) -> None:
+        """B 系统预期：PAPER 包含 Arxiv + PapersWithCode。"""
+        names = ADAPTER_REGISTRY[DataReqType.PAPER]
+        assert "ArxivAdapter" in names
+        assert "PapersWithCodeAdapter" in names
+
+    def test_code_contains_all_b_expected(self) -> None:
+        """B 系统预期：CODE 至少包含 GitHub + HuggingFace。"""
+        names = ADAPTER_REGISTRY[DataReqType.CODE]
+        assert "GitHubAdapter" in names
+        assert "HuggingFaceAdapter" in names
+
+    def test_robot_urdf_contains_all_b_expected(self) -> None:
+        """B 系统预期：ROBOT_URDF 包含正确的机器人模型源。"""
+        names = ADAPTER_REGISTRY[DataReqType.ROBOT_URDF]
+        for expected in [
+            "FrankaAdapter",
+            "AllegroAdapter",
+            "RobotiqAdapter",
+            "MuJoCoAdapter",
+            "IsaacSimAdapter",
+        ]:
+            assert expected in names, f"{expected} missing from ROBOT_URDF"
 
 
 class TestSelectAdapter:
     """select_adapter 单元测试。"""
 
     def test_select_paper_returns_arxiv(self) -> None:
-        """正常情况：PAPER 返回 ArxivAdapter 类。"""
+        """正常情况：PAPER 返回包含 ArxivAdapter 和 PapersWithCodeAdapter。"""
         adapters = select_adapter(DataReqType.PAPER)
         assert ArxivAdapter in adapters
+        assert PapersWithCodeAdapter in adapters
 
     def test_select_code_returns_github(self) -> None:
-        """正常情况：CODE 返回 GitHubAdapter 类。"""
+        """正常情况：CODE 返回包含 GitHubAdapter 和 HuggingFaceAdapter。"""
         adapters = select_adapter(DataReqType.CODE)
         assert GitHubAdapter in adapters
+        assert HuggingFaceAdapter in adapters
 
     def test_select_returns_adapter_subclasses(self) -> None:
         """正常情况：返回的都是 BaseAdapter 子类。"""

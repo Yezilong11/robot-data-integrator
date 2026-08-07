@@ -19,10 +19,11 @@ class TestIsaacSimAdapter:
         assert adapter.source == DataSource.ISAAC
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 设置正确（C11 修复后走 isaac-sim/IsaacLab）。"""
         adapter = IsaacSimAdapter()
         assert (
-            adapter.base_url == "https://raw.githubusercontent.com/NVIDIA-Omniverse/IsaacSim/main"
+            adapter.base_url
+            == "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2"
         )
 
     def test_adapter_rate_limit(self) -> None:
@@ -32,10 +33,7 @@ class TestIsaacSimAdapter:
 
     @pytest.mark.asyncio
     async def test_search_fallback_returns_results(self) -> None:
-        """路径 A 失败时降级到路径 B，返回硬编码匹配结果。
-
-        mock _scrape_html 抛 AdapterError 模拟路径 A 失败，验证降级到 fallback。
-        """
+        """路径 A 失败时降级到路径 B，返回硬编码匹配结果。"""
         adapter = IsaacSimAdapter()
         with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.side_effect = AdapterError(
@@ -59,29 +57,29 @@ class TestIsaacSimAdapter:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_fetch_primary_success(self) -> None:
-        """路径 A 成功：mock _download_bytes 返回数据，format 为 usd。"""
+    async def test_fetch_success(self) -> None:
+        """C11 修复后：单路径 fetch 走 IsaacLab Python 资产配置。"""
         adapter = IsaacSimAdapter()
-        fake_usd = b"# USD data"
+        fake_py = b"# Isaac Lab asset config"
         with patch.object(
-            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_usd
-        ):
-            raw = await adapter.fetch("franka_cabinet")
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_py
+        ) as mock_dl:
+            raw = await adapter.fetch("franka")
         assert raw.source == DataSource.ISAAC
-        assert raw.format == "usd"
-        assert raw.data == fake_usd
-        assert raw.size_bytes == len(fake_usd)
-        assert raw.size_bytes > 0
+        assert raw.format == "python"
+        assert raw.data == fake_py
+        assert raw.size_bytes == len(fake_py)
+        assert "robots/franka.py" in raw.url
+        mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_fetch_both_paths_fail_raises(self) -> None:
-        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+    async def test_fetch_fail_raises(self) -> None:
+        """C11 修复后：单路径 fetch 失败直接抛 AdapterError。"""
         adapter = IsaacSimAdapter()
         with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
             mock_dl.side_effect = AdapterError(
                 message="download failed", source=DataSource.ISAAC.value
             )
             with pytest.raises(AdapterError):
-                await adapter.fetch("franka_cabinet")
-        # 路径 A + 路径 B 各一次下载尝试
-        assert mock_dl.await_count == 2
+                await adapter.fetch("franka")
+        mock_dl.assert_awaited_once()

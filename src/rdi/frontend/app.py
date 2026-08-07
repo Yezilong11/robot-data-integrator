@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 import json
 import os
@@ -134,6 +135,135 @@ def build_demo_state(goal: str, review_decision: str, feedback: str) -> dict[str
     }
 
 
+def build_failure_state(
+    goal: str,
+    paper_file: Any,
+    review_decision: str,
+    feedback: str,
+    error_message: str,
+) -> dict[str, Any]:
+    created_at = datetime.now().isoformat(timespec="seconds")
+    package_id = f"fallback-package-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    package_dir = OUTPUT_ROOT / package_id
+    files_dir = package_dir / "files"
+    files_dir.mkdir(parents=True, exist_ok=True)
+
+    pdf_bytes = read_uploaded_pdf(paper_file)
+
+    (files_dir / "goal.txt").write_text(goal, encoding="utf-8")
+    (package_dir / "error_report.txt").write_text(error_message, encoding="utf-8")
+
+    if pdf_bytes is not None:
+        (files_dir / "uploaded_pdf.info.txt").write_text(
+            f"PDF bytes length: {len(pdf_bytes)}",
+            encoding="utf-8",
+        )
+
+    provenance = [
+        f"{created_at} frontend received user goal",
+        f"{created_at} frontend read pdf bytes: {len(pdf_bytes) if pdf_bytes else 0}",
+        f"{created_at} backend failed before returning experiment_package",
+        f"{created_at} frontend generated fallback package",
+    ]
+
+    validation_issues = [
+        {
+            "severity": "error",
+            "req_id": "backend-runtime",
+            "message": error_message,
+            "suggestion": "Check backend dependency loading or return fallback state.",
+            "auto_fixable": False,
+            "context": {"stage": "run_graph"},
+        }
+    ]
+
+    missing_items = [
+        {
+            "req_id": "backend-runtime",
+            "req_type": "unknown",
+            "description": "Backend did not return experiment_package.",
+            "reason": error_message,
+            "alternatives": [
+                "Disable Hermes/ChromaDB during first integration.",
+                "Fix xxhash environment issue.",
+                "Return minimal fallback state from backend.",
+            ],
+            "fallback_sources": [],
+        }
+    ]
+
+    manifest = {
+        "package_info": {
+            "package_id": package_id,
+            "goal": goal,
+            "created_at": created_at,
+            "iteration": 0,
+            "status": "fallback_failed",
+        },
+        "files": [
+            {
+                "req_id": "frontend-goal",
+                "path": "files/goal.txt",
+                "format": "txt",
+                "source_url": "local://frontend-input",
+                "retrieved_at": created_at,
+                "transformations": ["stored_user_goal"],
+                "confidence": 1.0,
+                "completeness": 100.0,
+            },
+            {
+                "req_id": "backend-error",
+                "path": "error_report.txt",
+                "format": "txt",
+                "source_url": "local://backend-error",
+                "retrieved_at": created_at,
+                "transformations": ["captured_exception"],
+                "confidence": 1.0,
+                "completeness": 100.0,
+            },
+        ],
+        "missing_items": [
+            {
+                "req_id": "backend-runtime",
+                "reason": error_message,
+                "alternatives": [
+                    "Fix xxhash/ChromaDB environment.",
+                    "Return minimal backend fallback state.",
+                ],
+            }
+        ],
+        "quality_report": {
+            "total_requirements": 1,
+            "fulfilled": 0,
+            "missing": 1,
+            "validation_issues": 1,
+            "avg_confidence": 0.0,
+            "avg_completeness": 0.0,
+        },
+        "provenance_log": provenance,
+        "output_dir": str(package_dir),
+    }
+
+    write_json(package_dir / "manifest.json", manifest)
+    (package_dir / "provenance.log").write_text("\n".join(provenance), encoding="utf-8")
+
+    return {
+        "user_goal": goal,
+        "data_requirements": [],
+        "retrieval_results": {},
+        "retrieval_errors": [],
+        "parsed_data": {},
+        "validation_issues": validation_issues,
+        "experiment_package": manifest,
+        "missing_items": missing_items,
+        "review_decision": review_decision,
+        "user_feedback": [feedback] if feedback.strip() else [],
+        "iteration_count": 0,
+        "provenance": provenance,
+        "errors": [error_message],
+    }
+
+
 def run_graph(goal: str, paper_file: Any, review_decision: str, feedback: str) -> dict[str, Any]:
     builder = importlib.import_module("rdi.graph.builder")
     graph = builder.build_graph()
@@ -151,9 +281,11 @@ def run_graph(goal: str, paper_file: Any, review_decision: str, feedback: str) -
     if pdf_bytes is not None:
         state["paper_pdf"] = pdf_bytes
 
-    result = graph.invoke(
-        state,
-        config={"configurable": {"thread_id": str(uuid.uuid4())}},
+    result = asyncio.run(
+        graph.ainvoke(
+            state,
+            config={"configurable": {"thread_id": str(uuid.uuid4())}},
+        )
     )
 
     if isinstance(result, dict):
@@ -196,7 +328,13 @@ def run_workflow(
             state = run_graph(goal, paper_file, review_decision, feedback)
         else:
             state = build_demo_state(goal, review_decision, feedback)
-
+        if not state.get("experiment_package"):
+            errors = to_plain(state.get("errors", []))
+            if isinstance(errors, list) and errors:
+                error_message = "; ".join(str(item) for item in errors)
+            else:
+                error_message = "Backend returned no experiment_package."
+            state = build_failure_state(goal, paper_file, review_decision, feedback, error_message)
         manifest = to_plain(state.get("experiment_package", {}))
         validation_issues = to_plain(state.get("validation_issues", []))
         missing_items = to_plain(state.get("missing_items", []))
@@ -220,14 +358,22 @@ def run_workflow(
         )
 
     except Exception as exc:
+        state = build_failure_state(goal, paper_file, review_decision, feedback, str(exc))
+        manifest = to_plain(state.get("experiment_package", {}))
+        validation_issues = to_plain(state.get("validation_issues", []))
+        missing_items = to_plain(state.get("missing_items", []))
+        provenance = to_plain(state.get("provenance", []))
+        package_dir = get_package_dir(state)
+        tree = package_tree(package_dir) if package_dir else ""
+
         return (
-            f"运行失败：{exc}",
-            {"errors": [str(exc)]},
-            "",
-            "",
-            [],
-            [],
-            "",
+            "运行失败，已生成前端兜底数据包",
+            summarize_state(state),
+            tree,
+            json.dumps(manifest, ensure_ascii=False, indent=2),
+            validation_issues,
+            missing_items,
+            "\n".join(str(item) for item in provenance),
         )
 
 

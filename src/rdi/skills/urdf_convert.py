@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from lxml import etree  # type: ignore[import-untyped]
+from lxml import etree
 
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
 from rdi.skills.base import BaseSkill

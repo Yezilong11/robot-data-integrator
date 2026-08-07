@@ -123,7 +123,7 @@ class LLMClient:
                         model=self._model,
                         retry_count=attempt,
                     )
-                return content  # type: ignore[no-any-return]
+                return content
             except OpenAIError as e:
                 last_err = e
                 if attempt < self._max_retries:
