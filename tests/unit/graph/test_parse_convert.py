@@ -142,3 +142,85 @@ def test_node_empty_state_returns_empty_dicts() -> None:
     assert out["parsed_data"] == {}
     assert out["missing_items"] == []
     assert out["errors"] == []
+
+
+def test_node_passes_urdf_mesh_paths_to_sim_config() -> None:
+    """sim_config 处理时，节点应把 URDF/Mesh 输出路径传给 SimConfigSkill。"""
+    sample_base = Path(__file__).parent.parent / "skills" / "sample_data"
+    mesh_data = (sample_base / "mesh" / "hand.stl").read_bytes()
+    urdf_data = (sample_base / "urdf" / "allegro_hand_r.urdf").read_bytes()
+    isaac_data = b"isaac: {objects: [{name: box, type: box, pos: [0,0,0], size: [1,1,1]}]}"
+
+    urdf_req = DataReq(
+        req_id="r_urdf",
+        req_type=DataReqType.ROBOT_URDF,
+        description="robot",
+        priority=Priority.REQUIRED,
+    )
+    mesh_req = DataReq(
+        req_id="r_mesh",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+    )
+    sim_req = DataReq(
+        req_id="r_sim",
+        req_type=DataReqType.SIM_CONFIG,
+        description="sim",
+        priority=Priority.REQUIRED,
+    )
+
+    state: SystemState = {
+        "data_requirements": [urdf_req, mesh_req, sim_req],
+        "retrieval_results": {
+            "r_urdf": RetrievalResult(
+                req_id="r_urdf",
+                data=RawData(
+                    source=DataSource.GITHUB,
+                    item_id="panda",
+                    format="urdf",
+                    data=urdf_data,
+                    url="https://example.com/panda.urdf",
+                ),
+                status="success",
+            ),
+            "r_mesh": RetrievalResult(
+                req_id="r_mesh",
+                data=RawData(
+                    source=DataSource.GITHUB,
+                    item_id="hand",
+                    format="stl",
+                    data=mesh_data,
+                    url="https://example.com/hand.stl",
+                ),
+                status="success",
+            ),
+            "r_sim": RetrievalResult(
+                req_id="r_sim",
+                data=RawData(
+                    source=DataSource.GITHUB,
+                    item_id="scene",
+                    format="yaml",
+                    data=isaac_data,
+                    url="https://example.com/scene",
+                ),
+                status="success",
+            ),
+        },
+    }
+
+    out = node_parse_convert(state)
+
+    assert "r_urdf" in out["parsed_data"]
+    assert "r_mesh" in out["parsed_data"]
+    assert "r_sim" in out["parsed_data"]
+    sim_item = out["parsed_data"]["r_sim"]
+    assert isinstance(sim_item, ParsedItem)
+    assert sim_item.req_type == DataReqType.SIM_CONFIG
+    assert sim_item.canonical_format == "mjcf"
+    assert isinstance(sim_item.data, bytes)
+    assert sim_item.output_path == "sim_config/scene.xml"
+    assert b"<mujoco" in sim_item.data
+    assert b"robots/panda.urdf" in sim_item.data
+    assert b"objects/hand.stl" in sim_item.data
+    assert b'<mesh file="objects/hand.stl" name="hand"/>' in sim_item.data

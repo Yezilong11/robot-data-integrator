@@ -76,20 +76,53 @@ async def test_retrieve_single_calls_hermes_inject_and_record(
     assert result["retrieval_results"]["req_000"].status == "success"
 
 
-async def test_retrieve_single_returns_success_result(
+async def test_retrieve_single_uses_keywords_for_search_query(
     mock_hermes: Mock, mock_adapters: AsyncMock
 ) -> None:
-    """验证节点返回真实 RetrievalResult（由 Adapter search → fetch 产生）。"""
+    """C2-fix: 有 keywords 时优先用 keywords 拼接作为 search query，而不是中文 description。"""
     payload = {
         "req_id": "req_001",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人的 URDF 描述文件",
+        "keywords": ["Franka", "Panda", "URDF"],
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_001"].status == "success"
+    # search 应该用英文关键词，而不是中文长描述
+    mock_adapters.search.assert_called_once_with("Franka Panda URDF")
+
+
+async def test_retrieve_single_falls_back_to_description_when_keywords_empty(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """keywords 为空时，应回退到 description 作为 search query。"""
+    payload = {
+        "req_id": "req_002",
         "req_type": "robot_urdf",
         "description": "查找URDF",
         "keywords": [],
     }
     result = await node_retrieve_single(payload)
 
-    retrieval = result["retrieval_results"]["req_001"]
-    assert retrieval.req_id == "req_001"
+    assert result["retrieval_results"]["req_002"].status == "success"
+    mock_adapters.search.assert_called_once_with("查找URDF")
+
+
+async def test_retrieve_single_returns_success_result(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """验证节点返回真实 RetrievalResult（由 Adapter search → fetch 产生）。"""
+    payload = {
+        "req_id": "req_003",
+        "req_type": "robot_urdf",
+        "description": "查找URDF",
+        "keywords": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_003"]
+    assert retrieval.req_id == "req_003"
     assert retrieval.status == "success"
     assert retrieval.data is not None
     assert retrieval.data.item_id == "test-1"
@@ -97,6 +130,38 @@ async def test_retrieve_single_returns_success_result(
     assert retrieval.source == DataSource.GITHUB
     assert retrieval.search_results[0].item_id == "test-1"
     assert "provenance" in result
+
+
+async def test_retrieve_single_augments_sim_config_with_context_keywords(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """sim_config 查找时，应将机器人/物体名称等上下文关键词加入 search query。"""
+
+    def _search_side_effect(query: str) -> list[SearchResult]:
+        # 仅当组合查询命中上下文关键词时才返回结果，验证 augment 生效
+        if "Franka" in query and "Panda" in query:
+            return [
+                SearchResult(item_id="scene-1", title="Franka MuJoCo", source=DataSource.GITHUB)
+            ]
+        return []
+
+    mock_adapters.search.side_effect = _search_side_effect
+
+    payload = {
+        "req_id": "req_sim",
+        "req_type": "sim_config",
+        "description": "MuJoCo 仿真环境",
+        "keywords": ["MuJoCo"],
+        "context_keywords": ["Franka", "Panda", "hand"],
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_sim"].status == "success"
+    calls = [call.args[0] for call in mock_adapters.search.call_args_list]
+    # 应依次尝试：完整 query、组合上下文 query、原始 keyword、上下文 keyword
+    assert calls[0] == "MuJoCo"
+    assert "MuJoCo" in calls[1] and "Franka" in calls[1] and "Panda" in calls[1]
+    assert any("Franka" in c and "Panda" in c for c in calls)
 
 
 async def test_retrieve_single_uses_fallback_sources_order(

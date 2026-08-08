@@ -69,7 +69,10 @@ class SkillRegistry:
         return self._instances[req_type]
 
     def process_retrieval_result(
-        self, result: RetrievalResult, req: DataReq
+        self,
+        result: RetrievalResult,
+        req: DataReq,
+        context: dict[str, Any] | None = None,
     ) -> ParsedItem | MissingItem:
         """把 RetrievalResult 交给对应 Skill 处理，装配 ParsedItem 或 MissingItem。
 
@@ -77,6 +80,9 @@ class SkillRegistry:
         - req_type 无对应 Skill → MissingItem
         - Skill 处理成功且 data 非空 → ParsedItem（provenance 从 RawData 装配）
         - Skill 处理失败或抛异常 → MissingItem（防御性捕获）
+
+        Args:
+            context: 调用方传入的额外上下文，将透传给 Skill.process（如 object_name）。
         """
         if result.data is None or result.status != "success":
             return MissingItem(
@@ -100,7 +106,7 @@ class SkillRegistry:
         raw = result.data
         fmt = raw.format
         name = raw.item_id or result.req_id
-        extra: dict[str, Any] = {}
+        extra: dict[str, Any] = dict(context) if context else {}
         if req.req_type == DataReqType.GRASP:
             # 抓取数据集约定由数据源推断；GRASP 的 process 需要 dataset_name
             src = result.source or raw.source

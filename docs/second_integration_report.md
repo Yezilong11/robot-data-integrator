@@ -1,8 +1,8 @@
 # 第二次联调报告
 
-> 报告日期：2026-08-07  
+> 报告日期：2026-08-08  
 > 对应目标：让系统生成包含可被外部工具加载的 URDF / mesh / grasp / sim_config 等真实文件的机器人实验数据包。  
-> 生成数据包：`data/output_packages/package-20260807-165308/`  
+> 生成数据包：`data/output_packages/package-20260808-181854/`  
 > 演示脚本：`scripts/run_second_integration_demo.py`
 
 ---
@@ -21,6 +21,7 @@
 - 强化了 Skill 兼容性：`URDFSkill` 支持 xacro 降级处理，`MeshSkill` 支持 `glb`/`zip` 兜底。
 - 在 `validate` 节点增加深度可加载性校验（URDF/mesh/sim_config/grasp）。
 - 跑通「Franka + YCB + MuJoCo」端到端 demo，生成真实数据包样例，并回归通过 378 个测试用例。
+- 2026-08-08 追加修复：中文自然语言目标端到端可用；`sim_config` 输出 MuJoCo MJCF XML；`grasp` 支持 GraspNet metadata JSON 解析并生成 synthetic grasp JSON；全量测试回归至 393 个通过。
 
 ---
 
@@ -80,6 +81,14 @@
 - Adapter 探活：`scripts/_probe_adapters.py` 14/15 通过（IEEE 因缺少 API Key 被跳过）。
 - 全量测试：`pytest` 378 passed / 1 skipped / 9 deselected。
 
+### Task 8：中文目标与真实 XML/grasp 修复
+
+- 修复 `retrieve_data` 多 token 查询问题，支持包含中文、空格与标点的自然语言目标正常检索。
+- 修复 `MuJoCoAdapter` / `IsaacSimAdapter` token 匹配逻辑，使 "MuJoCo" / "Isaac Sim" 等关键词能正确命中对应适配器。
+- `SimConfigSkill` 增加最小 MJCF 回退：当无法从 `mujoco_menagerie` 获取真实 scene 时，生成包含 URDF、mesh 与 worldbody 的基本 MuJoCo MJCF XML，并以 XML bytes 输出。
+- `GraspSkill` 增加 GraspNet metadata JSON 解析，在真实 `.npz`/`.pkl` 不可用时生成 synthetic grasp JSON，避免节点崩溃。
+- 使用中文目标「我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉，并测试抓取姿态的稳定性。」完成端到端验证，输出 URDF + STL + MJCF XML + grasp JSON。
+
 ---
 
 ## 3. 验证结果
@@ -96,7 +105,7 @@
 
 | 指标 | 结果 |
 |---|---|
-| 通过 | 378 |
+| 通过 | 393 |
 | 跳过 | 1 |
 | 取消选择 | 9 |
 | 失败 | 0 |
@@ -109,30 +118,31 @@
 
 ### 3.4 生成数据包验证
 
-数据包路径：`data/output_packages/package-20260807-165308/`
+数据包路径：`data/output_packages/package-20260808-181854/`
 
 manifest 摘要：
 
 ```json
 {
   "package_info": {
-    "goal": "Franka Panda grasps YCB banana in MuJoCo simulation",
-    "package_id": "package-20260807-165308",
+    "goal": "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉，并测试抓取姿态的稳定性。",
+    "package_id": "package-20260808-181854",
     "status": "complete"
   },
   "files": [
     {"req_id": "req_000", "path": "files/req_000.urdf", "format": "urdf"},
     {"req_id": "req_001", "path": "files/req_001.stl", "format": "trimesh.Trimesh"},
-    {"req_id": "req_002", "path": "files/req_002.json", "format": "SceneDescription"}
+    {"req_id": "req_002", "path": "files/req_002.xml", "format": "mujoco-mjcf"},
+    {"req_id": "req_003", "path": "files/req_003.json", "format": "grasp-metadata-json"}
   ],
   "missing_items": [],
   "quality_report": {
-    "total_requirements": 3,
-    "fulfilled": 3,
+    "total_requirements": 4,
+    "fulfilled": 4,
     "missing": 0,
-    "validation_issues": 2,
-    "avg_confidence": 0.9333,
-    "avg_completeness": 93.33
+    "validation_issues": 0,
+    "avg_confidence": 0.95,
+    "avg_completeness": 95.0
   }
 }
 ```
@@ -141,7 +151,9 @@ manifest 摘要：
 
 - URDF：使用 `yourdfpy.URDF.load(..., load_meshes=False)` 成功解析。
 - Mesh：使用 `trimesh.load(..., force="mesh")` 成功加载，faces 数量正常。
-- 数据包包含 URDF、mesh、sim_config 三类真实文件，满足「至少两类真实文件」的验收要求。
+- MJCF XML：可被 MuJoCo 加载，包含 worldbody、robot 与物体引用。
+- Grasp JSON：包含 synthetic grasp 元数据，可被下游工具读取。
+- 数据包包含 URDF、mesh、sim_config、grasp 四类文件，满足第二次联调目标。
 
 ---
 
@@ -149,23 +161,26 @@ manifest 摘要：
 
 | 问题/风险 | 影响 | 当前状态 |
 |---|---|---|
-| `parse_goal` 在本地真实 LLM 环境下仍不稳定 | 自然语言目标可能无法正确生成 `robot_urdf`/`mesh`/`sim_config` 类型的 DataReq | 已使用确定性 demo 脚本绕过，真实 LLM 环境需继续优化 prompt 与模型稳定性 |
+| `parse_goal` 在本地真实 LLM 环境下仍不稳定 | 自然语言目标可能无法正确生成 `robot_urdf`/`mesh`/`sim_config` 类型的 DataReq | 中文目标已可端到端运行，但不同措辞/模型的稳定性仍需继续优化 prompt 与输出 schema |
 | IEEE API Key 未配置 | IEEE 源无法 fetch | 仅影响该单一源，已通过探活脚本跳过 |
 | GoogleScanned 仍可能慢或失败 | mesh 来源的鲁棒性 | 已做超时降级，但仍依赖网络环境；YCB 作为主要 mesh 源已可用 |
-| GraspNet / DexGrasp 真实单文件下载常不可用 | grasp 数据缺失 | 已实现 metadata 返回作为降级，端到端 demo 以 URDF+mesh+sim_config 为主 |
-| `validation_issues=2` | 质量报告显示存在 2 个校验问题 | 不影响主要文件可加载性，后续需细化问题分类与 severity |
+| `grasp` 数据为 synthetic/metadata 降级 | 不是真实 GraspNet `.npz`/`.pkl` 抓取数据 | 已实现 metadata JSON 解析与 synthetic grasp 生成，端到端不崩溃，但真实抓取数据路径仍需补齐 |
+| `sim_config` 常为最小 MJCF 回退 | 生成的仿真场景较简单，未复用真实 `mujoco_menagerie` 场景 | 可生成合法 MuJoCo XML，但复杂真实场景覆盖率有限 |
+| `human_review` 节点仍是占位 | 缺少真实反馈闭环 | 节点存在但仅返回 satisfied，未实现 revise/unsatisfied 循环重检索 |
+| 输出数据包目录扁平 | 所有文件放在 `files/`，不利于直接使用 | 已记录需求，计划在第三次联调按类型组织目录 |
 
 ---
 
 ## 5. 下一步建议（第三次联调方向）
 
-1. **稳定真实 LLM 目标解析**：在 `parse_goal` 中引入更结构化的输出 schema 与更多 few-shot，必要时切换到本地可复现的轻量模型或规则兜底，减少 demo 脚本依赖。
-2. **补齐真实 grasp 数据路径**：继续打磨 GraspNet / DexGrasp 单个 `.npz`/`.pkl` 下载逻辑，增加本地缓存与备选源（如 YCB-Video grasp 标注）。
-3. **human_review 真实闭环**：实现用户反馈触发的 LangGraph 循环重检索，支持 revise/unsatisfied 决策。
-4. **数据包目录结构化**：按 `robots/`、`objects/`、`grasps/`、`sim_config/`、`scripts/` 组织输出，提升研究人员直接使用体验。
-5. **Hermes 经验库接入**：记录「源-需求类型-成功率」统计，让 `retrieve_data` 能基于历史成功率动态推荐备选源。
-6. **前端进度可视化**：在 `rdi.frontend.app` 中展示每个 DataReq 的检索阶段、成功/失败状态与原因。
-7. **IEEE / 其他 API Key 配置**：完善本地开发环境配置文档，减少探活失败项。
+1. **补齐真实 grasp 数据路径**：继续打磨 GraspNet / DexGrasp 单个 `.npz`/`.pkl` 下载逻辑，增加本地缓存与备选源（如 YCB-Video grasp 标注），替换当前的 synthetic/metadata 降级。
+2. **提升 `sim_config` 真实场景覆盖率**：优先复用 `mujoco_menagerie` 等真实 MJCF 场景，减少最小 MJCF 回退比例。
+3. **稳定真实 LLM 目标解析**：在 `parse_goal` 中引入更结构化的输出 schema 与更多 few-shot，覆盖中英文、不同句式与机器人/物体名称变体，必要时切换到本地可复现的轻量模型或规则兜底。
+4. **实现 `human_review` 真实闭环**：接入用户反馈触发的 LangGraph 循环重检索，支持 revise/unsatisfied 决策与重试策略。
+5. **数据包目录结构化**：按 `robots/`、`objects/`、`grasps/`、`sim_config/`、`scripts/` 组织输出，提升研究人员直接使用体验。
+6. **Hermes 经验库接入**：记录「源-需求类型-成功率」统计，让 `retrieve_data` 能基于历史成功率动态推荐备选源。
+7. **前端进度可视化**：在 `rdi.frontend.app` 中展示每个 DataReq 的检索阶段、成功/失败状态与原因。
+8. **IEEE / 其他 API Key 配置**：完善本地开发环境配置文档，减少探活失败项。
 
 ---
 
@@ -178,7 +193,7 @@ manifest 摘要：
 | 任务清单 | `.trae/specs/implement-second-integration/tasks.md` |
 | 技术指导 | `.trae/documents/second-integration-technical-guide.md` |
 | 演示脚本 | `scripts/run_second_integration_demo.py` |
-| 生成数据包 | `data/output_packages/package-20260807-165308/manifest.json` |
+| 生成数据包 | `data/output_packages/package-20260808-181854/manifest.json` |
 | CODE Skill | `src/rdi/skills/code_parse.py` |
 | DATASET Skill | `src/rdi/skills/dataset_parse.py` |
 | URDF Skill | `src/rdi/skills/urdf_convert.py` |
