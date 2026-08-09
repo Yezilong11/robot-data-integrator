@@ -11,8 +11,11 @@ Sensor），提供 parse → standardize → validate 三步处理流程，输�
 """
 
 from .base import BaseSkill
+from .code_parse import CodeSkill
+from .dataset_parse import DatasetSkill
 from .grasp_parse import DATASET_CONVENTIONS, CanonicalGrasp, GraspSkill
 from .mesh_process import MeshSkill
+from .paper_parse import PaperSkill
 from .policy_interface import PolicyInterfaceDoc, PolicyInterfaceSkill
 from .registry import SkillRegistry, default_registry
 from .sensor_data import SensorDataset, SensorDataSkill
@@ -22,13 +25,16 @@ from .urdf_convert import CanonicalRobot, Joint, Link, URDFSkill
 __all__ = [
     # 基类
     "BaseSkill",
-    # 6 类 Skill
+    # 8 类 Skill
     "URDFSkill",
     "MeshSkill",
     "GraspSkill",
     "SimConfigSkill",
     "PolicyInterfaceSkill",
     "SensorDataSkill",
+    "CodeSkill",
+    "DatasetSkill",
+    "PaperSkill",
     # 中间表示
     "CanonicalRobot",
     "Link",

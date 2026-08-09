@@ -82,13 +82,16 @@ class IsaacSimAdapter(BaseAdapter):
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
         """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
-        query_lower = query.lower()
+        tokens = query.lower().split()
         matched = [
             e
             for e in _FALLBACK_EXAMPLES
-            if query_lower in e["id"]
-            or query_lower in e["title"].lower()
-            or query_lower in e["description"].lower()
+            if any(
+                token in e["id"].lower()
+                or token in e["title"].lower()
+                or token in e["description"].lower()
+                for token in tokens
+            )
         ]
         return [
             SearchResult(

@@ -1,13 +1,27 @@
-# tests/unit/adapters/test_robotiq.py
 """RobotiqAdapter 的单元测试。"""
 
+import tempfile
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import yourdfpy
 
 from rdi.adapters.robotiq import RobotiqAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
+
+
+def _assert_urdf_parseable(data: bytes) -> None:
+    """使用 yourdfpy 解析 URDF 字节并断言至少含一个 link。"""
+    with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as f:
+        f.write(data)
+        tmp_path = f.name
+    try:
+        robot = yourdfpy.URDF.load(tmp_path, load_meshes=False)
+        assert robot.link_map
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
 
 
 class TestRobotiqAdapter:
@@ -72,6 +86,61 @@ class TestRobotiqAdapter:
         assert raw.data == fake_urdf
         assert raw.size_bytes == len(fake_urdf)
         assert raw.size_bytes > 0
+
+    @pytest.mark.asyncio
+    async def test_fetch_fallback_3f_plain_urdf(self) -> None:
+        """C2 修复：robotiq_3f_gripper 返回已展开纯 URDF，可被 yourdfpy 解析。"""
+        adapter = RobotiqAdapter()
+        fake_urdf = b"""<?xml version="1.0"?>
+<robot name="robotiq_3f">
+  <link name="base"/>
+  <joint name="j1" type="revolute">
+    <parent link="base"/>
+    <child link="finger"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" lower="-1" upper="1" velocity="1"/>
+  </joint>
+  <link name="finger"/>
+</robot>
+"""
+        with (
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
+            ) as mock_dl,
+            patch.object(adapter, "_fetch_primary", new_callable=AsyncMock) as mock_primary,
+        ):
+            mock_primary.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ROBOTIQ.value
+            )
+            raw = await adapter.fetch("robotiq_3f_gripper")
+        assert raw.source == DataSource.ROBOTIQ
+        assert raw.format == "urdf"
+        assert raw.url.endswith(".urdf")
+        _assert_urdf_parseable(raw.data)
+        mock_primary.assert_awaited_once()
+        mock_dl.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_fallback_2f_xacro_format(self) -> None:
+        """C2 修复：robotiq_2f_85 实际为 xacro，format 标记为 xacro。"""
+        adapter = RobotiqAdapter()
+        fake_xacro = b'<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotiq_2f_85"/>'
+        with (
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_xacro
+            ) as mock_dl,
+            patch.object(adapter, "_fetch_primary", new_callable=AsyncMock) as mock_primary,
+        ):
+            mock_primary.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ROBOTIQ.value
+            )
+            raw = await adapter.fetch("robotiq_2f_85")
+        assert raw.source == DataSource.ROBOTIQ
+        assert raw.format == "xacro"
+        assert raw.url.endswith(".xacro")
+        assert raw.data == fake_xacro
+        mock_primary.assert_awaited_once()
+        mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_fetch_both_paths_fail_raises(self) -> None:

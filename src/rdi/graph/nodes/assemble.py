@@ -25,6 +25,7 @@ from rdi.models import ManifestFile, ManifestMissingItem, PackageManifest, Quali
 _EXT_BY_FORMAT: dict[str, str] = {
     "urdf": ".urdf",
     "xml": ".xml",
+    "mjcf": ".xml",
     "stl": ".stl",
     "obj": ".obj",
     "npz": ".npz",

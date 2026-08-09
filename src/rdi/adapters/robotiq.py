@@ -138,6 +138,9 @@ class RobotiqAdapter(BaseAdapter):
         C8 修复：ros-industrial/robotiq 已迁至 ros-industrial-attic/robotiq，
         且文件路径不是 robotiq_description/urdf/{id}.urdf，而是按型号分散在
         {id}_gripper_visualization/urdf/ 下。使用 _FETCH_PATHS 映射表查实际路径。
+
+        C2 修复：根据实际文件扩展名标记 format；xacro 文件明确返回 format="xacro"，
+        便于 URDFSkill 做 xacro 兜底。
         """
         rel_path = _FETCH_PATHS.get(item_id)
         if not rel_path:
@@ -147,10 +150,11 @@ class RobotiqAdapter(BaseAdapter):
             )
         urdf_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(urdf_url)
+        fmt = "urdf" if rel_path.endswith(".urdf") else "xacro"
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
-            format="urdf",
+            format=fmt,
             data=content,
             url=urdf_url,
             size_bytes=len(content),

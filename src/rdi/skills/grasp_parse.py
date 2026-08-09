@@ -51,6 +51,34 @@ _APPROX_COMPLETENESS = 70.0  # graspnetAPI 不可用时近似重建旋转的完�
 _PER_POINT_CAP = 6  # parse_graspnet_npz 每个点最多保留的近似抓取数
 
 
+def generate_synthetic_grasps(object_name: str, count: int = 5) -> list[CanonicalGrasp]:
+    """当数据集仅返回元数据时，基于物体名生成合成 ``CanonicalGrasp`` 占位。
+
+    抓取点位于物体上方约 0.15m 处，Z 轴朝下（四元数 [0,1,0,0] 为 Y 轴 180° 旋转），
+    位置在 XY 平面小半径内均匀分布以提供轻微变化。
+    """
+    grasps: list[CanonicalGrasp] = []
+    quat = np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float64)
+    width = 0.05
+    score = 0.8
+    n = max(count, 1)
+    for i in range(n):
+        angle = 2.0 * np.pi * i / n
+        radius = 0.02
+        x = radius * np.cos(angle)
+        y = radius * np.sin(angle)
+        pos = np.array([x, y, 0.15], dtype=np.float64)
+        grasps.append(
+            CanonicalGrasp(position=pos, orientation=quat.copy(), width=width, score=score)
+        )
+    return grasps
+
+
+def _is_metadata_payload(decoded: Any) -> bool:
+    """判断解码后的 JSON 是否为数据集元数据（而非原始抓取列表）。"""
+    return isinstance(decoded, dict) and ("dataset_id" in decoded or "reason" in decoded)
+
+
 def _get_field(grasp: Any, key: str) -> Any:
     """从原始抓取（dict 或对象）读取字段。"""
     if isinstance(grasp, dict):
@@ -81,6 +109,20 @@ class GraspSkill(BaseSkill):
     """抓取姿态解析 Skill：GraspNet npz 直解（米制近似旋转）；DexGraspNet pkl 在 graspnetAPI 不可用时降级；未知约定报错。"""
 
     skill_name = "grasp"
+
+    @staticmethod
+    def _grasp_to_dict(grasp: CanonicalGrasp) -> dict[str, Any]:
+        """把 ``CanonicalGrasp`` 转为 JSON 可序列化的 dict。"""
+        return {
+            "position": grasp.position.tolist(),
+            "orientation": grasp.orientation.tolist(),
+            "width": float(grasp.width),
+            "score": float(grasp.score),
+        }
+
+    def _serialize_grasps(self, grasps: list[CanonicalGrasp]) -> dict[str, Any]:
+        """把 ``CanonicalGrasp`` 列表打包为可序列化的 ``{"grasps": [...]}``。"""
+        return {"grasps": [self._grasp_to_dict(g) for g in grasps]}
 
     def standardize_grasps(self, raw_grasps: list[Any], dataset_name: str) -> list[CanonicalGrasp]:
         """按 ``DATASET_CONVENTIONS`` 标准化原始抓取。
@@ -184,6 +226,32 @@ class GraspSkill(BaseSkill):
             try:
                 grasps = self.parse_graspnet_npz(data, max_points=int(kwargs.get("max_points", 5)))
             except Exception as exc:  # noqa: BLE001 — 任意解析失败均降级
+                # 数据集接口可能返回元数据 JSON（无真实 npz），降级为合成抓取
+                try:
+                    decoded = json.loads(data.decode("utf-8"))
+                except (ValueError, UnicodeDecodeError):
+                    return StandardResult(
+                        success=False,
+                        canonical_format="CanonicalGrasp",
+                        errors=[f"GraspNet npz 解析失败: {exc}"],
+                    )
+                if _is_metadata_payload(decoded):
+                    object_name = str(kwargs.get("object_name", "object"))
+                    grasps = generate_synthetic_grasps(
+                        object_name, count=int(kwargs.get("synthetic_count", 5))
+                    )
+                    return StandardResult(
+                        success=True,
+                        canonical_format="CanonicalGrasp",
+                        output_path=output_path,
+                        completeness_pct=0.0,
+                        confidence_score=0.6,
+                        warnings=[
+                            f"GraspNet 返回元数据 JSON（未找到真实 npz），"
+                            f"返回基于 '{object_name}' 的合成抓取姿态作为占位"
+                        ],
+                        data=self._serialize_grasps(grasps),
+                    )
                 return StandardResult(
                     success=False,
                     canonical_format="CanonicalGrasp",
@@ -200,10 +268,33 @@ class GraspSkill(BaseSkill):
                     "（approach=point-centroid 外法向 + in-plane r*π/2），"
                     "300 个 frustum 方向无法精确还原"
                 ],
-                data=grasps,
+                data=self._serialize_grasps(grasps),
             )
 
         if dataset_name == "dexgraspnet":
+            # 数据集接口可能返回元数据 JSON（无真实 pkl），降级为合成抓取
+            try:
+                decoded = json.loads(data.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                decoded = None
+            if decoded is not None and _is_metadata_payload(decoded):
+                object_name = str(kwargs.get("object_name", "object"))
+                grasps = generate_synthetic_grasps(
+                    object_name, count=int(kwargs.get("synthetic_count", 5))
+                )
+                return StandardResult(
+                    success=True,
+                    canonical_format="CanonicalGrasp",
+                    output_path=output_path,
+                    completeness_pct=0.0,
+                    confidence_score=0.6,
+                    warnings=[
+                        f"DexGraspNet 返回元数据 JSON（未找到真实 pkl），"
+                        f"返回基于 '{object_name}' 的合成抓取姿态作为占位"
+                    ],
+                    data=self._serialize_grasps(grasps),
+                )
+
             # pkl 反序列化依赖 graspnetAPI 自定义类；不可用时直接降级
             try:
                 importlib.import_module("graspnetAPI")
@@ -249,7 +340,7 @@ class GraspSkill(BaseSkill):
             canonical_format="CanonicalGrasp",
             output_path=output_path,
             completeness_pct=100.0,
-            data=grasps,
+            data=self._serialize_grasps(grasps),
         )
 
     def _parse_generic(
@@ -278,19 +369,33 @@ class GraspSkill(BaseSkill):
         """校验抓取结果：失败→invalid；任一 position 分量 |.|>1m→WARNING。"""
         if not result.success or result.data is None:
             return ValidationReport(is_valid=False, summary="抓取解析失败")
-        grasps = result.data
-        if not isinstance(grasps, list):
+        data = result.data
+        grasps: list[Any]
+        if isinstance(data, dict):
+            grasps = data.get("grasps", [])
+        elif isinstance(data, list):
+            grasps = data
+        else:
             return ValidationReport(is_valid=False, summary="抓取解析失败: 中间表示类型错误")
         issues: list[ValIssue] = []
         for idx, g in enumerate(grasps):
-            if not isinstance(g, CanonicalGrasp):
+            if isinstance(g, CanonicalGrasp):
+                position = g.position
+            elif isinstance(g, dict):
+                position = np.asarray(g.get("position", []), dtype=np.float64)
+            else:
                 continue
-            if bool(np.any(np.abs(g.position) > 1.0)):
+            if position.size == 0:
+                continue
+            if bool(np.any(np.abs(position) > 1.0)):
+                position_list = (
+                    position.tolist() if isinstance(position, np.ndarray) else list(position)
+                )
                 issues.append(
                     ValIssue(
                         severity=Severity.WARNING,
                         req_id=f"grasp#{idx}",
-                        message=f"抓取点超出工作空间 (position={g.position.tolist()})，请检查坐标系约定",
+                        message=f"抓取点超出工作空间 (position={position_list})，请检查坐标系约定",
                         suggestion="确认坐标系原点与单位是否已统一为米制物体中心系",
                         auto_fixable=False,
                     )

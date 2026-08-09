@@ -10,6 +10,7 @@
 
 import io
 import warnings
+import zipfile
 from typing import Any
 
 import numpy as np
@@ -18,8 +19,10 @@ import trimesh
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
 from rdi.skills.base import BaseSkill
 
-# 支持的输入格式
-_SUPPORTED_FMTS = frozenset({"stl", "obj", "ply", "dae"})
+# 支持的直接输入格式（trimesh 可直接加载）
+_SUPPORTED_FMTS = frozenset({"stl", "obj", "ply", "dae", "glb"})
+# zip 内部支持的 mesh 扩展名
+_ZIP_MESH_EXTS = frozenset({"stl", "obj", "ply", "dae", "glb"})
 # 疑似毫米单位阈值：bounding box 最大边长 > 10 视为毫米，需除以 1000 转米
 _MM_TO_M_EXTENT = 10.0
 # 触发 LOD 简化的最小面数
@@ -105,6 +108,25 @@ class MeshSkill(BaseSkill):
             return {"high": mesh, "collision": collision}
         return {"high": mesh, "collision": mesh}
 
+    def _load_zip_mesh(self, data: bytes) -> trimesh.Trimesh:
+        """解压 zip，找到第一个支持的 mesh 文件并用 trimesh 加载。"""
+        with zipfile.ZipFile(io.BytesIO(data), "r") as zf:
+            names = [
+                name
+                for name in zf.namelist()
+                if not name.endswith("/") and name.rsplit(".", 1)[-1].lower() in _ZIP_MESH_EXTS
+            ]
+            if not names:
+                raise ValueError("zip 中未找到支持的 mesh 文件 (stl/obj/ply/dae/glb)")
+            names.sort()
+            chosen = names[0]
+            file_bytes = zf.read(chosen)
+            ext = chosen.rsplit(".", 1)[-1].lower()
+        loaded = trimesh.load(io.BytesIO(file_bytes), file_type=ext, force="mesh")
+        if not isinstance(loaded, trimesh.Trimesh):
+            raise ValueError(f"trimesh 加载结果不是 Trimesh: {type(loaded).__name__}")
+        return loaded
+
     def process(self, data: bytes, **kwargs: Any) -> StandardResult:
         """处理原始 mesh 字节，返回标准化结果。
 
@@ -117,7 +139,7 @@ class MeshSkill(BaseSkill):
         """
         fmt = self._infer_fmt(kwargs)
         try:
-            mesh = self.parse(data, fmt)
+            mesh = self._load_zip_mesh(data) if fmt == "zip" else self.parse(data, fmt)
             # trimesh 对损坏输入常返回空 mesh（0 面）而非抛错，视作解析失败
             if len(mesh.faces) == 0:
                 return StandardResult(
@@ -213,5 +235,7 @@ class MeshSkill(BaseSkill):
         if isinstance(filename, str) and "." in filename:
             ext = filename.rsplit(".", 1)[-1].lower()
             if ext in _SUPPORTED_FMTS:
+                return ext
+            if ext == "zip":
                 return ext
         return "stl"

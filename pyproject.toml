@@ -50,6 +50,7 @@ dev = [
     "mypy>=1.10.0",
     "pre-commit>=3.7.0",
     "ipython>=8.20.0",
+    "yourdfpy>=0.0.60",
 ]
 
 [build-system]
@@ -131,3 +132,4 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+

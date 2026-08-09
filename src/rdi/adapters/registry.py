@@ -32,8 +32,6 @@ ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
         "FrankaAdapter",
         "AllegroAdapter",
         "RobotiqAdapter",
-        "MuJoCoAdapter",
-        "IsaacSimAdapter",
         "GitHubAdapter",
     ],
     DataReqType.MESH: ["YCBAdapter", "GoogleScannedAdapter", "GraspNetAdapter"],

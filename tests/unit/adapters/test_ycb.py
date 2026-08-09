@@ -1,13 +1,18 @@
 # tests/unit/adapters/test_ycb.py
 """YCBAdapter 的单元测试。"""
 
+import io
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import trimesh
 
 from rdi.adapters.ycb import YCBAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
+
+SAMPLE_MESH_DIR = Path(__file__).parents[1] / "skills" / "sample_data" / "mesh"
 
 
 class TestYCBAdapter:
@@ -57,11 +62,31 @@ class TestYCBAdapter:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_fetch_primary_success(self) -> None:
-        """C4 修订后：mock _request 返回文件树 + _download_bytes 返回数据。
+    async def test_fetch_prefers_obj(self) -> None:
+        """Task 3 修订：优先拉取 .obj/.stl，format 取实际扩展名。"""
+        adapter = YCBAdapter()
+        fake_obj = b"# OBJ mesh data"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "meshes/025_mug/google_16k/textured.glb"},
+            {"type": "file", "path": "meshes/025_mug/google_16k/nontextured.stl"},
+            {"type": "file", "path": "meshes/025_mug/google_16k/textured.obj"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_obj),
+        ):
+            raw = await adapter.fetch("025_mug")
+        assert raw.source == DataSource.YCB
+        assert raw.format == "obj"
+        assert raw.data == fake_obj
+        assert raw.size_bytes == len(fake_obj)
+        assert raw.size_bytes > 0
+        assert "meshes/025_mug/google_16k/textured.obj" in raw.url
 
-        C4 修订：ai-habitat/ycb 实测为 .glb 而非 .obj，format 字段取实际扩展名。
-        """
+    @pytest.mark.asyncio
+    async def test_fetch_falls_back_to_glb(self) -> None:
+        """Task 3 修订：无 obj/stl 时兼容 .glb/.gltf 兜底。"""
         adapter = YCBAdapter()
         fake_glb = b"GLB mesh data"
         mock_tree = [
@@ -73,16 +98,34 @@ class TestYCBAdapter:
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_glb),
         ):
             raw = await adapter.fetch("025_mug")
-        assert raw.source == DataSource.YCB
         assert raw.format == "glb"
         assert raw.data == fake_glb
-        assert raw.size_bytes == len(fake_glb)
-        assert raw.size_bytes > 0
-        assert "meshes/025_mug/google_16k/textured.glb" in raw.url
+
+    @pytest.mark.asyncio
+    async def test_fetch_minus_one_suffix_fallback(self) -> None:
+        """Task 3 修订：{item_id} 不存在时尝试 {item_id}-1 兜底。"""
+        adapter = YCBAdapter()
+        fake_stl = b"STL mesh data"
+        mock_tree_minus_one = [
+            {"type": "file", "path": "005_tomato_soup_can-1/google_16k/nontextured.stl"},
+        ]
+
+        async def fake_request(method: str, path: str) -> list:
+            if "005_tomato_soup_can-1" in path:
+                return mock_tree_minus_one
+            raise AdapterError(message="not found", source=DataSource.YCB.value, status_code=404)
+
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, side_effect=fake_request),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_stl),
+        ):
+            raw = await adapter.fetch("005_tomato_soup_can")
+        assert raw.format == "stl"
+        assert raw.data == fake_stl
 
     @pytest.mark.asyncio
     async def test_fetch_no_mesh_raises(self) -> None:
-        """C4 修订后：文件树无 mesh 文件时抛 AdapterError。"""
+        """Task 3 修订后：文件树无 mesh 文件时抛 AdapterError。"""
         adapter = YCBAdapter()
         mock_tree = [{"type": "file", "path": "README.md"}]
         with (
@@ -91,3 +134,21 @@ class TestYCBAdapter:
         ):
             await adapter.fetch("025_mug")
         assert "No mesh file" in exc_info.value.message
+
+    @pytest.mark.asyncio
+    async def test_fetch_returns_trimesh_loadable_obj(self) -> None:
+        """Task 3 验证：返回的 .obj 字节可被 trimesh.load 加载。"""
+        adapter = YCBAdapter()
+        real_obj = (SAMPLE_MESH_DIR / "triangle.obj").read_bytes()
+        mock_tree = [
+            {"type": "file", "path": "025_mug/google_16k/textured.obj"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=real_obj),
+        ):
+            raw = await adapter.fetch("025_mug")
+        assert raw.format == "obj"
+        mesh = trimesh.load(io.BytesIO(raw.data), file_type="obj")
+        assert len(mesh.vertices) == 3
+        assert len(mesh.faces) == 1
