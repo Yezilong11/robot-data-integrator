@@ -370,3 +370,80 @@ class TestBaseAdapterMirrorFallback:
         assert call.args == (primary_url,)
         assert call.kwargs["timeout"] == _GITHUB_RAW_FAST_TIMEOUT_S
         assert call.kwargs["max_retry"] == 1
+
+
+# ─── 本地文件缓存测试 ───
+
+
+class TestBaseAdapterFileCache:
+    """BaseAdapter 本地文件缓存（data/cache/<source>/）方法测试。"""
+
+    @staticmethod
+    def _adapter_with_root(tmp_path) -> BaseAdapter:
+        """构造 stub Adapter 并把缓存根目录指向临时目录。"""
+        adapter = _StubAdapter()
+        adapter.cache_root = lambda: tmp_path  # type: ignore[method-assign]
+        return adapter
+
+    def test_cache_root_dir_name_from_source(self) -> None:
+        """cache_root 目录名默认取 source.value，父级目录为 cache。"""
+        adapter = _StubAdapter()  # source = DataSource.ARXIV
+        root = adapter.cache_root()
+        assert root.name == "arxiv"
+        assert root.parent.name == "cache"
+
+    def test_cache_root_uses_custom_cache_dir_name(self, tmp_path) -> None:
+        """cache_dir_name 覆写后生效。"""
+        adapter = _StubAdapter()
+        adapter.cache_dir_name = "my-source"
+        root = adapter.cache_root()
+        assert root.name == "my-source"
+
+    def test_get_cache_path_sanitizes_item_id(self, tmp_path) -> None:
+        """item_id 中的不安全字符被清洗为下划线，不产生子目录。"""
+        adapter = self._adapter_with_root(tmp_path)
+        path = adapter.get_cache_path("a/b\\c:d e", suffix=".obj")
+        assert path == tmp_path / "a_b_c_d_e.obj"
+        assert path.parent == tmp_path
+
+    def test_get_cache_path_without_suffix(self, tmp_path) -> None:
+        """无 suffix 时直接以 item_id 命名。"""
+        adapter = self._adapter_with_root(tmp_path)
+        assert adapter.get_cache_path("item") == tmp_path / "item"
+
+    def test_save_and_load_roundtrip(self, tmp_path) -> None:
+        """save_to_cache 落盘后 is_cached / load_from_cache 均可命中。"""
+        adapter = self._adapter_with_root(tmp_path)
+        saved = adapter.save_to_cache("item1", b"payload")
+        assert saved == tmp_path / "item1"
+        assert adapter.is_cached("item1")
+        assert adapter.load_from_cache("item1") == b"payload"
+
+    def test_save_creates_nested_dirs(self, tmp_path) -> None:
+        """缓存根目录不存在时自动创建（mkdir parents=True）。"""
+        adapter = _StubAdapter()
+        root = tmp_path / "nested" / "dir"
+        adapter.cache_root = lambda: root  # type: ignore[method-assign]
+        adapter.save_to_cache("x", b"d")
+        assert (root / "x").is_file()
+
+    def test_load_miss_returns_none(self, tmp_path) -> None:
+        """未命中时 load_from_cache 返回 None、is_cached 返回 False。"""
+        adapter = self._adapter_with_root(tmp_path)
+        assert adapter.load_from_cache("missing") is None
+        assert not adapter.is_cached("missing")
+
+    def test_is_cached_false_for_empty_file(self, tmp_path) -> None:
+        """空文件不算有效缓存（非空才命中）。"""
+        adapter = self._adapter_with_root(tmp_path)
+        (tmp_path / "empty").write_bytes(b"")
+        assert not adapter.is_cached("empty")
+        assert adapter.load_from_cache("empty") is None
+
+    def test_suffix_distinguishes_files(self, tmp_path) -> None:
+        """同一 item_id 不同 suffix 互不干扰。"""
+        adapter = self._adapter_with_root(tmp_path)
+        adapter.save_to_cache("item", b"a", suffix=".urdf")
+        adapter.save_to_cache("item", b"b", suffix=".xacro")
+        assert adapter.load_from_cache("item", suffix=".urdf") == b"a"
+        assert adapter.load_from_cache("item", suffix=".xacro") == b"b"

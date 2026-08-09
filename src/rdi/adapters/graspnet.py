@@ -8,6 +8,7 @@
 import json
 from typing import Any
 
+from rdi.adapters._graspnet_objects import find_object_grasp_file
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
@@ -125,11 +126,14 @@ class GraspNetAdapter(BaseAdapter):
         self,
         item_id: str,
         req_type: DataReqType | None = None,
+        object_name: str | None = None,
     ) -> RawData:
         """按 DataReqType 返回单个 mesh/grasp 文件或 metadata JSON。
 
         - MESH: 只下载 ``models/`` 或仓库中首个 ``.obj/.ply/.stl/.dae`` mesh 文件
-        - GRASP: 只下载 ``grasp_label/`` 或仓库中首个 ``.npz/.pkl`` 抓取文件
+        - GRASP: 优先按 ``object_name``（物体名或 GraspNet object id，如 "banana"/
+          "003_cracker_box"）定位 ``grasp_label/`` 下的真实 ``.npz``；找不到回退仓库中
+          首个 ``.npz/.pkl`` 抓取文件
         - DATASET / None: 返回 metadata JSON（不下载整个 tar）
 
         若仓库中不存在对应类型的单个文件（如 GraspNet-1Billion 全为大体积
@@ -144,7 +148,7 @@ class GraspNetAdapter(BaseAdapter):
         if req_type == DataReqType.MESH:
             return await self._fetch_mesh(item_id, tree)
         if req_type == DataReqType.GRASP:
-            return await self._fetch_grasp(item_id, tree)
+            return await self._fetch_grasp(item_id, tree, object_name=object_name)
 
         # DATASET 或未知类型：返回 metadata
         return self._build_metadata(item_id, tree)
@@ -161,9 +165,20 @@ class GraspNetAdapter(BaseAdapter):
             "mesh 数据仅存在于大体积 tar 归档中",
         )
 
-    async def _fetch_grasp(self, item_id: str, tree: list[dict[str, Any]]) -> RawData:
-        """返回首个单个 grasp 文件；无则返回 metadata JSON。"""
-        file_path = self._find_file_by_ext(tree, _GRASP_EXTS)
+    async def _fetch_grasp(
+        self,
+        item_id: str,
+        tree: list[dict[str, Any]],
+        object_name: str | None = None,
+    ) -> RawData:
+        """返回物体对应或首个单个 grasp 文件；无则返回 metadata JSON。
+
+        提供 ``object_name``（或 item_id 本身为物体 id）时优先按物体名定位
+        ``grasp_label/`` 下的真实 ``.npz``，找不到回退 ``_find_file_by_ext``。
+        """
+        file_path = self._find_object_grasp_file(tree, object_name or item_id)
+        if file_path is None:
+            file_path = self._find_file_by_ext(tree, _GRASP_EXTS)
         if file_path:
             return await self._download_single(item_id, file_path)
         return self._build_metadata(
@@ -171,6 +186,10 @@ class GraspNetAdapter(BaseAdapter):
             tree,
             reason="仓库中无单个 grasp 文件 (.npz/.pkl)；grasp 标注仅存在于大体积 tar/hdf5 归档中",
         )
+
+    def _find_object_grasp_file(self, tree: list[dict[str, Any]], object_name: str) -> str | None:
+        """按物体名定位 ``grasp_label/`` 下的真实 ``.npz``；找不到返回 None。"""
+        return find_object_grasp_file(tree, object_name, _GRASP_EXTS)
 
     async def _download_single(self, item_id: str, file_path: str) -> RawData:
         """下载仓库中指定路径的单个文件。"""
@@ -194,6 +213,21 @@ class GraspNetAdapter(BaseAdapter):
         download_base = settings.huggingface_download_base_url.rstrip("/")
         url = f"{download_base}/datasets/{item_id}/resolve/main/{file_path.lstrip('/')}"
 
+        # 缓存命中直接返回；缓存键用 item_id + 文件路径区分（同一 repo 下不同文件）
+        cache_id = f"{item_id}/{file_path}"
+        if self.is_cached(cache_id):
+            data_bytes = self.load_from_cache(cache_id)
+            assert data_bytes is not None  # is_cached 已保证非空
+            return RawData(
+                source=DataSource.GRASPNET,
+                item_id=item_id,
+                format=fmt,
+                data=data_bytes,
+                url=url,
+                size_bytes=len(data_bytes),
+                metadata=self._file_metadata(fmt),
+            )
+
         # HEAD 预检体积，超阈值改返回 metadata
         size = await self._head_content_length(url)
         if size is not None and size > settings.max_fetch_bytes:
@@ -208,6 +242,7 @@ class GraspNetAdapter(BaseAdapter):
             )
 
         data_bytes = await self._download_bytes(url)
+        self.save_to_cache(cache_id, data_bytes)
         return RawData(
             source=DataSource.GRASPNET,
             item_id=item_id,
@@ -215,7 +250,13 @@ class GraspNetAdapter(BaseAdapter):
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),
+            metadata=self._file_metadata(fmt),
         )
+
+    @staticmethod
+    def _file_metadata(fmt: str) -> dict[str, Any]:
+        """真实 grasp 文件标注（.npz/.pkl 为真实抓取标注，mesh 等无标注）。"""
+        return {"is_real_grasp": True} if fmt in ("npz", "pkl") else {}
 
     def _build_metadata(
         self,
@@ -264,5 +305,5 @@ class GraspNetAdapter(BaseAdapter):
             if isinstance(item, dict):
                 path = item.get("path", "")
                 if path.lower().endswith(exts):
-                    return path
+                    return str(path)
         return None

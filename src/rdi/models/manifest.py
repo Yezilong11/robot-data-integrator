@@ -5,6 +5,7 @@
 """
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,6 +23,10 @@ class ManifestFile(BaseModel):
     transformations: list[str] = Field(default_factory=list, description="转换步骤列表")
     confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="置信度")
     completeness: float = Field(default=100.0, ge=0.0, le=100.0, description="完整度")
+    data_source_quality: str = Field(
+        default="fallback",
+        description="数据来源真实程度：real / synthetic / fallback",
+    )
 
 
 class ManifestMissingItem(BaseModel):
@@ -67,5 +72,13 @@ class PackageManifest(BaseModel):
     provenance_log: list[str] = Field(
         default_factory=list,
         description="溯源日志条目（每行一个时间戳记录）",
+    )
+    runtime_check: dict[str, Any] = Field(
+        default_factory=dict,
+        description="MuJoCo 一步仿真验证结果（status: passed/failed/skipped, detail 等）",
+    )
+    revision_history: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="human_review 触发的版本关联记录（revision, feedback, timestamp, package_id）",
     )
     output_dir: str = Field(description="数据包输出目录的绝对路径")

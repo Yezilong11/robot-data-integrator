@@ -6,6 +6,8 @@
 继续运行而非崩溃。
 """
 
+import logging
+import re
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +20,8 @@ from rdi.graph.state import SystemState
 from rdi.intelligence import LLMClient
 from rdi.intelligence.prompts import build_goal_parsing_prompt
 from rdi.models import DataReq, DataReqType, GoalSpec
+
+_logger = logging.getLogger(__name__)
 
 # ponytail: 临时用 PyMuPDF 直接抽取 PDF 文本，等 D 工程师的 PDFParseSkill 就绪后替换
 _PDF_TEXT_MAX_CHARS = 8000
@@ -70,56 +74,82 @@ def _extract_paper_text(paper_pdf: bytes | None) -> str | None:
     return text
 
 
-def _correct_req_type(req: DataReq) -> DataReq:
-    """基于 expected_format 与 description 关键词修正误分类的 req_type。
-
-    LLM 容易把真实机器人数据识别为通用的 code/dataset；
-    当显式格式或描述关键词命中时，强制映射到更具体的类型。
-    """
-    desc = req.description.lower()
-    fmt = (req.expected_format or "").lower()
-    text = f"{desc} {fmt}"
-    cur = req.req_type
-
-    if cur not in (DataReqType.CODE, DataReqType.DATASET):
-        return req
-
-    # 机器人描述文件
-    if "urdf" in text or "xacro" in text:
-        return req.model_copy(update={"req_type": DataReqType.ROBOT_URDF})
-
-    # 抓取姿态数据
-    grasp_keywords = ("grasp pose", "grasping pose", "grasp data", "grasp_label", "抓取姿态")
-    if any(k in text for k in grasp_keywords) or fmt in ("npz", "pkl"):
-        return req.model_copy(update={"req_type": DataReqType.GRASP})
-
-    # 仿真场景配置
-    sim_keywords = (
+# 强制映射关键词表（不区分大小写）。命中即覆盖 LLM 输出的 req_type。
+# 强关键词（格式后缀 / 专有名词）精确匹配，对任何 req_type 都生效；
+# 弱关键词（通用词）仅在 req_type 为非具体类型（code / dataset / unknown）时兜底，
+# 避免误伤已正确分类的具体需求（如 grasp 需求的描述里出现 "robot"）。
+_STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
+    DataReqType.ROBOT_URDF: ("urdf", "xacro"),
+    DataReqType.MESH: ("mesh", "3d model", "obj", "stl", "ply", "dae", "glb"),
+    DataReqType.GRASP: (
+        "grasp pose",
+        "grasping pose",
+        "grasp data",
+        "grasp_label",
+        "npz",
+        "pkl",
+        "抓取姿态",
+    ),
+    DataReqType.SIM_CONFIG: (
         "mujoco",
         "isaac",
+        "mjcf",
+        "xml",
         "simulation scene",
         "sim config",
-        "mjcf",
         "仿真场景",
         "仿真配置",
-    )
-    if any(k in text for k in sim_keywords) or fmt in ("xml", "mjcf"):
-        return req.model_copy(update={"req_type": DataReqType.SIM_CONFIG})
+    ),
+}
 
-    # 物体三维模型
-    mesh_keywords = (
-        "mesh",
-        "3d model",
-        "obj",
-        "stl",
-        "ply",
-        "dae",
-        "glb",
-        "三维模型",
-        "网格",
-    )
-    if any(k in text for k in mesh_keywords) or fmt in ("obj", "stl", "ply", "dae", "glb"):
-        return req.model_copy(update={"req_type": DataReqType.MESH})
+_WEAK_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
+    DataReqType.ROBOT_URDF: ("robot", "robots", "机器人"),
+    DataReqType.MESH: ("模型", "物体"),
+    DataReqType.GRASP: ("grasp", "grasping", "抓取"),
+    DataReqType.SIM_CONFIG: ("simulation", "仿真"),
+}
+
+# 仅这几种"非具体"类型允许用弱关键词兜底；paper / policy_model / sensor_data 等
+# 具体类型描述里常出现 robot / 抓取 等通用词，不应被强转。
+_WEAK_ELIGIBLE_TYPES: frozenset[DataReqType] = frozenset(
+    {DataReqType.CODE, DataReqType.DATASET, DataReqType.UNKNOWN}
+)
+
+
+def _kw_in(text: str, keyword: str) -> bool:
+    """不区分大小写的关键词匹配：中文按子串，英文按整词边界。
+
+    ``robot`` 只匹配独立单词，避免把 "Robotiq" / "robotics" 误判为 ROBOT_URDF；
+    ``obj`` 只匹配扩展名，避免命中 "objects"。
+    """
+    if any(ord(c) > 127 for c in keyword):
+        return keyword in text
+    return re.search(rf"\b{re.escape(keyword)}\b", text) is not None
+
+
+def _normalize_datareq(req: DataReq) -> DataReq:
+    """基于 expected_format 与 description 关键词修正误分类的 req_type。
+
+    LLM 容易把真实机器人数据识别为通用的 code/dataset，或给出错误的具体类型；
+    强关键词（格式后缀 / 专有名词）命中时无条件覆盖，弱关键词（通用词）仅在
+    req_type 为 code / dataset / unknown 时兜底，保证正常场景不误伤。
+    完全无法识别时标记 ``DataReqType.UNKNOWN`` 并记录 warning。
+    """
+    text = f"{req.description} {req.expected_format or ''}".lower()
+    cur = req.req_type
+
+    for typ, keywords in _STRONG_TYPE_KEYWORDS.items():
+        if any(_kw_in(text, k) for k in keywords):
+            return req.model_copy(update={"req_type": typ})
+
+    if cur in _WEAK_ELIGIBLE_TYPES:
+        for typ, keywords in _WEAK_TYPE_KEYWORDS.items():
+            if any(_kw_in(text, k) for k in keywords):
+                return req.model_copy(update={"req_type": typ})
+        if cur == DataReqType.UNKNOWN:
+            _logger.warning(
+                "parse_goal: 无法识别数据需求类型，req_id=%s 标记为 UNKNOWN", req.req_id
+            )
 
     return req
 
@@ -170,7 +200,7 @@ def node_parse_goal(state: SystemState) -> dict[str, Any]:
     ]
 
     # 后处理：根据 expected_format / description 关键词修正误分类
-    requirements = [_correct_req_type(req) for req in requirements]
+    requirements = [_normalize_datareq(req) for req in requirements]
 
     return {
         "parsed_goal": result.goal,

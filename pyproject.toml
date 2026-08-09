@@ -40,6 +40,10 @@ dependencies = [
     "PyYAML>=6.0",
 ]
 [project.optional-dependencies]
+# 运行时验证（MuJoCo 加载 + 一步仿真），体积较大故作为可选组
+runtime = [
+    "mujoco>=2.3",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",

@@ -157,6 +157,7 @@ class SkillRegistry:
             confidence_score=confidence,
             is_inferred=is_inferred,
             warnings=res.warnings,
+            data_source_quality=res.data_source_quality,
         )
 
 

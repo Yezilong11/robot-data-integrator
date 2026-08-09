@@ -5,7 +5,7 @@
 关键原则：所有字段必须可序列化（支持 Checkpoint 持久化）。
 """
 
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from rdi.models import (
     DataReq,
@@ -39,14 +39,18 @@ class SystemState(TypedDict, total=False):
     # ─── 解析标准化阶段（parse_and_convert 节点写入） ───
     parsed_data: dict[str, ParsedItem]  # key=req_id，标准化后的数据
     validation_issues: list[ValIssue]  # 质量校验发现的问题
+    runtime_check: dict[str, Any]  # SIM_CONFIG 的 MuJoCo 运行时验证结果（validate 节点写入）
 
     # ─── 整合输出阶段（assemble_package 节点写入） ───
     experiment_package: PackageManifest  # 最终数据包清单
     missing_items: list[MissingItem]  # 未找到的项 + 替代建议
 
     # ─── 用户审查阶段（human_review 节点写入） ───
-    review_decision: str  # "satisfied" 或 "revise"
+    review_decision: str  # "satisfied" / "revised" / "unsatisfied"
     user_feedback: list[str]  # 用户反馈记录
+    revised_goal: str | None  # revised 反馈转换后的修正目标描述
+    query_cache: dict[str, str]  # 查询关键词压缩缓存（key=description hash，value=压缩后关键词）
+    revision_history: list[dict[str, Any]]  # 修订记录（revision 序号/decision/feedback/revised_goal/timestamp，human_review 追加，assemble 写入 manifest）
 
     # ─── 元数据（各节点共享） ───
     iteration_count: int  # 当前迭代轮次

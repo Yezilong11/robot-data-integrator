@@ -2,9 +2,9 @@
 """数据包整合打包节点。
 
 将所有处理后的数据组装为标准化的可复现实验数据包：
-把 ``parsed_data`` 中每个 ``ParsedItem.data`` 序列化落盘到 ``files/`` 子目录，
-写出 ``manifest.json`` 与 ``provenance.log``，包含结构化 Manifest、目录结构、
-溯源日志和缺失项标注。
+把 ``parsed_data`` 中每个 ``ParsedItem.data`` 按 req_type 序列化落盘到对应子目录
+（如 ``robots/``、``objects/``），写出 ``manifest.json`` 与 ``provenance.log``，
+包含结构化 Manifest、目录结构、溯源日志和缺失项标注。
 """
 
 import dataclasses
@@ -19,7 +19,32 @@ import numpy as np
 
 from rdi.config.settings import settings
 from rdi.graph.state import SystemState
-from rdi.models import ManifestFile, ManifestMissingItem, PackageManifest, QualityReport
+from rdi.models import (
+    DataReqType,
+    ManifestFile,
+    ManifestMissingItem,
+    PackageManifest,
+    QualityReport,
+)
+
+# req_type → 数据包子目录；未知/未收录类型统一兜底 resources/
+# （与 CODE/DATASET/PAPER 归为同一通用资源目录，避免再引入碎片化 misc/ 目录）
+_SUBDIR_BY_REQ_TYPE: dict[DataReqType, str] = {
+    DataReqType.ROBOT_URDF: "robots",
+    DataReqType.MESH: "objects",
+    DataReqType.GRASP: "grasps",
+    DataReqType.SIM_CONFIG: "sim_config",
+    DataReqType.POLICY_MODEL: "policies",
+    DataReqType.CODE: "resources",
+    DataReqType.DATASET: "resources",
+    DataReqType.PAPER: "resources",
+}
+
+
+def _subdir_for_req_type(req_type: DataReqType) -> str:
+    """req_type → 数据包子目录名；未收录类型兜底 resources/。"""
+    return _SUBDIR_BY_REQ_TYPE.get(req_type, "resources")
+
 
 # canonical_format → 文件扩展名映射；未知格式默认 .bin
 _EXT_BY_FORMAT: dict[str, str] = {
@@ -83,7 +108,7 @@ def _serialize_item_data(data: Any) -> tuple[bytes | str, str]:
         return payload, ".json"
     if hasattr(data, "model_dump"):
         return data.model_dump_json(), ".json"
-    if isinstance(data, (dict, list)):
+    if isinstance(data, dict | list):
         return json.dumps(data, ensure_ascii=False, indent=2, default=_json_default), ".json"
     return repr(data), ".txt"
 
@@ -102,8 +127,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
 
     package_id = f"package-{now.strftime('%Y%m%d-%H%M%S')}"
     package_dir = Path(settings.output_dir) / package_id
-    files_dir = package_dir / "files"
-    files_dir.mkdir(parents=True, exist_ok=True)
+    package_dir.mkdir(parents=True, exist_ok=True)
 
     manifest_files: list[ManifestFile] = []
     provenance: list[str] = []
@@ -113,7 +137,9 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             content, suggested_ext = _serialize_item_data(item.data)
             ext = suggested_ext or _ext_for_format(item.canonical_format)
             filename = f"{_safe_filename(req_id)}{ext}"
-            target = files_dir / filename
+            rel_path = f"{_subdir_for_req_type(item.req_type)}/{filename}"
+            target = package_dir / rel_path
+            target.parent.mkdir(parents=True, exist_ok=True)
             if isinstance(content, bytes):
                 target.write_bytes(content)
             else:
@@ -127,13 +153,14 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         manifest_files.append(
             ManifestFile(
                 req_id=req_id,
-                path=f"files/{filename}",
+                path=rel_path,
                 format=item.canonical_format,
                 source_url=item.provenance.source_url,
                 retrieved_at=item.provenance.retrieved_at,
-                transformations=[*item.provenance.transformations, f"written_to:{filename}"],
+                transformations=[*item.provenance.transformations, f"written_to:{rel_path}"],
                 confidence=item.confidence_score,
                 completeness=item.completeness_pct,
+                data_source_quality=item.data_source_quality or "fallback",
             )
         )
 
@@ -173,6 +200,8 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
             f"落盘 {len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项"
         ],
+        runtime_check=state.get("runtime_check", {}),
+        revision_history=state.get("revision_history", []),
         output_dir=str(package_dir.resolve()),
     )
 

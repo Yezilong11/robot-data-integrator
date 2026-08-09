@@ -52,6 +52,32 @@ def package_tree(root: Path) -> str:
     return "\n".join(lines)
 
 
+def manifest_tree(manifest: Any) -> str:
+    """从 manifest ``files[].path`` 生成目录树（数据包目录缺失时的兜底展示）。
+
+    每个文件路径按 ``/`` 分层（含 ``robots/``、``objects/`` 等子目录），
+    目录行只出现一次，与 ``package_tree`` 的缩进风格一致。
+    """
+    if not isinstance(manifest, dict):
+        return ""
+    paths = sorted(
+        {str(f.get("path", "")).replace("\\", "/") for f in manifest.get("files", []) if f.get("path")}
+    )
+    if not paths:
+        return ""
+    lines: list[str] = []
+    seen_dirs: set[str] = set()
+    for rel in paths:
+        parts = rel.split("/")
+        for i in range(1, len(parts)):
+            prefix = "/".join(parts[:i])
+            if prefix not in seen_dirs:
+                seen_dirs.add(prefix)
+                lines.append("  " * (i - 1) + "- " + parts[i - 1])
+        lines.append("  " * (len(parts) - 1) + "- " + parts[-1])
+    return "\n".join(lines)
+
+
 def read_uploaded_pdf(file_obj: Any) -> bytes | None:
     if file_obj is None:
         return None
@@ -304,6 +330,99 @@ def summarize_state(state: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def build_req_status_table(state: dict[str, Any]) -> tuple[list[str], list[list[Any]]]:
+    """按每个 DataReq 构建状态表格（纯逻辑，供 Gradio Dataframe 与测试复用）。
+
+    每行对应 ``data_requirements`` 中的一条需求，按 req_id 关联
+    ``retrieval_results`` / ``retrieval_errors`` / ``validation_issues``。
+
+    状态推导规则（优先级从高到低）：
+    1. 有 retrieval result 且 status ∈ {missing, error} → 失败
+       （error_message 为失败原因）
+    2. is_fallback=True（非首选源成功，降级取数）或 status == "fallback" → 降级
+    3. 有 retrieval result 且 status == success → 成功
+    4. 无 retrieval result 但 retrieval_errors 含该 req → 失败（显示错误原因）
+    5. 仅 data_requirements 无任何检索痕迹：
+       - parsed_goal 已生成（解析完成、等待/正在检索）→ 检索中
+       - 否则（目标尚未完成解析）→ 解析中
+
+    失败原因优先级：
+    result.error_message > retrieval_errors 拼接 > validation_issues 中 error 级 message
+    > "未找到匹配数据"（missing 默认占位）
+    """
+    headers = ["req_id", "req_type", "状态", "数据源", "是否 fallback", "失败原因"]
+    reqs = to_plain(state.get("data_requirements", []))
+    results = to_plain(state.get("retrieval_results", {}))
+    errors = to_plain(state.get("retrieval_errors", []))
+    issues = to_plain(state.get("validation_issues", []))
+
+    errors_by_req: dict[str, list[dict[str, Any]]] = {}
+    for err in errors:
+        if isinstance(err, dict):
+            errors_by_req.setdefault(str(err.get("req_id", "")), []).append(err)
+    issues_by_req: dict[str, list[str]] = {}
+    for issue in issues:
+        if isinstance(issue, dict) and issue.get("severity") == "error":
+            issues_by_req.setdefault(str(issue.get("req_id", "")), []).append(
+                str(issue.get("message", ""))
+            )
+    has_parsed_goal = state.get("parsed_goal") is not None
+
+    rows: list[list[Any]] = []
+    for req in reqs:
+        if not isinstance(req, dict):
+            continue
+        req_id = str(req.get("req_id", ""))
+        result = results.get(req_id) if isinstance(results, dict) else None
+        result = result if isinstance(result, dict) else None
+        req_errors = errors_by_req.get(req_id, [])
+
+        # ── 状态推导 ──
+        if result is not None and result.get("status") in ("missing", "error"):
+            status = "失败"
+        elif (result is not None and result.get("is_fallback")) or (
+            result is not None and result.get("status") == "fallback"
+        ):
+            status = "降级"
+        elif result is not None:
+            status = "成功"
+        elif req_errors:
+            status = "失败"
+        else:
+            status = "检索中" if has_parsed_goal else "解析中"
+
+        # ── 数据源（成功/降级取 result.source；失败时补上尝试过的错误源） ──
+        sources: list[str] = []
+        if result is not None and result.get("source"):
+            sources.append(str(result["source"]))
+        if status == "失败" and not sources:
+            sources.extend(str(e.get("source", "")) for e in req_errors if e.get("source"))
+
+        # ── 失败原因 ──
+        reason = ""
+        if status == "失败":
+            if result is not None and result.get("error_message"):
+                reason = str(result["error_message"])
+            elif req_errors:
+                reason = "; ".join(str(e.get("error_message", "")) for e in req_errors)
+            if not reason and issues_by_req.get(req_id):
+                reason = "; ".join(issues_by_req[req_id])
+            if not reason and result is not None and result.get("status") == "missing":
+                reason = "未找到匹配数据"
+
+        rows.append(
+            [
+                req_id,
+                str(req.get("req_type", "")),
+                status,
+                ", ".join(dict.fromkeys(sources)),
+                "是" if (result is not None and result.get("is_fallback")) else "否",
+                reason,
+            ]
+        )
+    return headers, rows
+
+
 def get_package_dir(state: dict[str, Any]) -> Path | None:
     manifest = to_plain(state.get("experiment_package"))
     if isinstance(manifest, dict):
@@ -319,9 +438,20 @@ def run_workflow(
     paper_file: Any,
     review_decision: str,
     feedback: str,
-) -> tuple[str, dict[str, Any], str, str, Any, Any, str]:
+) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str]:
     if not goal.strip():
-        return "请输入实验目标。", {}, "", "", [], [], ""
+        req_headers, _ = build_req_status_table({})
+        return (
+            "请输入实验目标。",
+            {},
+            {"headers": req_headers, "data": []},
+            "",
+            "",
+            [],
+            {},
+            [],
+            "",
+        )
 
     try:
         if mode == "真实流程":
@@ -339,20 +469,29 @@ def run_workflow(
         validation_issues = to_plain(state.get("validation_issues", []))
         missing_items = to_plain(state.get("missing_items", []))
         provenance = to_plain(state.get("provenance", []))
+        runtime_check = to_plain(state.get("runtime_check", {}))
 
         package_dir = get_package_dir(state)
-        tree = package_tree(package_dir) if package_dir else ""
+        if package_dir is not None and package_dir.exists():
+            tree = package_tree(package_dir)
+        elif isinstance(manifest, dict) and manifest.get("files"):
+            tree = manifest_tree(manifest)
+        else:
+            tree = ""
 
         status = "运行完成"
         if state.get("errors"):
             status = "运行完成，但存在错误"
 
+        req_headers, req_rows = build_req_status_table(state)
         return (
             status,
             summarize_state(state),
+            {"headers": req_headers, "data": req_rows},
             tree,
             json.dumps(manifest, ensure_ascii=False, indent=2),
             validation_issues,
+            runtime_check,
             missing_items,
             "\n".join(str(item) for item in provenance),
         )
@@ -363,15 +502,24 @@ def run_workflow(
         validation_issues = to_plain(state.get("validation_issues", []))
         missing_items = to_plain(state.get("missing_items", []))
         provenance = to_plain(state.get("provenance", []))
+        runtime_check = to_plain(state.get("runtime_check", {}))
         package_dir = get_package_dir(state)
-        tree = package_tree(package_dir) if package_dir else ""
+        if package_dir is not None and package_dir.exists():
+            tree = package_tree(package_dir)
+        elif isinstance(manifest, dict) and manifest.get("files"):
+            tree = manifest_tree(manifest)
+        else:
+            tree = ""
 
+        req_headers, req_rows = build_req_status_table(state)
         return (
             "运行失败，已生成前端兜底数据包",
             summarize_state(state),
+            {"headers": req_headers, "data": req_rows},
             tree,
             json.dumps(manifest, ensure_ascii=False, indent=2),
             validation_issues,
+            runtime_check,
             missing_items,
             "\n".join(str(item) for item in provenance),
         )
@@ -392,7 +540,7 @@ def build_app() -> Any:
             goal = gr.Textbox(label="实验目标", lines=5)
             paper_file = gr.File(label="论文 PDF", file_types=[".pdf"])
             review_decision = gr.Radio(
-                choices=["satisfied", "revise"],
+                choices=["satisfied", "revised", "unsatisfied"],
                 value="satisfied",
                 label="审查决定",
             )
@@ -402,6 +550,11 @@ def build_app() -> Any:
 
         with gr.Tab("进度展示"):
             progress = gr.JSON(label="state_summary")
+            req_status = gr.Dataframe(
+                label="数据需求状态",
+                headers=["req_id", "req_type", "状态", "数据源", "是否 fallback", "失败原因"],
+                interactive=False,
+            )
             provenance = gr.Textbox(label="provenance", lines=12, interactive=False)
 
         with gr.Tab("数据包审查"):
@@ -410,6 +563,7 @@ def build_app() -> Any:
 
         with gr.Tab("校验与缺失项"):
             validation_issues = gr.JSON(label="validation_issues")
+            runtime_check = gr.JSON(label="runtime_check（MuJoCo 验证）")
             missing_items = gr.JSON(label="missing_items")
 
         run_button.click(
@@ -418,9 +572,11 @@ def build_app() -> Any:
             outputs=[
                 status,
                 progress,
+                req_status,
                 tree,
                 manifest,
                 validation_issues,
+                runtime_check,
                 missing_items,
                 provenance,
             ],

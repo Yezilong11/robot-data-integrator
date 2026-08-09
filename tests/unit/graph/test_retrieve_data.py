@@ -230,3 +230,75 @@ async def test_retrieve_single_uses_fallback_sources_order(
     assert retrieval.source == DataSource.FRANKA
     franka_mock.search.assert_called_once()
     github_mock.search.assert_not_called()
+
+
+async def test_retrieve_single_uses_hermes_priority_for_all_candidates(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Hermes 动态优先级对全部候选源生效：注册表顺序 github 在前，但 Hermes 认为 ieee 更可靠时应先尝试 ieee。"""
+    github_mock = AsyncMock()
+    github_mock.search.return_value = [
+        SearchResult(item_id="gh-1", title="GitHub", source=DataSource.GITHUB)
+    ]
+    github_mock.fetch.return_value = RawData(
+        source=DataSource.GITHUB,
+        item_id="gh-1",
+        format="code",
+        data=b"github code",
+        url="https://example.com/gh",
+    )
+
+    ieee_mock = AsyncMock()
+    ieee_mock.search.return_value = [
+        SearchResult(item_id="ieee-1", title="IEEE", source=DataSource.IEEE)
+    ]
+    ieee_mock.fetch.return_value = RawData(
+        source=DataSource.IEEE,
+        item_id="ieee-1",
+        format="code",
+        data=b"ieee code",
+        url="https://example.com/ieee",
+    )
+
+    class FakeGitHubAdapter:
+        source = DataSource.GITHUB
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await github_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await github_mock.fetch(item_id, req_type=req_type)
+
+    class FakeIEEEAdapter:
+        source = DataSource.IEEE
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await ieee_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await ieee_mock.fetch(item_id, req_type=req_type)
+
+    # 注册表顺序 github 优先，但 Hermes 历史成功率认为 ieee 更可靠
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter",
+        lambda req_type: [FakeGitHubAdapter, FakeIEEEAdapter],
+    )
+    mock_hermes.get_source_priority.return_value = ["ieee", "github"]
+
+    payload = {
+        "req_id": "req_000",
+        "req_type": "code",
+        "description": "查找代码",
+        "keywords": [],
+        "fallback_sources": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    # req_type 与候选源均传给 Hermes
+    mock_hermes.get_source_priority.assert_called_once()
+    assert mock_hermes.get_source_priority.call_args.args[0] == "code"
+    retrieval = result["retrieval_results"]["req_000"]
+    assert retrieval.status == "success"
+    assert retrieval.source == DataSource.IEEE
+    ieee_mock.search.assert_called_once()
+    github_mock.search.assert_not_called()

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from rdi.adapters.mujoco import MuJoCoAdapter
+from rdi.adapters.mujoco import _FALLBACK_SCENES, _FETCH_XML, MuJoCoAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
@@ -71,6 +71,43 @@ class TestMuJoCoAdapter:
         assert len(results) > 0
         assert results[0].item_id == "franka_emika_panda"
         mock_scrape.assert_awaited_once()
+
+    # ─── C13: 场景列表 / scene.xml 映射 / 关键词匹配 ───
+
+    def test_fallback_scenes_include_unitree_go2(self) -> None:
+        """C13：unitree_go2 加入降级场景列表，且每条记录均带 keywords。"""
+        ids = {s["id"] for s in _FALLBACK_SCENES}
+        assert "unitree_go2" in ids
+        assert all("keywords" in s and s["keywords"] for s in _FALLBACK_SCENES)
+        go2 = next(s for s in _FALLBACK_SCENES if s["id"] == "unitree_go2")
+        assert go2["keywords"] == ["unitree", "go2", "quadruped"]
+
+    def test_fetch_xml_uses_scene_xml_for_scene_scenes(self) -> None:
+        """C13：franka_emika_panda 与 unitree_go2 均映射到规范的 scene.xml 场景文件。"""
+        assert _FETCH_XML["unitree_go2"] == "unitree_go2/scene.xml"
+        assert _FETCH_XML["franka_emika_panda"].endswith("franka_emika_panda/scene.xml")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("query", "expected_id"),
+        [
+            ("go2", "unitree_go2"),
+            ("unitree robot", "unitree_go2"),
+            ("spot", "boston_dynamics_spot"),
+            ("boston dynamics", "boston_dynamics_spot"),
+            ("panda", "franka_emika_panda"),
+            ("viperx", "aloha"),
+        ],
+    )
+    async def test_search_fallback_keyword_match(self, query: str, expected_id: str) -> None:
+        """C13：keywords 参与 token 匹配，提升真实场景命中率。"""
+        adapter = MuJoCoAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.MUJOCO.value
+            )
+            results = await adapter.search(query)
+        assert any(r.item_id == expected_id for r in results)
 
     @pytest.mark.asyncio
     async def test_fetch_success(self) -> None:

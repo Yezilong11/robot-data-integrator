@@ -104,12 +104,13 @@ class TestGraspSkillDegradation:
     """降级与校验路径测试。"""
 
     def test_dexgraspnet_pkl_degrades(self) -> None:
-        """异常情况：graspnetAPI 不可用时 DexGraspNet pkl 降级，不抛异常。"""
+        """异常情况：graspnetAPI 不可用时 DexGraspNet pkl 解析失败降级为合成抓取，不抛异常。"""
         skill = GraspSkill()
         result = skill.process(b"not a pkl", dataset_name="dexgraspnet")
-        assert not result.success
-        assert any("graspnetAPI" in e for e in result.errors)
-        assert result.data is None
+        assert result.success
+        assert result.data_source_quality == "fallback"
+        assert any("合成" in w for w in result.warnings)
+        assert len(result.data["grasps"]) == 5
 
     def test_unknown_dataset_name(self) -> None:
         """异常情况：未知 dataset_name 返回 success=False，不猜测约定。"""

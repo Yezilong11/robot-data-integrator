@@ -12,6 +12,12 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
 
+@pytest.fixture(autouse=True)
+def _isolate_file_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """把本地文件缓存根目录指向临时目录，避免测试互相污染仓库 data/cache/。"""
+    monkeypatch.setattr(FrankaAdapter, "cache_root", lambda self: tmp_path)
+
+
 def _assert_urdf_parseable(data: bytes) -> None:
     """使用 yourdfpy 解析 URDF 字节并断言至少含一个 link。"""
     with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as f:
@@ -154,3 +160,23 @@ class TestFrankaAdapter:
                 await adapter.fetch("panda")
         # 路径 A + 路径 B 各一次下载尝试
         assert mock_dl.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_fetch_prefers_local_cache(self, tmp_path, monkeypatch) -> None:
+        """首次 fetch 触发下载并落盘；二次 fetch 命中缓存不再触发网络。"""
+        adapter = FrankaAdapter()
+        monkeypatch.setattr(adapter, "cache_root", lambda: tmp_path)
+        fake_urdf = b'<robot name="panda"/>'
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
+        ) as mock_dl:
+            raw1 = await adapter.fetch("panda")
+            raw2 = await adapter.fetch("panda")
+        assert raw1.data == fake_urdf
+        assert raw2.data == fake_urdf
+        assert raw1.format == "urdf"
+        # 仅首次触发下载；二次命中本地缓存
+        mock_dl.assert_awaited_once()
+        cache_file = tmp_path / "panda.urdf"
+        assert cache_file.is_file()
+        assert cache_file.read_bytes() == fake_urdf

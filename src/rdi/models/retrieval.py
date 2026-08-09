@@ -40,6 +40,10 @@ class RawData(BaseModel):
     url: str = Field(default="", description="获取来源 URL")
     retrieved_at: datetime = Field(default_factory=datetime.now, description="获取时间")
     size_bytes: int = Field(default=0, description="数据大小（字节）")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="额外元数据（如 is_real_grasp、grasp_annotation_available）",
+    )
 
 
 class RetrievalResult(BaseModel):

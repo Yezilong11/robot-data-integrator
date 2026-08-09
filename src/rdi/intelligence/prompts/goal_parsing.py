@@ -35,7 +35,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
   "requirements": [
     {
       "req_id": "从 req_000 起递增的字符串标识（req_000, req_001, ...）",
-      "req_type": "需求类型，必须是以下枚举值之一：paper / code / dataset / robot_urdf / mesh / grasp / sim_config / policy_model / sensor_data",
+      "req_type": "需求类型，必须是以下枚举值之一：paper / code / dataset / robot_urdf / mesh / grasp / sim_config / policy_model / sensor_data / unknown",
       "description": "数据需求描述（自然语言）",
       "priority": "优先级：required / recommended / optional",
       "keywords": ["搜索关键词"],
@@ -49,6 +49,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
 - goal.paper_info 为可选字段；未提供论文时设为 null 或省略整个对象。
 - requirements 数组每项的 req_id 必须从 req_000 起按需递增，确保唯一。
 - req_type 与 fallback_sources 必须严格匹配上述枚举字符串值，禁止自创。
+- 当输入完全无法匹配任何需求类型时，req_type 使用 unknown。
 
 # 需求拆分规则（必须遵守）
 
@@ -71,25 +72,127 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
   - ❌ ["弗兰卡熊猫机器人"]
   - ❌ ["黄香蕉"]
 
-# 类型识别示例
+# Few-shot 示例
 
-请根据数据内容的本质选择 req_type，而不是来源平台：
+下面每组均为「用户输入 → 期望的 requirements JSON 数组输出」。按数据内容的本质选择
+req_type（而不是来源平台），实际输出仍须包含完整的 goal + requirements 对象（符合上述
+schema），这里的示例只展示 requirements 数组部分。机器人 / 物体 / 仿真器 / 数据集名的
+英文原词必须保留在 keywords 中。
 
-- "Franka Panda URDF 机器人描述文件" → req_type="robot_urdf", expected_format="URDF", fallback_sources=["franka","github"], keywords=["Franka Panda", "机器人", "URDF"]
-- "YCB 香蕉的 3D 网格模型" → req_type="mesh", expected_format="STL", fallback_sources=["ycb","google_scanned"], keywords=["YCB", "banana", "香蕉", "STL"]
-- "抓取姿态 / grasp pose 数据" → req_type="grasp", expected_format="NPZ", fallback_sources=["graspnet","dexgrasp"], keywords=["grasp", "grasping pose", "抓取姿态", "NPZ"]
-- "MuJoCo 仿真场景配置" → req_type="sim_config", expected_format="XML", fallback_sources=["mujoco","isaac"], keywords=["MuJoCo", "仿真场景", "XML"]
-- "实现抓取策略的 GitHub 代码仓库" → req_type="code", expected_format="markdown", fallback_sources=["github","huggingface"]
-- "GraspNet 数据集或基准" → req_type="dataset", expected_format="JSON", fallback_sources=["graspnet","zenodo"]
+### 示例 1：完整复合目标（机器人 + 物体 + 抓取 + 仿真，英文）
 
-# 复合目标拆分示例
+输入："Franka Panda grasps YCB banana in MuJoCo"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Franka Panda 机器人 URDF 描述文件", "priority": "required", "keywords": ["Franka Panda", "机器人", "URDF"], "fallback_sources": ["franka", "github"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "YCB banana 的 3D 网格模型", "priority": "required", "keywords": ["YCB", "banana", "香蕉", "mesh"], "fallback_sources": ["ycb", "google_scanned"], "expected_format": "STL"},
+  {"req_id": "req_002", "req_type": "grasp", "description": "YCB banana 的抓取姿态数据", "priority": "required", "keywords": ["grasp", "grasp pose", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"},
+  {"req_id": "req_003", "req_type": "sim_config", "description": "MuJoCo 仿真场景配置", "priority": "required", "keywords": ["MuJoCo", "仿真场景", "XML"], "fallback_sources": ["mujoco", "isaac"], "expected_format": "XML"}
+]
 
-输入："我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉，并测试抓取姿态的稳定性。"
-必须输出 4 项 requirements：
-- robot_urdf: Franka Panda
-- mesh: YCB banana
-- sim_config: MuJoCo 场景
-- grasp: 抓取姿态 / grasp pose
+### 示例 2：完整复合目标（与示例 1 等价的中文表述）
+
+输入："我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Franka Panda 机器人 URDF 描述文件", "priority": "required", "keywords": ["Franka Panda", "机器人", "URDF"], "fallback_sources": ["franka", "github"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "YCB banana 的 3D 网格模型", "priority": "required", "keywords": ["YCB", "banana", "香蕉", "mesh"], "fallback_sources": ["ycb", "google_scanned"], "expected_format": "STL"},
+  {"req_id": "req_002", "req_type": "grasp", "description": "YCB banana 的抓取姿态数据", "priority": "required", "keywords": ["grasp", "grasp pose", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"},
+  {"req_id": "req_003", "req_type": "sim_config", "description": "MuJoCo 仿真场景配置", "priority": "required", "keywords": ["MuJoCo", "仿真场景", "XML"], "fallback_sources": ["mujoco", "isaac"], "expected_format": "XML"}
+]
+
+### 示例 3：Kinova Gen3 × EGAD × Isaac Sim（英文）
+
+输入："Kinova Gen3 picks up EGAD mug in Isaac Sim"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Kinova Gen3 机器人 URDF 描述文件", "priority": "required", "keywords": ["Kinova Gen3", "机器人", "URDF"], "fallback_sources": ["github", "zenodo"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "EGAD mug 的 3D 网格模型", "priority": "required", "keywords": ["EGAD", "mug", "杯子", "mesh"], "fallback_sources": ["zenodo", "google_scanned"], "expected_format": "STL"},
+  {"req_id": "req_002", "req_type": "grasp", "description": "EGAD mug 的抓取姿态数据", "priority": "required", "keywords": ["grasp", "grasp pose", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"},
+  {"req_id": "req_003", "req_type": "sim_config", "description": "Isaac Sim 仿真场景配置", "priority": "required", "keywords": ["Isaac Sim", "仿真场景", "USD"], "fallback_sources": ["isaac", "mujoco"], "expected_format": "USD"}
+]
+
+### 示例 4：UR5 + Robotiq 夹爪 × YCB（英文，无仿真器）
+
+输入："UR5 with Robotiq 2F-85 grasps YCB apple"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "UR5 与 Robotiq 2F-85 夹爪的 URDF 描述文件", "priority": "required", "keywords": ["UR5", "Robotiq 2F-85", "URDF"], "fallback_sources": ["robotiq", "github"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "YCB apple 的 3D 网格模型", "priority": "required", "keywords": ["YCB", "apple", "苹果", "mesh"], "fallback_sources": ["ycb", "google_scanned"], "expected_format": "STL"},
+  {"req_id": "req_002", "req_type": "grasp", "description": "YCB apple 的抓取姿态数据", "priority": "required", "keywords": ["grasp", "grasp pose", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"}
+]
+
+### 示例 5：堆叠任务（机器人 + 物体 + 仿真，无抓取）
+
+输入："Franka Panda stacks YCB blocks in PyBullet"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Franka Panda 机器人 URDF 描述文件", "priority": "required", "keywords": ["Franka Panda", "机器人", "URDF"], "fallback_sources": ["franka", "github"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "YCB blocks 的 3D 网格模型", "priority": "required", "keywords": ["YCB", "blocks", "积木", "mesh"], "fallback_sources": ["ycb", "google_scanned"], "expected_format": "STL"},
+  {"req_id": "req_002", "req_type": "sim_config", "description": "PyBullet 仿真场景配置", "priority": "required", "keywords": ["PyBullet", "仿真场景", "URDF"], "fallback_sources": ["github", "zenodo"], "expected_format": "URDF"}
+]
+
+### 示例 6：仅机器人模型（英文）
+
+输入："load UR5 robot model"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "UR5 机器人 URDF 模型", "priority": "required", "keywords": ["UR5", "机器人", "URDF"], "fallback_sources": ["github", "zenodo"], "expected_format": "URDF"}
+]
+
+### 示例 7：仅物体网格（中文）
+
+输入："下载香蕉的 3D 网格模型"
+输出：
+[
+  {"req_id": "req_000", "req_type": "mesh", "description": "香蕉的 3D 网格模型", "priority": "required", "keywords": ["banana", "香蕉", "mesh", "3D model"], "fallback_sources": ["google_scanned", "ycb"], "expected_format": "STL"}
+]
+
+### 示例 8：仅抓取姿态（英文）
+
+输入："get grasp poses for YCB objects"
+输出：
+[
+  {"req_id": "req_000", "req_type": "grasp", "description": "YCB 物体的抓取姿态数据", "priority": "required", "keywords": ["grasp", "grasp pose", "YCB", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"}
+]
+
+### 示例 9：仅仿真场景（中文）
+
+输入："仿真场景配置 MuJoCo"
+输出：
+[
+  {"req_id": "req_000", "req_type": "sim_config", "description": "MuJoCo 仿真场景配置", "priority": "required", "keywords": ["MuJoCo", "仿真场景", "XML"], "fallback_sources": ["mujoco", "isaac"], "expected_format": "XML"}
+]
+
+### 示例 10：混合目标（机器人 + 抓取 + 仿真，无物体网格，中文）
+
+输入："在 PyBullet 中为 Kinova Gen3 规划抓取姿态"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Kinova Gen3 机器人 URDF 描述文件", "priority": "required", "keywords": ["Kinova Gen3", "机器人", "URDF"], "fallback_sources": ["github", "zenodo"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "grasp", "description": "抓取姿态规划数据", "priority": "required", "keywords": ["grasp", "grasp pose", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"},
+  {"req_id": "req_002", "req_type": "sim_config", "description": "PyBullet 仿真场景配置", "priority": "required", "keywords": ["PyBullet", "仿真场景"], "fallback_sources": ["github", "zenodo"], "expected_format": "URDF"}
+]
+
+### 示例 11：ModelNet 物体（Franka × ModelNet × Isaac Sim，英文）
+
+输入："Franka Panda grasps ModelNet bottle in Isaac Sim"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Franka Panda 机器人 URDF 描述文件", "priority": "required", "keywords": ["Franka Panda", "机器人", "URDF"], "fallback_sources": ["franka", "github"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "ModelNet bottle 的 3D 网格模型", "priority": "required", "keywords": ["ModelNet", "bottle", "瓶子", "mesh"], "fallback_sources": ["zenodo", "google_scanned"], "expected_format": "OBJ"},
+  {"req_id": "req_002", "req_type": "grasp", "description": "ModelNet bottle 的抓取姿态数据", "priority": "required", "keywords": ["grasp", "grasp pose", "抓取姿态", "NPZ"], "fallback_sources": ["graspnet", "dexgrasp"], "expected_format": "NPZ"},
+  {"req_id": "req_003", "req_type": "sim_config", "description": "Isaac Sim 仿真场景配置", "priority": "required", "keywords": ["Isaac Sim", "仿真场景", "USD"], "fallback_sources": ["isaac", "mujoco"], "expected_format": "USD"}
+]
+
+### 示例 12：混合目标（机器人 + 物体网格，无抓取 / 仿真，中文）
+
+输入："下载 Franka Panda 的 URDF 和 YCB 物体的网格模型"
+输出：
+[
+  {"req_id": "req_000", "req_type": "robot_urdf", "description": "Franka Panda 机器人 URDF 描述文件", "priority": "required", "keywords": ["Franka Panda", "机器人", "URDF"], "fallback_sources": ["franka", "github"], "expected_format": "URDF"},
+  {"req_id": "req_001", "req_type": "mesh", "description": "YCB 物体的 3D 网格模型", "priority": "required", "keywords": ["YCB", "物体", "mesh"], "fallback_sources": ["ycb", "google_scanned"], "expected_format": "STL"}
+]
 """
 
 GOAL_PARSING_USER_TEMPLATE: str = """研究目标描述：

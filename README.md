@@ -184,7 +184,8 @@ flowchart TD
     E -->|retry| B
     F --> G[human_review<br/>人机审查]
     G -->|satisfied| H[END]
-    G -->|revise| B
+    G -->|revised| A
+    G -->|unsatisfied| B
 ```
 
 ## 数据源

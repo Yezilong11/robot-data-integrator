@@ -46,6 +46,7 @@ class DataReqType(StrEnum):
     SIM_CONFIG = "sim_config"
     POLICY_MODEL = "policy_model"
     SENSOR_DATA = "sensor_data"
+    UNKNOWN = "unknown"
 
 
 class Priority(StrEnum):
@@ -158,6 +159,10 @@ class StandardResult(BaseModel):
     errors: list[str] = Field(default_factory=list, description="错误列表")
     warnings: list[str] = Field(default_factory=list, description="警告列表")
     provenance: ProvenanceEntry | None = Field(default=None, description="溯源信息")
+    data_source_quality: str | None = Field(
+        default=None,
+        description="数据来源真实程度：real / synthetic / fallback",
+    )
     data: Any = Field(
         default=None,
         description="处理后的内存中间表示对象（CanonicalRobot/Trimesh/...），供节点装配 ParsedItem 与校验引擎读取",

@@ -10,6 +10,12 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
 
 
+@pytest.fixture(autouse=True)
+def _isolate_file_cache(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """把本地文件缓存根目录指向临时目录，避免测试互相污染仓库 data/cache/。"""
+    monkeypatch.setattr(GraspNetAdapter, "cache_root", lambda self: tmp_path)
+
+
 class TestGraspNetAdapter:
     """GraspNetAdapter 单元测试。"""
 
@@ -101,6 +107,56 @@ class TestGraspNetAdapter:
         assert raw.format == "npz"
         assert raw.data == fake_npz
         assert "grasp_label/0000_labels.npz" in raw.url
+        assert raw.metadata["is_real_grasp"] is True
+
+    @pytest.mark.asyncio
+    async def test_fetch_grasp_by_object_name(self) -> None:
+        """3.1：GRASP + object_name="banana" 命中 grasp_label/ 下 011_banana 的真实 npz。"""
+        adapter = GraspNetAdapter()
+        fake_npz = b"\x93NPZ"
+        mock_tree = [
+            {"type": "file", "path": "grasp_label/0000_labels.npz"},
+            {"type": "file", "path": "grasp_label/011_banana_0_labels.npz"},
+            {"type": "file", "path": "grasp_label/003_cracker_box_0_labels.npz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
+        ):
+            raw = await adapter.fetch(
+                "DravenALG/GraspNet-1Billion",
+                req_type=DataReqType.GRASP,
+                object_name="banana",
+            )
+        assert "011_banana" in raw.url
+        assert raw.metadata["is_real_grasp"] is True
+
+    @pytest.mark.asyncio
+    async def test_fetch_grasp_object_name_falls_back_to_first(self) -> None:
+        """3.1：物体名未命中（未知物体）时回退首个 .npz，不回归。"""
+        adapter = GraspNetAdapter()
+        fake_npz = b"\x93NPZ"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "grasp_label/0000_labels.npz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
+        ):
+            raw = await adapter.fetch(
+                "DravenALG/GraspNet-1Billion",
+                req_type=DataReqType.GRASP,
+                object_name="zzz_unknown_object",
+            )
+        assert "0000_labels.npz" in raw.url
+        assert raw.metadata["is_real_grasp"] is True
 
     @pytest.mark.asyncio
     async def test_fetch_dataset_returns_metadata(self) -> None:
@@ -179,3 +235,35 @@ class TestGraspNetAdapter:
         payload = _json.loads(raw.data)
         assert payload["file_size"] == big_size
         assert payload["file_path"] == "grasp_label/0000_labels.npz"
+
+    @pytest.mark.asyncio
+    async def test_fetch_prefers_local_cache(self, tmp_path, monkeypatch) -> None:
+        """首次 fetch 触发下载并落盘；二次 fetch 命中缓存不再触发网络。"""
+        adapter = GraspNetAdapter()
+        monkeypatch.setattr(adapter, "cache_root", lambda: tmp_path)
+        fake_npz = b"\x93NPZ"
+        mock_tree = [{"type": "file", "path": "grasp_label/0000_labels.npz"}]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz
+            ) as mock_dl,
+        ):
+            raw1 = await adapter.fetch(
+                "DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP
+            )
+            raw2 = await adapter.fetch(
+                "DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP
+            )
+        assert raw1.data == fake_npz
+        assert raw2.data == fake_npz
+        assert raw1.format == "npz"
+        # 仅首次触发下载；二次命中本地缓存
+        mock_dl.assert_awaited_once()
+        # 缓存文件名 = 清洗后的 item_id + 文件路径
+        cache_file = tmp_path / "DravenALG_GraspNet-1Billion_grasp_label_0000_labels.npz"
+        assert cache_file.is_file()
+        assert cache_file.read_bytes() == fake_npz

@@ -116,10 +116,15 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         adapter_classes = select_adapter(DataReqType(req_type))
     except ValueError:
         adapter_classes = []
-    priority_sources = hermes.get_source_priority(req_type)
+    # Hermes 动态优先级对全部候选源生效：显式传入候选源，保证优先级列表覆盖实际 Adapter。
+    priority_sources = hermes.get_source_priority(
+        req_type, [cls.source.value for cls in adapter_classes]
+    )
     priority_index = {src: i for i, src in enumerate(priority_sources)}
     fallback_sources = payload.get("fallback_sources") or []
     fallback_index = {src: i for i, src in enumerate(fallback_sources)}
+    # fallback_sources 顺序为第一优先级；其余源按 Hermes 优先级（priority_index 越小越靠前）排序，
+    # 不在 Hermes 候选列表中的源排最后。
     sorted_adapters = sorted(
         adapter_classes,
         key=lambda cls: (
@@ -174,7 +179,9 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 had_empty_search = True
                 continue
             try:
-                raw = await adapter.fetch(search_results[0].item_id, req_type=DataReqType(req_type))
+                raw = await adapter.fetch(  # type: ignore[call-arg]  # req_type 为 GraspNet/DexGrasp 扩展参数
+                    search_results[0].item_id, req_type=DataReqType(req_type)
+                )
             except TypeError:
                 # 兼容旧 Adapter 的 fetch(item_id) 签名
                 raw = await adapter.fetch(search_results[0].item_id)

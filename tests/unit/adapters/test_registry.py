@@ -47,8 +47,8 @@ class TestAdapterRegistry:
     """ADAPTER_REGISTRY 单元测试。"""
 
     def test_registry_has_all_req_types(self) -> None:
-        """正常情况：注册表覆盖所有 DataReqType。"""
-        expected_types = list(DataReqType)
+        """正常情况：注册表覆盖所有真实 DataReqType（UNKNOWN 为哨兵值，无需 adapter）。"""
+        expected_types = [t for t in DataReqType if t is not DataReqType.UNKNOWN]
         for req_type in expected_types:
             assert req_type in ADAPTER_REGISTRY, f"Missing {req_type} in ADAPTER_REGISTRY"
 

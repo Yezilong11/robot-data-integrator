@@ -66,3 +66,39 @@ def test_build_prompt_with_placeholder_literal_in_input() -> None:
     assert "{user_goal}" in user  # 作为用户输入的原始文本应保留
     assert "{paper_text}" in user  # paper_text中的字面量应保留
     assert "研究" in user
+
+
+def test_system_prompt_contains_ten_plus_few_shot_examples() -> None:
+    """System prompt 应包含 10+ 组完整 few-shot 示例。"""
+    assert GOAL_PARSING_SYSTEM.count("### 示例") >= 10
+
+
+def test_system_prompt_few_shot_covers_required_goals() -> None:
+    """5.1 要求的 10 个示例输入应全部出现在 few-shot 中。"""
+    inputs = [
+        "Franka Panda grasps YCB banana in MuJoCo",
+        "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉",
+        "Kinova Gen3 picks up EGAD mug in Isaac Sim",
+        "UR5 with Robotiq 2F-85 grasps YCB apple",
+        "Franka Panda stacks YCB blocks in PyBullet",
+        "load UR5 robot model",
+        "下载香蕉的 3D 网格模型",
+        "get grasp poses for YCB objects",
+        "仿真场景配置 MuJoCo",
+        "在 PyBullet 中为 Kinova Gen3 规划抓取姿态",
+    ]
+    for goal in inputs:
+        assert goal in GOAL_PARSING_SYSTEM
+
+
+def test_system_prompt_few_shot_covers_four_types_and_languages() -> None:
+    """few-shot 输出应覆盖四类需求（robot_urdf/mesh/grasp/sim_config）与中英文表述。"""
+    for req_type in ("robot_urdf", "mesh", "grasp", "sim_config"):
+        assert f'"req_type": "{req_type}"' in GOAL_PARSING_SYSTEM
+    assert "Franka Panda grasps YCB banana in MuJoCo" in GOAL_PARSING_SYSTEM
+    assert "下载香蕉的 3D 网格模型" in GOAL_PARSING_SYSTEM
+
+
+def test_system_prompt_schema_mentions_unknown_req_type() -> None:
+    """Schema 的 req_type 枚举应包含 unknown，供后处理标记未识别需求。"""
+    assert "unknown" in GOAL_PARSING_SYSTEM

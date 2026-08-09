@@ -37,7 +37,8 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
         - validate → 校验通过 → assemble_package
         - validate → 校验不通过 → retrieve_data（重试，最多3次）
         - human_review → 用户满意 → END
-        - human_review → 用户不满意 → retrieve_data（带反馈）
+        - human_review → 用户修订 → parse_goal（反馈转目标后重新解析）
+        - human_review → 用户不满意 → retrieve_data（带反馈重检索）
 
     Returns:
         编译后的可执行图实例，调用 .invoke(state) 运行。
@@ -80,7 +81,8 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
         route_after_review,
         {
             "satisfied": END,
-            "revise": "retrieve_data",
+            "revised": "parse_goal",
+            "unsatisfied": "retrieve_data",
         },
     )
 

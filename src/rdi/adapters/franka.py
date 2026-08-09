@@ -114,7 +114,13 @@ class FrankaAdapter(BaseAdapter):
         """路径 A：直接 URL 构造（官方页面路径模式）。"""
         # 从 franka.de 页面路径构造 URDF 下载链接
         url = f"{self._web_url}/models/{item_id}/{item_id}.urdf"
-        data_bytes = await self._download_bytes(url)
+        if not self.is_cached(item_id, suffix=".urdf"):
+            data_bytes = await self._download_bytes(url)
+            self.save_to_cache(item_id, data_bytes, suffix=".urdf")
+        else:
+            cached = self.load_from_cache(item_id, suffix=".urdf")
+            assert cached is not None  # is_cached 已保证非空
+            data_bytes = cached
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,
@@ -136,7 +142,13 @@ class FrankaAdapter(BaseAdapter):
         else:
             url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf.xacro"
             fmt = "xacro"
-        data_bytes = await self._download_bytes(url)
+        if not self.is_cached(item_id, suffix=f".{fmt}"):
+            data_bytes = await self._download_bytes(url)
+            self.save_to_cache(item_id, data_bytes, suffix=f".{fmt}")
+        else:
+            cached = self.load_from_cache(item_id, suffix=f".{fmt}")
+            assert cached is not None  # is_cached 已保证非空
+            data_bytes = cached
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,

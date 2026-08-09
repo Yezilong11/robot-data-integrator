@@ -10,9 +10,15 @@ import trimesh
 
 from rdi.adapters.ycb import YCBAdapter
 from rdi.exceptions import AdapterError
-from rdi.models.common import DataSource
+from rdi.models.common import DataReqType, DataSource
 
 SAMPLE_MESH_DIR = Path(__file__).parents[1] / "skills" / "sample_data" / "mesh"
+
+
+@pytest.fixture(autouse=True)
+def _isolate_file_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """把本地文件缓存根目录指向临时目录，避免测试互相污染仓库 data/cache/。"""
+    monkeypatch.setattr(YCBAdapter, "cache_root", lambda self: tmp_path)
 
 
 class TestYCBAdapter:
@@ -152,3 +158,71 @@ class TestYCBAdapter:
         mesh = trimesh.load(io.BytesIO(raw.data), file_type="obj")
         assert len(mesh.vertices) == 3
         assert len(mesh.faces) == 1
+
+    @pytest.mark.asyncio
+    async def test_fetch_prefers_local_cache(self, tmp_path, monkeypatch) -> None:
+        """首次 fetch 触发下载并落盘；二次 fetch 命中缓存不再触发网络。"""
+        adapter = YCBAdapter()
+        monkeypatch.setattr(adapter, "cache_root", lambda: tmp_path)
+        fake_obj = b"# OBJ mesh data"
+        mock_tree = [
+            {"type": "file", "path": "meshes/025_mug/google_16k/textured.obj"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_obj
+            ) as mock_dl,
+        ):
+            raw1 = await adapter.fetch("025_mug")
+            raw2 = await adapter.fetch("025_mug")
+        assert raw1.data == fake_obj
+        assert raw2.data == fake_obj
+        assert raw1.format == "obj"
+        # 仅首次触发下载；二次命中本地缓存
+        mock_dl.assert_awaited_once()
+        cache_file = tmp_path / "025_mug.obj"
+        assert cache_file.is_file()
+        assert cache_file.read_bytes() == fake_obj
+
+    @pytest.mark.asyncio
+    async def test_fetch_grasp_annotation_available(self) -> None:
+        """3.3：GRASP 且标注源可用时返回 .mat 抓取标注。"""
+        adapter = YCBAdapter()
+        fake_mat = b"MATLAB annotation data"
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_mat
+        ):
+            raw = await adapter.fetch("011_banana", req_type=DataReqType.GRASP)
+        assert raw.source == DataSource.YCB
+        assert raw.format == "mat"
+        assert raw.data == fake_mat
+        assert raw.metadata["grasp_annotation_available"] is True
+        assert raw.metadata["is_real_grasp"] is True
+
+    @pytest.mark.asyncio
+    async def test_fetch_grasp_annotation_unavailable_falls_back_to_mesh(self) -> None:
+        """3.3：GRASP 但标注源不可用（下载失败）时静默降级为 mesh，不回归。"""
+        adapter = YCBAdapter()
+        fake_obj = b"# OBJ mesh data"
+        mock_tree = [
+            {"type": "file", "path": "meshes/011_banana/google_16k/textured.obj"},
+        ]
+        with (
+            patch.object(
+                adapter,
+                "_download_bytes",
+                new_callable=AsyncMock,
+                side_effect=[
+                    AdapterError(
+                        message="annotation download failed", source=DataSource.YCB.value
+                    ),
+                    fake_obj,
+                ],
+            ),
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+        ):
+            raw = await adapter.fetch("011_banana", req_type=DataReqType.GRASP)
+        assert raw.format == "obj"
+        assert raw.data == fake_obj
+        assert raw.metadata["grasp_annotation_available"] is False

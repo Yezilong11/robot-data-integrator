@@ -4,6 +4,16 @@
 文档原始对接方式：文档解析（BeautifulSoup 解析 docs.isaacsim.omniverse.nvidia.com 文档页面）
 降级回退方式：GitHub raw URL（NVIDIA-Omniverse/IsaacSim 仓库）直接下载
 无需 API Key，直接 HTTP 下载。
+
+Isaac 官方场景到 MJCF/USD 的映射说明（C13）：
+- IsaacLab 资产为 Python 配置（isaaclab_assets/robots/{id}.py），通过
+  ``XxxCfg`` 引用 ``usd`` 资产，本身不是 MJCF/XML；
+- 本 Adapter 不转换格式：``fetch`` 返回原始 Python 配置字节，并在
+  ``RawData.metadata`` 标注 ``isaac_requires_native_processing=True`` 提示下游
+  需在 Isaac Sim 环境内用原生 USD/MJCF 管线处理（pxr 未安装，无法在此转换）；
+- 同源机器人在 mujoco_menagerie 有对应 MJCF 场景，可交叉参考：
+  franka → franka_emika_panda/scene.xml、cassie → agility_cassie/cassie.xml、
+  anymal → anybotics_anymal_b/anymal_b.xml（见 rdi.adapters.mujoco._FETCH_XML）。
 """
 
 from rdi.adapters.base import BaseAdapter
@@ -121,4 +131,11 @@ class IsaacSimAdapter(BaseAdapter):
             data=content,
             url=py_url,
             size_bytes=len(content),
+            metadata={
+                "isaac_requires_native_processing": True,
+                "suggestion": (
+                    "IsaacLab 资产为 Python 配置，引用 USD 场景；转 MJCF/XML 需在 "
+                    "Isaac Sim 环境内用原生 USD/MJCF 管线处理（pxr 未安装，无法在此转换）"
+                ),
+            },
         )

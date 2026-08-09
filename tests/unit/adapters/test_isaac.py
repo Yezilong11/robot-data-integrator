@@ -86,6 +86,18 @@ class TestIsaacSimAdapter:
         mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_fetch_marks_native_processing(self) -> None:
+        """C13：IsaacLab 资产为 Python 配置（引用 USD），fetch 标注原生处理提示。"""
+        adapter = IsaacSimAdapter()
+        fake_py = b"# Isaac Lab asset config"
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_py
+        ):
+            raw = await adapter.fetch("franka")
+        assert raw.metadata.get("isaac_requires_native_processing") is True
+        assert "suggestion" in raw.metadata
+
+    @pytest.mark.asyncio
     async def test_fetch_fail_raises(self) -> None:
         """C11 修复后：单路径 fetch 失败直接抛 AdapterError。"""
         adapter = IsaacSimAdapter()

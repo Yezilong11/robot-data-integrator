@@ -6,7 +6,7 @@ import os
 from typing import Any
 
 from rdi.adapters.registry import get_sources_for_type
-from rdi.hermes.experience_db import ExperienceDB
+from rdi.hermes.experience_db import GLOBAL_REQ_TYPE, ExperienceDB
 from rdi.models import DataReqType
 
 _LOG_PATH = "data/hermes_evolution.log"
@@ -32,8 +32,8 @@ class StrategyEvolver:
         self.last_evolve_time = now
 
     def evolve(self) -> None:
-        """遍历数据源统计，对异常成功率记录演化日志。"""
-        stats = self.db.get_source_stats()
+        """遍历数据源全局统计，对异常成功率记录演化日志。"""
+        stats = self.db.get_source_stats(req_type="*")
         for stat in stats:
             total = stat.get("total_requests", 0)
             if total == 0:
@@ -46,28 +46,39 @@ class StrategyEvolver:
             elif success_rate > 0.9 and total > 10:
                 self._log_evolution(source_name, "promote", "high_reliability")
 
-    def get_source_priority(self, req_type: str) -> list[str]:
-        """按成功率降序返回 req_type 候选数据源名称列表。
+    def get_source_priority(
+        self,
+        req_type: str,
+        candidates: list[str] | None = None,
+    ) -> list[str]:
+        """按 req_type 维度成功率降序返回候选数据源名称列表。
 
-        候选源通过 get_sources_for_type() 查询；
-        统计中缺失或 total_requests 为 0 的源默认成功率 0.5。
+        成功率取值优先 req_type 维度统计，缺失时回退全局（"*"）统计，
+        两维度均缺失或 total_requests 为 0 的源默认 0.5。
+        候选源默认取 get_sources_for_type()，也可显式传入 candidates。
         """
         try:
             req_enum = DataReqType(req_type)
         except ValueError:
             return []
-        candidates = get_sources_for_type(req_enum)
+        if candidates is None:
+            candidates = get_sources_for_type(req_enum)
         stats = self.db.get_source_stats()
-        stat_map: dict[str, dict[str, Any]] = {stat.get("source_name", ""): stat for stat in stats}
+        stat_map: dict[tuple[str, str], dict[str, Any]] = {
+            (stat.get("source_name", ""), stat.get("req_type", GLOBAL_REQ_TYPE)): stat
+            for stat in stats
+        }
 
         def rate(source_name: str) -> float:
-            stat = stat_map.get(source_name)
-            if stat is None:
-                return 0.5
-            total = int(stat.get("total_requests", 0))
-            if total == 0:
-                return 0.5
-            return float(stat.get("success_count", 0)) / total
+            for dim in (req_type, GLOBAL_REQ_TYPE):
+                stat = stat_map.get((source_name, dim))
+                if stat is None:
+                    continue
+                total = int(stat.get("total_requests", 0))
+                if total == 0:
+                    continue
+                return float(stat.get("success_count", 0)) / total
+            return 0.5
 
         ordered = sorted(candidates, key=rate, reverse=True)
         return ordered

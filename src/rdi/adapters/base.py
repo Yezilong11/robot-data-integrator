@@ -7,9 +7,11 @@
 
 import asyncio
 import hashlib
+import re
 import ssl
 import time
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, cast
 
 import aiohttp
@@ -76,6 +78,38 @@ class BaseAdapter(ABC):
     """
 
     source: DataSource  # 子类必须定义自己的源标识
+
+    # 本地文件缓存目录名（data/cache/<cache_dir_name>/）；默认取 source.value，子类可覆写
+    cache_dir_name: str | None = None
+
+    def cache_root(self) -> Path:
+        """本地文件缓存根目录 ``data/cache/<cache_dir_name>/``。"""
+        dir_name = self.cache_dir_name or self.source.value
+        return Path(__file__).resolve().parents[3] / "data" / "cache" / dir_name
+
+    def get_cache_path(self, item_id: str, suffix: str = "") -> Path:
+        """返回 item_id 对应的缓存文件路径（item_id 中的不安全字符会被清洗）。"""
+        sanitized = re.sub(r'[\\/:*?"<>|\s]', "_", item_id)
+        return self.cache_root() / f"{sanitized}{suffix}"
+
+    def is_cached(self, item_id: str, suffix: str = "") -> bool:
+        """缓存文件是否存在且非空。"""
+        path = self.get_cache_path(item_id, suffix)
+        return path.is_file() and path.stat().st_size > 0
+
+    def save_to_cache(self, item_id: str, data: bytes, suffix: str = "") -> Path:
+        """将 bytes 写入缓存文件并返回路径。"""
+        path = self.get_cache_path(item_id, suffix)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return path
+
+    def load_from_cache(self, item_id: str, suffix: str = "") -> bytes | None:
+        """命中缓存返回 bytes，未命中返回 None。"""
+        path = self.get_cache_path(item_id, suffix)
+        if path.is_file() and path.stat().st_size > 0:
+            return path.read_bytes()
+        return None
 
     def __init__(
         self,

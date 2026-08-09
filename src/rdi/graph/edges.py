@@ -32,13 +32,13 @@ def route_after_validate(state: SystemState) -> str:
 
 
 def route_after_review(state: SystemState) -> str:
-    """human_review 节点后的路由：用户满意则结束。
+    """human_review 节点后的路由：满意结束，修订回 parse_goal，不满意回 retrieve_data。
 
     Args:
         state: 当前全局状态
 
     Returns:
-        "satisfied" 或 "revise"
+        "satisfied" / "revised" / "unsatisfied" 之一
     """
     decision = state.get("review_decision", "satisfied")
     return decision

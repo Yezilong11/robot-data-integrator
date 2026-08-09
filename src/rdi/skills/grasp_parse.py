@@ -15,6 +15,7 @@
   in-plane r*π/2），completeness_pct 降为 70.0 并记 warning。
 """
 
+import contextlib
 import importlib
 import io
 import json
@@ -236,21 +237,8 @@ class GraspSkill(BaseSkill):
                         errors=[f"GraspNet npz 解析失败: {exc}"],
                     )
                 if _is_metadata_payload(decoded):
-                    object_name = str(kwargs.get("object_name", "object"))
-                    grasps = generate_synthetic_grasps(
-                        object_name, count=int(kwargs.get("synthetic_count", 5))
-                    )
-                    return StandardResult(
-                        success=True,
-                        canonical_format="CanonicalGrasp",
-                        output_path=output_path,
-                        completeness_pct=0.0,
-                        confidence_score=0.6,
-                        warnings=[
-                            f"GraspNet 返回元数据 JSON（未找到真实 npz），"
-                            f"返回基于 '{object_name}' 的合成抓取姿态作为占位"
-                        ],
-                        data=self._serialize_grasps(grasps),
+                    return self._synthetic_result(
+                        kwargs, output_path, "GraspNet", "返回元数据 JSON（未找到真实 npz）"
                     )
                 return StandardResult(
                     success=False,
@@ -263,6 +251,7 @@ class GraspSkill(BaseSkill):
                 output_path=output_path,
                 completeness_pct=_APPROX_COMPLETENESS,
                 confidence_score=0.7,
+                data_source_quality="real",
                 warnings=[
                     "graspnetAPI 不可用，旋转矩阵为近似重建"
                     "（approach=point-centroid 外法向 + in-plane r*π/2），"
@@ -278,44 +267,49 @@ class GraspSkill(BaseSkill):
             except (ValueError, UnicodeDecodeError):
                 decoded = None
             if decoded is not None and _is_metadata_payload(decoded):
-                object_name = str(kwargs.get("object_name", "object"))
-                grasps = generate_synthetic_grasps(
-                    object_name, count=int(kwargs.get("synthetic_count", 5))
-                )
-                return StandardResult(
-                    success=True,
-                    canonical_format="CanonicalGrasp",
-                    output_path=output_path,
-                    completeness_pct=0.0,
-                    confidence_score=0.6,
-                    warnings=[
-                        f"DexGraspNet 返回元数据 JSON（未找到真实 pkl），"
-                        f"返回基于 '{object_name}' 的合成抓取姿态作为占位"
-                    ],
-                    data=self._serialize_grasps(grasps),
+                return self._synthetic_result(
+                    kwargs, output_path, "DexGraspNet", "返回元数据 JSON（未找到真实 pkl）"
                 )
 
-            # pkl 反序列化依赖 graspnetAPI 自定义类；不可用时直接降级
-            try:
+            # pkl 反序列化：先尝试导入 graspnetAPI 注册 pkl 中的自定义类（用于其
+            # __reduce__ 还原），ImportError 时降级为通用 pickle.load 继续尝试。
+            with contextlib.suppress(ImportError):
                 importlib.import_module("graspnetAPI")
-            except ImportError:
-                return StandardResult(
-                    success=False,
-                    canonical_format="CanonicalGrasp",
-                    errors=["DexGraspNet pkl 需要 graspnetAPI 才能反序列化"],
-                )
             try:
                 obj = pickle.load(io.BytesIO(data))  # noqa: S301
             except Exception as exc:  # noqa: BLE001
-                return StandardResult(
-                    success=False,
-                    canonical_format="CanonicalGrasp",
-                    errors=[f"DexGraspNet pkl 需要 graspnetAPI 才能反序列化: {exc}"],
+                return self._synthetic_result(
+                    kwargs, output_path, "DexGraspNet", f"pkl 反序列化失败: {exc}"
                 )
             return self._finish_standardize(obj, dataset_name, output_path)
 
         # ycb / abdataset：尽力解析（json 或 pickle），失败降级
         return self._parse_generic(data, dataset_name, output_path)
+
+    def _synthetic_result(
+        self,
+        kwargs: dict[str, Any],
+        output_path: str | None,
+        source_name: str,
+        reason: str,
+    ) -> StandardResult:
+        """构造合成抓取占位结果（``data_source_quality="fallback"``）。"""
+        object_name = str(kwargs.get("object_name", "object"))
+        grasps = generate_synthetic_grasps(
+            object_name, count=int(kwargs.get("synthetic_count", 5))
+        )
+        return StandardResult(
+            success=True,
+            canonical_format="CanonicalGrasp",
+            output_path=output_path,
+            completeness_pct=0.0,
+            confidence_score=0.6,
+            data_source_quality="fallback",
+            warnings=[
+                f"{source_name} {reason}，返回基于 '{object_name}' 的合成抓取姿态作为占位"
+            ],
+            data=self._serialize_grasps(grasps),
+        )
 
     def _finish_standardize(
         self, raw: Any, dataset_name: str, output_path: str | None
@@ -340,6 +334,7 @@ class GraspSkill(BaseSkill):
             canonical_format="CanonicalGrasp",
             output_path=output_path,
             completeness_pct=100.0,
+            data_source_quality="real",
             data=self._serialize_grasps(grasps),
         )
 

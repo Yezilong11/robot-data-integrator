@@ -44,6 +44,10 @@ class ParsedItem(BaseModel):
         description="是否为模型推断数据",
     )
     warnings: list[str] = Field(default_factory=list, description="处理警告")
+    data_source_quality: str | None = Field(
+        default=None,
+        description="数据来源真实程度：real / synthetic / fallback",
+    )
 
 
 class MissingItem(BaseModel):
