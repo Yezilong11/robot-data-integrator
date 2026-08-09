@@ -20,9 +20,10 @@ from rdi.adapters.registry import ADAPTER_REGISTRY, select_adapter
 from rdi.adapters.robotiq import RobotiqAdapter
 from rdi.adapters.ycb import YCBAdapter
 from rdi.adapters.zenodo import ZenodoAdapter
+from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
 
-# 所有 14 个 Adapter 类及其对应的 DataSource
+# 所有 15 个 Adapter 类及其对应的 DataSource
 ALL_ADAPTERS: list[tuple[type[BaseAdapter], DataSource]] = [
     (ArxivAdapter, DataSource.ARXIV),
     (GitHubAdapter, DataSource.GITHUB),
@@ -52,28 +53,62 @@ class TestAdapterRegistry:
             assert req_type in ADAPTER_REGISTRY, f"Missing {req_type} in ADAPTER_REGISTRY"
 
     def test_paper_primary_is_arxiv(self) -> None:
-        """正常情况：PAPER 主源是 ArxivAdapter。"""
+        """正常情况：PAPER 主源是 ArxivAdapter，且包含 PapersWithCodeAdapter。"""
         names = ADAPTER_REGISTRY[DataReqType.PAPER]
         assert names[0] == "ArxivAdapter"
+        assert "PapersWithCodeAdapter" in names
 
     def test_code_primary_is_github(self) -> None:
-        """正常情况：CODE 主源是 GitHubAdapter。"""
+        """正常情况：CODE 主源是 GitHubAdapter，且包含 HuggingFaceAdapter。"""
         names = ADAPTER_REGISTRY[DataReqType.CODE]
         assert names[0] == "GitHubAdapter"
+        assert "HuggingFaceAdapter" in names
+
+    def test_robot_urdf_contains_sim_adapters(self) -> None:
+        """正常情况：ROBOT_URDF 包含 MuJoCoAdapter 和 IsaacSimAdapter。"""
+        names = ADAPTER_REGISTRY[DataReqType.ROBOT_URDF]
+        assert "MuJoCoAdapter" in names
+        assert "IsaacSimAdapter" in names
+
+    def test_paper_contains_all_b_expected(self) -> None:
+        """B 系统预期：PAPER 包含 Arxiv + PapersWithCode。"""
+        names = ADAPTER_REGISTRY[DataReqType.PAPER]
+        assert "ArxivAdapter" in names
+        assert "PapersWithCodeAdapter" in names
+
+    def test_code_contains_all_b_expected(self) -> None:
+        """B 系统预期：CODE 至少包含 GitHub + HuggingFace。"""
+        names = ADAPTER_REGISTRY[DataReqType.CODE]
+        assert "GitHubAdapter" in names
+        assert "HuggingFaceAdapter" in names
+
+    def test_robot_urdf_contains_all_b_expected(self) -> None:
+        """B 系统预期：ROBOT_URDF 包含正确的机器人模型源。"""
+        names = ADAPTER_REGISTRY[DataReqType.ROBOT_URDF]
+        for expected in [
+            "FrankaAdapter",
+            "AllegroAdapter",
+            "RobotiqAdapter",
+            "MuJoCoAdapter",
+            "IsaacSimAdapter",
+        ]:
+            assert expected in names, f"{expected} missing from ROBOT_URDF"
 
 
 class TestSelectAdapter:
     """select_adapter 单元测试。"""
 
     def test_select_paper_returns_arxiv(self) -> None:
-        """正常情况：PAPER 返回 ArxivAdapter 类。"""
+        """正常情况：PAPER 返回包含 ArxivAdapter 和 PapersWithCodeAdapter。"""
         adapters = select_adapter(DataReqType.PAPER)
         assert ArxivAdapter in adapters
+        assert PapersWithCodeAdapter in adapters
 
     def test_select_code_returns_github(self) -> None:
-        """正常情况：CODE 返回 GitHubAdapter 类。"""
+        """正常情况：CODE 返回包含 GitHubAdapter 和 HuggingFaceAdapter。"""
         adapters = select_adapter(DataReqType.CODE)
         assert GitHubAdapter in adapters
+        assert HuggingFaceAdapter in adapters
 
     def test_select_returns_adapter_subclasses(self) -> None:
         """正常情况：返回的都是 BaseAdapter 子类。"""
@@ -88,7 +123,7 @@ class TestSelectAdapter:
         assert GitHubAdapter in adapters
 
     def test_all_adapters_available_via_select(self) -> None:
-        """正常情况：所有 14 个 Adapter 都能通过 select_adapter 返回。"""
+        """正常情况：所有 15 个 Adapter 都能通过 select_adapter 返回。"""
         all_returned: set[type[BaseAdapter]] = set()
         for req_type in DataReqType:
             all_returned.update(select_adapter(req_type))
@@ -108,3 +143,42 @@ class TestSelectAdapter:
         """正常情况：每个 Adapter 实例化后 source 属性与 DataSource 枚举对应。"""
         adapter = adapter_cls()
         assert adapter.source == expected_source
+
+
+class TestGetAdapter:
+    """get_adapter 工厂函数单元测试。"""
+
+    def test_get_adapter_all_sources(self) -> None:
+        """正常情况：每个 DataSource 都能通过 get_adapter 返回 BaseAdapter 实例且 source 正确。"""
+        from rdi.adapters import get_adapter
+
+        for source in DataSource:
+            adapter = get_adapter(source)
+            assert isinstance(adapter, BaseAdapter), f"{source} 返回的不是 BaseAdapter 实例"
+            assert adapter.source == source, f"{source} 返回的 adapter.source 不匹配"
+
+    def test_get_adapter_covers_all_sources(self) -> None:
+        """正常情况：_ADAPTER_CLASSES 覆盖所有 DataSource 枚举值。"""
+        from rdi.adapters import _ADAPTER_CLASSES
+
+        assert len(_ADAPTER_CLASSES) == len(DataSource), (
+            f"_ADAPTER_CLASSES 有 {len(_ADAPTER_CLASSES)} 项，"
+            f"DataSource 枚举有 {len(DataSource)} 项"
+        )
+
+    def test_get_adapter_unknown_raises(self) -> None:
+        """异常情况：不在 _ADAPTER_CLASSES 中的 DataSource 会抛出 AdapterError。"""
+        from rdi.adapters import _ADAPTER_CLASSES, get_adapter
+
+        # 临时从 _ADAPTER_CLASSES 删除一个键，验证 get_adapter 抛出 AdapterError
+        test_source = DataSource.ARXIV
+        original = _ADAPTER_CLASSES.pop(test_source)
+        try:
+            with pytest.raises(AdapterError) as exc_info:
+                get_adapter(test_source)
+            assert (
+                test_source.value in exc_info.value.source
+                or exc_info.value.source == test_source.value
+            )
+        finally:
+            _ADAPTER_CLASSES[test_source] = original

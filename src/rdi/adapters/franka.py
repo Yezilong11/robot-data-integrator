@@ -1,101 +1,134 @@
 # src/rdi/adapters/franka.py
 """Franka Panda 机械臂 URDF Adapter。
 
-文档：https://franka.de/documentation
-提供 Franka Panda 等机器人的 URDF 模型文件下载。
+文档原始对接方式：网页抓取（BeautifulSoup 解析 franka.de 网页获取 URDF 链接）
+降级回退方式：GitHub raw URL（frankaemika/franka_ros 仓库）直接下载
 无需 API Key，直接 HTTP 下载。
 """
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
+from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 默认基础 URL，可通过 settings.franka_base_url 覆盖
-_DEFAULT_BASE_URL = "https://franka.de"
+# 降级回退：GitHub raw 仓库 URL
+_FALLBACK_BASE_URL = "https://raw.githubusercontent.com/frankaemika/franka_ros/develop"
 
-# Franka 机器人已知型号
-_KNOWN_MODELS: list[dict[str, str]] = [
-    {"name": "panda", "label": "Franka Panda", "description": "7-DOF 灵巧操作臂"},
-    {"name": "fr3", "label": "Franka Research 3", "description": "新一代研究平台"},
-    {"name": "emika_panda", "label": "Emika Panda", "description": "协作机器人"},
+# 降级回退：Franka 机器人已知型号
+_FALLBACK_MODELS: list[dict[str, str]] = [
+    {"id": "panda", "title": "Franka Panda", "description": "7-DOF 灵巧操作臂"},
+    {"id": "fr3", "title": "Franka Research 3", "description": "新一代研究平台"},
+    {"id": "emika_panda", "title": "Emika Panda", "description": "协作机器人"},
 ]
 
 
 class FrankaAdapter(BaseAdapter):
     """Franka Panda 机械臂 URDF Adapter。
 
-    提供：
-    - search: 搜索 Franka 机器人模型
-    - fetch: 根据 model_name 下载 URDF 文件
-    - fetch_urdf: 下载指定机器人的 URDF XML
+    对接方式（双路径）：
+    - 路径 A（优先）：网页抓取 — BeautifulSoup 解析 franka.de 获取 URDF 下载链接
+    - 路径 B（降级）：GitHub raw URL 下载
     """
 
     source = DataSource.FRANKA
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.franka_base_url or _DEFAULT_BASE_URL,
+            base_url=settings.franka_base_url,
             rate_limit=5,
         )
+        self._web_url = settings.franka_web_url
 
     async def search(self, query: str) -> list[SearchResult]:
-        """搜索 Franka 机器人模型。
+        """搜索 Franka 机器人模型。优先网页抓取，失败降级硬编码列表。"""
+        try:
+            return await self._search_primary(query)
+        except AdapterError:
+            return await self._search_fallback(query)
 
-        Args:
-            query: 搜索词（如 "panda"、"fr3"、"arm"）
+    async def _search_primary(self, query: str) -> list[SearchResult]:
+        """路径 A：网页抓取方式（文档原始对接方式）— 解析 franka.de 网页。"""
+        url = f"{self._web_url}/models"
+        soup = await self._scrape_html(url)
+        results: list[SearchResult] = []
+        # 解析页面中的机器人型号链接
+        for link in soup.select("a[href*='panda'], a[href*='fr3'], a[href*='urdf']"):
+            model_name = self._attr_str(link, "href").rstrip("/").split("/")[-1]
+            if not model_name:
+                continue
+            title = link.get_text(strip=True) or model_name
+            query_lower = query.lower()
+            if query_lower in model_name.lower() or query_lower in title.lower():
+                results.append(
+                    SearchResult(
+                        item_id=model_name,
+                        title=title,
+                        source=DataSource.FRANKA,
+                        url=f"{self._web_url}/models/{model_name}",
+                        metadata={"model_name": model_name},
+                    )
+                )
+        if not results:
+            raise AdapterError(
+                message=f"Web scraping returned no models for: {query}",
+                source=self.source.value,
+            )
+        return results
 
-        Returns:
-            SearchResult 列表
-        """
+    async def _search_fallback(self, query: str) -> list[SearchResult]:
+        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
         query_lower = query.lower()
         matched = [
             m
-            for m in _KNOWN_MODELS
-            if query_lower in m["name"] or query_lower in m["label"].lower()
+            for m in _FALLBACK_MODELS
+            if query_lower in m["id"]
+            or query_lower in m["title"].lower()
+            or query_lower in m["description"].lower()
         ]
         return [
             SearchResult(
-                item_id=m["name"],
-                title=m["label"],
+                item_id=m["id"],
+                title=m["title"],
                 source=DataSource.FRANKA,
-                url=f"{self.base_url}/models/{m['name']}",
-                metadata={"model_name": m["name"], "description": m["description"]},
+                url=f"{self.base_url}/franka_description/robots/{m['id']}",
+                metadata={"model_name": m["id"], "description": m["description"]},
             )
             for m in matched
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """根据 model_name 下载 URDF 文件。
+        """下载 URDF 文件。优先 franka.de 网页，失败降级 GitHub raw URL。"""
+        try:
+            return await self._fetch_primary(item_id)
+        except AdapterError:
+            return await self._fetch_fallback(item_id)
 
-        Args:
-            item_id: 机器人型号名称（如 "panda"）
-
-        Returns:
-            RawData 包含 URDF XML 二进制数据
-
-        Raises:
-            AdapterError: 下载失败
-        """
-        return await self.fetch_urdf(item_id)
-
-    async def fetch_urdf(self, model_name: str) -> RawData:
-        """下载指定机器人的 URDF XML 文件。
-
-        Args:
-            model_name: 机器人型号名称（如 "panda"、"fr3"）
-
-        Returns:
-            RawData 包含 URDF XML 二进制数据
-
-        Raises:
-            AdapterError: 下载失败
-        """
-        url = f"{self.base_url}/models/{model_name}/urdf/{model_name}.urdf"
+    async def _fetch_primary(self, item_id: str) -> RawData:
+        """路径 A：直接 URL 构造（官方页面路径模式）。"""
+        # 从 franka.de 页面路径构造 URDF 下载链接
+        url = f"{self._web_url}/models/{item_id}/{item_id}.urdf"
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.FRANKA,
-            item_id=model_name,
+            item_id=item_id,
+            format="urdf",
+            data=data_bytes,
+            url=url,
+            size_bytes=len(data_bytes),
+        )
+
+    async def _fetch_fallback(self, item_id: str) -> RawData:
+        """路径 B：GitHub raw URL 降级回退。
+
+        C6 修复：frankaemika/franka_ros develop 分支下实际是 .urdf.xacro（xacro 模板），
+        不是 .urdf。已 curl 验证 panda/fr3 路径可达。
+        """
+        url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf.xacro"
+        data_bytes = await self._download_bytes(url)
+        return RawData(
+            source=DataSource.FRANKA,
+            item_id=item_id,
             format="urdf",
             data=data_bytes,
             url=url,

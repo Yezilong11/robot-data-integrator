@@ -85,7 +85,6 @@ class TestGetSkill:
 
     def test_get_skill_unregistered_returns_none(self) -> None:
         reg = SkillRegistry()
-        assert reg.get_skill(DataReqType.PAPER) is None
         assert reg.get_skill(DataReqType.CODE) is None
         assert reg.get_skill(DataReqType.DATASET) is None
 
@@ -138,9 +137,9 @@ class TestProcessRetrievalResult:
         assert outcome.reason == "timeout"
 
     def test_missing_on_unregistered_req_type(self) -> None:
-        raw = _make_raw("pdf", b"paper bytes")
+        raw = _make_raw("zip", b"code bytes")
         result = RetrievalResult(req_id="req_001", data=raw, status="success")
-        req = _make_req(DataReqType.PAPER)
+        req = _make_req(DataReqType.CODE)
 
         outcome = SkillRegistry().process_retrieval_result(result, req)
 

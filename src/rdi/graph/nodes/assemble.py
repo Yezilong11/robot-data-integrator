@@ -1,74 +1,197 @@
 # src/rdi/graph/nodes/assemble.py
 """数据包整合打包节点。
 
-将所有处理后的数据组装为标准化的可复现实验数据包，
-包含结构化 Manifest 文件、目录结构、溯源日志和缺失项标注。
+将所有处理后的数据组装为标准化的可复现实验数据包：
+把 ``parsed_data`` 中每个 ``ParsedItem.data`` 序列化落盘到 ``files/`` 子目录，
+写出 ``manifest.json`` 与 ``provenance.log``，包含结构化 Manifest、目录结构、
+溯源日志和缺失项标注。
 """
 
+import dataclasses
+import io
+import json
+import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import numpy as np
+
+from rdi.config.settings import settings
 from rdi.graph.state import SystemState
-from rdi.models import (
-    ManifestFile,
-    PackageManifest,
-    QualityReport,
-)
+from rdi.models import ManifestFile, ManifestMissingItem, PackageManifest, QualityReport
+
+# canonical_format → 文件扩展名映射；未知格式默认 .bin
+_EXT_BY_FORMAT: dict[str, str] = {
+    "urdf": ".urdf",
+    "xml": ".xml",
+    "stl": ".stl",
+    "obj": ".obj",
+    "npz": ".npz",
+    "json": ".json",
+    "text": ".txt",
+    "markdown": ".md",
+    "md": ".md",
+}
+
+
+def _ext_for_format(canonical_format: str) -> str:
+    """把 canonical_format 映射为文件扩展名；未知格式返回 .bin。"""
+    return _EXT_BY_FORMAT.get(canonical_format.lower(), ".bin")
+
+
+def _safe_filename(req_id: str) -> str:
+    """清洗 req_id 中的非法字符（非字母数字下划线替换为 _），防止路径注入。"""
+    return re.sub(r"[^A-Za-z0-9_]", "_", req_id)
+
+
+def _is_trimesh(data: Any) -> bool:
+    """判断 data 是否为 trimesh 网格对象（有 export 方法且模块名含 trimesh）。"""
+    return hasattr(data, "export") and "trimesh" in data.__class__.__module__
+
+
+def _json_default(obj: Any) -> Any:
+    """json.dumps 的 default 处理器：兼容 numpy 与 datetime。"""
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, np.generic):
+        return obj.item()
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"无法序列化类型: {type(obj).__name__}")
+
+
+def _serialize_item_data(data: Any) -> tuple[bytes | str, str]:
+    """把 ParsedItem.data 序列化为可写盘内容，返回 (内容, 建议扩展名)。
+
+    建议扩展名为空表示沿用 canonical_format 映射的扩展名（bytes/str 保留原格式）；
+    trimesh 导出二进制 STL；结构化对象导出 JSON；其余对象兜底 repr 文本。
+    """
+    if isinstance(data, bytes):
+        return data, ""
+    if isinstance(data, str):
+        return data, ""
+    if isinstance(data, np.ndarray):
+        buf = io.BytesIO()
+        np.savez(buf, data=data)
+        return buf.getvalue(), ".npz"
+    if _is_trimesh(data):
+        return data.export(file_type="stl"), ".stl"
+    if dataclasses.is_dataclass(data) and not isinstance(data, type):
+        payload = json.dumps(dataclasses.asdict(data), ensure_ascii=False, default=_json_default)
+        return payload, ".json"
+    if hasattr(data, "model_dump"):
+        return data.model_dump_json(), ".json"
+    if isinstance(data, (dict, list)):
+        return json.dumps(data, ensure_ascii=False, indent=2, default=_json_default), ".json"
+    return repr(data), ".txt"
 
 
 def node_assemble(state: SystemState) -> dict[str, Any]:
-    """整合打包节点。
-
-    当前为空骨架实现，返回占位 PackageManifest。
-    后续由人员 E（产品工程师）接入真实打包逻辑。
+    """整合打包节点：序列化解析数据落盘并生成 Manifest。
 
     Returns:
         更新 state 的字段：experiment_package, missing_items, provenance
     """
+    now = datetime.now()
     parsed_data = state.get("parsed_data", {})
+    missing_items = state.get("missing_items", [])
     requirements = state.get("data_requirements", [])
     validation_issues = state.get("validation_issues", [])
 
-    # 占位：构造 Manifest
-    manifest_files = [
-        ManifestFile(
-            req_id=req_id,
-            path=f"outputs/{req_id}.bin",
-            format=item.canonical_format,
-            source_url=item.provenance.source_url,
-            retrieved_at=item.provenance.retrieved_at,
-            transformations=item.provenance.transformations,
-            confidence=item.confidence_score,
-            completeness=item.completeness_pct,
+    package_id = f"package-{now.strftime('%Y%m%d-%H%M%S')}"
+    package_dir = Path(settings.output_dir) / package_id
+    files_dir = package_dir / "files"
+    files_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_files: list[ManifestFile] = []
+    provenance: list[str] = []
+
+    for req_id, item in parsed_data.items():
+        try:
+            content, suggested_ext = _serialize_item_data(item.data)
+            ext = suggested_ext or _ext_for_format(item.canonical_format)
+            filename = f"{_safe_filename(req_id)}{ext}"
+            target = files_dir / filename
+            if isinstance(content, bytes):
+                target.write_bytes(content)
+            else:
+                target.write_text(content, encoding="utf-8")
+        except Exception as exc:  # noqa: BLE001 — 单项失败不中断整体打包
+            provenance.append(
+                f"[{now.isoformat()}] assemble_package: 序列化 {req_id} 失败，已从数据包排除: {exc}"
+            )
+            continue
+
+        manifest_files.append(
+            ManifestFile(
+                req_id=req_id,
+                path=f"files/{filename}",
+                format=item.canonical_format,
+                source_url=item.provenance.source_url,
+                retrieved_at=item.provenance.retrieved_at,
+                transformations=[*item.provenance.transformations, f"written_to:{filename}"],
+                confidence=item.confidence_score,
+                completeness=item.completeness_pct,
+            )
         )
-        for req_id, item in parsed_data.items()
+
+    manifest_missing = [
+        ManifestMissingItem(
+            req_id=m.req_id,
+            reason=m.reason,
+            alternatives=m.alternatives,
+        )
+        for m in missing_items
     ]
+
+    total_conf = sum(f.confidence for f in manifest_files)
+    total_comp = sum(f.completeness for f in manifest_files)
+    avg_confidence = total_conf / len(manifest_files) if manifest_files else 0.0
+    avg_completeness = total_comp / len(manifest_files) if manifest_files else 0.0
 
     package = PackageManifest(
         package_info={
             "goal": state.get("user_goal", ""),
-            "created_at": datetime.now().isoformat(),
+            "created_at": now.isoformat(),
             "iteration": state.get("iteration_count", 0),
+            "package_id": package_id,
+            "status": "complete",
         },
         files=manifest_files,
-        missing_items=[],
+        missing_items=manifest_missing,
         quality_report=QualityReport(
             total_requirements=len(requirements),
-            fulfilled=len(parsed_data),
-            missing=0,
+            fulfilled=len(manifest_files),
+            missing=len(manifest_missing),
             validation_issues=len(validation_issues),
-            avg_confidence=1.0,
-            avg_completeness=100.0,
+            avg_confidence=avg_confidence,
+            avg_completeness=avg_completeness,
         ),
         provenance_log=[
-            f"[{datetime.now().isoformat()}] assemble_package: "
-            f"打包 {len(parsed_data)} 个文件 (骨架实现)"
+            f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
+            f"落盘 {len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项"
         ],
-        output_dir="./data/output_packages/package_placeholder",
+        output_dir=str(package_dir.resolve()),
+    )
+
+    (package_dir / "manifest.json").write_text(
+        json.dumps(package.model_dump(mode="json"), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (package_dir / "provenance.log").write_text(
+        "\n".join(package.provenance_log),
+        encoding="utf-8",
+    )
+
+    provenance.insert(
+        0,
+        f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
+        f"落盘 {len(manifest_files)} 个文件",
     )
 
     return {
         "experiment_package": package,
-        "missing_items": [],
-        "provenance": [f"[{datetime.now().isoformat()}] assemble_package: 生成数据包 (骨架实现)"],
+        "missing_items": missing_items,
+        "provenance": provenance,
     }

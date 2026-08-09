@@ -2,8 +2,8 @@
 """SkillRegistry — 按 DataReqType 分发到对应 Skill 的注册表。
 
 维护 ``DataReqType → BaseSkill`` 单例映射（懒加载），提供 ``get_skill`` 与
-``process_retrieval_result`` 便捷方法。PAPER / CODE / DATASET 不在 6 类 Skill
-范围内，``get_skill`` 返回 None（parse_convert 节点据此跳过并记 warning）。
+``process_retrieval_result`` 便捷方法。CODE / DATASET 暂不在 Skill 范围内，
+``get_skill`` 返回 None（parse_convert 节点据此跳过并记 warning）。
 
 ``process_retrieval_result`` 把 ``RetrievalResult.data.data`` 字节交给对应 Skill
 处理，按 ``StandardResult`` 装配 ``ParsedItem``（provenance 从 RawData 继承），
@@ -20,6 +20,7 @@ from rdi.models.retrieval import RetrievalResult
 from rdi.skills.base import BaseSkill
 from rdi.skills.grasp_parse import GraspSkill
 from rdi.skills.mesh_process import MeshSkill
+from rdi.skills.paper_parse import PaperSkill
 from rdi.skills.policy_interface import PolicyInterfaceSkill
 from rdi.skills.sensor_data import SensorDataSkill
 from rdi.skills.sim_config import SimConfigSkill
@@ -53,6 +54,7 @@ class SkillRegistry:
             DataReqType.SIM_CONFIG: SimConfigSkill,
             DataReqType.POLICY_MODEL: PolicyInterfaceSkill,
             DataReqType.SENSOR_DATA: SensorDataSkill,
+            DataReqType.PAPER: PaperSkill,
         }
 
     def get_skill(self, req_type: DataReqType) -> BaseSkill | None:
