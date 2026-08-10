@@ -34,8 +34,10 @@ def test_parse_mujoco_success() -> None:
     data = _read("sample_mujoco.xml")
     result = SimConfigSkill().process(data, fmt="mjcf")
     assert result.success is True
-    assert result.canonical_format == "SceneDescription"
-    scene = result.data
+    assert result.canonical_format == "xml"
+    assert isinstance(result.data, bytes)
+    # 保留 SceneDescription 供内省：从返回的 XML 字节二次解析
+    scene = SimConfigSkill().parse_mujoco(result.data)
     assert isinstance(scene, SceneDescription)
     assert scene.source_format == "mjcf"
     assert len(scene.objects) >= 1
@@ -85,56 +87,97 @@ def test_empty_scene_warning() -> None:
     assert result.success is True
     assert result.warnings  # process 提示场景无物体
     assert any("场景无物体" in w for w in result.warnings)
-    assert isinstance(result.data, SceneDescription)
-    assert result.data.objects == []
+    assert isinstance(result.data, bytes)
+    scene = skill.parse_mujoco(result.data)
+    assert scene.objects == []
     # validate 同样产出 WARNING 级 ValIssue
     report = skill.validate(result)
     assert report.is_valid is True  # WARNING 非阻断
     assert any(i.severity == Severity.WARNING and "场景无物体" in i.message for i in report.issues)
 
 
-# ─── Scenario: Isaac 配置降级 ───
+# ─── Scenario: Isaac 配置回退为最小 MJCF ───
 
 
-def test_isaac_degrades_gracefully() -> None:
+def test_isaac_fallback_to_mjcf() -> None:
     skill = SimConfigSkill()
-    result = skill.process(_read("isaac_scene.yaml"), fmt="isaac")
+    result = skill.process(
+        _read("isaac_scene.yaml"),
+        fmt="isaac",
+        urdf_path="robots/franka.urdf",
+        mesh_path="objects/banana.stl",
+    )
     assert result.success is True
     assert result.completeness_pct < 100.0
     assert result.confidence_score < 1.0
-    assert any("Isaac" in w and "描述性解析" in w for w in result.warnings)
-    scene = result.data
-    assert isinstance(scene, SceneDescription)
-    assert scene.source_format == "isaac"
-    assert len(scene.objects) >= 1
-    # pxr 不可用：Skill 不暴露 to_isaac_usd，仅提供 to_isaac_yaml
-    assert not hasattr(skill, "to_isaac_usd")
-    yaml_bytes = skill.to_isaac_yaml(scene)
-    assert isinstance(yaml_bytes, bytes)
-    assert b"objects" in yaml_bytes
+    assert result.canonical_format == "mjcf"
+    assert isinstance(result.data, bytes)
+    assert b"<mujoco" in result.data
+    assert b"robots/franka.urdf" in result.data
+    assert b"objects/banana.stl" in result.data
+    assert any("未找到真实 MuJoCo MJCF" in w for w in result.warnings)
+    report = skill.validate(result)
+    assert report.is_valid is True
 
 
-# ─── Scenario: 未知格式失败 ───
+# ─── Scenario: 未知格式回退为最小 MJCF ───
 
 
-def test_unknown_format_fails() -> None:
+def test_unknown_format_fallback_to_mjcf() -> None:
     result = SimConfigSkill().process(b"x", fmt="unknown")
-    assert result.success is False
-    assert result.errors
-    assert result.data is None
+    assert result.success is True
+    assert result.canonical_format == "mjcf"
+    assert isinstance(result.data, bytes)
+    assert b"<mujoco" in result.data
+    assert any("未找到真实 MuJoCo MJCF" in w for w in result.warnings)
 
 
-# ─── Scenario: 损坏 XML 降级 ───
+# ─── Scenario: 损坏 XML 回退为最小 MJCF ───
 
 
-def test_parse_invalid_xml_degrades() -> None:
+def test_parse_invalid_xml_fallback_to_mjcf() -> None:
     result = SimConfigSkill().process(b"not xml", fmt="mjcf")
-    assert result.success is False
-    assert result.errors
-    assert result.data is None
-    assert any("MJCF 解析失败" in e for e in result.errors)
+    assert result.success is True
+    assert result.canonical_format == "mjcf"
+    assert isinstance(result.data, bytes)
+    assert b"<mujoco" in result.data
+    assert any("未找到真实 MuJoCo MJCF" in w for w in result.warnings)
     report = SimConfigSkill().validate(result)
-    assert report.is_valid is False
+    assert report.is_valid is True
+
+
+# ─── Scenario: 生成最小 MJCF ───
+
+
+def test_generate_minimal_mjcf() -> None:
+    skill = SimConfigSkill()
+    xml_bytes = skill.generate_minimal_mjcf(
+        urdf_path="robots/panda.urdf",
+        mesh_path="objects/cube.stl",
+    )
+    assert isinstance(xml_bytes, bytes)
+    text = xml_bytes.decode("utf-8")
+    assert "<mujoco" in text
+    assert "robots/panda.urdf" in text
+    assert "objects/cube.stl" in text
+    assert '<mesh file="objects/cube.stl" name="cube"/>' in text
+    assert '<geom name="object_geom" type="mesh" mesh="cube"' in text
+    assert '<geom name="floor" type="plane"' in text
+    assert "<worldbody>" in text
+    # 二次解析可得到至少 floor 与 object 两个 geom
+    scene = skill.parse_mujoco(xml_bytes)
+    assert len(scene.objects) >= 2
+
+
+def test_generate_minimal_mjcf_without_mesh() -> None:
+    skill = SimConfigSkill()
+    xml_bytes = skill.generate_minimal_mjcf(urdf_path="robots/panda.urdf", mesh_path=None)
+    text = xml_bytes.decode("utf-8")
+    assert "<mujoco" in text
+    assert "robots/panda.urdf" in text
+    assert "<mesh" not in text
+    scene = skill.parse_mujoco(xml_bytes)
+    assert any(o.name == "floor" for o in scene.objects)
 
 
 # ─── validate 契约补充：成功路径无问题 ───

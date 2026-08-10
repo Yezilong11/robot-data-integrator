@@ -2,11 +2,9 @@
 """SkillRegistry 单元测试（同步）。
 
 覆盖 spec「SkillRegistry — 按 req_type 分发」需求的全部场景：
-- 已注册类型分发（6 类 Skill 单例，二次调用返回同一实例）
-- 未注册类型返回 None（PAPER/CODE/DATASET）
+- 已注册类型分发（全部 Skill 单例，二次调用返回同一实例）
 - 端到端装配 ParsedItem（MeshSkill + hand.stl，provenance 从 RawData 继承）
 - 无原始数据 / 查找失败 → MissingItem
-- 未注册 req_type → MissingItem（无对应 Skill）
 - Skill 处理失败 → MissingItem（errors 拼接为 reason）
 """
 
@@ -20,6 +18,8 @@ from rdi.models.goal import DataReq, Priority
 from rdi.models.parsed import MissingItem, ParsedItem
 from rdi.models.retrieval import RawData, RetrievalResult
 from rdi.skills import (
+    CodeSkill,
+    DatasetSkill,
     GraspSkill,
     MeshSkill,
     PolicyInterfaceSkill,
@@ -70,6 +70,8 @@ class TestGetSkill:
         assert isinstance(reg.get_skill(DataReqType.SIM_CONFIG), SimConfigSkill)
         assert isinstance(reg.get_skill(DataReqType.POLICY_MODEL), PolicyInterfaceSkill)
         assert isinstance(reg.get_skill(DataReqType.SENSOR_DATA), SensorDataSkill)
+        assert isinstance(reg.get_skill(DataReqType.CODE), CodeSkill)
+        assert isinstance(reg.get_skill(DataReqType.DATASET), DatasetSkill)
 
     def test_get_skill_returns_same_instance(self) -> None:
         reg = SkillRegistry()
@@ -80,13 +82,15 @@ class TestGetSkill:
             DataReqType.SIM_CONFIG,
             DataReqType.POLICY_MODEL,
             DataReqType.SENSOR_DATA,
+            DataReqType.CODE,
+            DataReqType.DATASET,
         ):
             assert reg.get_skill(req_type) is reg.get_skill(req_type)
 
-    def test_get_skill_unregistered_returns_none(self) -> None:
+    def test_get_skill_code_and_dataset_registered(self) -> None:
         reg = SkillRegistry()
-        assert reg.get_skill(DataReqType.CODE) is None
-        assert reg.get_skill(DataReqType.DATASET) is None
+        assert isinstance(reg.get_skill(DataReqType.CODE), CodeSkill)
+        assert isinstance(reg.get_skill(DataReqType.DATASET), DatasetSkill)
 
 
 # ─── Scenario: 端到端装配 ParsedItem / 失败降级 ───
@@ -136,7 +140,7 @@ class TestProcessRetrievalResult:
         assert isinstance(outcome, MissingItem)
         assert outcome.reason == "timeout"
 
-    def test_missing_on_unregistered_req_type(self) -> None:
+    def test_missing_on_code_skill_failure(self) -> None:
         raw = _make_raw("zip", b"code bytes")
         result = RetrievalResult(req_id="req_001", data=raw, status="success")
         req = _make_req(DataReqType.CODE)
@@ -144,7 +148,7 @@ class TestProcessRetrievalResult:
         outcome = SkillRegistry().process_retrieval_result(result, req)
 
         assert isinstance(outcome, MissingItem)
-        assert "无对应 Skill" in outcome.reason
+        assert outcome.reason
 
     def test_missing_on_skill_failure(self) -> None:
         raw = _make_raw("stl", b"not a mesh")

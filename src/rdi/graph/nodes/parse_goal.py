@@ -17,7 +17,7 @@ from rdi.exceptions import LLMParseError, LLMUnavailableError
 from rdi.graph.state import SystemState
 from rdi.intelligence import LLMClient
 from rdi.intelligence.prompts import build_goal_parsing_prompt
-from rdi.models import DataReq, GoalSpec
+from rdi.models import DataReq, DataReqType, GoalSpec
 
 # ponytail: 临时用 PyMuPDF 直接抽取 PDF 文本，等 D 工程师的 PDFParseSkill 就绪后替换
 _PDF_TEXT_MAX_CHARS = 8000
@@ -70,6 +70,60 @@ def _extract_paper_text(paper_pdf: bytes | None) -> str | None:
     return text
 
 
+def _correct_req_type(req: DataReq) -> DataReq:
+    """基于 expected_format 与 description 关键词修正误分类的 req_type。
+
+    LLM 容易把真实机器人数据识别为通用的 code/dataset；
+    当显式格式或描述关键词命中时，强制映射到更具体的类型。
+    """
+    desc = req.description.lower()
+    fmt = (req.expected_format or "").lower()
+    text = f"{desc} {fmt}"
+    cur = req.req_type
+
+    if cur not in (DataReqType.CODE, DataReqType.DATASET):
+        return req
+
+    # 机器人描述文件
+    if "urdf" in text or "xacro" in text:
+        return req.model_copy(update={"req_type": DataReqType.ROBOT_URDF})
+
+    # 抓取姿态数据
+    grasp_keywords = ("grasp pose", "grasping pose", "grasp data", "grasp_label", "抓取姿态")
+    if any(k in text for k in grasp_keywords) or fmt in ("npz", "pkl"):
+        return req.model_copy(update={"req_type": DataReqType.GRASP})
+
+    # 仿真场景配置
+    sim_keywords = (
+        "mujoco",
+        "isaac",
+        "simulation scene",
+        "sim config",
+        "mjcf",
+        "仿真场景",
+        "仿真配置",
+    )
+    if any(k in text for k in sim_keywords) or fmt in ("xml", "mjcf"):
+        return req.model_copy(update={"req_type": DataReqType.SIM_CONFIG})
+
+    # 物体三维模型
+    mesh_keywords = (
+        "mesh",
+        "3d model",
+        "obj",
+        "stl",
+        "ply",
+        "dae",
+        "glb",
+        "三维模型",
+        "网格",
+    )
+    if any(k in text for k in mesh_keywords) or fmt in ("obj", "stl", "ply", "dae", "glb"):
+        return req.model_copy(update={"req_type": DataReqType.MESH})
+
+    return req
+
+
 def node_parse_goal(state: SystemState) -> dict[str, Any]:
     """目标解析节点：调用 LLM 把 user_goal + paper_pdf 转换为结构化数据需求。
 
@@ -114,6 +168,9 @@ def node_parse_goal(state: SystemState) -> dict[str, Any]:
         req.model_copy(update={"req_id": f"req_{i:03d}"})
         for i, req in enumerate(result.requirements)
     ]
+
+    # 后处理：根据 expected_format / description 关键词修正误分类
+    requirements = [_correct_req_type(req) for req in requirements]
 
     return {
         "parsed_goal": result.goal,

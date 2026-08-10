@@ -15,6 +15,12 @@ from rdi.models.retrieval import RawData, SearchResult
 # 降级回退：GitHub raw 仓库 URL
 _FALLBACK_BASE_URL = "https://raw.githubusercontent.com/frankaemika/franka_ros/develop"
 
+# C2 修复：已展开纯 URDF 源（pybullet_robots 内置 Panda）
+_PANDA_PLAIN_URDF_URL = (
+    "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/master"
+    "/data/franka_panda/panda.urdf"
+)
+
 # 降级回退：Franka 机器人已知型号
 _FALLBACK_MODELS: list[dict[str, str]] = [
     {"id": "panda", "title": "Franka Panda", "description": "7-DOF 灵巧操作臂"},
@@ -121,15 +127,20 @@ class FrankaAdapter(BaseAdapter):
     async def _fetch_fallback(self, item_id: str) -> RawData:
         """路径 B：GitHub raw URL 降级回退。
 
-        C6 修复：frankaemika/franka_ros develop 分支下实际是 .urdf.xacro（xacro 模板），
-        不是 .urdf。已 curl 验证 panda/fr3 路径可达。
+        C2 修复：panda 使用已展开纯 URDF；fr3/emika_panda 等仍走 xacro，
+        但 format 明确标记为 xacro，便于 URDFSkill 做 xacro 兜底。
         """
-        url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf.xacro"
+        if item_id == "panda":
+            url = _PANDA_PLAIN_URDF_URL
+            fmt = "urdf"
+        else:
+            url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf.xacro"
+            fmt = "xacro"
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,
-            format="urdf",
+            format=fmt,
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),

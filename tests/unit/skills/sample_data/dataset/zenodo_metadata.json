@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "title": "YCB Video Dataset",
+    "description": "A dataset for 6D object pose estimation from video sequences.",
+    "license": {
+      "id": "CC-BY-4.0"
+    }
+  },
+  "links": {
+    "self": "https://zenodo.org/records/12345",
+    "download": "https://zenodo.org/records/12345/files/ycb_video.zip"
+  },
+  "files": [
+    {
+      "key": "ycb_video.zip",
+      "size": 1073741824,
+      "checksum": "md5:abc123"
+    },
+    {
+      "key": "readme.txt",
+      "size": 1024,
+      "checksum": "md5:def456"
+    }
+  ]
+}

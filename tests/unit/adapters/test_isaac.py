@@ -57,6 +57,19 @@ class TestIsaacSimAdapter:
         assert results == []
 
     @pytest.mark.asyncio
+    async def test_search_fallback_multi_token_match(self) -> None:
+        """路径 B 支持多 token 查询：任一 token 命中即返回结果。"""
+        adapter = IsaacSimAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ISAAC.value
+            )
+            results = await adapter.search("Isaac franka")
+        assert len(results) > 0
+        assert results[0].item_id == "franka"
+        mock_scrape.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_fetch_success(self) -> None:
         """C11 修复后：单路径 fetch 走 IsaacLab Python 资产配置。"""
         adapter = IsaacSimAdapter()

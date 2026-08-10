@@ -7,7 +7,7 @@ import pytest
 
 from rdi.adapters.dexgrasp import DexGraspAdapter
 from rdi.exceptions import AdapterError
-from rdi.models.common import DataSource
+from rdi.models.common import DataReqType, DataSource
 
 
 class TestDexGraspAdapter:
@@ -58,41 +58,102 @@ class TestDexGraspAdapter:
             assert results[0].metadata["downloads"] == 100
 
     @pytest.mark.asyncio
-    async def test_dexgrasp_fetch_with_mock(self) -> None:
-        """C2 修订后：mock _request 返回文件树 + _download_bytes 返回数据。
-
-        C2 修订：lhrlhr/DexGraspNet2.0 实测为 .tar.gz 归档，format 字段为 tar.gz。
-        E1 修复后 fetch 先 HEAD 预检体积；mock _head_content_length 返回 None
-        （大小未知）→ 走原下载流程。
-        """
+    async def test_dexgrasp_fetch_mesh_success(self) -> None:
+        """Task 3 修订后：req_type=MESH 返回首个 .obj/.ply/.stl/.dae mesh 文件。"""
         adapter = DexGraspAdapter()
-        fake_targz = b"\x1f\x8btar.gz data"
+        fake_obj = b"# OBJ mesh data"
         mock_tree = [
             {"type": "file", "path": "README.md"},
-            {"type": "file", "path": "dex_grasps_new.tar.gz", "size": 12345},
+            {"type": "file", "path": "meshes/object_000001.obj"},
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
             patch.object(
                 adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
             ),
-            patch.object(
-                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_targz
-            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_obj),
         ):
-            raw = await adapter.fetch("dexgraspnet/dexgraspnet")
+            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.MESH)
             assert raw.source == DataSource.DEXGRASP
-            assert raw.item_id == "dexgraspnet/dexgraspnet"
-            assert raw.format == "tar.gz"
+            assert raw.item_id == "lhrlhr/DexGraspNet2.0"
+            assert raw.format == "obj"
+            assert raw.data == fake_obj
             assert raw.size_bytes > 0
-            assert "dex_grasps_new.tar.gz" in raw.url
+            assert "meshes/object_000001.obj" in raw.url
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_grasp_success(self) -> None:
+        """Task 3 修订后：req_type=GRASP 返回首个 .npz/.pkl 抓取文件。"""
+        adapter = DexGraspAdapter()
+        fake_npz = b"\x93NPZ"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "grasps/0000_grasp.npz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
+        ):
+            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.GRASP)
+            assert raw.source == DataSource.DEXGRASP
+            assert raw.format == "npz"
+            assert raw.data == fake_npz
+            assert "grasps/0000_grasp.npz" in raw.url
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_dataset_returns_metadata(self) -> None:
+        """Task 3 修订后：req_type=DATASET 返回 metadata JSON，不下载整个 tar.gz。"""
+        adapter = DexGraspAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md", "size": 100},
+            {"type": "file", "path": "dex_grasps_new.tar.gz", "size": 999999999},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
+        ):
+            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.DATASET)
+        assert raw.source == DataSource.DEXGRASP
+        assert raw.format == "json"
+        mock_dl.assert_not_called()
+        payload = __import__("json").loads(raw.data)
+        assert payload["dataset_id"] == "lhrlhr/DexGraspNet2.0"
+        assert any(f["path"] == "dex_grasps_new.tar.gz" for f in payload["file_list"])
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_mesh_returns_metadata_when_no_single_mesh(self) -> None:
+        """Task 3 修订后：MESH 请求但仓库只有 tar.gz 归档时返回 metadata JSON。"""
+        adapter = DexGraspAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "meshes.tar.gz"},
+        ]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
+            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.MESH)
+        assert raw.format == "json"
+        payload = __import__("json").loads(raw.data)
+        assert "mesh" in payload["reason"]
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_grasp_returns_metadata_when_no_single_grasp(self) -> None:
+        """Task 3 修订后：GRASP 请求但仓库只有 tar.gz 归档时返回 metadata JSON。"""
+        adapter = DexGraspAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "grasps.tar.gz"},
+        ]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
+            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.GRASP)
+        assert raw.format == "json"
+        payload = __import__("json").loads(raw.data)
+        assert "grasp" in payload["reason"]
 
     @pytest.mark.asyncio
     async def test_dexgrasp_fetch_returns_metadata_when_over_threshold(self) -> None:
-        """C2+E1 修复：HEAD 预检体积超 max_fetch_bytes 时返回 metadata JSON。
-
-        验证：不调用 _download_bytes；返回 format=json，含 url/size_bytes/file_list。
-        """
+        """Task 3 修订：HEAD 预检体积超 max_fetch_bytes 时返回 metadata JSON。"""
         import json as _json
 
         from rdi.config.settings import settings
@@ -101,7 +162,7 @@ class TestDexGraspAdapter:
         big_size = settings.max_fetch_bytes + 1
         mock_tree = [
             {"type": "file", "path": "README.md", "size": 100},
-            {"type": "file", "path": "dex_grasps_new.tar.gz", "size": big_size},
+            {"type": "file", "path": "grasps/0000_grasp.npz", "size": big_size},
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
@@ -113,12 +174,9 @@ class TestDexGraspAdapter:
             ),
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
         ):
-            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0")
+            raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.GRASP)
         assert raw.format == "json"
-        assert raw.size_bytes == big_size
         mock_dl.assert_not_called()
         payload = _json.loads(raw.data)
-        assert payload["size_bytes"] == big_size
-        assert payload["file_path"] == "dex_grasps_new.tar.gz"
-        assert payload["dataset_id"] == "lhrlhr/DexGraspNet2.0"
-        assert any(f["path"] == "dex_grasps_new.tar.gz" for f in payload["file_list"])
+        assert payload["file_size"] == big_size
+        assert payload["file_path"] == "grasps/0000_grasp.npz"

@@ -64,9 +64,15 @@ class TestAdapterRegistry:
         assert names[0] == "GitHubAdapter"
         assert "HuggingFaceAdapter" in names
 
-    def test_robot_urdf_contains_sim_adapters(self) -> None:
-        """正常情况：ROBOT_URDF 包含 MuJoCoAdapter 和 IsaacSimAdapter。"""
+    def test_robot_urdf_does_not_contain_sim_adapters(self) -> None:
+        """C2 修复：ROBOT_URDF 不再包含 MuJoCoAdapter 和 IsaacSimAdapter。"""
         names = ADAPTER_REGISTRY[DataReqType.ROBOT_URDF]
+        assert "MuJoCoAdapter" not in names
+        assert "IsaacSimAdapter" not in names
+
+    def test_sim_config_contains_sim_adapters(self) -> None:
+        """正常情况：SIM_CONFIG 包含 MuJoCoAdapter 和 IsaacSimAdapter。"""
+        names = ADAPTER_REGISTRY[DataReqType.SIM_CONFIG]
         assert "MuJoCoAdapter" in names
         assert "IsaacSimAdapter" in names
 
@@ -83,16 +89,20 @@ class TestAdapterRegistry:
         assert "HuggingFaceAdapter" in names
 
     def test_robot_urdf_contains_all_b_expected(self) -> None:
-        """B 系统预期：ROBOT_URDF 包含正确的机器人模型源。"""
+        """B 系统预期：ROBOT_URDF 仅包含真实机器人 URDF 源。"""
         names = ADAPTER_REGISTRY[DataReqType.ROBOT_URDF]
         for expected in [
             "FrankaAdapter",
             "AllegroAdapter",
             "RobotiqAdapter",
-            "MuJoCoAdapter",
-            "IsaacSimAdapter",
         ]:
             assert expected in names, f"{expected} missing from ROBOT_URDF"
+
+    def test_sim_config_contains_all_b_expected(self) -> None:
+        """B 系统预期：SIM_CONFIG 包含仿真配置源。"""
+        names = ADAPTER_REGISTRY[DataReqType.SIM_CONFIG]
+        for expected in ["MuJoCoAdapter", "IsaacSimAdapter"]:
+            assert expected in names, f"{expected} missing from SIM_CONFIG"
 
 
 class TestSelectAdapter:

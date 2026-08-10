@@ -1,4 +1,3 @@
-# src/rdi/adapters/graspnet.py
 """GraspNet 抓取数据集 Adapter。
 
 文档原始对接方式：官方下载（graspnet.net 网页解析下载链接）
@@ -7,11 +6,12 @@
 """
 
 import json
+from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
-from rdi.models.common import DataSource
+from rdi.models.common import DataReqType, DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
 # 降级回退：GraspNet 已知数据集（C3 修复：id 改为真实 HF repo）
@@ -28,6 +28,10 @@ _FALLBACK_DATASETS: list[dict[str, str]] = [
         "description": "GraspNet 抓取标注 HDF5 格式",
     },
 ]
+
+# 按 DataReqType 匹配的扩展名
+_MESH_EXTS = (".obj", ".ply", ".stl", ".dae")
+_GRASP_EXTS = (".npz", ".pkl")
 
 
 class GraspNetAdapter(BaseAdapter):
@@ -117,79 +121,92 @@ class GraspNetAdapter(BaseAdapter):
             for d in matched
         ]
 
-    async def fetch(self, item_id: str) -> RawData:
-        """下载数据集文件。
+    async def fetch(
+        self,
+        item_id: str,
+        req_type: DataReqType | None = None,
+    ) -> RawData:
+        """按 DataReqType 返回单个 mesh/grasp 文件或 metadata JSON。
 
-        C3+C14 修复：原 `_fetch_primary`（graspnet.net/datasets/{id}/download/data.npz）
-        和 `_fetch_fallback`（huggingface.co/datasets/graspnet/{id}/resolve/main/data.npz）
-        均为虚构路径。改为先调 HF 镜像 API 列文件树，再下载首个数据文件。
-        GraspNet-1Billion 实际是 .tar 归档（每个 12-142GB），非 .npz。
+        - MESH: 只下载 ``models/`` 或仓库中首个 ``.obj/.ply/.stl/.dae`` mesh 文件
+        - GRASP: 只下载 ``grasp_label/`` 或仓库中首个 ``.npz/.pkl`` 抓取文件
+        - DATASET / None: 返回 metadata JSON（不下载整个 tar）
 
-        C3 + E1 修复：rect_labels.tar 达 31.8GB，30s 探活超时不可下载。
-        下载前 HEAD 预检 Content-Length，超 max_fetch_bytes 阈值时
-        改返回 metadata JSON（含 url/size_bytes/file_list）。
-        同时补全 target_exts 的 .tar.gz（原仅 .tar，会匹配并下载全量大归档）。
+        若仓库中不存在对应类型的单个文件（如 GraspNet-1Billion 全为大体积
+        .tar 归档），返回 metadata JSON 并说明原因，避免触发整数据集下载。
         """
         # C3: 通过 HF 镜像 API 列出仓库文件树（base_url 默认 hf-mirror.com）
         tree = await self._request(
             "GET",
             f"/api/datasets/{item_id}/tree/main",
         )
-        # 找首个数据文件（.npz / .tar / .tar.gz / .h5）
-        # E1 修订：补 .tar.gz，避免 .tar 误匹配 .tar.gz 的大归档
-        target_exts = (".npz", ".tar.gz", ".tar", ".h5", ".hdf5")
-        file_path = next(
-            (
-                item.get("path", "")
-                for item in tree
-                if isinstance(item, dict) and item.get("path", "").lower().endswith(target_exts)
-            ),
-            None,
+
+        if req_type == DataReqType.MESH:
+            return await self._fetch_mesh(item_id, tree)
+        if req_type == DataReqType.GRASP:
+            return await self._fetch_grasp(item_id, tree)
+
+        # DATASET 或未知类型：返回 metadata
+        return self._build_metadata(item_id, tree)
+
+    async def _fetch_mesh(self, item_id: str, tree: list[dict[str, Any]]) -> RawData:
+        """返回首个单个 mesh 文件；无则返回 metadata JSON。"""
+        file_path = self._find_file_by_ext(tree, _MESH_EXTS)
+        if file_path:
+            return await self._download_single(item_id, file_path)
+        return self._build_metadata(
+            item_id,
+            tree,
+            reason="仓库中无单个 mesh 文件 (.obj/.ply/.stl/.dae)；"
+            "mesh 数据仅存在于大体积 tar 归档中",
         )
-        if not file_path:
-            raise AdapterError(
-                message=f"No data file ({target_exts}) found in dataset {item_id}",
-                source=self.source.value,
-            )
-        # 确定格式：.tar.gz → tar.gz，其余取末段扩展名
+
+    async def _fetch_grasp(self, item_id: str, tree: list[dict[str, Any]]) -> RawData:
+        """返回首个单个 grasp 文件；无则返回 metadata JSON。"""
+        file_path = self._find_file_by_ext(tree, _GRASP_EXTS)
+        if file_path:
+            return await self._download_single(item_id, file_path)
+        return self._build_metadata(
+            item_id,
+            tree,
+            reason="仓库中无单个 grasp 文件 (.npz/.pkl)；grasp 标注仅存在于大体积 tar/hdf5 归档中",
+        )
+
+    async def _download_single(self, item_id: str, file_path: str) -> RawData:
+        """下载仓库中指定路径的单个文件。"""
         lower_path = file_path.lower()
         if lower_path.endswith(".tar.gz"):
             fmt = "tar.gz"
         else:
             ext = lower_path.rsplit(".", 1)[-1]
-            fmt = {"npz": "npz", "tar": "tar", "h5": "hdf5", "hdf5": "hdf5"}.get(ext, "binary")
-        # C3: 下载走 huggingface_download_base_url（默认 hf-mirror.com）
+            fmt = {
+                "npz": "npz",
+                "pkl": "pkl",
+                "obj": "obj",
+                "ply": "ply",
+                "stl": "stl",
+                "dae": "dae",
+                "h5": "hdf5",
+                "hdf5": "hdf5",
+                "tar": "tar",
+            }.get(ext, "binary")
+
         download_base = settings.huggingface_download_base_url.rstrip("/")
         url = f"{download_base}/datasets/{item_id}/resolve/main/{file_path.lstrip('/')}"
-        # E1: HEAD 预检体积，超阈值改返回 metadata
+
+        # HEAD 预检体积，超阈值改返回 metadata
         size = await self._head_content_length(url)
         if size is not None and size > settings.max_fetch_bytes:
-            file_list = [
-                {
-                    "path": item.get("path", ""),
-                    "size": item.get("size", 0),
-                }
-                for item in tree
-                if isinstance(item, dict)
-            ]
-            payload = {
-                "url": url,
-                "size_bytes": size,
-                "file_path": file_path,
-                "format": fmt,
-                "dataset_id": item_id,
-                "file_list": file_list,
-                "note": "file exceeds max_fetch_bytes; returning metadata only",
-            }
-            data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-            return RawData(
-                source=DataSource.GRASPNET,
-                item_id=item_id,
-                format="json",
-                data=data_bytes,
-                url=url,
-                size_bytes=size,
+            return self._build_metadata(
+                item_id,
+                [],
+                reason=f"单个文件 {file_path} 体积 {size}B 超过 max_fetch_bytes"
+                f" ({settings.max_fetch_bytes}B)，不下载",
+                file_path=file_path,
+                file_url=url,
+                file_size=size,
             )
+
         data_bytes = await self._download_bytes(url)
         return RawData(
             source=DataSource.GRASPNET,
@@ -199,3 +216,53 @@ class GraspNetAdapter(BaseAdapter):
             url=url,
             size_bytes=len(data_bytes),
         )
+
+    def _build_metadata(
+        self,
+        item_id: str,
+        tree: list[dict[str, Any]],
+        reason: str | None = None,
+        file_path: str | None = None,
+        file_url: str | None = None,
+        file_size: int | None = None,
+    ) -> RawData:
+        """构造并返回 metadata JSON RawData。"""
+        file_list = [
+            {
+                "path": item.get("path", ""),
+                "size": item.get("size", 0),
+            }
+            for item in tree
+            if isinstance(item, dict)
+        ]
+        payload: dict[str, Any] = {
+            "dataset_id": item_id,
+            "file_list": file_list,
+            "source": "graspnet",
+        }
+        if reason:
+            payload["reason"] = reason
+        if file_path:
+            payload["file_path"] = file_path
+        if file_url:
+            payload["file_url"] = file_url
+        if file_size is not None:
+            payload["file_size"] = file_size
+        data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        return RawData(
+            source=DataSource.GRASPNET,
+            item_id=item_id,
+            format="json",
+            data=data_bytes,
+            url=f"https://huggingface.co/datasets/{item_id}",
+            size_bytes=len(data_bytes),
+        )
+
+    def _find_file_by_ext(self, tree: list[dict[str, Any]], exts: tuple[str, ...]) -> str | None:
+        """在文件树中按扩展名匹配首个文件路径。"""
+        for item in tree:
+            if isinstance(item, dict):
+                path = item.get("path", "")
+                if path.lower().endswith(exts):
+                    return path
+        return None

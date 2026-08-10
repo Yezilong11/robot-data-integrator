@@ -60,6 +60,19 @@ class TestMuJoCoAdapter:
         assert results == []
 
     @pytest.mark.asyncio
+    async def test_search_fallback_multi_token_match(self) -> None:
+        """路径 B 支持多 token 查询：任一 token 命中即返回结果。"""
+        adapter = MuJoCoAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.MUJOCO.value
+            )
+            results = await adapter.search("MuJoCo panda")
+        assert len(results) > 0
+        assert results[0].item_id == "franka_emika_panda"
+        mock_scrape.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_fetch_success(self) -> None:
         """C10 修复后：单路径 fetch 走 mujoco_menagerie，mock _download_bytes 返回数据。"""
         adapter = MuJoCoAdapter()

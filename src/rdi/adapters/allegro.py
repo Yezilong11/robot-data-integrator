@@ -12,6 +12,14 @@ from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
+# C2 修复：已展开纯 URDF 源（dexsuite/dex-urdf）
+_PLAIN_URDF_BASE = "https://raw.githubusercontent.com/dexsuite/dex-urdf/main"
+_PLAIN_URDF_PATHS: dict[str, str] = {
+    "allegro_hand_v4": "robots/hands/allegro_hand/allegro_hand_right.urdf",
+    "allegro_hand_right": "robots/hands/allegro_hand/allegro_hand_right.urdf",
+    "allegro_hand_left": "robots/hands/allegro_hand/allegro_hand_left.urdf",
+}
+
 # 降级回退：Allegro 手已知型号
 _FALLBACK_MODELS: list[dict[str, str]] = [
     {
@@ -114,18 +122,21 @@ class AllegroAdapter(BaseAdapter):
     async def fetch(self, item_id: str) -> RawData:
         """下载 URDF 文件。
 
-        C7 修复：simlabor/allegro_hand_ros 仓库 404 不存在；
-        改用 pal-robotics/allegro_hand（PAL Robotics 官方仓库）。
-        该仓库只有一个 allegro_hand.urdf.xacro（左右手通过 xacro 参数区分），
-        已 curl 验证 allegro_hand_description/urdf/allegro_hand.urdf.xacro 可达。
-        删除虚构的 _fetch_primary（wonikrobotics.com 网页路径不存在）。
+        C2 修复：优先使用 dexsuite/dex-urdf 已展开纯 URDF；
+        v3 等无稳定纯 URDF 型号仍走 pal-robotics xacro，format 明确标记为 xacro。
         """
-        urdf_url = f"{self.base_url}/allegro_hand_description/urdf/allegro_hand.urdf.xacro"
+        plain_path = _PLAIN_URDF_PATHS.get(item_id)
+        if plain_path is not None:
+            urdf_url = f"{_PLAIN_URDF_BASE}/{plain_path}"
+            fmt = "urdf"
+        else:
+            urdf_url = f"{self.base_url}/allegro_hand_description/urdf/allegro_hand.urdf.xacro"
+            fmt = "xacro"
         content = await self._download_bytes(urdf_url)
         return RawData(
             source=DataSource.ALLEGRO,
             item_id=item_id,
-            format="urdf",
+            format=fmt,
             data=content,
             url=urdf_url,
             size_bytes=len(content),

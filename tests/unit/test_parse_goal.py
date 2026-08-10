@@ -162,3 +162,42 @@ def test_extract_paper_text_handles_empty() -> None:
     assert _extract_paper_text(None) is None
     assert _extract_paper_text(b"") is None
     assert _extract_paper_text(b"not a pdf") is None
+
+
+@pytest.mark.parametrize(
+    ("initial_type", "description", "expected_format", "expected_type"),
+    [
+        (DataReqType.CODE, "Franka Panda URDF 模型", "urdf/xacro", DataReqType.ROBOT_URDF),
+        (DataReqType.DATASET, "YCB banana 3D model", "obj", DataReqType.MESH),
+        (DataReqType.CODE, "grasp pose data for mug", "npz", DataReqType.GRASP),
+        (DataReqType.DATASET, "MuJoCo simulation scene config", "xml", DataReqType.SIM_CONFIG),
+    ],
+)
+def test_parse_goal_corrects_misclassified_req_type(
+    monkeypatch: pytest.MonkeyPatch,
+    initial_type: DataReqType,
+    description: str,
+    expected_format: str,
+    expected_type: DataReqType,
+) -> None:
+    """LLM 把真实数据误标为 code/dataset 时，按格式或描述关键词修正。"""
+    reqs = [
+        DataReq(
+            req_id="req_000",
+            req_type=initial_type,
+            description=description,
+            priority=Priority.REQUIRED,
+            expected_format=expected_format,
+        )
+    ]
+    _install_fake(
+        monkeypatch,
+        result=_GoalParsingResult(
+            goal=GoalSpec(research_topic="test"),
+            requirements=reqs,
+        ),
+    )
+
+    out = node_parse_goal({"user_goal": "test"})
+
+    assert out["data_requirements"][0].req_type == expected_type

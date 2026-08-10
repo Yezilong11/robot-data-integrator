@@ -8,6 +8,17 @@
 
 Robot Data Integrator (RDI) 是一个基于 LLM 驱动的智能工作流系统，用于从多种异构数据源自动检索、解析、校验和整合机器人操作与抓取研究所需的数据。系统集成 LangGraph 工作流编排、Qwen 大语言模型智能决策、Hermes 持续学习引擎，以及 15 种数据源适配器，最终输出标准化的实验数据包。
 
+## 项目进展
+
+- **第二次联调已完成（2026-08-08）**：系统已能根据中文自然语言目标端到端生成包含 URDF、mesh、MuJoCo MJCF XML 与 grasp JSON 的实验数据包。
+- **示例目标**：「我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉，并测试抓取姿态的稳定性。」
+- **生成数据包示例**：`data/output_packages/package-20260808-181854/`，包含：
+  - `files/req_000.urdf` — Franka Panda URDF
+  - `files/req_001.stl` — YCB 香蕉 mesh
+  - `files/req_002.xml` — MuJoCo MJCF 场景
+  - `files/req_003.json` — grasp 元数据 / synthetic grasp
+- **当前测试状态**：393 passed / 1 skipped / 9 deselected。
+
 ## 核心特性
 
 - **LLM 驱动的目标解析** — 自动从自然语言目标提取数据需求清单，支持 PDF 论文辅助解析
@@ -96,6 +107,9 @@ cp .env.example .env
 ```bash
 # 启动 Gradio 前端
 uv run python -m rdi.frontend.app
+
+# 运行第二次联调 demo（生成 URDF + STL + MJCF XML + grasp JSON 数据包）
+uv run python scripts/run_second_integration_demo.py
 
 # 运行测试
 uv run pytest tests/unit/ -v

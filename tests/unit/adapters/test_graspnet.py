@@ -7,7 +7,7 @@ import pytest
 
 from rdi.adapters.graspnet import GraspNetAdapter
 from rdi.exceptions import AdapterError
-from rdi.models.common import DataSource
+from rdi.models.common import DataReqType, DataSource
 
 
 class TestGraspNetAdapter:
@@ -57,17 +57,37 @@ class TestGraspNetAdapter:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_fetch_primary_success(self) -> None:
-        """C3 修复后：mock _request 返回文件树 + _download_bytes 返回数据。
+    async def test_fetch_mesh_success(self) -> None:
+        """Task 3 修订后：req_type=MESH 返回首个 .obj/.ply/.stl/.dae mesh 文件。"""
+        adapter = GraspNetAdapter()
+        fake_obj = b"# OBJ mesh data"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "models/object_000001.obj"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_obj),
+        ):
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.MESH)
+        assert raw.source == DataSource.GRASPNET
+        assert raw.format == "obj"
+        assert raw.data == fake_obj
+        assert raw.size_bytes == len(fake_obj)
+        assert raw.size_bytes > 0
+        assert "models/object_000001.obj" in raw.url
 
-        E1 修复后 fetch 先 HEAD 预检体积；mock _head_content_length 返回 None
-        （大小未知）→ 走原下载流程。
-        """
+    @pytest.mark.asyncio
+    async def test_fetch_grasp_success(self) -> None:
+        """Task 3 修订后：req_type=GRASP 返回首个 .npz/.pkl 抓取文件。"""
         adapter = GraspNetAdapter()
         fake_npz = b"\x93NPZ"
         mock_tree = [
             {"type": "file", "path": "README.md"},
-            {"type": "file", "path": "data/grasp_data.npz"},
+            {"type": "file", "path": "grasp_label/0000_labels.npz"},
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
@@ -76,45 +96,63 @@ class TestGraspNetAdapter:
             ),
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
         ):
-            raw = await adapter.fetch("graspnet-benchmark")
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP)
         assert raw.source == DataSource.GRASPNET
         assert raw.format == "npz"
         assert raw.data == fake_npz
-        assert raw.size_bytes == len(fake_npz)
-        assert raw.size_bytes > 0
-        assert "data/grasp_data.npz" in raw.url
+        assert "grasp_label/0000_labels.npz" in raw.url
 
     @pytest.mark.asyncio
-    async def test_fetch_matches_tar_gz(self) -> None:
-        """E1 修订：target_exts 含 .tar.gz，优先匹配 .tar.gz 而非 .tar。
-
-        构造含 .tar.gz 与 .tar 的文件树，验证选中 .tar.gz 且 format=tar.gz。
-        """
+    async def test_fetch_dataset_returns_metadata(self) -> None:
+        """Task 3 修订后：req_type=DATASET 返回 metadata JSON，不下载整个 tar。"""
         adapter = GraspNetAdapter()
-        fake_bytes = b"tar.gz!"
         mock_tree = [
-            {"type": "file", "path": "README.md"},
-            {"type": "file", "path": "rect_labels.tar.gz"},
+            {"type": "file", "path": "README.md", "size": 100},
+            {"type": "file", "path": "rect_labels.tar.gz", "size": 999999999},
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
-            ),
-            patch.object(
-                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_bytes
-            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
         ):
-            raw = await adapter.fetch("DravenALG/GraspNet-1Billion")
-        assert raw.format == "tar.gz"
-        assert "rect_labels.tar.gz" in raw.url
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.DATASET)
+        assert raw.source == DataSource.GRASPNET
+        assert raw.format == "json"
+        mock_dl.assert_not_called()
+        payload = __import__("json").loads(raw.data)
+        assert payload["dataset_id"] == "DravenALG/GraspNet-1Billion"
+        assert any(f["path"] == "rect_labels.tar.gz" for f in payload["file_list"])
+
+    @pytest.mark.asyncio
+    async def test_fetch_mesh_returns_metadata_when_no_single_mesh(self) -> None:
+        """Task 3 修订后：MESH 请求但仓库只有 tar 归档时返回 metadata JSON。"""
+        adapter = GraspNetAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "models.tar"},
+        ]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.MESH)
+        assert raw.format == "json"
+        payload = __import__("json").loads(raw.data)
+        assert "mesh" in payload["reason"]
+
+    @pytest.mark.asyncio
+    async def test_fetch_grasp_returns_metadata_when_no_single_grasp(self) -> None:
+        """Task 3 修订后：GRASP 请求但仓库只有 tar/hdf5 时返回 metadata JSON。"""
+        adapter = GraspNetAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "grasp_label.tar"},
+        ]
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP)
+        assert raw.format == "json"
+        payload = __import__("json").loads(raw.data)
+        assert "grasp" in payload["reason"]
 
     @pytest.mark.asyncio
     async def test_fetch_returns_metadata_when_over_threshold(self) -> None:
-        """C3+E1 修复：HEAD 预检体积超 max_fetch_bytes 时返回 metadata JSON。
-
-        验证：不调用 _download_bytes；返回 format=json，含 url/size_bytes/file_list。
-        """
+        """Task 3 修订：HEAD 预检体积超 max_fetch_bytes 时返回 metadata JSON。"""
         import json as _json
 
         from rdi.config.settings import settings
@@ -123,7 +161,7 @@ class TestGraspNetAdapter:
         big_size = settings.max_fetch_bytes + 1
         mock_tree = [
             {"type": "file", "path": "README.md", "size": 100},
-            {"type": "file", "path": "rect_labels.tar", "size": big_size},
+            {"type": "file", "path": "grasp_label/0000_labels.npz", "size": big_size},
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
@@ -135,24 +173,9 @@ class TestGraspNetAdapter:
             ),
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
         ):
-            raw = await adapter.fetch("DravenALG/GraspNet-1Billion")
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP)
         assert raw.format == "json"
-        assert raw.size_bytes == big_size
         mock_dl.assert_not_called()
         payload = _json.loads(raw.data)
-        assert payload["size_bytes"] == big_size
-        assert payload["file_path"] == "rect_labels.tar"
-        assert payload["dataset_id"] == "DravenALG/GraspNet-1Billion"
-        assert any(f["path"] == "rect_labels.tar" for f in payload["file_list"])
-
-    @pytest.mark.asyncio
-    async def test_fetch_no_npz_raises(self) -> None:
-        """C3 修复后：文件树无数据文件时抛 AdapterError。"""
-        adapter = GraspNetAdapter()
-        mock_tree = [{"type": "file", "path": "README.md"}]
-        with (
-            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
-            pytest.raises(AdapterError) as exc_info,
-        ):
-            await adapter.fetch("graspnet-benchmark")
-        assert "No data file" in exc_info.value.message
+        assert payload["file_size"] == big_size
+        assert payload["file_path"] == "grasp_label/0000_labels.npz"
