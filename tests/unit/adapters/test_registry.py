@@ -46,11 +46,39 @@ ALL_ADAPTERS: list[tuple[type[BaseAdapter], DataSource]] = [
 class TestAdapterRegistry:
     """ADAPTER_REGISTRY 单元测试。"""
 
+    # D2: 新增四类暂无内置数据源的 DataReqType（诚实失败为 missing，
+    # 不注册 Adapter 是预期语义，见 spec Task 13）。
+    _NO_BUILTIN_SOURCE_TYPES = {
+        DataReqType.CAMERA_CALIB,
+        DataReqType.TEACHING_TRAJECTORY,
+        DataReqType.ROBOT_CONFIG,
+        DataReqType.BENCHMARK_TASK,
+    }
+
     def test_registry_has_all_req_types(self) -> None:
-        """正常情况：注册表覆盖所有真实 DataReqType（UNKNOWN 为哨兵值，无需 adapter）。"""
-        expected_types = [t for t in DataReqType if t is not DataReqType.UNKNOWN]
+        """正常情况：注册表覆盖所有真实 DataReqType（UNKNOWN 为哨兵值，无需 adapter）。
+
+        D2：CAMERA_CALIB / TEACHING_TRAJECTORY / ROBOT_CONFIG / BENCHMARK_TASK
+        暂不注册 adapter（无内置数据源），从预期中排除。
+        """
+        expected_types = [
+            t
+            for t in DataReqType
+            if t is not DataReqType.UNKNOWN
+            and t not in self._NO_BUILTIN_SOURCE_TYPES
+        ]
         for req_type in expected_types:
             assert req_type in ADAPTER_REGISTRY, f"Missing {req_type} in ADAPTER_REGISTRY"
+
+    def test_registry_no_builtin_for_new_types(self) -> None:
+        """D2：四类新类型在注册表中无内置 Adapter（select_adapter 返回空列表）。"""
+        for req_type in self._NO_BUILTIN_SOURCE_TYPES:
+            assert req_type not in ADAPTER_REGISTRY, (
+                f"{req_type} 不应注册内置 Adapter（无内置数据源）"
+            )
+            assert select_adapter(req_type) == [], (
+                f"select_adapter({req_type}) 应返回空列表"
+            )
 
     def test_paper_primary_is_arxiv(self) -> None:
         """正常情况：PAPER 主源是 ArxivAdapter，且包含 PapersWithCodeAdapter。"""

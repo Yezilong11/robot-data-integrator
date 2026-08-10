@@ -13,6 +13,7 @@ import io
 import json
 import posixpath
 import re
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ import numpy as np
 
 from rdi.config.settings import PIPELINE_VERSION, settings
 from rdi.graph.state import SystemState
+from rdi.logging import get_logger
 from rdi.models import (
     DataReqType,
     ManifestFile,
@@ -29,6 +31,8 @@ from rdi.models import (
     Priority,
     QualityReport,
 )
+
+logger = get_logger(__name__)
 
 # req_type → 数据包子目录；未知/未收录类型统一兜底 resources/
 # （与 CODE/DATASET/PAPER 归为同一通用资源目录，避免再引入碎片化 misc/ 目录）
@@ -77,6 +81,25 @@ def _ext_for_raw_format(original_format: str, canonical_format: str) -> str:
     if fmt in ("xml", "mjcf"):
         return ".xml"
     return _ext_for_format(canonical_format)
+
+
+# 资产文件扩展名 → 语义格式；未知扩展名兜底 "asset"
+_ASSET_FORMAT_BY_EXT: dict[str, str] = {
+    ".stl": "mesh",
+    ".dae": "mesh",
+    ".obj": "mesh",
+    ".png": "texture",
+    ".jpg": "texture",
+    ".jpeg": "texture",
+    ".xml": "xml",
+    ".urdf": "urdf",
+}
+
+
+def _asset_format(rel_asset: str) -> str:
+    """按资产文件扩展名推断语义格式（mesh/texture/xml/urdf）；未知扩展名用 "asset"。"""
+    ext = posixpath.splitext(rel_asset)[1].lower()
+    return _ASSET_FORMAT_BY_EXT.get(ext, "asset")
 
 
 def _safe_filename(req_id: str) -> str:
@@ -155,6 +178,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         更新 state 的字段：experiment_package, missing_items, provenance
     """
     now = datetime.now()
+    start = time.monotonic()
     parsed_data = state.get("parsed_data", {})
     missing_items = state.get("missing_items", [])
     requirements = state.get("data_requirements", [])
@@ -170,6 +194,8 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
     for req_id, item in parsed_data.items():
         try:
             subdir = _subdir_for_req_type(item.req_type)
+            # 资产文件条目暂存，主文件条目之后统一追加（保持 files[0] 为主文件）
+            asset_entries: list[ManifestFile] = []
             if item.raw_bytes is not None:
                 # P0-3 数据包自包含：原始 XML 与其引用的外部资产直接落盘
                 ext = _ext_for_raw_format(
@@ -188,9 +214,30 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                         norm_asset = norm_asset[3:]
                     if not norm_asset or norm_asset == "..":
                         continue
-                    asset_target = package_dir / subdir / norm_asset
+                    asset_rel_path = f"{subdir}/{norm_asset}"
+                    asset_target = package_dir / asset_rel_path
                     asset_target.parent.mkdir(parents=True, exist_ok=True)
                     asset_target.write_bytes(content)
+                    # P0-5：资产文件同样纳入 manifest 与 checksums.txt（校验和与磁盘一致）
+                    asset_entries.append(
+                        ManifestFile(
+                            req_id=req_id,
+                            path=asset_rel_path,
+                            format=_asset_format(norm_asset),
+                            source_url=item.provenance.source_url,
+                            retrieved_at=item.provenance.retrieved_at,
+                            transformations=[f"written_to:{asset_rel_path}"],
+                            confidence=item.confidence_score,
+                            completeness=item.completeness_pct,
+                            data_source_quality=item.data_source_quality or "unknown",
+                            is_fallback=item.is_fallback,
+                            downloaded=True,
+                            file_url=item.provenance.source_url,
+                            file_size=len(content),
+                            local_path=asset_rel_path,
+                            checksum_sha256=hashlib.sha256(content).hexdigest(),
+                        )
+                    )
             else:
                 content, suggested_ext = _serialize_item_data(item.data)
                 ext = suggested_ext or _ext_for_format(item.canonical_format)
@@ -208,6 +255,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             # reference 项写入的是 metadata JSON 代理文件，同样可算校验和）
             sha256 = hashlib.sha256(target.read_bytes()).hexdigest()
         except Exception as exc:  # noqa: BLE001 — 单项失败不中断整体打包
+            logger.warning("assemble.item_failed", req_id=req_id, reason=str(exc))
             provenance.append(
                 f"[{now.isoformat()}] assemble_package: 序列化 {req_id} 失败，已从数据包排除: {exc}"
             )
@@ -249,6 +297,8 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                 checksum_sha256=sha256,
             )
         )
+        # 主文件条目之后追加资产条目，保持 manifest 中主文件在前
+        manifest_files.extend(asset_entries)
 
     manifest_missing = [
         ManifestMissingItem(
@@ -281,7 +331,10 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             "created_at": now.isoformat(),
             "iteration": state.get("iteration_count", 0),
             "package_id": package_id,
+            "run_id": str(state.get("run_id", "")),  # str() 包裹兼容 None；单跑/测试为空串
             "pipeline_version": PIPELINE_VERSION,
+            # E3：真实流程产物显式标记非 demo（与演示流程 demo=true 区分）
+            "demo": "false",
             # 契约字段，源 metadata 提供时填充（当前数据链路未透传 license/citation）
             "license": "",
             "citation": "",
@@ -310,6 +363,20 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         json.dumps(package.model_dump(mode="json"), ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    # D1: 物理量纲显式化 —— 每个成功落盘 req 的单位/坐标系/时间戳落盘 units.json，
+    # 转换参数（DATASET_CONVENTIONS 约定 + item 元数据）不再只存在于代码常量
+    units_meta = {
+        req_id: {
+            "units": item.units,
+            "coordinate_frame": item.coordinate_frame,
+            "timestamp_epoch": item.timestamp_epoch,
+        }
+        for req_id, item in parsed_data.items()
+    }
+    (package_dir / "units.json").write_text(
+        json.dumps(units_meta, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     (package_dir / "provenance.log").write_text(
         "\n".join(package.provenance_log),
         encoding="utf-8",
@@ -319,6 +386,15 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         0,
         f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
         f"落盘 {len(manifest_files)} 个文件",
+    )
+
+    logger.info(
+        "assemble.done",
+        package_id=package_id,
+        files=len(manifest_files),
+        missing=len(manifest_missing),
+        status=package.package_info["status"],
+        elapsed_seconds=round(time.monotonic() - start, 3),
     )
 
     return {

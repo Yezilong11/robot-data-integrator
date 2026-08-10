@@ -11,7 +11,7 @@ from typing import Any
 from rdi.adapters._graspnet_objects import find_object_grasp_file
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataReqType, DataSource
 from rdi.models.retrieval import RawData, RawReference, SearchResult
 
@@ -102,7 +102,7 @@ class GraspNetAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
         query_lower = query.lower()
         matched = [
             d
@@ -111,6 +111,14 @@ class GraspNetAdapter(BaseAdapter):
             or query_lower in d["title"].lower()
             or query_lower in d["description"].lower()
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_DATASETS)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=d["id"],
@@ -139,6 +147,10 @@ class GraspNetAdapter(BaseAdapter):
         若仓库中不存在对应类型的单个文件（如 GraspNet-1Billion 全为大体积
         .tar 归档），返回 metadata JSON 并说明原因，避免触发整数据集下载。
         """
+        # D3: 来源级本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）
+        local = self._try_local_fetch(item_id, req_type=req_type, object_name=object_name)
+        if local is not None:
+            return local
         # C3: 通过 HF 镜像 API 列出仓库文件树（base_url 默认 hf-mirror.com）
         tree = await self._request(
             "GET",
@@ -190,6 +202,51 @@ class GraspNetAdapter(BaseAdapter):
     def _find_object_grasp_file(self, tree: list[dict[str, Any]], object_name: str) -> str | None:
         """按物体名定位 ``grasp_label/`` 下的真实 ``.npz``；找不到返回 None。"""
         return find_object_grasp_file(tree, object_name, _GRASP_EXTS)
+
+    def _try_local_fetch(
+        self,
+        item_id: str,
+        req_type: DataReqType | None = None,
+        object_name: str | None = None,
+    ) -> RawData | None:
+        """本地数据集挂载命中检查（D3）。
+
+        本地目录即 HF repo 根（settings.local_datasets["graspnet"]）：递归扫描构造
+        与 tree API 同构的条目列表，再用与网络相同的定位逻辑（_find_object_grasp_
+        file / _find_file_by_ext）选相对路径，命中读取本地文件返回 source=LOCAL
+        的 RawData（不发网络请求），未命中返回 None 走网络。DATASET 类型不参与
+        本地单文件命中（本地挂载不改变 metadata 引用语义）。
+        """
+        root = self.local_dataset_root()
+        if root is None:
+            return None
+        tree = self._walk_local_tree(root)
+        if not tree:
+            return None
+        if req_type == DataReqType.MESH:
+            file_path = self._find_file_by_ext(tree, _MESH_EXTS)
+        elif req_type == DataReqType.GRASP:
+            file_path = self._find_object_grasp_file(tree, object_name or item_id)
+            if file_path is None:
+                file_path = self._find_file_by_ext(tree, _GRASP_EXTS)
+        else:
+            return None
+        if not file_path:
+            return None
+        path = self._find_local_file([file_path])
+        if path is None:
+            return None
+        data = path.read_bytes()
+        fmt = file_path.rsplit(".", 1)[-1].lower()
+        return RawData(
+            source=DataSource.LOCAL,
+            item_id=item_id,
+            format=fmt,
+            data=data,
+            url=f"local://{self.source.value}/{file_path}",
+            size_bytes=len(data),
+            metadata=self._file_metadata(fmt),
+        )
 
     async def _download_single(self, item_id: str, file_path: str) -> RawData:
         """下载仓库中指定路径的单个文件。"""

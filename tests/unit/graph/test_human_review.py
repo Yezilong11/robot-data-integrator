@@ -19,7 +19,8 @@ from rdi.exceptions import LLMUnavailableError
 from rdi.graph.edges import route_after_review
 from rdi.graph.nodes import human_review
 from rdi.graph.nodes.assemble import node_assemble
-from rdi.models import DataReq, DataReqType, Priority
+from rdi.models import DataReq, DataReqType, MissingItem, Priority, RetrievalError
+from rdi.models.common import DataSource
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -110,8 +111,9 @@ def test_revised_calls_llm_writes_revised_goal_and_routes_to_parse_goal(
     assert route_after_review(merged) == "revised"
     assert update["revised_goal"] == "用 UR5 在 PyBullet 中抓取 YCB mug"
     assert merged["user_goal"] == "用 UR5 在 PyBullet 中抓取 YCB mug"
-    # 循环清空旧检索结果，避免状态污染
-    assert merged["retrieval_results"] == {}
+    # 保留成功检索结果（只重跑失败项，不整体清空）
+    assert merged["retrieval_results"] == state["retrieval_results"]
+    assert "retrieval_results" not in update
     assert any("回到 parse_goal" in p for p in merged["provenance"])
 
 
@@ -146,7 +148,9 @@ def test_unsatisfied_routes_to_retrieve_data(monkeypatch: pytest.MonkeyPatch) ->
     assert route_after_review(merged) == "unsatisfied"
     assert "重检索建议" in update["revised_goal"]
     assert "DexGraspNet" in update["revised_goal"]
-    assert merged["retrieval_results"] == {}
+    # 保留成功检索结果（只重跑失败项，不整体清空）
+    assert merged["retrieval_results"] == state["retrieval_results"]
+    assert "retrieval_results" not in update
     # unsatisfied 不调用 LLM（规则生成建议）
     assert fake.calls == []
     assert any("回到 retrieve_data" in p for p in merged["provenance"])
@@ -158,6 +162,72 @@ def test_unsatisfied_without_feedback_has_default_advice(monkeypatch: pytest.Mon
     merged, update = _run(_base_state("unsatisfied"))
     assert "更换数据源" in update["revised_goal"]
     assert merged["review_decision"] == "unsatisfied"
+
+
+# ─── C5: retry_req_ids（仅重跑失败 req） ───
+
+
+def _failed_state(decision: str) -> SystemState:
+    """构造含失败项的 state：missing_items 与 retrieval_errors 中 req_001 重复（验证去重）。"""
+    return _base_state(
+        decision,
+        missing_items=[
+            MissingItem(
+                req_id="req_001",
+                req_type=DataReqType.MESH,
+                description="banana mesh",
+                reason="未找到",
+            )
+        ],
+        retrieval_errors=[
+            RetrievalError(
+                req_id="req_001", source=DataSource.GITHUB, error_type="not_found", error_message="404"
+            ),
+            RetrievalError(
+                req_id="req_002", source=DataSource.GITHUB, error_type="timeout", error_message="超时"
+            ),
+        ],
+    )
+
+
+def test_unsatisfied_sets_retry_req_ids_dedup_and_keeps_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """unsatisfied：retry_req_ids 从 missing_items + retrieval_errors 收集并去重；不再清空 retrieval_results。"""
+    _patch_llm(monkeypatch, _FakeLLMClient())
+    state = _failed_state("unsatisfied")
+    merged, update = _run(state)
+
+    # 去重：req_001 同时在 missing_items 与 retrieval_errors 中，只出现一次
+    assert update["retry_req_ids"] == ["req_001", "req_002"]
+    # 不再清空检索结果：update 不含 retrieval_results 键，原值保留
+    assert "retrieval_results" not in update
+    assert merged["retrieval_results"] == state["retrieval_results"]
+    # provenance 注明仅重跑失败 req
+    assert any("仅重跑失败 req: req_001, req_002" in p for p in merged["provenance"])
+
+
+def test_revised_sets_retry_req_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    """revised：同样写入 retry_req_ids（仅重跑失败 req），成功项保留。"""
+    fake = _FakeLLMClient(result=human_review._RevisedGoal(revised_goal="用 UR5 在 PyBullet 中抓取 mug"))
+    _patch_llm(monkeypatch, fake)
+    state = _failed_state("revised")
+    merged, update = _run(state)
+
+    assert update["retry_req_ids"] == ["req_001", "req_002"]
+    assert "retrieval_results" not in update
+    assert merged["retrieval_results"] == state["retrieval_results"]
+    assert any("仅重跑失败 req: req_001, req_002" in p for p in merged["provenance"])
+
+
+def test_satisfied_does_not_set_retry_req_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    """satisfied：不触发重跑，不产生 retry_req_ids。"""
+    _patch_llm(monkeypatch, _FakeLLMClient())
+    merged, update = _run(_failed_state("satisfied"))
+
+    assert merged["review_decision"] == "satisfied"
+    assert "retry_req_ids" not in update
+    assert "retrieval_results" not in update
 
 
 # ─── 循环上限 ───

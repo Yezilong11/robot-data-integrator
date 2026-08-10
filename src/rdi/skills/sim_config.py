@@ -336,6 +336,7 @@ class SimConfigSkill(BaseSkill):
             confidence_score=0.8,
             warnings=warnings,
             data_source_quality="fallback",
+            is_fallback=True,
             data=xml_bytes,
         )
 

@@ -100,6 +100,33 @@ _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
         "仿真场景",
         "仿真配置",
     ),
+    # D2: 新增四类强关键词。中文用具体词避开泛词误伤：
+    # "配置" 会命中 SIM_CONFIG 的"仿真场景配置"，故 ROBOT_CONFIG 只收英文具体词。
+    DataReqType.CAMERA_CALIB: (
+        "camera calibration",
+        "calibration",
+        "calib",
+        "intrinsics",
+        "extrinsics",
+        "标定",
+        "内参",
+        "外参",
+    ),
+    DataReqType.TEACHING_TRAJECTORY: (
+        "teaching trajectory",
+        "teaching",
+        "demonstration",
+        "示教轨迹",
+        "示教",
+    ),
+    DataReqType.ROBOT_CONFIG: (
+        "robot config",
+        "robot_config",
+        "robot-config",
+        "config.yaml",
+        "yaml config",
+    ),
+    DataReqType.BENCHMARK_TASK: ("benchmark", "基准测试", "基准任务"),
 }
 
 _WEAK_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
@@ -113,6 +140,29 @@ _WEAK_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
 # 具体类型描述里常出现 robot / 抓取 等通用词，不应被强转。
 _WEAK_ELIGIBLE_TYPES: frozenset[DataReqType] = frozenset(
     {DataReqType.CODE, DataReqType.DATASET, DataReqType.UNKNOWN}
+)
+
+# C1: 中文抓取语境物体名提取模式（先"X 的抓取标注"语序，再"抓取标注：X"语序）
+_OBJECT_NAME_PATTERNS: tuple[str, ...] = (
+    r"([\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_-]*)\s*的\s*抓取(?:标注|姿态|数据)?",
+    r"抓取(?:标注|姿态|数据)?\s*[:：]?\s*([\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_-]*)",
+)
+# 语序二可能误捕获的泛化词（如"抓取数据"中的"数据"不是物体名）
+_OBJECT_NAME_STOPWORDS: frozenset[str] = frozenset(
+    {"数据", "文件", "标注", "姿态", "模型", "网格", "物体", "场景", "配置", "任务", "信息"}
+)
+# C1: YCB 常见物体英文名小列表（覆盖测试场景，不做全表）
+_YCB_COMMON_OBJECT_NAMES: tuple[str, ...] = (
+    "banana",
+    "apple",
+    "mug",
+    "bowl",
+    "cracker box",
+    "sugar box",
+    "tomato soup can",
+    "master chef can",
+    "mustard bottle",
+    "tuna fish can",
 )
 
 
@@ -152,6 +202,37 @@ def _normalize_datareq(req: DataReq) -> DataReq:
             )
 
     return req
+
+
+def _extract_object_name_from_text(text: str) -> str:
+    """从描述文本提取目标物体名；未识别返回空串。
+
+    规则（按优先级）：
+    1. YCB 风格物体 id（如 ``011_banana``）；
+    2. 中文抓取语境名词（"banana 的抓取标注" / "抓取标注：banana"），
+       排除"数据/文件"等泛化词；
+    3. 英文 grasp 语境（如 "grasp pose of banana"）；
+    4. YCB 常见物体英文名小列表。
+    """
+    m = re.search(r"\b(\d{3}_[a-z0-9_]+)\b", text)
+    if m:
+        return m.group(1)
+    for pattern in _OBJECT_NAME_PATTERNS:
+        m = re.search(pattern, text)
+        if m and m.group(1).lower() not in _OBJECT_NAME_STOPWORDS:
+            return m.group(1)
+    m = re.search(
+        r"grasp(?:ing)? (?:pose|data|annotation)?(?:s)? (?:of|for|on)?\s*([a-z0-9_-]+)",
+        text,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1)
+    lower = text.lower()
+    for name in _YCB_COMMON_OBJECT_NAMES:
+        if re.search(rf"\b{re.escape(name)}\b", lower):
+            return name
+    return ""
 
 
 def node_parse_goal(state: SystemState) -> dict[str, Any]:
@@ -201,6 +282,22 @@ def node_parse_goal(state: SystemState) -> dict[str, Any]:
 
     # 后处理：根据 expected_format / description 关键词修正误分类
     requirements = [_normalize_datareq(req) for req in requirements]
+
+    # C1: 对 GRASP/MESH 需求从描述文本补充 object_name（先 normalize 再填充，
+    # 保证 req_type 已修正为 GRASP/MESH 后才会触发；LLM 已填的 object_name 不覆盖）
+    requirements = [
+        req.model_copy(
+            update={
+                "object_name": _extract_object_name_from_text(
+                    f"{req.description} {req.expected_format or ''}"
+                )
+            }
+        )
+        if req.req_type in (DataReqType.GRASP, DataReqType.MESH)
+        and not (getattr(req, "object_name", "") or "").strip()
+        else req
+        for req in requirements
+    ]
 
     return {
         "parsed_goal": result.goal,

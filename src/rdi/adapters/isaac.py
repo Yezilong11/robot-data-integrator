@@ -18,7 +18,7 @@ Isaac 官方场景到 MJCF/USD 的映射说明（C13）：
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
@@ -91,7 +91,7 @@ class IsaacSimAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
         tokens = query.lower().split()
         matched = [
             e
@@ -103,6 +103,14 @@ class IsaacSimAdapter(BaseAdapter):
                 for token in tokens
             )
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_EXAMPLES)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=e["id"],
@@ -117,11 +125,16 @@ class IsaacSimAdapter(BaseAdapter):
     async def fetch(self, item_id: str) -> RawData:
         """下载资产配置文件。
 
+        D3：本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）。
         C11 修复：NVIDIA-Omniverse/IsaacSim 已 archived 且无资产；
         改用 isaac-sim/IsaacLab，资产通过 Python 配置文件引用 USD。
         删除虚构的 _fetch_primary（docs/_static/{id}.usd 不存在），
         直接走 IsaacLab 的 robots/{id}.py（已 curl 验证 franka.py/allegro.py 可达）。
         """
+        # D3: 本地挂载目录即 IsaacLab 仓库根镜像，相对路径与 raw URL 同构
+        local = self._local_raw(item_id, self._local_candidates(item_id))
+        if local is not None:
+            return local
         py_url = f"{self.base_url}/source/isaaclab_assets/isaaclab_assets/robots/{item_id}.py"
         content = await self._download_bytes(py_url)
         return RawData(
@@ -139,3 +152,7 @@ class IsaacSimAdapter(BaseAdapter):
                 ),
             },
         )
+
+    def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:
+        """本地挂载候选 (仓库相对路径, format)，与 fetch 的 URL 路径同构。"""
+        return [(f"source/isaaclab_assets/isaaclab_assets/robots/{item_id}.py", "python")]

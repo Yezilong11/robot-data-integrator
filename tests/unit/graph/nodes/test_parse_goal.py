@@ -14,7 +14,7 @@ import logging
 
 import pytest
 
-from rdi.graph.nodes.parse_goal import _normalize_datareq
+from rdi.graph.nodes.parse_goal import _extract_object_name_from_text, _normalize_datareq
 from rdi.models import DataReq, DataReqType, Priority
 
 
@@ -180,3 +180,99 @@ def test_example_corpus_maps_to_four_types(
     """5.1 示例清单中的各条需求描述经规则后处理正确产出四类 DataReq。"""
     out = _normalize_datareq(_req(description, None, DataReqType.CODE))
     assert out.req_type == expected
+
+
+# ─── C1: _extract_object_name_from_text 物体名提取规则 ───
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        # 规则 1：YCB 风格 id
+        ("011_banana 的 mesh", "011_banana"),
+        ("YCB 003_cracker_box 的抓取标注", "003_cracker_box"),
+        # 规则 2：中文抓取语境（两种语序）
+        ("banana 的抓取标注", "banana"),
+        ("抓取标注：banana", "banana"),
+        ("YCB apple 的抓取姿态数据", "apple"),
+        ("EGAD mug 的抓取姿态数据", "mug"),
+        # 规则 3：英文 grasp 语境
+        ("grasp pose of banana", "banana"),
+        ("grasping pose of mug", "mug"),
+        # 规则 4：YCB 常见物体英文名
+        ("YCB banana 的 3D 网格模型", "banana"),
+        ("ModelNet bottle 的 3D 网格模型", ""),
+        # 无物体名 / 泛化词不误报
+        ("抓取姿态数据", ""),
+        ("抓取数据", ""),
+        ("一些无关描述", ""),
+    ],
+)
+def test_extract_object_name_from_text(text: str, expected: str) -> None:
+    """C1：按优先级从描述文本提取目标物体名。"""
+    assert _extract_object_name_from_text(text) == expected
+
+
+# ─── D2: 新类型（CAMERA_CALIB / TEACHING_TRAJECTORY / ROBOT_CONFIG / BENCHMARK_TASK） ───
+
+
+@pytest.mark.parametrize(
+    ("description", "expected"),
+    [
+        # ── CAMERA_CALIB ──
+        ("标定相机参数", DataReqType.CAMERA_CALIB),
+        ("相机标定", DataReqType.CAMERA_CALIB),
+        ("camera calibration 内参外参", DataReqType.CAMERA_CALIB),
+        ("标定", DataReqType.CAMERA_CALIB),
+        # ── TEACHING_TRAJECTORY ──
+        ("机械臂示教轨迹数据", DataReqType.TEACHING_TRAJECTORY),
+        ("采集示教轨迹", DataReqType.TEACHING_TRAJECTORY),
+        ("teaching trajectory 数据", DataReqType.TEACHING_TRAJECTORY),
+        ("demonstration 数据", DataReqType.TEACHING_TRAJECTORY),
+        # ── ROBOT_CONFIG ──
+        ("获取 robot config", DataReqType.ROBOT_CONFIG),
+        ("robot_config 文件", DataReqType.ROBOT_CONFIG),
+        ("config.yaml 机器人参数", DataReqType.ROBOT_CONFIG),
+        # ── BENCHMARK_TASK ──
+        ("benchmark 评测任务", DataReqType.BENCHMARK_TASK),
+        ("基准测试任务", DataReqType.BENCHMARK_TASK),
+        ("基准任务定义", DataReqType.BENCHMARK_TASK),
+    ],
+)
+def test_normalize_maps_new_types(
+    description: str,
+    expected: DataReqType,
+) -> None:
+    """D2：LLM 把新类型需求误标为 code/unknown 时，按中文/英文描述关键词映射。"""
+    out = _normalize_datareq(_req(description, None, DataReqType.CODE))
+    assert out.req_type == expected
+    out_unknown = _normalize_datareq(_req(description, None, DataReqType.UNKNOWN))
+    assert out_unknown.req_type == expected
+
+
+@pytest.mark.parametrize(
+    "req_type",
+    [
+        DataReqType.CAMERA_CALIB,
+        DataReqType.TEACHING_TRAJECTORY,
+        DataReqType.ROBOT_CONFIG,
+        DataReqType.BENCHMARK_TASK,
+    ],
+)
+def test_normalize_keeps_llm_filled_new_types(req_type: DataReqType) -> None:
+    """D2：LLM 已正确输出新类型时，后处理保持原类型不被改走。"""
+    out = _normalize_datareq(_req("描述内容", None, req_type))
+    assert out.req_type == req_type
+
+
+def test_normalize_new_types_do_not_misclassify_existing() -> None:
+    """D2 不回归：新类型关键词不误伤已有类型。"""
+    # SIM_CONFIG 描述含"配置"不应被 ROBOT_CONFIG 转走（ROBOT_CONFIG 不收中文"配置"）
+    s = _req("MuJoCo 仿真场景配置", None, DataReqType.SIM_CONFIG)
+    assert _normalize_datareq(s).req_type == DataReqType.SIM_CONFIG
+    # ROBOT_URDF 描述含 "robot" 但无 "robot config" 整词，不被 ROBOT_CONFIG 转走
+    r = _req("Franka Panda robot URDF 模型", None, DataReqType.ROBOT_URDF)
+    assert _normalize_datareq(r).req_type == DataReqType.ROBOT_URDF
+    # GRASP 描述含"轨迹"（抓取姿态）不应被 TEACHING_TRAJECTORY 转走
+    g = _req("grasp pose 轨迹数据", None, DataReqType.GRASP)
+    assert _normalize_datareq(g).req_type == DataReqType.GRASP

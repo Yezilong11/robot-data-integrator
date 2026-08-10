@@ -74,9 +74,13 @@ class Settings(BaseSettings):
         default=10,
         description="每秒最大并发请求数",
     )
-    adapter_cache_ttl: int = Field(
+    cache_ttl_seconds: int = Field(
         default=3600,
         description="缓存 TTL 秒数",
+    )
+    cache_max_entries: int = Field(
+        default=256,
+        description="内存缓存最大条目数",
     )
     max_fetch_bytes: int = Field(
         default=50_000_000,
@@ -107,6 +111,20 @@ class Settings(BaseSettings):
             "海外或 jsdelivr 不可达时可改为其他 GH raw 镜像或置空禁用。"
         ),
     )
+    local_datasets: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "来源级本地数据集挂载（D3）：数据源名（DataSource.value，如 graspnet/"
+            "ycb/franka）→ 本地目录。本地目录布局与远程仓库/URL 的路径同构"
+            "（GraspNet/YCB/DexGrasp 为 HF repo 根，Franka/Allegro/Robotiq/MuJoCo/"
+            "Isaac 为 GitHub 仓库根）。adapter fetch 时优先在挂载目录中按 item_id/"
+            "object_name 定位文件（用与网络相同的扩展名/物体名定位逻辑），命中直接"
+            "返回本地数据（source=local，不发起网络请求），未命中走网络。与前端"
+            "per-req 注入（state.local_files，req_id→路径）并存互不干扰：前者按来源"
+            "挂载整个数据集目录，后者按需求注入单个文件。环境变量示例："
+            'LOCAL_DATASETS=\'{"graspnet":"D:/datasets/graspnet","ycb":"D:/datasets/ycb"}\''
+        ),
+    )
 
     # ─── 数据源 URL 配置 ───
     huggingface_api_url: str = Field(
@@ -129,20 +147,32 @@ class Settings(BaseSettings):
         description="Google Scanned Objects (Gazebo Fuel) API URL",
     )
     robotiq_base_url: str = Field(
-        default="https://raw.githubusercontent.com/ros-industrial-attic/robotiq/kinetic-devel",
-        description="Robotiq URDF 模型仓库基础 URL（ros-industrial 已迁至 attic）",
+        default="https://raw.githubusercontent.com/ros-industrial-attic/robotiq/45196f6558fe8ba9d89bc8a105396c68c3e7e892",
+        description=(
+            "Robotiq URDF 模型仓库基础 URL（ros-industrial 已迁至 attic）。"
+            "钉 commit 45196f6558fe8ba9d89bc8a105396c68c3e7e892（2026-08-10 pin）"
+        ),
     )
     allegro_base_url: str = Field(
-        default="https://raw.githubusercontent.com/pal-robotics/allegro_hand/main",
-        description="Allegro 灵巧手 URDF 模型仓库基础 URL（PAL Robotics 官方仓库）",
+        default="https://raw.githubusercontent.com/pal-robotics/allegro_hand/93d7154068345a7e6496654b91c14db93818d9b3",
+        description=(
+            "Allegro 灵巧手 URDF 模型仓库基础 URL（PAL Robotics 官方仓库）。"
+            "钉 commit 93d7154068345a7e6496654b91c14db93818d9b3（2026-08-10 pin）"
+        ),
     )
     mujoco_base_url: str = Field(
-        default="https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/main",
-        description="MuJoCo MJCF 模型仓库基础 URL",
+        default="https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994",
+        description=(
+            "MuJoCo MJCF 模型仓库基础 URL。"
+            "钉 commit da76818e269b82289eba39808e2fb91d679d6994（2026-08-10 pin）"
+        ),
     )
     isaac_base_url: str = Field(
         default="https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2",
-        description="Isaac Lab 资产配置仓库基础 URL（USD 资产通过 Python 配置引用）",
+        description=(
+            "Isaac Lab 资产配置仓库基础 URL（USD 资产通过 Python 配置引用）。"
+            "release/3.0.0-beta2 为具体 release tag，不可变，无漂移风险"
+        ),
     )
 
     # ─── 数据源 URL 配置（可通过环境变量覆盖） ───
@@ -173,8 +203,11 @@ class Settings(BaseSettings):
         description="YCB Objects 数据集镜像基础 URL（默认走 HF 镜像）",
     )
     franka_base_url: str = Field(
-        default="https://raw.githubusercontent.com/frankaemika/franka_ros/develop",
-        description="Franka 机器人模型仓库基础 URL（降级回退下载地址）",
+        default="https://raw.githubusercontent.com/frankarobotics/franka_ros/ddd2fffd9de44b02ad15b4bbb2bfa2cec4d60d98",
+        description=(
+            "Franka 机器人模型仓库基础 URL（降级回退下载地址，仓库已从 frankaemika 迁移至 frankarobotics）。"
+            "钉 commit ddd2fffd9de44b02ad15b4bbb2bfa2cec4d60d98（2026-08-10 pin）"
+        ),
     )
 
     # ─── 数据源网页 URL 配置（文档原始对接方式） ───

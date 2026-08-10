@@ -36,18 +36,33 @@ class DataSource(StrEnum):
 
 
 class DataReqType(StrEnum):
-    """数据需求类型枚举，对应六类异构数据。"""
+    """数据需求类型枚举，每个成员带中文描述（``zh`` 属性）。
 
-    PAPER = "paper"
-    CODE = "code"
-    DATASET = "dataset"
-    ROBOT_URDF = "robot_urdf"
-    MESH = "mesh"
-    GRASP = "grasp"
-    SIM_CONFIG = "sim_config"
-    POLICY_MODEL = "policy_model"
-    SENSOR_DATA = "sensor_data"
-    UNKNOWN = "unknown"
+    D2：新增 CAMERA_CALIB / TEACHING_TRAJECTORY / ROBOT_CONFIG / BENCHMARK_TASK
+    四类科研常见需求；其中 SIM_CONFIG 等已有内置 Adapter/Skill，新增四类暂无
+    内置数据源（检索链路返回 missing + 「该类型暂无内置数据源」）。
+    """
+
+    def __new__(cls, value: str, zh: str) -> "DataReqType":
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        obj.zh = zh
+        return obj
+
+    PAPER = "paper", "论文"
+    CODE = "code", "代码仓库"
+    DATASET = "dataset", "数据集"
+    ROBOT_URDF = "robot_urdf", "机器人 URDF 模型"
+    MESH = "mesh", "物体网格模型"
+    GRASP = "grasp", "抓取姿态/标注"
+    SIM_CONFIG = "sim_config", "仿真场景配置"
+    POLICY_MODEL = "policy_model", "策略模型"
+    SENSOR_DATA = "sensor_data", "传感器数据"
+    CAMERA_CALIB = "camera_calib", "相机标定参数"
+    TEACHING_TRAJECTORY = "teaching_trajectory", "示教轨迹"
+    ROBOT_CONFIG = "robot_config", "机器人配置"
+    BENCHMARK_TASK = "benchmark_task", "基准测试任务"
+    UNKNOWN = "unknown", "未知/未识别"
 
 
 class Priority(StrEnum):
@@ -163,6 +178,22 @@ class StandardResult(BaseModel):
     data_source_quality: str | None = Field(
         default=None,
         description="数据来源真实程度：real / synthetic / fallback",
+    )
+    is_fallback: bool = Field(
+        default=False,
+        description="结果是否来自合成/降级占位（非原始数据直接解析）",
+    )
+    units: str = Field(
+        default="",
+        description="数据单位标注（如 meter/millimeter/radian，空串=未标注）",
+    )
+    coordinate_frame: str = Field(
+        default="",
+        description="坐标系/参考系标注（如 camera/object_center/world/base_link，空串=未标注）",
+    )
+    timestamp_epoch: float | None = Field(
+        default=None,
+        description="数据对应的时间戳（Unix epoch 秒），None=无",
     )
     data: Any = Field(
         default=None,

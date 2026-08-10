@@ -62,3 +62,5 @@ class SystemState(TypedDict, total=False):
     validate_iteration: int  # validate 重试轮次
     provenance: Annotated[list[str], operator.add]  # 数据溯源日志（时间戳 + 操作描述），累积各节点溯源日志
     errors: Annotated[list[str], operator.add]  # 累积的错误信息，不被后序节点清空
+    run_id: str  # 本次运行的唯一标识（时间戳-随机短串），流程入口注入；未注入时为空串（兼容单跑/测试）
+    retry_req_ids: Annotated[list[str], operator.add]  # 需重试/重跑的 req_id（human_review 追加，retrieve_data 只处理这些 + 新需求）

@@ -35,7 +35,7 @@ def test_system_prompt_mentions_json_schema() -> None:
 
 
 def test_system_prompt_lists_all_req_types() -> None:
-    """System prompt 应列出全部 9 种 req_type 枚举值。"""
+    """System prompt 应列出全部 13 种 req_type 枚举值。"""
     required_types = [
         "paper",
         "code",
@@ -46,9 +46,29 @@ def test_system_prompt_lists_all_req_types() -> None:
         "sim_config",
         "policy_model",
         "sensor_data",
+        "camera_calib",
+        "teaching_trajectory",
+        "robot_config",
+        "benchmark_task",
     ]
     for t in required_types:
         assert t in GOAL_PARSING_SYSTEM
+
+
+def test_system_prompt_explains_new_req_types() -> None:
+    """D2：系统提示应含 4 个新类型的识别说明（拆分规则 + 无内置源留空 fallback 提示）。"""
+    assert "camera_calib" in GOAL_PARSING_SYSTEM
+    assert "teaching_trajectory" in GOAL_PARSING_SYSTEM
+    assert "robot_config" in GOAL_PARSING_SYSTEM
+    assert "benchmark_task" in GOAL_PARSING_SYSTEM
+    # 识别说明：每类新类型在拆分规则中被点名
+    for keyword in ("相机标定", "示教轨迹", "机器人配置", "基准测试"):
+        assert keyword in GOAL_PARSING_SYSTEM
+    # 诚实语义：新类型 fallback_sources 留空，不硬凑源
+    assert "暂无内置数据源" in GOAL_PARSING_SYSTEM
+    assert 'fallback_sources": []' in GOAL_PARSING_SYSTEM
+    # 示例 13 覆盖四类新类型的完整输出
+    assert "示例 13" in GOAL_PARSING_SYSTEM
 
 
 def test_returned_tuple_has_two_strings() -> None:

@@ -13,11 +13,15 @@ import os
 import posixpath
 import shutil
 import tempfile
+import time
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from rdi.logging import get_logger
 from rdi.models import DataReqType, Priority, Severity, ValIssue
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from rdi.graph.state import SystemState
@@ -191,7 +195,11 @@ def _validate_mesh_loadability(item: Any, req_id: str) -> ValIssue | None:
                 message="Mesh 校验依赖未安装: trimesh",
             )
         try:
-            mesh = _load_mesh_bytes(data, item.provenance.original_format or "")
+            # 优先用 canonical_format（归一化后 MESH 项为 "stl" bytes，原始格式可能
+            # 是 obj 等与内容不一致的源格式）；未知格式由 _load_mesh_bytes 轮询兜底。
+            mesh = _load_mesh_bytes(
+                data, item.canonical_format or item.provenance.original_format or ""
+            )
         except Exception as exc:  # noqa: BLE001
             return ValIssue(
                 severity=Severity.ERROR,
@@ -245,15 +253,49 @@ def _is_missing_asset_error(message: str) -> bool:
     return any(hint in lower for hint in _MISSING_ASSET_HINTS)
 
 
+def _mujoco_load(xml_bytes: bytes, assets: dict[str, bytes]) -> None:
+    """用 MuJoCo 加载 MJCF 并运行一步仿真；失败抛异常。
+
+    P0-3：item 带 assets 时把 xml 与外部资源写入临时目录后 ``from_xml_path``
+    加载，使 MJCF 引用的相对路径 mesh/texture 可被解析；无 assets 时维持
+    ``from_xml_string`` 加载。写入时相对路径防目录逃逸：normpath 并剥离
+    前导 ../ 段。
+    """
+    if not assets:
+        model = mujoco.MjModel.from_xml_string(xml_bytes)
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = os.path.join(tmp, "model.xml")
+            with open(model_path, "wb") as f:
+                f.write(xml_bytes)
+            for rel_path, content in assets.items():
+                norm_rel = posixpath.normpath(rel_path)
+                while norm_rel.startswith("../"):
+                    norm_rel = norm_rel[3:]
+                if not norm_rel or norm_rel == "..":
+                    continue
+                asset_path = os.path.join(tmp, norm_rel)
+                os.makedirs(os.path.dirname(asset_path), exist_ok=True)
+                with open(asset_path, "wb") as f:
+                    f.write(content)
+            model = mujoco.MjModel.from_xml_path(model_path)
+    sim_data = mujoco.MjData(model)
+    mujoco.mj_step(model, sim_data)
+
+
 def _mujoco_runtime_check(item: Any, req_id: str) -> tuple[ValIssue | None, dict[str, Any]]:
     """MuJoCo 运行时验证：加载 MJCF 并运行一步仿真。
 
-    资源缺失降级策略：MJCF 可能引用外部 mesh 文件（相对路径），
-    ``from_xml_string`` 无资源目录时会因找不到文件而失败。此时先尝试写临时
-    文件后用 ``from_xml_path`` 加载（按文件位置解析相对路径）；若仍失败，
-    视为「资源引用未解析」——XML 语法合法但运行时验证无法完成，降级为
-    WARNING（非 ERROR），避免把真实但引用外部资产的 XML 误判为不可运行。
-    其余编译/仿真错误（非法几何、actuator 配置等）视为真实失败，记为 ERROR。
+    P0-3：item 携带 assets 时把 xml 与外部资源写入临时目录后加载，使 MJCF
+    引用的外部 mesh/texture 可解析，加载通过则 status=passed（不再因缺资源
+    恒为 skipped）。
+
+    资源缺失降级策略：无 assets、或带 assets 但引用资源仍未下载全时，加载会
+    因找不到文件而失败。无 assets 时先尝试写临时文件后用 ``from_xml_path``
+    加载（按文件位置解析相对路径）；仍失败或带 assets 仍缺资源，视为「资源
+    引用未解析」——XML 语法合法但运行时验证无法完成，降级为 WARNING（非
+    ERROR），避免把真实但引用外部资产的 XML 误判为不可运行。其余编译/仿真
+    错误（非法几何、actuator 配置等）视为真实失败，记为 ERROR。
 
     Returns:
         (issue, runtime_check)：issue 为失败时的问题记录（成功为 None）；
@@ -263,10 +305,9 @@ def _mujoco_runtime_check(item: Any, req_id: str) -> tuple[ValIssue | None, dict
         return None, {"status": "skipped", "detail": "mujoco 未安装，仅做 XML 语法校验"}
     data = item.data
     xml_bytes = data if isinstance(data, bytes) else data.encode("utf-8")
+    assets = getattr(item, "assets", None) or {}
     try:
-        model = mujoco.MjModel.from_xml_string(xml_bytes)
-        sim_data = mujoco.MjData(model)
-        mujoco.mj_step(model, sim_data)
+        _mujoco_load(xml_bytes, assets)
     except Exception as exc:  # noqa: BLE001 - 记录 mujoco 加载/仿真失败原因
         if not _is_missing_asset_error(str(exc)):
             return (
@@ -276,6 +317,16 @@ def _mujoco_runtime_check(item: Any, req_id: str) -> tuple[ValIssue | None, dict
                     message=f"MJCF 无法通过 MuJoCo 验证: {exc}",
                 ),
                 {"status": "failed", "detail": f"MuJoCo 加载/仿真失败: {exc}"},
+            )
+        if assets:
+            # 带 assets 仍缺资源（下载不全）→ 直接降级，无更深的回退
+            return (
+                ValIssue(
+                    severity=Severity.WARNING,
+                    req_id=req_id,
+                    message=f"MJCF 资源引用未解析（跳过运行时验证）: {exc}",
+                ),
+                {"status": "skipped", "detail": f"资源引用未解析: {exc}"},
             )
         tmp_path = ""
         try:
@@ -409,6 +460,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
         更新 state 的字段：validation_issues, validate_iteration, provenance
     """
     now = datetime.now()
+    start = time.monotonic()
     parsed_data = state.get("parsed_data", {})
     missing_items = state.get("missing_items", [])
     requirements = state.get("data_requirements", [])
@@ -419,8 +471,9 @@ def node_validate(state: SystemState) -> dict[str, Any]:
     runtime_checks: dict[str, Any] = {}
 
     for req_id, item in parsed_data.items():
+        item_issues: list[ValIssue] = []
         if _is_empty(item.data):
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.ERROR,
                     req_id=req_id,
@@ -429,7 +482,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
         if item.completeness_pct < 100.0:
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
                     req_id=req_id,
@@ -438,7 +491,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
         if item.confidence_score < 1.0:
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
                     req_id=req_id,
@@ -447,7 +500,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
         if item.output_path == "":
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
                     req_id=req_id,
@@ -457,9 +510,18 @@ def node_validate(state: SystemState) -> dict[str, Any]:
 
         # 可加载性深度校验
         load_issues, runtime_check = _check_loadability(item, req_id)
-        issues.extend(load_issues)
+        item_issues.extend(load_issues)
         if runtime_check is not None:
             runtime_checks[req_id] = runtime_check
+        issues.extend(item_issues)
+        logger.info(
+            "validate.item",
+            req_id=req_id,
+            req_type=item.req_type.value,
+            status="pass" if not item_issues else "issues",
+            issue_count=len(item_issues),
+            error_count=sum(1 for i in item_issues if i.severity == Severity.ERROR),
+        )
 
     for m in missing_items:
         req = req_by_id.get(m.req_id)
@@ -480,8 +542,23 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                     message="非必需需求缺失",
                 )
             )
+        logger.warning(
+            "validate.missing",
+            req_id=m.req_id,
+            priority=(req.priority.value if req is not None else "unknown"),
+        )
 
     error_count = sum(1 for i in issues if i.severity == Severity.ERROR)
+
+    logger.info(
+        "validate.done",
+        parsed=len(parsed_data),
+        missing=len(missing_items),
+        issues=len(issues),
+        errors=error_count,
+        iteration=iteration,
+        elapsed_seconds=round(time.monotonic() - start, 3),
+    )
 
     return {
         "validation_issues": issues,

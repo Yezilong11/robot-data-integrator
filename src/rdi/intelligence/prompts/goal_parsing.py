@@ -35,7 +35,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
   "requirements": [
     {
       "req_id": "从 req_000 起递增的字符串标识（req_000, req_001, ...）",
-      "req_type": "需求类型，必须是以下枚举值之一：paper / code / dataset / robot_urdf / mesh / grasp / sim_config / policy_model / sensor_data / unknown",
+      "req_type": "需求类型，必须是以下枚举值之一：paper / code / dataset / robot_urdf / mesh / grasp / sim_config / policy_model / sensor_data / camera_calib / teaching_trajectory / robot_config / benchmark_task / unknown",
       "description": "数据需求描述（自然语言）",
       "priority": "优先级：required / recommended / optional",
       "keywords": ["搜索关键词"],
@@ -61,6 +61,13 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
 4. **抓取任务/抓取姿态**：只要提到"抓取"、"grasp"、"抓取姿态"、"grasp pose"、"夹取"，必须生成一项 `grasp`。
 5. **代码仓库**：只有当目标是"复现某论文/算法"且需要具体代码仓库时，才生成 `code`。
 6. **数据集/基准**：只有当目标是"使用某数据集训练/评测"时，才生成 `dataset`。
+7. **相机标定**：只要提到"相机标定"、"标定相机"、"手眼标定"、"相机内参/外参"、"camera calibration"、"intrinsics"、"extrinsics"，必须生成一项 `camera_calib`。
+8. **示教轨迹**：只要提到"示教"、"示教轨迹"、"示教学习"、"teaching trajectory"、"demonstration"、"轨迹数据（机器人运动）"，必须生成一项 `teaching_trajectory`。
+9. **机器人配置**：只要提到"机器人配置"、"机械臂配置"、"控制器参数"、"robot config"、"配置文件（URDF/MJCF 之外的机器人参数）"，必须生成一项 `robot_config`。
+10. **基准测试任务**：只要提到"benchmark"、"基准测试"、"基准任务"、"评测任务"、"任务集"、"机器人操作基准"，必须生成一项 `benchmark_task`。
+
+> 注意：`camera_calib` / `teaching_trajectory` / `robot_config` / `benchmark_task` 目前暂无内置数据源，
+> 生成这些类型时 `fallback_sources` 留空（`[]`），不要为它们硬凑 fallback_sources 枚举值。
 
 # 关键词提取规则
 
@@ -192,6 +199,17 @@ schema），这里的示例只展示 requirements 数组部分。机器人 / 物
 [
   {"req_id": "req_000", "req_type": "robot_urdf", "description": "Franka Panda 机器人 URDF 描述文件", "priority": "required", "keywords": ["Franka Panda", "机器人", "URDF"], "fallback_sources": ["franka", "github"], "expected_format": "URDF"},
   {"req_id": "req_001", "req_type": "mesh", "description": "YCB 物体的 3D 网格模型", "priority": "required", "keywords": ["YCB", "物体", "mesh"], "fallback_sources": ["ycb", "google_scanned"], "expected_format": "STL"}
+]
+
+### 示例 13：新类型（相机标定 + 示教轨迹 + 机器人配置 + benchmark 任务，中文）
+
+输入："标定相机参数，采集机械臂示教轨迹，并整理机器人配置文件，用于 benchmark 评测任务"
+输出：
+[
+  {"req_id": "req_000", "req_type": "camera_calib", "description": "相机标定参数（内参/外参）", "priority": "required", "keywords": ["camera calibration", "intrinsics", "extrinsics", "标定"], "fallback_sources": [], "expected_format": "YAML"},
+  {"req_id": "req_001", "req_type": "teaching_trajectory", "description": "机械臂示教轨迹数据", "priority": "required", "keywords": ["teaching trajectory", "demonstration", "示教轨迹"], "fallback_sources": [], "expected_format": "NPZ"},
+  {"req_id": "req_002", "req_type": "robot_config", "description": "机器人配置文件", "priority": "required", "keywords": ["robot config", "机器人配置"], "fallback_sources": [], "expected_format": "YAML"},
+  {"req_id": "req_003", "req_type": "benchmark_task", "description": "benchmark 评测任务定义", "priority": "recommended", "keywords": ["benchmark", "基准测试"], "fallback_sources": [], "expected_format": "JSON"}
 ]
 """
 

@@ -14,6 +14,7 @@ from rdi.adapters.registry import select_adapter
 from rdi.config.settings import settings
 from rdi.exceptions import (
     AdapterAuthError,
+    AdapterCatalogError,
     AdapterError,
     AdapterNotFoundError,
     AdapterRateLimitError,
@@ -21,10 +22,13 @@ from rdi.exceptions import (
 )
 from rdi.graph.state import SystemState
 from rdi.hermes.engine import HermesEngine
+from rdi.logging import get_logger
 from rdi.models import DataReqType, DataSource, RetrievalError, RetrievalResult, SearchResult
 
 # 模块级懒加载 HermesEngine 单例，便于测试 monkeypatch
 _hermes_engine: HermesEngine | None = None
+
+logger = get_logger(__name__)
 
 
 def _get_hermes_engine() -> HermesEngine:
@@ -110,9 +114,15 @@ async def _retrieve_single_with_timeout(payload: dict[str, Any]) -> dict[str, An
     try:
         async with asyncio.timeout(settings.per_req_timeout):
             return await node_retrieve_single(payload)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         elapsed = time.monotonic() - start
         message = "检索超时（超过 per_req_timeout 秒）"
+        logger.warning(
+            "retrieve.timeout",
+            req_id=req_id,
+            status="timeout",
+            elapsed_seconds=round(elapsed, 3),
+        )
         result = RetrievalResult(
             req_id=req_id,
             status="error",
@@ -144,17 +154,38 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
     ``asyncio.gather`` 并发执行：单个需求超时或失败不阻塞其他需求。
     原实现曾通过 ``Send`` 做 fan-out，但 LangGraph 要求普通节点只能返回
     dict，因此改为在节点内部用 ``asyncio.gather`` 并行汇总。
+
+    C5：当 state 设了 ``retry_req_ids``（human_review revised/unsatisfied 写入）
+    时，只重跑失败 req + 新增需求（不在既有 ``retrieval_results`` 中的 req），
+    成功项沿用上一轮结果，不重新检索；``retrieval_results`` 以既有结果起步，
+    不再整体覆盖。未设 ``retry_req_ids``（首次运行 / validate 重试）时全部处理，
+    保持原行为。
     """
     requirements = state.get("data_requirements", [])
     if not requirements:
+        logger.info("retrieve.none", status="skipped", reason="no_requirements")
         return {
             "provenance": [f"[{datetime.now().isoformat()}] retrieve_data: 无数据需求，跳过查找"],
         }
 
     context_keywords = _extract_context_keywords(requirements)
-    retrieval_results: dict[str, RetrievalResult] = {}
+    retry_req_ids = set(state.get("retry_req_ids") or [])
+    existing = state.get("retrieval_results") or {}
+    if retry_req_ids:
+        # 只处理失败/新增需求；既有成功项跳过（沿用上一轮结果，不重拉）
+        to_process = [r for r in requirements if r.req_id in retry_req_ids or r.req_id not in existing]
+        to_skip = [r for r in requirements if r.req_id not in retry_req_ids and r.req_id in existing]
+    else:
+        to_process = requirements  # 首次运行 / validate 重试（未设 retry_req_ids）：全部处理
+        to_skip = []
+
+    retrieval_results: dict[str, RetrievalResult] = dict(existing)  # 以既有结果起步，保留成功项
     provenance: list[str] = []
     retrieval_errors: list[RetrievalError] = []
+    for req in to_skip:
+        provenance.append(
+            f"[{datetime.now().isoformat()}] retrieve_data: 沿用上一轮结果，不重拉 ({req.req_id})"
+        )
 
     # 为每个需求构造 payload 并并行执行；gather 返回顺序与输入顺序一致，
     # 超时/成功均由 _retrieve_single_with_timeout 兜底为普通返回。
@@ -168,9 +199,10 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
                     "keywords": req.keywords,
                     "fallback_sources": [s.value for s in req.fallback_sources],
                     "context_keywords": context_keywords,
+                    "object_name": str(getattr(req, "object_name", "") or ""),
                 }
             )
-            for req in requirements
+            for req in to_process
         )
     )
 
@@ -203,6 +235,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     req_type = payload.get("req_type", "unknown")
     description = payload.get("description", "")
     keywords = payload.get("keywords") or []
+    logger.info("retrieve.start", req_id=req_id, req_type=req_type)
     # C2-fix: 用英文/中文关键词搜索，而不是整段中文长描述。
     # Adapter 的 fallback 列表多为英文 id/title，中文 description 会导致匹配失败。
     query = " ".join(str(k) for k in keywords) if keywords else description
@@ -221,6 +254,39 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         adapter_classes = select_adapter(DataReqType(req_type))
     except ValueError:
         adapter_classes = []
+    if not adapter_classes:
+        # D2: 该 req_type 无内置数据源（如 CAMERA_CALIB / TEACHING_TRAJECTORY /
+        # ROBOT_CONFIG / BENCHMARK_TASK 暂未注册 Adapter）。诚实失败为 missing，
+        # reason 明确「该类型暂无内置数据源」，不塞 UNKNOWN、不误报为有源但未收录
+        # （后者是 AdapterCatalogError 的「有源但未收录」语义，与无源是两回事）。
+        elapsed = time.monotonic() - start
+        message = "该类型暂无内置数据源，未执行检索"
+        logger.warning(
+            "retrieve.missing",
+            req_id=req_id,
+            req_type=req_type,
+            status="missing",
+            reason=message,
+            elapsed_seconds=round(elapsed, 3),
+        )
+        result = RetrievalResult(
+            req_id=req_id,
+            status="missing",
+            error_message=message,
+            elapsed_seconds=elapsed,
+        )
+        hermes.record_experience(
+            task_desc=description,
+            req_type=req_type,
+            result_status="missing",
+            sources_used=[],
+            elapsed_seconds=elapsed,
+        )
+        return {
+            "retrieval_results": {req_id: result},
+            "provenance": provenance,
+            "retrieval_errors": retrieval_errors,
+        }
     # Hermes 动态优先级对全部候选源生效：显式传入候选源，保证优先级列表覆盖实际 Adapter。
     priority_sources = hermes.get_source_priority(
         req_type, [cls.source.value for cls in adapter_classes]
@@ -249,6 +315,14 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 seen.add(kw_str.lower())
                 queries.append(kw_str)
 
+    # C1: object_name 作为额外 query token，帮助 YCB/MuJoCo 等 search 按物体名匹配
+    object_name = payload.get("object_name", "") or ""
+    if object_name:
+        object_str = str(object_name).strip()
+        if object_str and object_str.lower() not in seen:
+            seen.add(object_str.lower())
+            queries.append(object_str)
+
     # sim_config 查找时，把机器人/物体名称等上下文关键词作为额外 query token，
     # 提升命中对应 MuJoCo MJCF 资源的概率。
     if req_type == DataReqType.SIM_CONFIG.value:
@@ -267,6 +341,8 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
 
     had_empty_search = False
     last_source = ""
+    # C2: 累积各源「清单外目标」诊断（跨 adapter 保留），用于 missing 的 error_message
+    search_failures: list[str] = []
 
     for idx, adapter_cls in enumerate(sorted_adapters):
         is_fallback = idx > 0
@@ -277,20 +353,42 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
             adapter = adapter_cls()  # type: ignore[call-arg]
             search_results: list[SearchResult] = []
             for q in queries:
-                search_results = await adapter.search(q)
+                try:
+                    search_results = await adapter.search(q)
+                except AdapterCatalogError as exc:
+                    # C2: 清单外目标——收集可诊断语义，继续尝试剩余 query（如物体名）
+                    search_failures.append(f"{adapter_cls.source.value}: {exc.message}")
+                    continue
                 if search_results:
                     break
             if not search_results:
                 had_empty_search = True
                 continue
+            # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
+            # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
+            fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
+            if object_name:
+                fetch_kwargs["object_name"] = object_name
             try:
-                raw = await adapter.fetch(  # type: ignore[call-arg]  # req_type 为 GraspNet/DexGrasp 扩展参数
-                    search_results[0].item_id, req_type=DataReqType(req_type)
-                )
+                raw = await adapter.fetch(search_results[0].item_id, **fetch_kwargs)
             except TypeError:
-                # 兼容旧 Adapter 的 fetch(item_id) 签名
-                raw = await adapter.fetch(search_results[0].item_id)
+                try:
+                    raw = await adapter.fetch(
+                        search_results[0].item_id, req_type=DataReqType(req_type)
+                    )
+                except TypeError:
+                    # 兼容旧 Adapter 的 fetch(item_id) 签名
+                    raw = await adapter.fetch(search_results[0].item_id)
             elapsed = time.monotonic() - start
+            logger.info(
+                "retrieve.success",
+                req_id=req_id,
+                req_type=req_type,
+                status="success",
+                source=raw.source.value,
+                is_fallback=is_fallback,
+                elapsed_seconds=round(elapsed, 3),
+            )
             result = RetrievalResult(
                 req_id=req_id,
                 status="success",
@@ -319,11 +417,29 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     elapsed = time.monotonic() - start
     if had_empty_search:
         status = "missing"
-        error_message = ""
+        error_message = "；".join(search_failures)
     else:
         status = "error"
         error_message = "所有候选源均失败: " + "; ".join(
             f"{e.source.value}:{e.error_type}" for e in retrieval_errors
+        )
+    if status == "missing":
+        logger.warning(
+            "retrieve.missing",
+            req_id=req_id,
+            req_type=req_type,
+            status=status,
+            reason=error_message or "no_result",
+            elapsed_seconds=round(elapsed, 3),
+        )
+    else:
+        logger.error(
+            "retrieve.error",
+            req_id=req_id,
+            req_type=req_type,
+            status=status,
+            error_types=[e.error_type for e in retrieval_errors],
+            elapsed_seconds=round(elapsed, 3),
         )
     sources_used = [last_source] if last_source else []
 

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,7 +16,15 @@ import pytest
 
 from rdi.config.settings import PIPELINE_VERSION, settings
 from rdi.graph.nodes.assemble import node_assemble
-from rdi.models import DataReq, DataReqType, DataSource, MissingItem, ParsedItem, Priority, RawReference
+from rdi.models import (
+    DataReq,
+    DataReqType,
+    DataSource,
+    MissingItem,
+    ParsedItem,
+    Priority,
+    RawReference,
+)
 from rdi.models.common import ProvenanceEntry
 
 if TYPE_CHECKING:
@@ -163,6 +172,78 @@ def test_assemble_writes_raw_urdf_and_assets(output_dir: Path) -> None:
     # manifest 记录沿用现有构造（format 为 canonical_format）
     assert pkg.files[0].path == "robots/req_raw.urdf"
     assert pkg.files[0].format == "urdf"
+
+
+def test_assemble_assets_in_manifest_and_checksums(output_dir: Path) -> None:
+    """P0-5：资产文件纳入 manifest 条目与 checksums.txt，校验和与磁盘一致，主文件不回归。"""
+    urdf = b'<robot name="r"><link name="base"/></robot>'
+    item = ParsedItem(
+        req_id="req_asset_mf",
+        req_type=DataReqType.ROBOT_URDF,
+        name="req_asset_mf",
+        canonical_format="urdf",
+        output_path="unused",
+        data=b"<payload>",  # 有 raw_bytes 时不走 data 序列化
+        raw_bytes=urdf,
+        assets={
+            "meshes/base.stl": b"stl-bytes",
+            "./textures/uv.png": b"png-bytes",
+            "config/unknown.zzz": b"zzz-bytes",  # 未知扩展名 → "asset"
+            "../..": b"evil-bytes",  # 剥离后为 ".." → continue，不落盘不进 manifest
+        },
+        provenance=ProvenanceEntry(
+            source=DataSource.GITHUB,
+            source_url="https://example.com/panda.urdf",
+            retrieved_at=_FIXED_TIME,
+            original_format="urdf",
+        ),
+    )
+    out = node_assemble({"parsed_data": {"req_asset_mf": item}})
+    pkg = out["experiment_package"]
+    package_dir = Path(pkg.output_dir)
+
+    files_by_path = {f.path: f for f in pkg.files}
+
+    # 主文件条目仍在且行为不回归
+    main = files_by_path["robots/req_asset_mf.urdf"]
+    assert pkg.files[0].path == "robots/req_asset_mf.urdf"  # 主文件在列表首位
+    assert main.format == "urdf"
+    assert main.downloaded is True
+    assert main.checksum_sha256 == hashlib.sha256(urdf).hexdigest()
+
+    # 资产条目：format 语义推断 + downloaded=True + 校验和与磁盘实际一致
+    stl = files_by_path["robots/meshes/base.stl"]
+    assert stl.req_id == "req_asset_mf"
+    assert stl.format == "mesh"
+    assert stl.downloaded is True
+    assert stl.file_url == "https://example.com/panda.urdf"
+    assert stl.local_path == "robots/meshes/base.stl"
+    assert stl.file_size == len(b"stl-bytes")
+    assert stl.checksum_sha256 == hashlib.sha256(b"stl-bytes").hexdigest()
+    assert (
+        hashlib.sha256((package_dir / stl.path).read_bytes()).hexdigest()
+        == stl.checksum_sha256
+    )
+    assert stl.transformations == ["written_to:robots/meshes/base.stl"]
+
+    png = files_by_path["robots/textures/uv.png"]
+    assert png.format == "texture"
+    assert png.checksum_sha256 == hashlib.sha256(b"png-bytes").hexdigest()
+    assert hashlib.sha256((package_dir / png.path).read_bytes()).hexdigest() == (
+        hashlib.sha256(b"png-bytes").hexdigest()
+    )
+
+    unknown = files_by_path["robots/config/unknown.zzz"]
+    assert unknown.format == "asset"
+    assert unknown.downloaded is True
+
+    # 被剥离到空/.. 的资产不落盘、不进 manifest
+    assert "robots/.." not in files_by_path
+
+    # checksums.txt 覆盖主文件与全部资产文件路径
+    checksums_txt = (package_dir / "checksums.txt").read_text(encoding="utf-8").splitlines()
+    for f in pkg.files:
+        assert f"{f.checksum_sha256}  {f.path}" in checksums_txt
 
 
 def test_assemble_uses_original_format_extension(output_dir: Path) -> None:
@@ -344,6 +425,36 @@ def test_assemble_package_info_contract(output_dir: Path) -> None:
     assert pkg.package_info["citation"] == ""
 
 
+def test_assemble_package_info_run_id_passthrough(output_dir: Path) -> None:
+    """B2：state.run_id 透传到 manifest.package_info.run_id。"""
+    out = node_assemble(
+        {
+            "parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")},
+            "run_id": "20260810-123456-abcdef01",
+        }
+    )
+    pkg = out["experiment_package"]
+    assert pkg.package_info["run_id"] == "20260810-123456-abcdef01"
+
+
+def test_assemble_package_info_run_id_default_empty(output_dir: Path) -> None:
+    """B2：state 不含 run_id（单跑/测试）→ package_info.run_id 为空串。"""
+    out = node_assemble(
+        {"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}}
+    )
+    pkg = out["experiment_package"]
+    assert pkg.package_info["run_id"] == ""
+
+
+def test_assemble_package_info_demo_false(output_dir: Path) -> None:
+    """E3：真实流程产物 package_info.demo=false（与演示流程 demo=true 区分）。"""
+    out = node_assemble(
+        {"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}}
+    )
+    pkg = out["experiment_package"]
+    assert pkg.package_info["demo"] == "false"
+
+
 # ─── P1-2: data_source_quality 显式化 / is_fallback 透传 ───
 
 
@@ -393,3 +504,32 @@ def test_assemble_is_fallback_passthrough(output_dir: Path) -> None:
     item_default = _item("req_fb_default", DataReqType.MESH, "stl")
     out_default = node_assemble({"parsed_data": {"req_fb_default": item_default}})
     assert out_default["experiment_package"].files[0].is_fallback is False
+
+
+def test_assemble_writes_units_json(output_dir: Path) -> None:
+    """D1：units.json 落盘，每 req 记录 units/coordinate_frame/timestamp_epoch。"""
+    item_urdf = _item("req_urdf", DataReqType.ROBOT_URDF, "urdf")
+    item_urdf.units = "meter"
+    item_urdf.coordinate_frame = "world"
+    item_urdf.timestamp_epoch = 1710000000.0
+
+    item_mesh = _item("req_mesh", DataReqType.MESH, "stl")
+    # 未标注单位：保持默认空串/None
+
+    out = node_assemble({"parsed_data": {"req_urdf": item_urdf, "req_mesh": item_mesh}})
+    package_dir = Path(out["experiment_package"].output_dir)
+
+    units_file = package_dir / "units.json"
+    assert units_file.is_file()
+    units_meta = json.loads(units_file.read_text(encoding="utf-8"))
+
+    assert units_meta["req_urdf"] == {
+        "units": "meter",
+        "coordinate_frame": "world",
+        "timestamp_epoch": 1710000000.0,
+    }
+    assert units_meta["req_mesh"] == {
+        "units": "",
+        "coordinate_frame": "",
+        "timestamp_epoch": None,
+    }

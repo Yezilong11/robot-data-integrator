@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from rdi.adapters.isaac import IsaacSimAdapter
-from rdi.exceptions import AdapterError
+from rdi.adapters.isaac import _FALLBACK_EXAMPLES, IsaacSimAdapter
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 
 
@@ -46,15 +46,18 @@ class TestIsaacSimAdapter:
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_search_fallback_no_match_returns_empty(self) -> None:
-        """路径 B 无匹配时返回空列表（不返回全量）。"""
+    async def test_search_fallback_no_match_raises_catalog_error(self) -> None:
+        """路径 B 无匹配时抛 AdapterCatalogError（有源但未收录，不静默空）。"""
         adapter = IsaacSimAdapter()
         with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.side_effect = AdapterError(
                 message="primary failed", source=DataSource.ISAAC.value
             )
-            results = await adapter.search("zzznomatchxyz")
-        assert results == []
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("zzznomatchxyz")
+        assert "仅收录" in exc_info.value.message
+        assert "有源但未收录" in exc_info.value.message
+        assert f"仅收录 {len(_FALLBACK_EXAMPLES)}" in exc_info.value.message
 
     @pytest.mark.asyncio
     async def test_search_fallback_multi_token_match(self) -> None:

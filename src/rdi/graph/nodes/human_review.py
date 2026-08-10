@@ -15,7 +15,6 @@
 每次循环（revised / unsatisfied）清空旧的 ``retrieval_results``，避免状态污染。
 """
 
-import logging
 from datetime import datetime
 from typing import Any
 
@@ -25,8 +24,9 @@ from pydantic import BaseModel, Field
 from rdi.exceptions import LLMParseError, LLMUnavailableError
 from rdi.graph.state import SystemState
 from rdi.intelligence import LLMClient
+from rdi.logging import get_logger
 
-_logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # human_review 修订循环上限：最多允许 _MAX_REVIEW_ROUNDS 轮修订，
 # 第 _MAX_REVIEW_ROUNDS + 1 次进入时强制按 satisfied 结束。
@@ -88,10 +88,10 @@ def _convert_feedback_to_goal(original_goal: str, feedback: list[str]) -> str:
         return result.revised_goal.strip()
     except (LLMUnavailableError, LLMParseError) as e:
         # 降级：直接用用户反馈原文作为修正目标，不崩溃
-        _logger.warning(
-            "human_review: LLM 反馈转换失败，降级使用反馈原文 (%s: %s)",
-            type(e).__name__,
-            e,
+        logger.warning(
+            "human_review.llm_fallback",
+            error_type=type(e).__name__,
+            reason=str(e),
         )
         fallback = "；".join(feedback)
         return f"{original_goal}。修正要求：{fallback}" if fallback else original_goal
@@ -102,6 +102,27 @@ def _build_retrieval_advice(feedback: list[str]) -> str:
     if not feedback:
         return "请更换数据源或使用更精确的关键词后重新检索"
     return "重检索建议（更换数据源/更精确关键词）：" + "；".join(feedback)
+
+
+def _failed_req_ids(state: SystemState) -> list[str]:
+    """从 ``missing_items`` 与 ``retrieval_errors`` 收集去重后的失败 req_id 列表。
+
+    missing_items 项可能是 MissingItem 或 dict（checkpoint 重建失败时退回 dict），
+    retrieval_errors 同理可能是 RetrievalError 或 dict；统一取 ``req_id`` 字段。
+    """
+    ids: list[str] = []
+    seen: set[str] = set()
+    for item in state.get("missing_items", []):
+        rid = item.get("req_id") if isinstance(item, dict) else getattr(item, "req_id", None)
+        if rid is not None and str(rid) not in seen:
+            seen.add(str(rid))
+            ids.append(str(rid))
+    for error in state.get("retrieval_errors", []):
+        rid = error.get("req_id") if isinstance(error, dict) else getattr(error, "req_id", None)
+        if rid is not None and str(rid) not in seen:
+            seen.add(str(rid))
+            ids.append(str(rid))
+    return ids
 
 
 def _apply_feedback_to_requirements(requirements: list[Any], feedback: list[str]) -> list[Any]:
@@ -133,9 +154,9 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
     返回 dict 仅更新本节点负责的字段，LangGraph 会将其合并回全局 state：
     - satisfied：``review_decision`` / ``provenance``；
     - revised：额外更新 ``revised_goal`` / ``user_goal`` / ``review_iteration``，
-      并清空 ``retrieval_results``；
+      并写入 ``retry_req_ids``（仅重跑失败 req，成功项沿用）；
     - unsatisfied：额外更新 ``revised_goal`` / ``data_requirements``（反馈写回
-      需求）/ ``review_iteration``，并清空 ``retrieval_results``。
+      需求）/ ``review_iteration``，并写入 ``retry_req_ids``。
 
     除纯 satisfied 外（revised / unsatisfied / 强制结束），向 ``revision_history``
     追加一条修订记录（revision 序号、decision、feedback、revised_goal、timestamp），
@@ -176,7 +197,7 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
 
     # 信任边界：外部传入的 decision 归一化为三值之一
     if decision not in _VALID_DECISIONS:
-        _logger.warning("human_review: 未知审查决定 %r，视为 satisfied", decision)
+        logger.warning("human_review.unknown_decision", decision=decision)
         decision = "satisfied"
 
     # 循环上限：review_iteration 独立于 validate 的 validate_iteration，
@@ -184,10 +205,10 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
     iteration = state.get("review_iteration", 0)
     forced = decision != "satisfied" and iteration >= _MAX_REVIEW_ROUNDS
     if forced:
-        _logger.warning(
-            "human_review: 修订轮次 %d 超过上限 %d，强制按 satisfied 结束",
-            iteration,
-            _MAX_REVIEW_ROUNDS,
+        logger.warning(
+            "human_review.forced_end",
+            iteration=iteration,
+            max_rounds=_MAX_REVIEW_ROUNDS,
         )
         decision = "satisfied"
 
@@ -217,7 +238,8 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
         revised_goal = _convert_feedback_to_goal(original_goal, feedback)
         update["revised_goal"] = revised_goal
         update["user_goal"] = revised_goal  # parse_goal 读取 user_goal 重新解析
-        update["retrieval_results"] = {}  # 清空旧检索结果，避免状态污染
+        failed_ids = _failed_req_ids(state)
+        update["retry_req_ids"] = failed_ids  # 仅重跑失败 req，成功项沿用不重拉
         update["review_iteration"] = iteration + 1
         update["revision_history"] = [
             *revision_history,
@@ -229,6 +251,8 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
                 "timestamp": now,
             },
         ]
+        if failed_ids:
+            provenance.append(f"[{now}] human_review: 仅重跑失败 req: {', '.join(failed_ids)}")
         provenance.append(
             f"[{now}] human_review: 用户选择修订，反馈已转换为修正目标，回到 parse_goal 重新解析"
         )
@@ -240,7 +264,8 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
         update["data_requirements"] = _apply_feedback_to_requirements(
             state.get("data_requirements", []), feedback
         )
-        update["retrieval_results"] = {}
+        failed_ids = _failed_req_ids(state)
+        update["retry_req_ids"] = failed_ids  # 仅重跑失败 req，成功项沿用不重拉
         update["review_iteration"] = iteration + 1
         update["revision_history"] = [
             *revision_history,
@@ -252,6 +277,8 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
                 "timestamp": now,
             },
         ]
+        if failed_ids:
+            provenance.append(f"[{now}] human_review: 仅重跑失败 req: {', '.join(failed_ids)}")
         provenance.append(
             f"[{now}] human_review: 用户不满意，反馈已写入 data_requirements，回到 retrieve_data 按新需求重检索"
         )
@@ -259,4 +286,11 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
             provenance.append(f"[{now}] human_review: 用户反馈: {message}")
 
     update["provenance"] = provenance
+    logger.info(
+        "human_review.decision",
+        decision=decision,
+        iteration=iteration,
+        forced=forced,
+        feedback_count=len(feedback),
+    )
     return update

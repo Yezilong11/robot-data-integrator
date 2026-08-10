@@ -8,12 +8,13 @@
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
 # C2 修复：已展开纯 URDF 源（dexsuite/dex-urdf）
-_PLAIN_URDF_BASE = "https://raw.githubusercontent.com/dexsuite/dex-urdf/main"
+# 钉 commit f5e7132f22108164577fea4c25ef99b5cc0e1900（2026-08-10 pin）
+_PLAIN_URDF_BASE = "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900"
 _PLAIN_URDF_PATHS: dict[str, str] = {
     "allegro_hand_v4": "robots/hands/allegro_hand/allegro_hand_right.urdf",
     "allegro_hand_right": "robots/hands/allegro_hand/allegro_hand_right.urdf",
@@ -99,7 +100,7 @@ class AllegroAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
         query_lower = query.lower()
         matched = [
             m
@@ -108,6 +109,14 @@ class AllegroAdapter(BaseAdapter):
             or query_lower in m["title"].lower()
             or query_lower in m["description"].lower()
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_MODELS)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=m["id"],
@@ -122,9 +131,14 @@ class AllegroAdapter(BaseAdapter):
     async def fetch(self, item_id: str) -> RawData:
         """下载 URDF 文件。
 
+        D3：本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）。
         C2 修复：优先使用 dexsuite/dex-urdf 已展开纯 URDF；
         v3 等无稳定纯 URDF 型号仍走 pal-robotics xacro，format 明确标记为 xacro。
         """
+        # D3: 本地挂载目录即 dex-urdf/pal-robotics 仓库根镜像，相对路径与 raw URL 同构
+        local = self._local_raw(item_id, self._local_candidates(item_id))
+        if local is not None:
+            return local
         plain_path = _PLAIN_URDF_PATHS.get(item_id)
         if plain_path is not None:
             urdf_url = f"{_PLAIN_URDF_BASE}/{plain_path}"
@@ -143,3 +157,10 @@ class AllegroAdapter(BaseAdapter):
             size_bytes=len(content),
             assets=assets,
         )
+
+    def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:
+        """本地挂载候选 (仓库相对路径, format)，与 fetch 的 URL 路径同构。"""
+        plain_path = _PLAIN_URDF_PATHS.get(item_id)
+        if plain_path is not None:
+            return [(plain_path, "urdf")]
+        return [("allegro_hand_description/urdf/allegro_hand.urdf.xacro", "xacro")]

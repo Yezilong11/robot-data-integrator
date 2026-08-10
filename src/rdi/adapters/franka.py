@@ -8,16 +8,18 @@
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：GitHub raw 仓库 URL
-_FALLBACK_BASE_URL = "https://raw.githubusercontent.com/frankaemika/franka_ros/develop"
+# 降级回退：GitHub raw 仓库 URL（owner 已从 frankaemika 迁移至 frankarobotics）
+# 钉 commit ddd2fffd9de44b02ad15b4bbb2bfa2cec4d60d98（2026-08-10 pin）
+_FALLBACK_BASE_URL = "https://raw.githubusercontent.com/frankarobotics/franka_ros/ddd2fffd9de44b02ad15b4bbb2bfa2cec4d60d98"
 
 # C2 修复：已展开纯 URDF 源（pybullet_robots 内置 Panda）
+# 钉 commit cea68420a249544210c0f02eaafc144a4487b47f（2026-08-10 pin）
 _PANDA_PLAIN_URDF_URL = (
-    "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/master"
+    "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/cea68420a249544210c0f02eaafc144a4487b47f"
     "/data/franka_panda/panda.urdf"
 )
 
@@ -83,7 +85,7 @@ class FrankaAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
         query_lower = query.lower()
         matched = [
             m
@@ -92,6 +94,14 @@ class FrankaAdapter(BaseAdapter):
             or query_lower in m["title"].lower()
             or query_lower in m["description"].lower()
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_MODELS)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=m["id"],
@@ -104,11 +114,24 @@ class FrankaAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载 URDF 文件。优先 franka.de 网页，失败降级 GitHub raw URL。"""
+        """下载 URDF 文件。优先 franka.de 网页，失败降级 GitHub raw URL。
+
+        D3：本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）。
+        """
+        # D3: 本地挂载目录即 franka_ros 仓库根镜像，相对路径与 GitHub raw URL 同构
+        local = self._local_raw(item_id, self._local_candidates(item_id))
+        if local is not None:
+            return local
         try:
             return await self._fetch_primary(item_id)
         except AdapterError:
             return await self._fetch_fallback(item_id)
+
+    def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:
+        """本地挂载候选 (仓库相对路径, format)，与 _fetch_fallback 的 URL 路径同构。"""
+        if item_id == "panda":
+            return [("data/franka_panda/panda.urdf", "urdf")]
+        return [(f"franka_description/robots/{item_id}/{item_id}.urdf.xacro", "xacro")]
 
     async def _fetch_primary(self, item_id: str) -> RawData:
         """路径 A：直接 URL 构造（官方页面路径模式）。"""
@@ -145,11 +168,13 @@ class FrankaAdapter(BaseAdapter):
         else:
             url = f"{self.base_url}/franka_description/robots/{item_id}/{item_id}.urdf.xacro"
             fmt = "xacro"
-        if not self.is_cached(item_id, suffix=f".{fmt}"):
+        # B3：降级路径缓存后缀带 .fallback，与主路径 .urdf 互不覆盖
+        cache_suffix = f".{fmt}.fallback"
+        if not self.is_cached(item_id, suffix=cache_suffix):
             data_bytes = await self._download_bytes(url)
-            self.save_to_cache(item_id, data_bytes, suffix=f".{fmt}")
+            self.save_to_cache(item_id, data_bytes, suffix=cache_suffix)
         else:
-            cached = self.load_from_cache(item_id, suffix=f".{fmt}")
+            cached = self.load_from_cache(item_id, suffix=cache_suffix)
             assert cached is not None  # is_cached 已保证非空
             data_bytes = cached
         # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产

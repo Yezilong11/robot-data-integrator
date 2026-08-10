@@ -251,6 +251,9 @@ class URDFSkill(BaseSkill):
             completeness_pct=completeness,
             confidence_score=confidence,
             warnings=warnings,
+            # D1: URDF 几何/惯量约定为米制，坐标系为各 link 自身系
+            units="meter",
+            coordinate_frame="unknown",
             data=robot,
         )
 
@@ -311,6 +314,8 @@ class URDFSkill(BaseSkill):
             completeness_pct=80.0,
             confidence_score=0.8,
             warnings=["xacro 模块不可用，已使用字符串级降级处理，结果可能不完整"],
+            units="meter",
+            coordinate_frame="unknown",
         )
 
     @staticmethod

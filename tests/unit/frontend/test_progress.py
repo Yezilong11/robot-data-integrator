@@ -7,17 +7,24 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-import pytest
+import json
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from rdi.frontend.app import (
+    DEMO_ROOT,
+    OUTPUT_ROOT,
     build_req_status_table,
+    derive_stage_progress,
     manifest_tree,
     resume_workflow,
     run_workflow,
+    stage_progress_view,
     summarize_state,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _req(req_id: str, req_type: str = "robot_urdf") -> dict[str, Any]:
@@ -206,7 +213,7 @@ def test_summarize_state_plain() -> None:
 def test_resume_workflow_no_pending(monkeypatch: pytest.MonkeyPatch) -> None:
     """无待继续运行时给出明确提示，不触碰 graph。"""
     monkeypatch.setattr("rdi.frontend.app._pending_thread_id", None)
-    status, summary, req_status, tree, manifest, vissues, rcheck, missing, prov = (
+    status, summary, req_status, tree, manifest, vissues, rcheck, missing, prov, stage = (
         resume_workflow("satisfied", "")
     )
     assert "没有待继续的运行" in status
@@ -218,10 +225,18 @@ def test_resume_workflow_no_pending(monkeypatch: pytest.MonkeyPatch) -> None:
     assert rcheck == {}
     assert missing == []
     assert prov == ""
+    # 无待继续运行 → 五个阶段均未开始
+    assert stage == {
+        "目标解析": "未开始",
+        "数据检索": "未开始",
+        "解析转换": "未开始",
+        "质量校验": "未开始",
+        "整合打包": "未开始",
+    }
 
 
 def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> None:
-    """真实流程首跑中断：9 元组首元素提示到「数据包审查」继续运行，展示中断态中间结果。"""
+    """真实流程首跑中断：10 元组首元素提示到「数据包审查」继续运行，展示中断态中间结果。"""
     interrupted_state: dict[str, Any] = {
         "user_goal": "goal",
         "data_requirements": [_req("req_a")],
@@ -239,7 +254,7 @@ def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> 
 
     result = run_workflow("真实流程", "goal", None, "")
 
-    assert len(result) == 9
+    assert len(result) == 10
     assert "继续运行" in result[0]
     assert result[1]["user_goal"] == "goal"
     assert result[2]["headers"] == [
@@ -255,13 +270,120 @@ def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> 
     assert result[3] == ""
     assert result[4] == ""
     assert result[8] == "p1\np2"
+    # 中断态阶段进度：mock state 有检索结果与校验记录 → 检索/校验已完成，其余未开始
+    assert result[9]["数据检索"] == "完成"
+    assert result[9]["质量校验"] == "完成"
+    assert result[9]["整合打包"] == "未开始"
 
 
-def test_run_workflow_demo_mode_returns_9_tuple() -> None:
-    """演示流程走 build_demo_state + _format_result，返回完整 9 元组展示数据。"""
+def test_run_workflow_demo_mode_returns_10_tuple() -> None:
+    """演示流程走 build_demo_state + _format_result，返回完整 10 元组展示数据。"""
     result = run_workflow("演示流程", "演示目标", None, "")
-    assert len(result) == 9
+    assert len(result) == 10
     assert result[0] == "运行完成"
     assert result[1]["user_goal"] == "演示目标"
     assert result[3]  # package tree 非空
     assert result[4]  # manifest JSON 非空
+    # E3：演示产物 manifest 标记 demo=true
+    manifest = json.loads(result[4])
+    assert manifest["package_info"]["demo"] == "true"
+    # 演示流程视为完整跑完：五个阶段全部完成
+    assert result[9] == {
+        "目标解析": "完成",
+        "数据检索": "完成",
+        "解析转换": "完成",
+        "质量校验": "完成",
+        "整合打包": "完成",
+    }
+
+
+def test_demo_package_isolated_in_demo_root() -> None:
+    """E3：演示流程产物写入独立 DEMO_ROOT，不落入真实 output_packages，且带 demo 标记。"""
+    result = run_workflow("演示流程", "隔离目标", None, "")
+    manifest = json.loads(result[4])
+    package_dir = Path(manifest["output_dir"])
+    assert package_dir.is_relative_to(DEMO_ROOT)
+    assert not package_dir.is_relative_to(OUTPUT_ROOT)
+    assert manifest["package_info"]["demo"] == "true"
+    # 演示产物实际落盘
+    assert (package_dir / "manifest.json").is_file()
+    assert (package_dir / "files" / "goal.txt").is_file()
+
+
+def _fallback_dirs() -> set[str]:
+    return {p.name for p in OUTPUT_ROOT.glob("fallback-package-*")}
+
+
+def test_real_workflow_failure_no_fallback_package(monkeypatch: pytest.MonkeyPatch) -> None:
+    """E3：真实流程返回无 experiment_package 的失败态 → 不创建 fallback 包目录，按失败呈现。"""
+    failed_state: dict[str, Any] = {
+        "user_goal": "goal",
+        "run_id": "r-1",
+        "errors": ["backend exploded"],
+        "stage_progress": [],
+    }
+    monkeypatch.setattr(
+        "rdi.frontend.app.run_graph",
+        lambda goal, paper_file, local_files_json="": (failed_state, "tid-1", False),
+    )
+
+    before = _fallback_dirs()
+    result = run_workflow("真实流程", "goal", None, "")
+    after = _fallback_dirs()
+
+    assert before == after  # 未创建任何 fallback 包目录
+    assert len(result) == 10
+    assert result[0] == "运行失败"  # 空产物 + 有错误 → 真实失败
+    assert result[1]["errors"] == ["backend exploded"]
+    assert result[3] == ""  # 无数据包目录树
+    assert result[4] == "{}"  # 空产物 manifest
+    assert result[8] == ""  # 无 provenance
+
+
+def test_real_workflow_exception_no_fallback_package(monkeypatch: pytest.MonkeyPatch) -> None:
+    """E3：真实流程 run_graph 抛异常 → 同样不伪造 fallback 包，按真实失败呈现。"""
+
+    def boom(goal: str, paper_file: Any, local_files_json: str = "") -> Any:
+        raise RuntimeError("graph crashed")
+
+    monkeypatch.setattr("rdi.frontend.app.run_graph", boom)
+
+    before = _fallback_dirs()
+    result = run_workflow("真实流程", "goal", None, "")
+    after = _fallback_dirs()
+
+    assert before == after  # 未创建任何 fallback 包目录
+    assert len(result) == 10
+    assert result[0] == "运行失败"
+    assert result[1]["errors"] == ["graph crashed"]
+    assert result[3] == ""
+    assert result[4] == "{}"
+
+
+def test_stage_progress_view_explicit_record() -> None:
+    """显式 stage_progress（run_graph 流式记录）优先于字段反推。"""
+    view = stage_progress_view({"stage_progress": ["parse_goal", "retrieve_data"]})
+    assert view["目标解析"] == "完成"
+    assert view["数据检索"] == "完成"
+    assert view["解析转换"] == "未开始"
+    assert view["质量校验"] == "未开始"
+    assert view["整合打包"] == "未开始"
+
+
+def test_stage_progress_view_derives_from_fields() -> None:
+    """无 stage_progress 记录时按 state 字段反推（resume / 旧状态兜底）。"""
+    state: dict[str, Any] = {
+        "parsed_goal": {"goal": "g"},
+        "retrieval_results": {"a": {"req_id": "a"}},
+        "parsed_data": {"a": {"req_id": "a"}},
+        "validation_issues": [],
+        "experiment_package": {"files": []},
+    }
+    assert stage_progress_view(state) == {
+        "目标解析": "完成",
+        "数据检索": "完成",
+        "解析转换": "完成",
+        "质量校验": "完成",
+        "整合打包": "完成",
+    }
+    assert derive_stage_progress({}) == []

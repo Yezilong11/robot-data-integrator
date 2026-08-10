@@ -13,8 +13,10 @@ import ssl
 import time
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import aiohttp
 import certifi
@@ -38,6 +40,10 @@ _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 # 来不及兜底（主 URL 用 self.timeout*2=60s 超时 × 3 次重试，单次挂起即占满预算）。
 # 主镜像 URL 改用 8s 短超时 + 不重试，挂起时快速转镜像；镜像用正常超时+重试。
 _GITHUB_RAW_FAST_TIMEOUT_S = 8.0
+
+# 资产递归下载的 include 嵌套深度上限（主 XML 为第 0 层）。
+# 超过上限即终止展开（不抛异常），避免 include 链过深/异常结构拖垮下载。
+_MAX_ASSET_DEPTH = 3
 
 
 class TTLCache:
@@ -113,6 +119,153 @@ class BaseAdapter(ABC):
             return path.read_bytes()
         return None
 
+    # ─── D3: 来源级本地数据集挂载 ───
+    # settings.local_datasets 按「来源名 → 本地目录」挂载整个数据集，adapter fetch
+    # 时优先在本地命中（source=local，不发任何网络请求），未命中走网络。与前端
+    # per-req 注入（state.local_files，req_id → 路径，parse_convert 节点消费）层级
+    # 不同、互不干扰：local_files 绕过 adapter 直接注入单文件，local_datasets 在
+    # adapter 内按 item_id/object_name 定位。本地目录布局与远程仓库/URL 的路径同构
+    # （GraspNet/YCB/DexGrasp 为 HF repo 根，Franka/Allegro/Robotiq/MuJoCo/Isaac 为
+    # GitHub 仓库根），各 adapter 用与网络相同的定位逻辑（扩展名/物体名/路径映射）
+    # 在本地找文件。
+
+    def local_dataset_root(self) -> Path | None:
+        """返回本数据源在 ``settings.local_datasets`` 中挂载的本地目录。
+
+        未配置或目录不存在返回 None（调用方保持既有网络流程）。
+        """
+        root = settings.local_datasets.get(self.source.value)
+        if not root:
+            return None
+        path = Path(root)
+        return path if path.is_dir() else None
+
+    @staticmethod
+    def _walk_local_tree(root: Path, rel_subdir: str = "") -> list[dict[str, Any]]:
+        """递归扫描本地目录，构造与远程文件树（tree API）同构的条目列表。
+
+        ``rel_subdir`` 非空时只扫描其下文件；返回条目的 ``path`` 均为相对
+        ``root`` 的正斜杠路径（与网络 tree API 的 path 字段一致，便于复用
+        ``_find_file_by_ext``/``find_object_grasp_file`` 等按扩展名/物体名
+        定位逻辑）。目录不存在返回空列表。
+        """
+        scan_root = root / rel_subdir if rel_subdir else root
+        if not scan_root.is_dir():
+            return []
+        items: list[dict[str, Any]] = []
+        for full in sorted(scan_root.rglob("*")):
+            if full.is_file():
+                rel = full.relative_to(root).as_posix()
+                try:
+                    size = full.stat().st_size
+                except OSError:
+                    size = 0
+                items.append({"type": "file", "path": rel, "size": size})
+        return items
+
+    def _find_local_file(self, rel_paths: Iterable[str]) -> Path | None:
+        """在本地挂载目录中按相对路径列表查找第一个存在且非空的文件。
+
+        相对路径与远程仓库中的路径同构（如 ``grasp_label/xxx.npz``、
+        ``franka_description/robots/panda/...``）。未配置挂载、相对路径越出挂载根
+        （路径穿越防护）或未命中均返回 None。
+        """
+        root = self.local_dataset_root()
+        if root is None:
+            return None
+        root_resolved = root.resolve()
+        for rel in rel_paths:
+            if not rel:
+                continue
+            candidate = (root_resolved / rel).resolve()
+            try:
+                candidate.relative_to(root_resolved)
+            except ValueError:
+                continue  # 路径穿越防护（../ 等越出挂载根）
+            if candidate.is_file() and candidate.stat().st_size > 0:
+                return candidate
+        return None
+
+    def _local_raw(self, item_id: str, candidates: list[tuple[str, str]]) -> RawData | None:
+        """本地数据集命中：按 ``(相对路径, format)`` 候选列表读取第一个存在的文件。
+
+        XML 类格式（urdf/xacro/xml）自动从本地挂载目录收集引用的资产
+        （mesh/texture/include，复用 ``_resolve_asset_rel`` 规范化、不发网络请求）；
+        命中返回 ``source=LOCAL`` 的 RawData，未命中返回 None（调用方走网络）。
+        """
+        root = self.local_dataset_root()
+        if root is None:
+            return None
+        for rel_path, fmt in candidates:
+            path = self._find_local_file([rel_path])
+            if path is None:
+                continue
+            data = path.read_bytes()
+            assets: dict[str, bytes] = {}
+            if fmt in ("urdf", "xacro", "xml"):
+                assets = self._local_assets_from_xml(data, posixpath.dirname(rel_path))
+            return RawData(
+                source=DataSource.LOCAL,
+                item_id=item_id,
+                format=fmt,
+                data=data,
+                url=f"local://{self.source.value}/{rel_path}",
+                size_bytes=len(data),
+                assets=assets,
+            )
+        return None
+
+    def _local_assets_from_xml(self, xml_bytes: bytes, xml_rel_dir: str) -> dict[str, bytes]:
+        """从本地挂载目录读取 XML 引用的外部资产（mesh/texture/include），不发起网络。
+
+        D3：本地命中主 XML 时，其引用的相对路径资产同样优先从本地读取（存在则
+        读入，缺失跳过，与 ``_download_xml_with_assets`` 的降级策略一致）。include
+        链递归展开（深度上限 ``_MAX_ASSET_DEPTH``、``seen`` 去重防环），assets 键为
+        相对主 XML 的完整路径（与网络版一致）。
+        """
+        assets: dict[str, bytes] = {}
+
+        def _collect(root: ET.Element, base_dir: str, depth: int, seen: set[str]) -> None:
+            if depth > _MAX_ASSET_DEPTH:
+                return
+            for elem in root.iter():
+                # 去掉命名空间前缀（如 {http://...}mesh → mesh）后统一小写匹配
+                tag = elem.tag.split("}")[-1].lower()
+                if tag not in {"mesh", "texture", "include"}:
+                    continue
+                rel = (elem.get("filename") or elem.get("file") or "").strip()
+                norm = self._resolve_asset_rel(rel)
+                if norm is None:
+                    continue
+                full_rel = posixpath.join(base_dir, norm) if base_dir else norm
+                if full_rel in seen:
+                    continue  # 同一路径已处理（去重/防环）
+                path = self._find_local_file([full_rel])
+                if path is None:
+                    continue  # 本地缺失资产跳过（与网络版单资产失败只跳过一致）
+                content = path.read_bytes()
+                assets[full_rel] = content
+                seen.add(full_rel)
+                if tag != "include":
+                    continue
+                try:
+                    sub_root = ET.fromstring(content)
+                except Exception:  # noqa: BLE001 — 子 XML 解析失败按无资产处理
+                    continue
+                _collect(
+                    sub_root,
+                    posixpath.join(base_dir, posixpath.dirname(norm)),
+                    depth + 1,
+                    seen,
+                )
+
+        try:
+            root = ET.fromstring(xml_bytes)
+        except Exception:  # noqa: BLE001 — 解析失败按无资产处理（与网络版一致）
+            return assets
+        _collect(root, xml_rel_dir, 0, set())
+        return assets
+
     def __init__(
         self,
         base_url: str,
@@ -120,7 +273,7 @@ class BaseAdapter(ABC):
     ) -> None:
         self.base_url = base_url
         self.semaphore = asyncio.Semaphore(rate_limit)
-        self.cache = TTLCache(maxsize=500, ttl=settings.adapter_cache_ttl)
+        self.cache = TTLCache(maxsize=settings.cache_max_entries, ttl=settings.cache_ttl_seconds)
         self.timeout = settings.adapter_timeout
         self.max_retry = settings.adapter_max_retry
         # E4: raw.githubusercontent.com 镜像兜底基础 URL（空字符串则禁用镜像）
@@ -477,14 +630,18 @@ class BaseAdapter(ABC):
         数据包自包含（P0-3）：主 XML 下载后，把其引用的相对路径资产（URDF 的
         ``<mesh filename>``/``<texture filename>``、MJCF 的 ``<mesh file>``/
         ``<texture file>``、xacro 的 ``<include filename>``）逐个拉取，使数据包
-        可离线完整加载。
+        可离线完整加载。include 链递归展开：子 XML 的 mesh/texture/include 引用
+        同样下载，子 XML 内的相对路径以其所在目录为基准。
 
         降级策略：XML 解析失败返回空 dict（不抛异常，不阻塞主下载流程）；
-        绝对 URL（package://、model://、http(s):// 等）、xacro 变量（$(...)
-        ）与绝对路径（/ 开头）不下载；单个资产下载失败只跳过该资产。
+        model://、http(s):// 等绝对 URL、xacro 变量（$(...)）与绝对路径（/ 开头）
+        不下载；package://<rest> 按相对路径解析（pybullet_robots panda 语义：
+        ``package://panda_description/...`` 等价于同仓库目录下，即 rest 直接相对
+        于 XML 所在目录）；include 深度超过 _MAX_ASSET_DEPTH 终止展开；
+        同一规范化路径只下载一次（去重防环）；单个资产下载失败只跳过该资产。
 
         Returns:
-            规范化相对路径 → 字节 的字典；同一路径重复出现时后者覆盖。
+            规范化相对路径 → 字节 的字典；同一路径重复出现时只下载一次。
         """
         assets: dict[str, bytes] = {}
         try:
@@ -492,6 +649,29 @@ class BaseAdapter(ABC):
         except Exception:  # noqa: BLE001 — 解析失败按无资产处理
             return assets
         base_dir = posixpath.dirname(xml_url)
+        await self._collect_assets(root, base_dir, 0, set(), assets, set())
+        return assets
+
+    async def _collect_assets(
+        self,
+        root: ET.Element,
+        base_dir: str,
+        depth: int,
+        seen: set[str],
+        assets: dict[str, bytes],
+        skipped: set[str],
+        rel_prefix: str = "",
+    ) -> None:
+        """递归收集 XML 子树中的 mesh/texture/include 引用并下载（内部方法）。
+
+        include 链逐层展开：include 引用的子 XML 也解析其引用，子 XML 内相对
+        路径以 ``posixpath.join(base_dir, dirname(include 路径))`` 为下载基准，
+        assets 键以 ``rel_prefix`` 拼接为相对主 XML 的完整路径（避免不同目录
+        下同名文件互相覆盖）。``seen`` 记录已下载的完整相对路径（去重防环）；
+        ``skipped`` 记录深度超限与下载失败的路径（仅作内部记录）。
+        """
+        if depth > _MAX_ASSET_DEPTH:
+            return
         for elem in root.iter():
             # 去掉命名空间前缀（如 {http://...}mesh → mesh）后统一小写匹配
             tag = elem.tag.split("}")[-1].lower()
@@ -500,23 +680,63 @@ class BaseAdapter(ABC):
             rel = (elem.get("filename") or elem.get("file") or "").strip()
             if not rel:
                 continue
-            # 绝对 URL（package://、model://、http(s)://）与 xacro 变量不下载
-            if rel.startswith(("package://", "model://", "http://", "https://")):
+            norm_rel = self._resolve_asset_rel(rel)
+            if norm_rel is None:
                 continue
-            if "$(" in rel:
+            if tag == "include" and depth + 1 > _MAX_ASSET_DEPTH:
+                skipped.add(norm_rel)
+                continue  # 深度超限：该子 XML 及其引用不再展开（不下载）
+            full_rel = posixpath.join(rel_prefix, norm_rel) if rel_prefix else norm_rel
+            if full_rel in seen:
+                continue  # 同一路径已处理（去重/防环）
+            asset_url = posixpath.join(base_dir, norm_rel)
+            try:
+                content = await self._download_bytes(asset_url)
+            except AdapterError:
+                skipped.add(norm_rel)
+                continue  # 单个资产失败只跳过，不中断整体
+            assets[full_rel] = content
+            seen.add(full_rel)
+            if tag != "include":
                 continue
-            if rel.startswith("/"):
-                continue  # 绝对路径无法解析
+            try:
+                sub_root = ET.fromstring(content)
+            except Exception:  # noqa: BLE001 — 子 XML 解析失败按无资产处理
+                continue
+            sub_base = posixpath.join(base_dir, posixpath.dirname(norm_rel))
+            sub_prefix = posixpath.join(rel_prefix, posixpath.dirname(norm_rel))
+            await self._collect_assets(
+                sub_root, sub_base, depth + 1, seen, assets, skipped, sub_prefix
+            )
+
+    @staticmethod
+    def _resolve_asset_rel(rel: str) -> str | None:
+        """把 XML 资源引用解析为规范化相对路径；无法解析时返回 None。
+
+        规则：model://、http(s):// 绝对 URL、xacro 变量（$(...)）与绝对路径
+        （/ 开头）不下载；``package://<rest>`` 把 rest 当作相对路径（pybullet_
+        robots panda 语义：package://panda_description/... 等价于同仓库目录下的
+        panda_description/...）；其余按普通相对路径处理（去前导 ./ 并 normpath）。
+        """
+        if rel.startswith("package://"):
+            rest = rel[len("package://") :]
+            if not rest or rest.startswith("/"):
+                return None
+            norm = posixpath.normpath(rest)
+        elif (
+            rel.startswith(("model://", "http://", "https://"))
+            or "$(" in rel
+            or rel.startswith("/")  # 绝对 URL / xacro 变量 / 绝对路径均不下载
+        ):
+            return None
+        else:
             # 规范化相对路径：去前导 ./，normpath 处理 ../
             if rel.startswith("./"):
                 rel = rel[2:]
-            norm_rel = posixpath.normpath(rel)
-            asset_url = posixpath.join(base_dir, norm_rel)
-            try:
-                assets[norm_rel] = await self._download_bytes(asset_url)
-            except AdapterError:
-                continue  # 单个资产失败只跳过，不中断整体
-        return assets
+            norm = posixpath.normpath(rel)
+        if not norm or norm in (".", ".."):
+            return None
+        return norm
 
     async def _head_content_length(self, url: str) -> int | None:
         """通过 HEAD 请求预检文件大小（Content-Length）。
@@ -555,6 +775,15 @@ class BaseAdapter(ABC):
 
     @staticmethod
     def _make_cache_key(method: str, path: str, kwargs: dict[str, Any]) -> str:
-        """生成缓存键。"""
-        key_str = f"{method}:{path}:{sorted(kwargs.items())}"
+        """生成缓存键。
+
+        B3 修复：URL query 参数乱序、空值不影响键命中——
+        query 解析后按参数名排序、丢弃空值，再重建 URL 参与哈希。
+        """
+        parts = urlsplit(path)
+        query = urlencode(sorted(parse_qsl(parts.query)))
+        normalized = urlunsplit(
+            (parts.scheme, parts.netloc, parts.path, query, parts.fragment)
+        )
+        key_str = f"{method}:{normalized}:{sorted(kwargs.items())}"
         return hashlib.md5(key_str.encode()).hexdigest()

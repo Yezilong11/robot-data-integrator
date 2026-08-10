@@ -237,6 +237,25 @@ def test_validate_mesh_trimesh_object_success() -> None:
     assert not any(i.req_id == "r1" and "面片" in i.message for i in out["validation_issues"])
 
 
+def test_validate_mesh_stl_bytes_with_obj_original_format() -> None:
+    """回归：归一化后 data 为 STL bytes、canonical_format="stl"，但原始格式是 obj。
+
+    此前 bytes 加载用 original_format="obj" 去解析 STL bytes 导致误报
+    "Mesh 无法加载"；现在优先用 canonical_format，未知格式才轮询。
+    """
+    mesh_bytes = trimesh.creation.box(extents=[1.0, 1.0, 1.0]).export(file_type="stl")
+    item = _item("r1", DataReqType.MESH, mesh_bytes, fmt="stl")
+    item = item.model_copy(
+        update={"provenance": _provenance(fmt="obj")}
+    )  # canonical_format=stl, original_format=obj
+    state: SystemState = {"parsed_data": {"r1": item}}
+    out = node_validate(state)
+    assert not any(
+        i.req_id == "r1" and ("Mesh 无法加载" in i.message or "面片" in i.message)
+        for i in out["validation_issues"]
+    )
+
+
 def test_validate_mesh_failure_invalid_bytes() -> None:
     state: SystemState = {
         "parsed_data": {"r1": _item("r1", DataReqType.MESH, b"not a mesh", fmt="stl")},
@@ -401,9 +420,7 @@ def test_validate_sim_config_mujoco_runtime_passed() -> None:
         "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, xml_bytes, fmt="xml")},
     }
     out = node_validate(state)
-    assert not any(
-        i.req_id == "r1" and "无法解析" in i.message for i in out["validation_issues"]
-    )
+    assert not any(i.req_id == "r1" and "无法解析" in i.message for i in out["validation_issues"])
     assert out["runtime_check"]["r1"]["status"] == "passed"
 
 
@@ -415,9 +432,7 @@ def test_validate_sim_config_invalid_xml_still_error() -> None:
     }
     out = node_validate(state)
     assert any(
-        i.req_id == "r1"
-        and "XML/MJCF 无法解析" in i.message
-        and i.severity == Severity.ERROR
+        i.req_id == "r1" and "XML/MJCF 无法解析" in i.message and i.severity == Severity.ERROR
         for i in out["validation_issues"]
     )
     assert out["runtime_check"]["r1"]["status"] == "failed"
@@ -455,9 +470,7 @@ def test_validate_sim_config_runtime_check_skipped_without_mujoco(
         "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, xml_bytes, fmt="xml")},
     }
     out = node_validate(state)
-    assert not any(
-        i.req_id == "r1" and "无法解析" in i.message for i in out["validation_issues"]
-    )
+    assert not any(i.req_id == "r1" and "无法解析" in i.message for i in out["validation_issues"])
     assert out["runtime_check"]["r1"]["status"] == "skipped"
 
 
@@ -469,19 +482,39 @@ def test_validate_sim_config_missing_asset_is_not_error() -> None:
         b"<worldbody><geom type='mesh' mesh='m'/></worldbody></mujoco>"
     )
     state: SystemState = {
-        "parsed_data": {
-            "r1": _item("r1", DataReqType.SIM_CONFIG, missing_mesh_mjcf, fmt="xml")
-        },
+        "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, missing_mesh_mjcf, fmt="xml")},
     }
     out = node_validate(state)
-    assert any(
-        i.req_id == "r1" and "资源引用未解析" in i.message
-        for i in out["validation_issues"]
-    )
+    assert any(i.req_id == "r1" and "资源引用未解析" in i.message for i in out["validation_issues"])
     assert not any(
         i.req_id == "r1" and i.severity == Severity.ERROR for i in out["validation_issues"]
     )
     assert out["runtime_check"]["r1"]["status"] == "skipped"
+
+
+def test_validate_sim_config_mujoco_with_assets_passes() -> None:
+    """带 assets 的 MJCF（引用外部 mesh）经临时目录加载通过 → runtime_check 为 passed。"""
+    pytest.importorskip("mujoco")
+    mesh_bytes = trimesh.creation.box(extents=[1.0, 1.0, 1.0]).export(file_type="stl")
+    mjcf = (
+        b'<mujoco model="x"><asset><mesh name="m" file="meshes/base.stl"/></asset>'
+        b'<worldbody><geom type="mesh" mesh="m"/></worldbody></mujoco>'
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.SIM_CONFIG,
+        name="r1",
+        canonical_format="xml",
+        output_path="sim/r1.xml",
+        data=mjcf,
+        assets={"meshes/base.stl": mesh_bytes},
+        provenance=_provenance("xml"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert not any(
+        i.req_id == "r1" and i.severity == Severity.ERROR for i in out["validation_issues"]
+    )
+    assert out["runtime_check"]["r1"]["status"] == "passed"
 
 
 def test_validate_runtime_check_written_to_manifest(

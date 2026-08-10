@@ -13,11 +13,15 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterNotFoundError, AdapterRateLimitError
+from rdi.exceptions import (
+    AdapterCatalogError,
+    AdapterNotFoundError,
+    AdapterRateLimitError,
+)
 from rdi.graph.nodes.retrieve_data import node_retrieve_data, node_retrieve_single
 from rdi.models.common import DataReqType, DataSource, Priority
 from rdi.models.goal import DataReq
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.retrieval import RawData, RetrievalResult, SearchResult
 
 
 @pytest.fixture
@@ -469,3 +473,318 @@ async def test_retrieve_data_per_req_timeout_does_not_block_others(
     ]
     assert len(timeout_errors) == 1
     assert "超时" in timeout_errors[0].error_message
+
+
+# ─── C1: object_name 从 payload 透传到 adapter.fetch ───
+
+
+async def test_retrieve_single_passes_object_name_to_fetch(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """C1：payload 带 object_name 时，fetch 以 object_name kwarg 调用（GraspNet 定位物体文件）。"""
+    payload = {
+        "req_id": "req_004",
+        "req_type": "grasp",
+        "description": "banana 的抓取标注",
+        "keywords": ["banana", "grasp"],
+        "object_name": "banana",
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_004"].status == "success"
+    mock_adapters.fetch.assert_called_once_with(
+        "test-1", req_type=DataReqType("grasp"), object_name="banana"
+    )
+    # object_name 作为额外 query token 参与 search
+    assert "banana" in [call.args[0] for call in mock_adapters.search.call_args_list][0]
+
+
+async def test_retrieve_single_omits_object_name_when_empty(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """C1：object_name 为空时不传该 kwarg，保持旧行为。"""
+    payload = {
+        "req_id": "req_005",
+        "req_type": "robot_urdf",
+        "description": "查找URDF",
+        "keywords": [],
+        "object_name": "",
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_005"].status == "success"
+    mock_adapters.fetch.assert_called_once_with("test-1", req_type=DataReqType("robot_urdf"))
+
+
+async def test_retrieve_single_fetch_falls_back_without_object_name_kwarg(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """C1：fetch 不接受 object_name 的旧 Adapter 降级到 req_type 调用，不抛异常。"""
+    calls: list[tuple[Any, ...]] = []
+
+    class LegacyAdapter:
+        source = DataSource.GITHUB
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return [SearchResult(item_id="old-1", title="Old", source=DataSource.GITHUB)]
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            calls.append((item_id, req_type))
+            return RawData(
+                source=DataSource.GITHUB,
+                item_id=item_id,
+                format="json",
+                data=b"legacy",
+                url="https://example.com/old",
+            )
+
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [LegacyAdapter]
+    )
+
+    payload = {
+        "req_id": "req_006",
+        "req_type": "grasp",
+        "description": "banana 的抓取标注",
+        "keywords": [],
+        "object_name": "banana",
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_006"].status == "success"
+    # 第一次带 object_name 调用抛 TypeError（签名不支持）→ 降级为 req_type 调用
+    assert calls[-1] == ("old-1", DataReqType("grasp"))
+
+
+# ─── C5: 仅重跑失败 req（retry_req_ids 选择性处理） ───
+
+
+def _two_req_state(retry_req_ids: list[str] | None, keep_result: RetrievalResult | None) -> dict[str, Any]:
+    """构造两个需求的 state：req_keep 有既有结果，req_retry 为失败重跑目标。"""
+    state: dict[str, Any] = {
+        "data_requirements": [
+            DataReq(
+                req_id="req_keep",
+                req_type=DataReqType.CODE,
+                description="已成功的需求",
+                priority=Priority.REQUIRED,
+                keywords=["keep"],
+            ),
+            DataReq(
+                req_id="req_retry",
+                req_type=DataReqType.CODE,
+                description="需重跑的需求",
+                priority=Priority.REQUIRED,
+                keywords=["retry"],
+            ),
+        ]
+    }
+    if retry_req_ids is not None:
+        state["retry_req_ids"] = retry_req_ids
+    if keep_result is not None:
+        state["retrieval_results"] = {"req_keep": keep_result}
+    return state
+
+
+async def test_retrieve_data_only_reruns_failed_reqs(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """retry_req_ids 设定时：只重跑失败 req，成功项不重拉、原结果保留。"""
+    old_result = RetrievalResult(req_id="req_keep", status="success")
+    state = _two_req_state(retry_req_ids=["req_retry"], keep_result=old_result)
+    result = await node_retrieve_data(state)
+
+    # req_keep 未重拉（其关键词未进入 search），req_retry 正常检索
+    search_queries = [c.args[0] for c in mock_adapters.search.call_args_list]
+    assert search_queries, "至少执行了一次检索"
+    assert all("keep" not in q for q in search_queries)
+    assert any("retry" in q for q in search_queries)
+    # 返回结果同时含 req_keep（原值保留）与 req_retry（新结果）
+    assert result["retrieval_results"]["req_keep"] is old_result
+    assert result["retrieval_results"]["req_retry"].status == "success"
+    # provenance 注明沿用不重拉
+    assert any("沿用上一轮结果，不重拉 (req_keep)" in p for p in result["provenance"])
+
+
+async def test_retrieve_data_reruns_all_when_no_retry_req_ids(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """retry_req_ids 为空（首次运行 / validate 重试）：全部重跑，既有结果被新结果覆盖（原行为）。"""
+    old_result = RetrievalResult(req_id="req_keep", status="success")
+    state = _two_req_state(retry_req_ids=None, keep_result=old_result)
+    result = await node_retrieve_data(state)
+
+    search_queries = [c.args[0] for c in mock_adapters.search.call_args_list]
+    assert any("keep" in q for q in search_queries)
+    assert any("retry" in q for q in search_queries)
+    # 两个需求均重新检索：req_keep 原值被覆盖为新结果
+    assert result["retrieval_results"]["req_keep"] is not old_result
+    assert result["retrieval_results"]["req_keep"].status == "success"
+    assert result["retrieval_results"]["req_retry"].status == "success"
+    # 全部处理时不产生"沿用"溯源
+    assert not any("沿用上一轮结果" in p for p in result["provenance"])
+
+
+# ─── C2: 硬编码清单外目标可诊断（Task 8） ───
+
+
+async def test_retrieve_single_catalog_error_yields_missing_with_diagnostics(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """C2：search 对清单外目标抛 AdapterCatalogError 时，missing 的 error_message 携带诊断语义。"""
+    mock_adapter = AsyncMock()
+
+    def _search_side_effect(query: str) -> list[SearchResult]:
+        raise AdapterCatalogError(
+            message="该源仅收录 20 个已知目标，未收录 'banana'（有源但未收录）",
+            source="ycb",
+        )
+
+    mock_adapter.search.side_effect = _search_side_effect
+    mock_cls = Mock(return_value=mock_adapter)
+    mock_cls.source = DataSource.YCB
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls]
+    )
+
+    payload = {
+        "req_id": "req_cat",
+        "req_type": "grasp",
+        "description": "banana 的抓取标注",
+        "keywords": ["banana", "grasp"],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_cat"]
+    assert retrieval.status == "missing"
+    assert "该源仅收录" in retrieval.error_message
+    assert "有源但未收录" in retrieval.error_message
+    assert "ycb:" in retrieval.error_message
+    # 清单外诊断不是连接类失败：不落入 retrieval_errors
+    assert result["retrieval_errors"] == []
+
+
+async def test_retrieve_single_catalog_error_then_query_hit_succeeds(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """C1 不回归：第一个 query 清单外抛 AdapterCatalogError，后续 query（物体名）命中时仍返回 success。"""
+    def _search_side_effect(query: str) -> list[SearchResult]:
+        if query == "banana grasp":
+            raise AdapterCatalogError(
+                message="该源仅收录 20 个已知目标，未收录 'banana grasp'（有源但未收录）",
+                source="ycb",
+            )
+        if query == "banana":
+            return [
+                SearchResult(item_id="011_banana", title="Banana", source=DataSource.GITHUB)
+            ]
+        return []
+
+    mock_adapters.search.side_effect = _search_side_effect
+
+    payload = {
+        "req_id": "req_cat2",
+        "req_type": "grasp",
+        "description": "banana 的抓取标注",
+        "keywords": ["banana", "grasp"],
+        "object_name": "",
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_cat2"]
+    assert retrieval.status == "success"
+    assert retrieval.data is not None
+    # 清单外诊断已累积但成功路径不受影响
+    assert result["retrieval_errors"] == []
+
+
+# ─── D2: 新类型无内置数据源 → 诚实失败（missing + 「该类型暂无内置数据源」） ───
+
+
+@pytest.mark.parametrize(
+    "new_type",
+    [
+        "camera_calib",
+        "teaching_trajectory",
+        "robot_config",
+        "benchmark_task",
+    ],
+)
+async def test_retrieve_single_new_type_missing_no_builtin_source(
+    mock_hermes: Mock, new_type: str
+) -> None:
+    """D2：无内置 adapter 的新类型请求返回 missing，reason 含「该类型暂无内置数据源」。
+
+    与 C2 的 AdapterCatalogError「有源但未收录」语义区分：这里是无内置数据源
+    （未注册任何候选 Adapter），不塞 UNKNOWN、不误报为有源但未收录。
+    """
+    payload = {
+        "req_id": "req_new",
+        "req_type": new_type,
+        "description": "测试新类型",
+        "keywords": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_new"]
+    assert retrieval.status == "missing"
+    assert "该类型暂无内置数据源" in retrieval.error_message
+    # 无源是缺失语义而非连接类错误：不落入 retrieval_errors
+    assert result["retrieval_errors"] == []
+    # 记录为 missing，且未使用任何源
+    call_kwargs = mock_hermes.record_experience.call_args.kwargs
+    assert call_kwargs["req_type"] == new_type
+    assert call_kwargs["result_status"] == "missing"
+    assert call_kwargs["sources_used"] == []
+
+
+async def test_retrieve_data_new_type_missing_in_parallel(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D2：并行检索中，无内置源的新类型需求与其他类型共存时各自正确返回。"""
+    mock_adapter = AsyncMock()
+    mock_adapter.search.return_value = [
+        SearchResult(item_id="c-1", title="Code", source=DataSource.GITHUB)
+    ]
+    mock_adapter.fetch.return_value = RawData(
+        source=DataSource.GITHUB,
+        item_id="c-1",
+        format="json",
+        data=b"code",
+        url="https://example.com",
+    )
+    mock_cls = Mock(return_value=mock_adapter)
+
+    def _select(req_type: Any) -> list[Any]:
+        if req_type == DataReqType.CODE:
+            return [mock_cls]
+        return []  # CAMERA_CALIB 等新类型无内置源
+
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", _select)
+
+    state: dict[str, Any] = {
+        "data_requirements": [
+            DataReq(
+                req_id="req_known",
+                req_type=DataReqType.CODE,
+                description="查找代码",
+                priority=Priority.REQUIRED,
+                keywords=["code"],
+            ),
+            DataReq(
+                req_id="req_calib",
+                req_type=DataReqType.CAMERA_CALIB,
+                description="标定相机参数",
+                priority=Priority.REQUIRED,
+                keywords=["标定"],
+            ),
+        ]
+    }
+    result = await node_retrieve_data(state)
+
+    assert result["retrieval_results"]["req_known"].status == "success"
+    calib = result["retrieval_results"]["req_calib"]
+    assert calib.status == "missing"
+    assert "该类型暂无内置数据源" in calib.error_message
+    # 无源新类型不产生 retrieval_errors
+    assert result["retrieval_errors"] == []

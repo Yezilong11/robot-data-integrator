@@ -9,7 +9,7 @@ from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataReqType, DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
@@ -106,7 +106,7 @@ class YCBAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
         query_lower = query.lower()
         matched = [
             obj
@@ -115,6 +115,14 @@ class YCBAdapter(BaseAdapter):
             or query_lower in obj["title"].lower()
             or query_lower in obj["category"].lower()
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_OBJECTS)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=obj["id"],
@@ -130,18 +138,83 @@ class YCBAdapter(BaseAdapter):
             for obj in matched
         ]
 
-    async def fetch(self, item_id: str, req_type: DataReqType | None = None) -> RawData:
+    async def fetch(
+        self,
+        item_id: str,
+        req_type: DataReqType | None = None,
+        object_name: str | None = None,
+    ) -> RawData:
         """按需求类型返回 YCB 数据。
 
         - GRASP: 优先尝试 YCB 抓取标注（``{item_id}.mat``）；标注源不可用时
           静默降级为 mesh，并在 metadata 标注 ``grasp_annotation_available: False``
         - 其他 / None: 返回物体 mesh（优先 .obj/.stl）
+
+        ``object_name`` 为兼容统一 fetch 签名保留：YCB 的物体匹配由 search 的
+        query 完成，不改变取数逻辑。
         """
+        # D3: 来源级本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）
+        local = self._try_local_fetch(item_id, req_type=req_type)
+        if local is not None:
+            return local
         if req_type == DataReqType.GRASP:
             annotation = await self._fetch_grasp_annotation(item_id)
             if annotation is not None:
                 return annotation
         return await self._fetch_mesh(item_id)
+
+    def _try_local_fetch(
+        self,
+        item_id: str,
+        req_type: DataReqType | None = None,
+    ) -> RawData | None:
+        """本地数据集挂载命中检查（D3）。
+
+        本地目录即 ycb-fixed-meshes 镜像 repo 根（settings.local_datasets["ycb"]）：
+        GRASP 命中 ``{item_id}.mat`` 抓取标注（与 _fetch_grasp_annotation 的 URL 同
+        构）；mesh 扫描 ``{item_id}/google_16k`` 子树（与 _list_mesh_subtree 同构），
+        复用 _pick_mesh_path 选文件，``{item_id}`` 不存在时 ``{item_id}-1`` 兜底。
+        命中返回 source=LOCAL 的 RawData（不发网络请求），未命中返回 None 走网络。
+        """
+        root = self.local_dataset_root()
+        if root is None:
+            return None
+        if req_type == DataReqType.GRASP:
+            mat_path = self._find_local_file([f"{item_id}.mat"])
+            if mat_path is not None:
+                data = mat_path.read_bytes()
+                return RawData(
+                    source=DataSource.LOCAL,
+                    item_id=item_id,
+                    format="mat",
+                    data=data,
+                    url=f"local://{self.source.value}/{item_id}.mat",
+                    size_bytes=len(data),
+                    metadata={"grasp_annotation_available": True, "is_real_grasp": True},
+                )
+        subtree = self._walk_local_tree(root, f"{item_id}/google_16k")
+        if not subtree:
+            # 与网络版一致：{item_id} 不存在时尝试 {item_id}-1 兜底
+            subtree = self._walk_local_tree(root, f"{item_id}-1/google_16k")
+        if not subtree:
+            return None
+        mesh_path = self._pick_mesh_path(subtree)
+        if not mesh_path:
+            return None
+        path = self._find_local_file([mesh_path])
+        if path is None:
+            return None
+        data = path.read_bytes()
+        fmt = mesh_path.rsplit(".", 1)[-1].lower()
+        return RawData(
+            source=DataSource.LOCAL,
+            item_id=item_id,
+            format=fmt,
+            data=data,
+            url=f"local://{self.source.value}/{mesh_path}",
+            size_bytes=len(data),
+            metadata={"grasp_annotation_available": False},
+        )
 
     async def _fetch_grasp_annotation(self, item_id: str) -> RawData | None:
         """尝试下载 YCB 抓取标注（.mat）；下载失败或不可用时返回 None（静默降级）。"""

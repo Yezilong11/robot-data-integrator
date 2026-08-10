@@ -10,7 +10,7 @@ from typing import cast
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
@@ -137,7 +137,7 @@ class MuJoCoAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。
 
         C13：匹配维度扩展 id/title/description + keywords 列表（任一 token
         命中任一字段/关键词即返回）。
@@ -154,6 +154,14 @@ class MuJoCoAdapter(BaseAdapter):
                 for token in tokens
             )
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_SCENES)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=cast("str", s["id"]),
@@ -168,9 +176,14 @@ class MuJoCoAdapter(BaseAdapter):
     async def fetch(self, item_id: str) -> RawData:
         """下载 MJCF XML 配置文件。
 
+        D3：本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）。
         C10 修复：删除虚构的 _fetch_primary（readthedocs _static/{id}.xml 不存在），
         直接走 mujoco_menagerie GitHub raw URL。XML 文件名不统一，用 _FETCH_XML 映射。
         """
+        # D3: 本地挂载目录即 mujoco_menagerie 仓库根镜像，相对路径即 _FETCH_XML
+        local = self._local_raw(item_id, self._local_candidates(item_id))
+        if local is not None:
+            return local
         rel_path = _FETCH_XML.get(item_id)
         if not rel_path:
             raise AdapterError(
@@ -189,3 +202,10 @@ class MuJoCoAdapter(BaseAdapter):
             size_bytes=len(content),
             assets=assets,
         )
+
+    def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:
+        """本地挂载候选 (仓库相对路径, format)，与 fetch 的 URL 路径同构。"""
+        rel_path = _FETCH_XML.get(item_id)
+        if not rel_path:
+            return []
+        return [(rel_path, "xml")]

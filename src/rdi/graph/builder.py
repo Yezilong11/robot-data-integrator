@@ -22,6 +22,7 @@ from rdi.graph.nodes import (
     node_validate,
 )
 from rdi.graph.state import SystemState
+from rdi.logging import configure_logging
 
 
 def build_graph(checkpointer: Any = None) -> CompiledStateGraph[SystemState, None, SystemState, SystemState]:
@@ -55,6 +56,9 @@ def build_graph(checkpointer: Any = None) -> CompiledStateGraph[SystemState, Non
     Returns:
         编译后的可执行图实例，调用 .invoke(state) 运行。
     """
+    # 结构化日志初始化：按 settings.log_level / log_format 配置（幂等）
+    configure_logging()
+
     # ─── 初始化状态图 ───
     graph = StateGraph(SystemState)
 

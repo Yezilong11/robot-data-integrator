@@ -201,3 +201,160 @@ def test_parse_goal_corrects_misclassified_req_type(
     out = node_parse_goal({"user_goal": "test"})
 
     assert out["data_requirements"][0].req_type == expected_type
+
+
+@pytest.mark.parametrize(
+    ("req_type", "description", "expected_format", "expected_object_name"),
+    [
+        (DataReqType.GRASP, "banana 的抓取标注", "npz", "banana"),
+        (DataReqType.MESH, "011_banana 的 mesh", None, "011_banana"),
+    ],
+)
+def test_parse_goal_fills_object_name(
+    monkeypatch: pytest.MonkeyPatch,
+    req_type: DataReqType,
+    description: str,
+    expected_format: str | None,
+    expected_object_name: str,
+) -> None:
+    """C1：GRASP/MESH 需求经 node_parse_goal 后处理按描述文本填充 object_name。"""
+    reqs = [
+        DataReq(
+            req_id="req_000",
+            req_type=req_type,
+            description=description,
+            priority=Priority.REQUIRED,
+            expected_format=expected_format,
+        )
+    ]
+    _install_fake(
+        monkeypatch,
+        result=_GoalParsingResult(
+            goal=GoalSpec(research_topic="test"),
+            requirements=reqs,
+        ),
+    )
+
+    out = node_parse_goal({"user_goal": "test"})
+
+    assert out["data_requirements"][0].object_name == expected_object_name
+
+
+def test_parse_goal_keeps_llm_filled_object_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """C1：LLM 已填的 object_name 不被后处理覆盖。"""
+    reqs = [
+        DataReq(
+            req_id="req_000",
+            req_type=DataReqType.GRASP,
+            description="banana 的抓取标注",
+            priority=Priority.REQUIRED,
+            expected_format="npz",
+            object_name="011_banana",
+        )
+    ]
+    _install_fake(
+        monkeypatch,
+        result=_GoalParsingResult(
+            goal=GoalSpec(research_topic="test"),
+            requirements=reqs,
+        ),
+    )
+
+    out = node_parse_goal({"user_goal": "test"})
+
+    assert out["data_requirements"][0].object_name == "011_banana"
+
+
+def test_parse_goal_does_not_fill_object_name_for_other_types(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """C1：非 GRASP/MESH 需求不填充 object_name（保持空串）。"""
+    reqs = [
+        DataReq(
+            req_id="req_000",
+            req_type=DataReqType.PAPER,
+            description="banana 的抓取标注相关论文",
+            priority=Priority.REQUIRED,
+        )
+    ]
+    _install_fake(
+        monkeypatch,
+        result=_GoalParsingResult(
+            goal=GoalSpec(research_topic="test"),
+            requirements=reqs,
+        ),
+    )
+
+    out = node_parse_goal({"user_goal": "test"})
+
+    assert out["data_requirements"][0].object_name == ""
+
+
+# ─── D2: 新类型可识别（CAMERA_CALIB / TEACHING_TRAJECTORY / ROBOT_CONFIG / BENCHMARK_TASK） ───
+
+
+@pytest.mark.parametrize(
+    ("description", "expected_type"),
+    [
+        ("标定相机参数", DataReqType.CAMERA_CALIB),
+        ("采集机械臂示教轨迹", DataReqType.TEACHING_TRAJECTORY),
+        ("机器人配置 robot config", DataReqType.ROBOT_CONFIG),
+        ("benchmark 基准测试任务", DataReqType.BENCHMARK_TASK),
+    ],
+)
+def test_parse_goal_recognizes_new_types(
+    monkeypatch: pytest.MonkeyPatch,
+    description: str,
+    expected_type: DataReqType,
+) -> None:
+    """D2：LLM 输出 unknown、描述含新类型中文关键词时，后处理映射为对应新类型。"""
+    reqs = [
+        DataReq(
+            req_id="req_000",
+            req_type=DataReqType.UNKNOWN,
+            description=description,
+            priority=Priority.REQUIRED,
+        )
+    ]
+    _install_fake(
+        monkeypatch,
+        result=_GoalParsingResult(
+            goal=GoalSpec(research_topic="test"),
+            requirements=reqs,
+        ),
+    )
+
+    out = node_parse_goal({"user_goal": description})
+
+    assert out["data_requirements"][0].req_type == expected_type
+
+
+def test_parse_goal_keeps_llm_new_type_and_zh_description(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """D2：LLM 直接输出新类型时保持不被改走，且枚举成员带中文描述（zh）。"""
+    reqs = [
+        DataReq(
+            req_id="req_000",
+            req_type=DataReqType.CAMERA_CALIB,
+            description="相机标定参数",
+            priority=Priority.REQUIRED,
+        )
+    ]
+    _install_fake(
+        monkeypatch,
+        result=_GoalParsingResult(
+            goal=GoalSpec(research_topic="test"),
+            requirements=reqs,
+        ),
+    )
+
+    out = node_parse_goal({"user_goal": "标定相机参数"})
+
+    req = out["data_requirements"][0]
+    assert req.req_type == DataReqType.CAMERA_CALIB
+    # 中文描述映射：枚举成员 zh 属性非空且语义正确
+    assert DataReqType.CAMERA_CALIB.zh == "相机标定参数"
+    assert DataReqType.TEACHING_TRAJECTORY.zh == "示教轨迹"
+    assert DataReqType.ROBOT_CONFIG.zh == "机器人配置"
+    assert DataReqType.BENCHMARK_TASK.zh == "基准测试任务"
