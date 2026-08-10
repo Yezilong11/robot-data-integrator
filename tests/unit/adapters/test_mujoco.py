@@ -126,6 +126,26 @@ class TestMuJoCoAdapter:
         mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_fetch_fills_assets_for_mesh_references(self) -> None:
+        """P0-3：MJCF 引用相对 mesh 文件时，fetch 返回的 raw.assets 携带资产字节。"""
+        adapter = MuJoCoAdapter()
+        fake_xml = (
+            b'<mujoco model="x"><asset><mesh file="meshes/foo.stl"/></asset>'
+            b"<worldbody/></mujoco>"
+        )
+        with patch.object(
+            adapter,
+            "_download_bytes",
+            new_callable=AsyncMock,
+            side_effect=[fake_xml, b"stl-data"],
+        ) as mock_dl:
+            raw = await adapter.fetch("aloha")
+        assert raw.assets == {"meshes/foo.stl": b"stl-data"}
+        # 主 XML 一次 + mesh 资产一次
+        assert mock_dl.await_count == 2
+        assert mock_dl.call_args_list[1].args[0].endswith("meshes/foo.stl")
+
+    @pytest.mark.asyncio
     async def test_fetch_unknown_scene_raises(self) -> None:
         """C10 修复后：未知 scene（无路径映射）直接抛 AdapterError。"""
         adapter = MuJoCoAdapter()

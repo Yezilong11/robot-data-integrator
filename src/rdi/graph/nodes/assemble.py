@@ -8,8 +8,10 @@
 """
 
 import dataclasses
+import hashlib
 import io
 import json
+import posixpath
 import re
 from datetime import datetime
 from pathlib import Path
@@ -17,13 +19,14 @@ from typing import Any
 
 import numpy as np
 
-from rdi.config.settings import settings
+from rdi.config.settings import PIPELINE_VERSION, settings
 from rdi.graph.state import SystemState
 from rdi.models import (
     DataReqType,
     ManifestFile,
     ManifestMissingItem,
     PackageManifest,
+    Priority,
     QualityReport,
 )
 
@@ -64,6 +67,16 @@ _EXT_BY_FORMAT: dict[str, str] = {
 def _ext_for_format(canonical_format: str) -> str:
     """把 canonical_format 映射为文件扩展名；未知格式返回 .bin。"""
     return _EXT_BY_FORMAT.get(canonical_format.lower(), ".bin")
+
+
+def _ext_for_raw_format(original_format: str, canonical_format: str) -> str:
+    """按原始格式决定原始 XML 落盘扩展名；未知格式回退 canonical_format 映射。"""
+    fmt = (original_format or "").lower()
+    if fmt in ("urdf", "xacro"):
+        return ".urdf"
+    if fmt in ("xml", "mjcf"):
+        return ".xml"
+    return _ext_for_format(canonical_format)
 
 
 def _safe_filename(req_id: str) -> str:
@@ -113,6 +126,28 @@ def _serialize_item_data(data: Any) -> tuple[bytes | str, str]:
     return repr(data), ".txt"
 
 
+def _derive_package_status(
+    num_files: int, missing_items: list[Any], requirements: list[Any]
+) -> str:
+    """推导数据包状态：failed / partial / complete。
+
+    - 无任何落盘文件 → failed
+    - 存在 REQUIRED 优先级需求缺失 → failed
+    - 存在非必需需求缺失 → partial
+    - 其余 → complete
+    """
+    if num_files == 0:
+        return "failed"
+    req_by_id = {r.req_id: r for r in requirements}
+    has_missing = False
+    for m in missing_items:
+        req = req_by_id.get(m.req_id)
+        if req is not None and req.priority == Priority.REQUIRED:
+            return "failed"
+        has_missing = True
+    return "partial" if has_missing else "complete"
+
+
 def node_assemble(state: SystemState) -> dict[str, Any]:
     """整合打包节点：序列化解析数据落盘并生成 Manifest。
 
@@ -134,22 +169,67 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
 
     for req_id, item in parsed_data.items():
         try:
-            content, suggested_ext = _serialize_item_data(item.data)
-            ext = suggested_ext or _ext_for_format(item.canonical_format)
-            filename = f"{_safe_filename(req_id)}{ext}"
-            rel_path = f"{_subdir_for_req_type(item.req_type)}/{filename}"
-            target = package_dir / rel_path
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if isinstance(content, bytes):
-                target.write_bytes(content)
+            subdir = _subdir_for_req_type(item.req_type)
+            if item.raw_bytes is not None:
+                # P0-3 数据包自包含：原始 XML 与其引用的外部资产直接落盘
+                ext = _ext_for_raw_format(
+                    item.provenance.original_format, item.canonical_format
+                )
+                filename = f"{_safe_filename(req_id)}{ext}"
+                rel_path = f"{subdir}/{filename}"
+                target = package_dir / rel_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(item.raw_bytes)
+                written_size = len(item.raw_bytes)
+                for rel_asset, content in (item.assets or {}).items():
+                    # 剥离前导 ../ 段，防止资产路径逃逸出数据包
+                    norm_asset = posixpath.normpath(rel_asset)
+                    while norm_asset.startswith("../"):
+                        norm_asset = norm_asset[3:]
+                    if not norm_asset or norm_asset == "..":
+                        continue
+                    asset_target = package_dir / subdir / norm_asset
+                    asset_target.parent.mkdir(parents=True, exist_ok=True)
+                    asset_target.write_bytes(content)
             else:
-                target.write_text(content, encoding="utf-8")
+                content, suggested_ext = _serialize_item_data(item.data)
+                ext = suggested_ext or _ext_for_format(item.canonical_format)
+                filename = f"{_safe_filename(req_id)}{ext}"
+                rel_path = f"{subdir}/{filename}"
+                target = package_dir / rel_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if isinstance(content, bytes):
+                    target.write_bytes(content)
+                    written_size = len(content)
+                else:
+                    target.write_text(content, encoding="utf-8")
+                    written_size = len(content.encode("utf-8"))
+            # P0-5：文件写入成功后统一计算 SHA-256（raw 分支与序列化分支均覆盖；
+            # reference 项写入的是 metadata JSON 代理文件，同样可算校验和）
+            sha256 = hashlib.sha256(target.read_bytes()).hexdigest()
         except Exception as exc:  # noqa: BLE001 — 单项失败不中断整体打包
             provenance.append(
                 f"[{now.isoformat()}] assemble_package: 序列化 {req_id} 失败，已从数据包排除: {exc}"
             )
             continue
 
+        # P0-4：带 reference 的项表示大文件未下载（如 tar/PDF/zip），
+        # manifest 标记 downloaded=false 并提供远端 URL 供用户手动获取
+        reference = getattr(item, "reference", None)
+        if reference is not None:
+            downloaded, file_url, file_size, local_path = (
+                False,
+                reference.url or reference.download_hint,
+                reference.file_size,
+                "",
+            )
+        else:
+            downloaded, file_url, file_size, local_path = (
+                True,
+                item.provenance.source_url,
+                written_size,
+                rel_path,
+            )
         manifest_files.append(
             ManifestFile(
                 req_id=req_id,
@@ -160,7 +240,13 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                 transformations=[*item.provenance.transformations, f"written_to:{rel_path}"],
                 confidence=item.confidence_score,
                 completeness=item.completeness_pct,
-                data_source_quality=item.data_source_quality or "fallback",
+                data_source_quality=item.data_source_quality or "unknown",
+                is_fallback=item.is_fallback,
+                downloaded=downloaded,
+                file_url=file_url,
+                file_size=file_size,
+                local_path=local_path,
+                checksum_sha256=sha256,
             )
         )
 
@@ -178,13 +264,28 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
     avg_confidence = total_conf / len(manifest_files) if manifest_files else 0.0
     avg_completeness = total_comp / len(manifest_files) if manifest_files else 0.0
 
+    # P0-5：校验和清单，每行 "<sha256>  <path>"，按路径排序保证确定性；缺失校验和的项跳过
+    checksum_lines = [
+        f"{f.checksum_sha256}  {f.path}"
+        for f in sorted(manifest_files, key=lambda f: f.path)
+        if f.checksum_sha256
+    ]
+    (package_dir / "checksums.txt").write_text(
+        "\n".join(checksum_lines),
+        encoding="utf-8",
+    )
+
     package = PackageManifest(
         package_info={
             "goal": state.get("user_goal", ""),
             "created_at": now.isoformat(),
             "iteration": state.get("iteration_count", 0),
             "package_id": package_id,
-            "status": "complete",
+            "pipeline_version": PIPELINE_VERSION,
+            # 契约字段，源 metadata 提供时填充（当前数据链路未透传 license/citation）
+            "license": "",
+            "citation": "",
+            "status": _derive_package_status(len(manifest_files), missing_items, requirements),
         },
         files=manifest_files,
         missing_items=manifest_missing,

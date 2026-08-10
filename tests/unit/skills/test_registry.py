@@ -16,7 +16,7 @@ import trimesh
 from rdi.models.common import DataReqType, DataSource
 from rdi.models.goal import DataReq, Priority
 from rdi.models.parsed import MissingItem, ParsedItem
-from rdi.models.retrieval import RawData, RetrievalResult
+from rdi.models.retrieval import RawData, RawReference, RetrievalResult
 from rdi.skills import (
     CodeSkill,
     DatasetSkill,
@@ -138,7 +138,24 @@ class TestProcessRetrievalResult:
         outcome = SkillRegistry().process_retrieval_result(result, req)
 
         assert isinstance(outcome, MissingItem)
-        assert outcome.reason == "timeout"
+        assert outcome.reason == "检索失败[error]: timeout"
+
+    def test_error_status_reason_keeps_structured_info(self) -> None:
+        """status=error 且 error_message 非空时，reason 保留结构化失败信息。"""
+        raw = _make_raw("stl", b"x")
+        result = RetrievalResult(
+            req_id="req_001",
+            data=raw,
+            status="error",
+            error_message="github:rate_limit",
+        )
+        req = _make_req(DataReqType.MESH)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, MissingItem)
+        assert "检索失败" in outcome.reason
+        assert "github:rate_limit" in outcome.reason
 
     def test_missing_on_code_skill_failure(self) -> None:
         raw = _make_raw("zip", b"code bytes")
@@ -159,3 +176,100 @@ class TestProcessRetrievalResult:
 
         assert isinstance(outcome, MissingItem)
         assert outcome.reason  # skill errors propagated as reason
+
+    # ─── P0-3: URDF/MJCF 原始字节与资产透传 ───
+
+    def test_urdf_passthrough_raw_bytes_and_assets(self) -> None:
+        """ROBOT_URDF 类型把 raw_bytes 与 assets 透传到 ParsedItem。"""
+        urdf = (
+            b'<robot name="r"><link name="base"><visual><geometry>'
+            b'<mesh filename="meshes/base.stl"/>'
+            b"</geometry></visual></link></robot>"
+        )
+        raw = _make_raw("urdf", urdf, item_id="panda", source=DataSource.FRANKA)
+        raw.assets = {"meshes/base.stl": b"stl-data"}
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.ROBOT_URDF)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.raw_bytes == urdf
+        assert outcome.assets == {"meshes/base.stl": b"stl-data"}
+
+    def test_non_urdf_types_do_not_passthrough(self) -> None:
+        """MESH 等其他类型不透传 raw_bytes/assets（保持默认 None/空 dict）。"""
+        data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+        raw = _make_raw("stl", data, item_id="hand")
+        raw.assets = {"tex.png": b"png-data"}  # 即便 RawData 有 assets 也不透传
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.MESH)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.raw_bytes is None
+        assert outcome.assets == {}
+
+    # ─── P0-4: RawReference 透传 ───
+
+    def test_reference_passthrough_from_raw_data(self) -> None:
+        """P0-4：RawData.reference 无条件透传到 ParsedItem.reference。"""
+        data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+        raw = _make_raw("stl", data, item_id="hand")
+        raw.reference = RawReference(
+            url="https://example.com/big.tar",
+            file_size=12345,
+            download_hint="https://mirror.example.com/big.tar",
+            reason="过大",
+        )
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.MESH)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.reference is not None
+        assert outcome.reference.url == "https://example.com/big.tar"
+        assert outcome.reference.file_size == 12345
+        assert outcome.reference.reason == "过大"
+
+    def test_reference_none_when_raw_has_none(self) -> None:
+        """P0-4：RawData.reference 为 None 时 ParsedItem.reference 保持 None。"""
+        data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+        raw = _make_raw("stl", data, item_id="hand")
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.MESH)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.reference is None
+
+    # ─── P1-2: is_fallback 透传 ───
+
+    def test_is_fallback_passthrough_true(self) -> None:
+        """RetrievalResult.is_fallback=True（非首选源成功）→ ParsedItem.is_fallback=True。"""
+        data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+        raw = _make_raw("stl", data, item_id="hand")
+        result = RetrievalResult(
+            req_id="req_001", data=raw, status="success", is_fallback=True
+        )
+        req = _make_req(DataReqType.MESH)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.is_fallback is True
+
+    def test_is_fallback_default_false(self) -> None:
+        """RetrievalResult 未设置 is_fallback（默认 False，首选源成功）→ ParsedItem.is_fallback=False。"""
+        data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+        raw = _make_raw("stl", data, item_id="hand")
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.MESH)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.is_fallback is False

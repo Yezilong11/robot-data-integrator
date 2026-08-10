@@ -19,6 +19,7 @@ from rdi.exceptions import LLMUnavailableError
 from rdi.graph.edges import route_after_review
 from rdi.graph.nodes import human_review
 from rdi.graph.nodes.assemble import node_assemble
+from rdi.models import DataReq, DataReqType, Priority
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -58,7 +59,7 @@ def _base_state(decision: str = "satisfied", **extra: Any) -> SystemState:
         "user_goal": "用 Franka Panda 在 MuJoCo 中抓取 YCB banana",
         "review_decision": decision,
         "user_feedback": [],
-        "iteration_count": 1,
+        "review_iteration": 0,
         "retrieval_results": {"req_000": None},
         "provenance": [],
         "errors": [],
@@ -162,15 +163,15 @@ def test_unsatisfied_without_feedback_has_default_advice(monkeypatch: pytest.Mon
 # ─── 循环上限 ───
 
 
-@pytest.mark.parametrize("iteration", [4, 5])
+@pytest.mark.parametrize("iteration", [3, 4])
 def test_loop_cap_force_ends_on_4th_review(
     iteration: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """超过上限：即使 review_decision 为 revised 也强制按 satisfied 结束。"""
+    """review_iteration 达到上限（>=3，即第 4 次进入）时：即使 review_decision 为 revised 也强制按 satisfied 结束。"""
     fake = _FakeLLMClient()
     _patch_llm(monkeypatch, fake)
 
-    state = _base_state("revised", iteration_count=iteration, user_feedback=["再来一次"])
+    state = _base_state("revised", review_iteration=iteration, user_feedback=["再来一次"])
     merged, update = _run(state)
 
     assert merged["review_decision"] == "satisfied"
@@ -184,11 +185,11 @@ def test_loop_cap_force_ends_on_4th_review(
 def test_loop_cap_not_reached_still_allows_revision(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """未超过上限（第 3 轮）仍允许修订。"""
+    """未超过上限（review_iteration=2，第 3 轮）仍允许修订。"""
     fake = _FakeLLMClient(result=human_review._RevisedGoal(revised_goal="修正目标"))
     _patch_llm(monkeypatch, fake)
 
-    merged, _ = _run(_base_state("revised", iteration_count=3, user_feedback=["微调"]))
+    merged, _ = _run(_base_state("revised", review_iteration=2, user_feedback=["微调"]))
 
     assert merged["review_decision"] == "revised"
     assert merged["revised_goal"] == "修正目标"
@@ -290,7 +291,7 @@ def test_loop_cap_records_forced_revision(monkeypatch: pytest.MonkeyPatch) -> No
     """循环上限强制结束时仍记录一次修订（decision=satisfied (forced)），便于追溯。"""
     _patch_llm(monkeypatch, _FakeLLMClient())
 
-    state = _base_state("revised", iteration_count=4, user_feedback=["再来一次"])
+    state = _base_state("revised", review_iteration=4, user_feedback=["再来一次"])
     merged, update = _run(state)
 
     assert merged["review_decision"] == "satisfied"
@@ -302,6 +303,115 @@ def test_loop_cap_records_forced_revision(monkeypatch: pytest.MonkeyPatch) -> No
     assert record["feedback"] == ["再来一次"]
     assert record["revised_goal"] == state["user_goal"]  # 未应用的反馈，保留当前生效目标
     assert record["timestamp"]
+
+
+# ─── interrupt 真实流程 ───
+
+
+def test_interrupt_review_waits_for_resume_decision(monkeypatch: pytest.MonkeyPatch) -> None:
+    """interrupt_review=True 时调用 interrupt 等待用户决策，且不读 state.review_decision。"""
+    fake = _FakeLLMClient()
+    _patch_llm(monkeypatch, fake)
+    calls: list[Any] = []
+
+    def _fake_interrupt(payload: Any) -> dict[str, Any]:
+        calls.append(payload)
+        return {"decision": "satisfied", "feedback": ["x"]}
+
+    monkeypatch.setattr(human_review, "interrupt", _fake_interrupt)
+
+    # state.review_decision 预置为 revised，但 interrupt 返回 satisfied →
+    # 节点必须以 interrupt 的返回值为准继续
+    state = _base_state("revised", interrupt_review=True, user_feedback=["预置反馈"])
+    merged, update = _run(state)
+
+    assert len(calls) == 1
+    payload = calls[0]
+    assert "请审查当前数据包" in payload["message"]
+    assert "req_ids" in payload
+    assert merged["review_decision"] == "satisfied"
+    assert route_after_review(merged) == "satisfied"
+    # 反馈来自 interrupt 返回的 resume 值，而非 state.user_feedback
+    assert any("用户反馈: x" in p for p in merged["provenance"])
+    assert not any("预置反馈" in p for p in merged["provenance"])
+    assert "user_goal" not in update  # satisfied 分支不写 user_goal
+    assert fake.calls == []  # 未走 revised，不调用 LLM
+
+
+def test_interrupt_review_uses_requirements_for_req_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    """interrupt 的 payload.req_ids 从 data_requirements 提取（兼容 pydantic 对象与 dict）。"""
+    calls: list[Any] = []
+    monkeypatch.setattr(
+        human_review,
+        "interrupt",
+        lambda payload: calls.append(payload) or {"decision": "satisfied", "feedback": []},
+    )
+
+    req = DataReq(
+        req_id="req_001",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+    )
+    state = _base_state(
+        "satisfied",
+        interrupt_review=True,
+        data_requirements=[req, {"req_id": "req_002"}],
+    )
+    _run(state)
+
+    assert calls[0]["req_ids"] == ["req_001", "req_002"]
+
+
+# ─── unsatisfied 反馈写回 data_requirements ───
+
+
+def test_unsatisfied_writes_feedback_to_requirements(monkeypatch: pytest.MonkeyPatch) -> None:
+    """unsatisfied：反馈写回 data_requirements（description/keywords），review_iteration 自增。"""
+    _patch_llm(monkeypatch, _FakeLLMClient())
+
+    req = DataReq(
+        req_id="req_001",
+        req_type=DataReqType.MESH,
+        description="banana mesh",
+        priority=Priority.REQUIRED,
+        keywords=["banana"],
+    )
+    state = _base_state(
+        "unsatisfied",
+        user_feedback=["要真实 DexGraspNet 数据"],
+        data_requirements=[req],
+    )
+    merged, update = _run(state)
+
+    assert "data_requirements" in update
+    new_reqs = update["data_requirements"]
+    assert len(new_reqs) == 1
+    assert new_reqs[0] is not req  # 返回新对象，不就地修改
+    assert "用户反馈: 要真实 DexGraspNet 数据" in new_reqs[0].description
+    assert "要真实 DexGraspNet 数据" in new_reqs[0].keywords
+    assert req.description == "banana mesh"  # 原需求未被修改
+    assert req.keywords == ["banana"]
+    assert merged["review_iteration"] == 1  # review_iteration 自增
+    assert any("反馈已写入 data_requirements" in p for p in merged["provenance"])
+
+
+def test_unsatisfied_empty_feedback_keeps_requirements(monkeypatch: pytest.MonkeyPatch) -> None:
+    """unsatisfied 且无反馈：data_requirements 仍返回新列表（无空反馈污染 keywords）。"""
+    _patch_llm(monkeypatch, _FakeLLMClient())
+
+    req = DataReq(
+        req_id="req_001",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+        keywords=["banana"],
+    )
+    merged, update = _run(_base_state("unsatisfied", data_requirements=[req]))
+
+    new_reqs = update["data_requirements"]
+    assert new_reqs[0].keywords == ["banana"]
+    assert merged["review_iteration"] == 1
 
 
 # ─── 端到端：human_review(revised) → assemble ───

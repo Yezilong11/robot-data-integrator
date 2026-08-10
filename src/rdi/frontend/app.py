@@ -290,34 +290,101 @@ def build_failure_state(
     }
 
 
-def run_graph(goal: str, paper_file: Any, review_decision: str, feedback: str) -> dict[str, Any]:
-    builder = importlib.import_module("rdi.graph.builder")
-    graph = builder.build_graph()
+# 真实流程两阶段状态：首跑（interrupt）与 resume 共享同一个 graph 实例与 thread_id
+_pending_thread_id: str | None = None
+_graph_app: Any = None
+
+
+def _get_graph_app() -> Any:
+    """懒加载带 MemorySaver checkpointer 的编译图（支持 interrupt/resume）。"""
+    global _graph_app
+    if _graph_app is None:
+        builder = importlib.import_module("rdi.graph.builder")
+        from langgraph.checkpoint.memory import MemorySaver
+
+        _graph_app = builder.build_graph(checkpointer=MemorySaver())
+    return _graph_app
+
+
+def run_graph(goal: str, paper_file: Any, local_files_json: str = "") -> tuple[dict[str, Any], str, bool]:
+    """真实流程首跑：返回 (state, thread_id, interrupted)。
+
+    interrupted=True 表示图已在 human_review 前中断，等待用户通过
+    ``resume_workflow`` 提供审查决定后继续。
+    """
+    global _pending_thread_id
+    graph = _get_graph_app()
 
     state: dict[str, Any] = {
         "user_goal": goal,
-        "iteration_count": 0,
         "provenance": [],
         "errors": [],
-        "review_decision": review_decision,
-        "user_feedback": [feedback] if feedback.strip() else [],
+        "interrupt_review": True,
     }
 
     pdf_bytes = read_uploaded_pdf(paper_file)
     if pdf_bytes is not None:
         state["paper_pdf"] = pdf_bytes
 
+    local_files: dict[str, str] = {}
+    if local_files_json:
+        try:
+            parsed = json.loads(local_files_json)
+            local_files = {str(k): str(v) for k, v in parsed.items() if k and v}
+        except json.JSONDecodeError:
+            local_files = {}
+    if local_files:
+        state["local_files"] = local_files
+
+    thread_id = str(uuid.uuid4())
+    _pending_thread_id = thread_id
     result = asyncio.run(
         graph.ainvoke(
             state,
-            config={"configurable": {"thread_id": str(uuid.uuid4())}},
+            config={"configurable": {"thread_id": thread_id}},
         )
     )
 
-    if isinstance(result, dict):
-        return result
+    if not isinstance(result, dict):
+        return {"errors": [f"Unexpected graph result: {result!r}"]}, thread_id, False
+    interrupted = "__interrupt__" in result
+    return result, thread_id, interrupted
 
-    return {"errors": [f"Unexpected graph result: {result!r}"]}
+
+def resume_workflow(review_decision: str, feedback: str) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str]:
+    """真实流程第二阶段：用用户决策 resume 已中断的图。"""
+    global _pending_thread_id
+    if not _pending_thread_id:
+        req_headers, _ = build_req_status_table({})
+        return (
+            "没有待继续的运行，请先点击「运行」。",
+            {},
+            {"headers": req_headers, "data": []},
+            "",
+            "",
+            [],
+            {},
+            [],
+            "",
+        )
+
+    from langgraph.types import Command
+
+    thread_id = _pending_thread_id
+    graph = _get_graph_app()
+    result = asyncio.run(
+        graph.ainvoke(
+            Command(
+                resume={
+                    "decision": review_decision,
+                    "feedback": [feedback] if feedback.strip() else [],
+                }
+            ),
+            config={"configurable": {"thread_id": thread_id}},
+        )
+    )
+    _pending_thread_id = None
+    return _format_result(result, review_decision, feedback)
 
 
 def summarize_state(state: dict[str, Any]) -> dict[str, Any]:
@@ -432,12 +499,65 @@ def get_package_dir(state: dict[str, Any]) -> Path | None:
     return None
 
 
+def _format_result(
+    state: dict[str, Any],
+    review_decision: str,
+    feedback: str,
+) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str]:
+    """把运行结果 state 格式化为前端 9 元组展示数据（run_workflow / resume_workflow 共享）。
+
+    state 无 experiment_package 且非中断态时，生成前端兜底失败数据包。
+    """
+    if not state.get("experiment_package") and "__interrupt__" not in state:
+        errors = to_plain(state.get("errors", []))
+        if isinstance(errors, list) and errors:
+            error_message = "; ".join(str(item) for item in errors)
+        else:
+            error_message = "Backend returned no experiment_package."
+        state = build_failure_state(
+            str(state.get("user_goal", "")),
+            None,
+            review_decision,
+            feedback,
+            error_message,
+        )
+    manifest = to_plain(state.get("experiment_package", {}))
+    validation_issues = to_plain(state.get("validation_issues", []))
+    missing_items = to_plain(state.get("missing_items", []))
+    provenance = to_plain(state.get("provenance", []))
+    runtime_check = to_plain(state.get("runtime_check", {}))
+
+    package_dir = get_package_dir(state)
+    if package_dir is not None and package_dir.exists():
+        tree = package_tree(package_dir)
+    elif isinstance(manifest, dict) and manifest.get("files"):
+        tree = manifest_tree(manifest)
+    else:
+        tree = ""
+
+    status = "运行完成"
+    if state.get("errors"):
+        status = "运行完成，但存在错误"
+
+    req_headers, req_rows = build_req_status_table(state)
+    return (
+        status,
+        summarize_state(state),
+        {"headers": req_headers, "data": req_rows},
+        tree,
+        json.dumps(manifest, ensure_ascii=False, indent=2),
+        validation_issues,
+        runtime_check,
+        missing_items,
+        "\n".join(str(item) for item in provenance),
+    )
+
+
 def run_workflow(
     mode: str,
     goal: str,
     paper_file: Any,
-    review_decision: str,
-    feedback: str,
+    local_files_json: str,
 ) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str]:
     if not goal.strip():
         req_headers, _ = build_req_status_table({})
@@ -455,74 +575,26 @@ def run_workflow(
 
     try:
         if mode == "真实流程":
-            state = run_graph(goal, paper_file, review_decision, feedback)
+            state, _tid, interrupted = run_graph(goal, paper_file, local_files_json)
+            if interrupted:
+                req_headers, req_rows = build_req_status_table(state)
+                return (
+                    "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
+                    summarize_state(state),
+                    {"headers": req_headers, "data": req_rows},
+                    "",
+                    "",
+                    to_plain(state.get("validation_issues", [])),
+                    to_plain(state.get("runtime_check", {})),
+                    to_plain(state.get("missing_items", [])),
+                    "\n".join(str(x) for x in to_plain(state.get("provenance", []))),
+                )
         else:
-            state = build_demo_state(goal, review_decision, feedback)
-        if not state.get("experiment_package"):
-            errors = to_plain(state.get("errors", []))
-            if isinstance(errors, list) and errors:
-                error_message = "; ".join(str(item) for item in errors)
-            else:
-                error_message = "Backend returned no experiment_package."
-            state = build_failure_state(goal, paper_file, review_decision, feedback, error_message)
-        manifest = to_plain(state.get("experiment_package", {}))
-        validation_issues = to_plain(state.get("validation_issues", []))
-        missing_items = to_plain(state.get("missing_items", []))
-        provenance = to_plain(state.get("provenance", []))
-        runtime_check = to_plain(state.get("runtime_check", {}))
-
-        package_dir = get_package_dir(state)
-        if package_dir is not None and package_dir.exists():
-            tree = package_tree(package_dir)
-        elif isinstance(manifest, dict) and manifest.get("files"):
-            tree = manifest_tree(manifest)
-        else:
-            tree = ""
-
-        status = "运行完成"
-        if state.get("errors"):
-            status = "运行完成，但存在错误"
-
-        req_headers, req_rows = build_req_status_table(state)
-        return (
-            status,
-            summarize_state(state),
-            {"headers": req_headers, "data": req_rows},
-            tree,
-            json.dumps(manifest, ensure_ascii=False, indent=2),
-            validation_issues,
-            runtime_check,
-            missing_items,
-            "\n".join(str(item) for item in provenance),
-        )
-
+            state = build_demo_state(goal, "satisfied", "")
+        return _format_result(state, "satisfied", "")
     except Exception as exc:
-        state = build_failure_state(goal, paper_file, review_decision, feedback, str(exc))
-        manifest = to_plain(state.get("experiment_package", {}))
-        validation_issues = to_plain(state.get("validation_issues", []))
-        missing_items = to_plain(state.get("missing_items", []))
-        provenance = to_plain(state.get("provenance", []))
-        runtime_check = to_plain(state.get("runtime_check", {}))
-        package_dir = get_package_dir(state)
-        if package_dir is not None and package_dir.exists():
-            tree = package_tree(package_dir)
-        elif isinstance(manifest, dict) and manifest.get("files"):
-            tree = manifest_tree(manifest)
-        else:
-            tree = ""
-
-        req_headers, req_rows = build_req_status_table(state)
-        return (
-            "运行失败，已生成前端兜底数据包",
-            summarize_state(state),
-            {"headers": req_headers, "data": req_rows},
-            tree,
-            json.dumps(manifest, ensure_ascii=False, indent=2),
-            validation_issues,
-            runtime_check,
-            missing_items,
-            "\n".join(str(item) for item in provenance),
-        )
+        state = build_failure_state(goal, paper_file, "satisfied", "", str(exc))
+        return _format_result(state, "satisfied", "")
 
 
 def build_app() -> Any:
@@ -539,13 +611,18 @@ def build_app() -> Any:
             )
             goal = gr.Textbox(label="实验目标", lines=5)
             paper_file = gr.File(label="论文 PDF", file_types=[".pdf"])
+            local_files = gr.Textbox(
+                label="本地文件注入（JSON：{\"req_id\": \"路径\"}，真实流程可选）",
+                lines=2,
+            )
             review_decision = gr.Radio(
                 choices=["satisfied", "revised", "unsatisfied"],
                 value="satisfied",
-                label="审查决定",
+                label="审查决定（真实流程，运行中断后生效）",
             )
             feedback = gr.Textbox(label="反馈", lines=3)
             run_button = gr.Button("运行", variant="primary")
+            resume_button = gr.Button("继续运行")
             status = gr.Textbox(label="状态", interactive=False)
 
         with gr.Tab("进度展示"):
@@ -568,7 +645,23 @@ def build_app() -> Any:
 
         run_button.click(
             fn=run_workflow,
-            inputs=[mode, goal, paper_file, review_decision, feedback],
+            inputs=[mode, goal, paper_file, local_files],
+            outputs=[
+                status,
+                progress,
+                req_status,
+                tree,
+                manifest,
+                validation_issues,
+                runtime_check,
+                missing_items,
+                provenance,
+            ],
+        )
+
+        resume_button.click(
+            fn=resume_workflow,
+            inputs=[review_decision, feedback],
             outputs=[
                 status,
                 progress,

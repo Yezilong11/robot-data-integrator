@@ -123,6 +123,7 @@ class RobotiqAdapter(BaseAdapter):
         """路径 A：直接 URL 构造（官方页面路径模式）。"""
         url = f"{self._web_url}/products/{item_id}/{item_id}.urdf"
         content = await self._download_bytes(url)
+        assets = await self._download_xml_with_assets(url, content)
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
@@ -130,6 +131,7 @@ class RobotiqAdapter(BaseAdapter):
             data=content,
             url=url,
             size_bytes=len(content),
+            assets=assets,
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
@@ -151,6 +153,7 @@ class RobotiqAdapter(BaseAdapter):
         urdf_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(urdf_url)
         fmt = "urdf" if rel_path.endswith(".urdf") else "xacro"
+        assets = await self._download_xml_with_assets(urdf_url, content)
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
@@ -158,4 +161,5 @@ class RobotiqAdapter(BaseAdapter):
             data=content,
             url=urdf_url,
             size_bytes=len(content),
+            assets=assets,
         )

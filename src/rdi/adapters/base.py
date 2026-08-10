@@ -7,9 +7,11 @@
 
 import asyncio
 import hashlib
+import posixpath
 import re
 import ssl
 import time
+import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, cast
@@ -468,6 +470,53 @@ class BaseAdapter(ABC):
             return None
         owner, repo, ref, path = parts
         return f"{self._github_mirror_base}/{owner}/{repo}@{ref}/{path}"
+
+    async def _download_xml_with_assets(self, xml_url: str, xml_bytes: bytes) -> dict[str, bytes]:
+        """解析 XML 中引用的外部资源（mesh/texture/include）并一并下载。
+
+        数据包自包含（P0-3）：主 XML 下载后，把其引用的相对路径资产（URDF 的
+        ``<mesh filename>``/``<texture filename>``、MJCF 的 ``<mesh file>``/
+        ``<texture file>``、xacro 的 ``<include filename>``）逐个拉取，使数据包
+        可离线完整加载。
+
+        降级策略：XML 解析失败返回空 dict（不抛异常，不阻塞主下载流程）；
+        绝对 URL（package://、model://、http(s):// 等）、xacro 变量（$(...)
+        ）与绝对路径（/ 开头）不下载；单个资产下载失败只跳过该资产。
+
+        Returns:
+            规范化相对路径 → 字节 的字典；同一路径重复出现时后者覆盖。
+        """
+        assets: dict[str, bytes] = {}
+        try:
+            root = ET.fromstring(xml_bytes)
+        except Exception:  # noqa: BLE001 — 解析失败按无资产处理
+            return assets
+        base_dir = posixpath.dirname(xml_url)
+        for elem in root.iter():
+            # 去掉命名空间前缀（如 {http://...}mesh → mesh）后统一小写匹配
+            tag = elem.tag.split("}")[-1].lower()
+            if tag not in {"mesh", "texture", "include"}:
+                continue
+            rel = (elem.get("filename") or elem.get("file") or "").strip()
+            if not rel:
+                continue
+            # 绝对 URL（package://、model://、http(s)://）与 xacro 变量不下载
+            if rel.startswith(("package://", "model://", "http://", "https://")):
+                continue
+            if "$(" in rel:
+                continue
+            if rel.startswith("/"):
+                continue  # 绝对路径无法解析
+            # 规范化相对路径：去前导 ./，normpath 处理 ../
+            if rel.startswith("./"):
+                rel = rel[2:]
+            norm_rel = posixpath.normpath(rel)
+            asset_url = posixpath.join(base_dir, norm_rel)
+            try:
+                assets[norm_rel] = await self._download_bytes(asset_url)
+            except AdapterError:
+                continue  # 单个资产失败只跳过，不中断整体
+        return assets
 
     async def _head_content_length(self, url: str) -> int | None:
         """通过 HEAD 请求预检文件大小（Content-Length）。

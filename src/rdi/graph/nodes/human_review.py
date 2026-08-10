@@ -9,8 +9,9 @@
 - ``unsatisfied``：生成更具体的重检索建议（更换数据源 / 更精确关键词）
   写入 ``revised_goal``，流程经条件边回到 ``retrieve_data``。
 
-循环上限：复用 state 的 ``iteration_count``（validate 节点每轮 +1），
-超过 ``_MAX_REVIEW_ROUNDS`` 时强制按 satisfied 结束并记录 warning。
+循环上限：使用独立于 validate 的 ``review_iteration``（前端注入，validate 的
+``validate_iteration`` 只统计检索-校验回退轮次，两者解耦），超过
+``_MAX_REVIEW_ROUNDS`` 时强制按 satisfied 结束并记录 warning。
 每次循环（revised / unsatisfied）清空旧的 ``retrieval_results``，避免状态污染。
 """
 
@@ -18,6 +19,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from langgraph.types import interrupt
 from pydantic import BaseModel, Field
 
 from rdi.exceptions import LLMParseError, LLMUnavailableError
@@ -102,27 +104,73 @@ def _build_retrieval_advice(feedback: list[str]) -> str:
     return "重检索建议（更换数据源/更精确关键词）：" + "；".join(feedback)
 
 
+def _apply_feedback_to_requirements(requirements: list[Any], feedback: list[str]) -> list[Any]:
+    """把用户反馈写回 data_requirements：description 追加反馈文本，keywords 追加非空反馈项。
+
+    对每条 DataReq 用 ``model_copy(deep=True)`` 复制后修改，返回新列表（不就地改动原需求）。
+    """
+    updated: list[Any] = []
+    for req in requirements:
+        if isinstance(req, dict):
+            # 兜底：state 来自 checkpoint 且 pydantic 重建失败时退回 dict
+            new_req = dict(req)
+            new_req["description"] = new_req.get("description", "") + "\n用户反馈: " + "; ".join(feedback)
+            new_req["keywords"] = [*(new_req.get("keywords") or []), *(m for m in feedback if m)]
+        else:
+            new_req = req.model_copy(deep=True)
+            new_req.description = new_req.description + "\n用户反馈: " + "; ".join(feedback)
+            new_req.keywords = [*new_req.keywords, *(m for m in feedback if m)]
+        updated.append(new_req)
+    return updated
+
+
 def node_human_review(state: SystemState) -> dict[str, Any]:
     """用户审查节点：根据 ``review_decision`` 走三种分支。
 
+    ``interrupt_review=True`` 时（真实流程）先调用 ``interrupt()`` 等待用户
+    决策后再走分支；否则读取 state 中预置的 ``review_decision``（单跑/演示）。
+
     返回 dict 仅更新本节点负责的字段，LangGraph 会将其合并回全局 state：
     - satisfied：``review_decision`` / ``provenance``；
-    - revised：额外更新 ``revised_goal`` / ``user_goal``，并清空 ``retrieval_results``；
-    - unsatisfied：额外更新 ``revised_goal``，并清空 ``retrieval_results``。
+    - revised：额外更新 ``revised_goal`` / ``user_goal`` / ``review_iteration``，
+      并清空 ``retrieval_results``；
+    - unsatisfied：额外更新 ``revised_goal`` / ``data_requirements``（反馈写回
+      需求）/ ``review_iteration``，并清空 ``retrieval_results``。
 
     除纯 satisfied 外（revised / unsatisfied / 强制结束），向 ``revision_history``
     追加一条修订记录（revision 序号、decision、feedback、revised_goal、timestamp），
     供 assemble 节点写入 manifest；返回完整旧列表 + 新记录。
 
     Args:
-        state: 当前全局状态（含前端传入的 review_decision / user_feedback）。
+        state: 当前全局状态（含前端传入的 review_decision / user_feedback；
+            interrupt_review=True 时改为调用 interrupt 等待用户决策）。
 
     Returns:
         更新 state 的字段（部分更新 dict）。
     """
     now = datetime.now().isoformat()
-    decision = state.get("review_decision", "satisfied")
-    feedback = state.get("user_feedback", [])
+    if state.get("interrupt_review"):
+        # 真实流程：等待用户决策（interrupt 返回 resume 值）
+        req_ids = []
+        for r in state.get("data_requirements") or []:
+            rid = r.get("req_id") if isinstance(r, dict) else getattr(r, "req_id", None)
+            if rid is not None:
+                req_ids.append(str(rid))
+        resume = interrupt(
+            {
+                "message": "请审查当前数据包，选择 satisfied / revised / unsatisfied",
+                "req_ids": req_ids,
+            }
+        )
+        decision = str((resume or {}).get("decision", "satisfied"))
+        feedback = (
+            [str(m) for m in (resume or {}).get("feedback", [])]
+            if (resume or {}).get("feedback")
+            else []
+        )
+    else:
+        decision = state.get("review_decision", "satisfied")
+        feedback = state.get("user_feedback", [])
     original_goal = state.get("revised_goal") or state.get("user_goal", "")
     revision_history = state.get("revision_history", [])
 
@@ -131,9 +179,10 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
         _logger.warning("human_review: 未知审查决定 %r，视为 satisfied", decision)
         decision = "satisfied"
 
-    # 循环上限：超过 _MAX_REVIEW_ROUNDS 轮修订后强制结束
-    iteration = state.get("iteration_count", 0)
-    forced = decision != "satisfied" and iteration > _MAX_REVIEW_ROUNDS
+    # 循环上限：review_iteration 独立于 validate 的 validate_iteration，
+    # 仅统计用户审查/修订轮次；超过 _MAX_REVIEW_ROUNDS 轮后强制结束
+    iteration = state.get("review_iteration", 0)
+    forced = decision != "satisfied" and iteration >= _MAX_REVIEW_ROUNDS
     if forced:
         _logger.warning(
             "human_review: 修订轮次 %d 超过上限 %d，强制按 satisfied 结束",
@@ -169,6 +218,7 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
         update["revised_goal"] = revised_goal
         update["user_goal"] = revised_goal  # parse_goal 读取 user_goal 重新解析
         update["retrieval_results"] = {}  # 清空旧检索结果，避免状态污染
+        update["review_iteration"] = iteration + 1
         update["revision_history"] = [
             *revision_history,
             {
@@ -186,8 +236,12 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
             provenance.append(f"[{now}] human_review: 用户反馈: {message}")
     elif decision == "unsatisfied":
         advice = _build_retrieval_advice(feedback)
-        update["revised_goal"] = advice
+        update["revised_goal"] = advice  # 保留重检索建议文本供追溯
+        update["data_requirements"] = _apply_feedback_to_requirements(
+            state.get("data_requirements", []), feedback
+        )
         update["retrieval_results"] = {}
+        update["review_iteration"] = iteration + 1
         update["revision_history"] = [
             *revision_history,
             {
@@ -199,7 +253,7 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
             },
         ]
         provenance.append(
-            f"[{now}] human_review: 用户不满意，生成重检索建议，回到 retrieve_data 重新检索"
+            f"[{now}] human_review: 用户不满意，反馈已写入 data_requirements，回到 retrieve_data 按新需求重检索"
         )
         for message in feedback:
             provenance.append(f"[{now}] human_review: 用户反馈: {message}")

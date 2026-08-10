@@ -10,6 +10,9 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from .common import DataReqType, DataSource, ProvenanceEntry
+# 循环 import 检查：retrieval.py 仅依赖 common.py，不反向引用 parsed.py，
+# 因此可安全使用真实类型 RawReference（无需退化为 Any）。
+from .retrieval import RawReference
 
 
 class ParsedItem(BaseModel):
@@ -26,6 +29,11 @@ class ParsedItem(BaseModel):
     canonical_format: str = Field(description="标准化格式名")
     output_path: str = Field(description="输出文件路径（相对于数据包根目录）")
     data: Any = Field(description="标准化后的数据对象（Python 对象，序列化时转为文件）")
+    raw_bytes: bytes | None = Field(default=None, description="原始下载字节（URDF/MJCF 原文件）")
+    assets: dict[str, bytes] = Field(
+        default_factory=dict,
+        description="引用的外部资源（相对路径 → 字节）",
+    )
     provenance: ProvenanceEntry = Field(description="溯源信息")
     completeness_pct: float = Field(
         default=100.0,
@@ -47,6 +55,14 @@ class ParsedItem(BaseModel):
     data_source_quality: str | None = Field(
         default=None,
         description="数据来源真实程度：real / synthetic / fallback",
+    )
+    is_fallback: bool = Field(
+        default=False,
+        description="是否使用了备选源（透传自 RetrievalResult.is_fallback）",
+    )
+    reference: RawReference | None = Field(
+        default=None,
+        description="未下载大文件的引用记录（透传自 RawData.reference）",
     )
 
 

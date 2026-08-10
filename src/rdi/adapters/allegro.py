@@ -133,6 +133,7 @@ class AllegroAdapter(BaseAdapter):
             urdf_url = f"{self.base_url}/allegro_hand_description/urdf/allegro_hand.urdf.xacro"
             fmt = "xacro"
         content = await self._download_bytes(urdf_url)
+        assets = await self._download_xml_with_assets(urdf_url, content)
         return RawData(
             source=DataSource.ALLEGRO,
             item_id=item_id,
@@ -140,4 +141,5 @@ class AllegroAdapter(BaseAdapter):
             data=content,
             url=urdf_url,
             size_bytes=len(content),
+            assets=assets,
         )

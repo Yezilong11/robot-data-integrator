@@ -70,6 +70,20 @@ def test_validate_empty_data_is_error() -> None:
     )
 
 
+def test_validate_iteration_increments() -> None:
+    """validate 使用独立的 validate_iteration 自增（不依赖历史字段 iteration_count）。"""
+    state: SystemState = {"parsed_data": {}, "validate_iteration": 2}
+    out = node_validate(state)
+    assert out["validate_iteration"] == 3
+    assert "iteration_count" not in out  # 不再写历史字段
+
+
+def test_validate_iteration_defaults_to_one() -> None:
+    """state 无 validate_iteration 时从 1 开始计数。"""
+    out = node_validate({"parsed_data": {}})
+    assert out["validate_iteration"] == 1
+
+
 def test_validate_low_completeness_and_confidence_are_warnings() -> None:
     state: SystemState = {
         "parsed_data": {
@@ -136,6 +150,58 @@ def test_validate_urdf_failure() -> None:
         "parsed_data": {"r1": _item("r1", DataReqType.ROBOT_URDF, b"not a urdf", fmt="urdf")},
     }
     out = node_validate(state)
+    assert any(
+        i.req_id == "r1" and "URDF 无法解析" in i.message and i.severity == Severity.ERROR
+        for i in out["validation_issues"]
+    )
+
+
+def test_validate_urdf_self_contained_assets_passes() -> None:
+    """P0-3：raw_bytes + 完整 assets（自包含）时 load_meshes=True 深度校验通过。"""
+    pytest.importorskip("yourdfpy")
+    mesh_bytes = trimesh.creation.box(extents=[1.0, 1.0, 1.0]).export(file_type="stl")
+    urdf = (
+        b'<robot name="r"><link name="base"><visual><geometry>'
+        b'<mesh filename="meshes/base.stl"/>'
+        b"</geometry></visual></link></robot>"
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.ROBOT_URDF,
+        name="r1",
+        canonical_format="urdf",
+        output_path="robots/r1.urdf",
+        data=urdf,
+        raw_bytes=urdf,
+        assets={"meshes/base.stl": mesh_bytes},
+        provenance=_provenance("urdf"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert not any(
+        i.req_id == "r1" and "URDF 无法解析" in i.message for i in out["validation_issues"]
+    )
+
+
+def test_validate_urdf_missing_asset_is_error() -> None:
+    """P0-3：raw_bytes 引用 assets 中缺失的 mesh 时深度校验报 ERROR。"""
+    pytest.importorskip("yourdfpy")
+    urdf = (
+        b'<robot name="r"><link name="base"><visual><geometry>'
+        b'<mesh filename="meshes/missing.stl"/>'
+        b"</geometry></visual></link></robot>"
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.ROBOT_URDF,
+        name="r1",
+        canonical_format="urdf",
+        output_path="robots/r1.urdf",
+        data=urdf,
+        raw_bytes=urdf,
+        assets={},  # 引用的 mesh 缺失
+        provenance=_provenance("urdf"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
     assert any(
         i.req_id == "r1" and "URDF 无法解析" in i.message and i.severity == Severity.ERROR
         for i in out["validation_issues"]

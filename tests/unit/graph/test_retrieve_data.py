@@ -6,13 +6,17 @@
 3. 返回真实 ``RetrievalResult``（由候选 Adapter 的 search → fetch 链路产生）。
 """
 
+import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from rdi.graph.nodes.retrieve_data import node_retrieve_single
-from rdi.models.common import DataSource
+from rdi.config.settings import settings
+from rdi.exceptions import AdapterNotFoundError, AdapterRateLimitError
+from rdi.graph.nodes.retrieve_data import node_retrieve_data, node_retrieve_single
+from rdi.models.common import DataReqType, DataSource, Priority
+from rdi.models.goal import DataReq
 from rdi.models.retrieval import RawData, SearchResult
 
 
@@ -164,6 +168,71 @@ async def test_retrieve_single_augments_sim_config_with_context_keywords(
     assert any("Franka" in c and "Panda" in c for c in calls)
 
 
+async def test_retrieve_single_records_rate_limit_error(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Adapter fetch 抛 AdapterRateLimitError(429) 时，retrieval_errors 记录 error_type=rate_limit。"""
+    mock_adapter = AsyncMock()
+    mock_adapter.search.return_value = [
+        SearchResult(item_id="rl-1", title="RL", source=DataSource.GITHUB)
+    ]
+    mock_adapter.fetch.side_effect = AdapterRateLimitError(
+        "rate limited", source="github", status_code=429
+    )
+    mock_cls = Mock(return_value=mock_adapter)
+    mock_cls.source = DataSource.GITHUB
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
+
+    payload = {
+        "req_id": "req_rl",
+        "req_type": "code",
+        "description": "查找代码",
+        "keywords": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_rl"]
+    assert retrieval.status == "error"
+    errors = result["retrieval_errors"]
+    assert len(errors) == 1
+    assert errors[0].req_id == "req_rl"
+    assert errors[0].source == DataSource.GITHUB
+    assert errors[0].error_type == "rate_limit"
+    assert "github:rate_limit" in retrieval.error_message
+
+
+async def test_retrieve_single_records_not_found_error(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Adapter fetch 抛 AdapterNotFoundError(404) 时，retrieval_errors 记录 error_type=not_found。"""
+    mock_adapter = AsyncMock()
+    mock_adapter.search.return_value = [
+        SearchResult(item_id="nf-1", title="NF", source=DataSource.GITHUB)
+    ]
+    mock_adapter.fetch.side_effect = AdapterNotFoundError(
+        "not found", source="github", status_code=404
+    )
+    mock_cls = Mock(return_value=mock_adapter)
+    mock_cls.source = DataSource.GITHUB
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
+
+    payload = {
+        "req_id": "req_nf",
+        "req_type": "code",
+        "description": "查找代码",
+        "keywords": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_nf"]
+    assert retrieval.status == "error"
+    errors = result["retrieval_errors"]
+    assert len(errors) == 1
+    assert errors[0].error_type == "not_found"
+    assert errors[0].error_message
+    assert "github:not_found" in retrieval.error_message
+
+
 async def test_retrieve_single_uses_fallback_sources_order(
     mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -302,3 +371,101 @@ async def test_retrieve_single_uses_hermes_priority_for_all_candidates(
     assert retrieval.source == DataSource.IEEE
     ieee_mock.search.assert_called_once()
     github_mock.search.assert_not_called()
+
+
+# ─── Task 7：node_retrieve_data 并行检索 + 独立超时预算 ───
+
+
+async def test_retrieve_data_parallel_merges_all_reqs(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """并行汇总：多个需求并行执行后 retrieval_results 全部存在、errors 合并、返回键齐全。"""
+    state: dict[str, Any] = {
+        "data_requirements": [
+            DataReq(
+                req_id="req_p1",
+                req_type=DataReqType.CODE,
+                description="查找抓取代码",
+                priority=Priority.REQUIRED,
+                keywords=["grasp"],
+            ),
+            DataReq(
+                req_id="req_p2",
+                req_type=DataReqType.PAPER,
+                description="查找抓取论文",
+                priority=Priority.REQUIRED,
+                keywords=["grasp"],
+            ),
+        ]
+    }
+    result = await node_retrieve_data(state)
+
+    # 返回结构键齐全
+    assert set(result) == {"retrieval_results", "provenance", "retrieval_errors"}
+    # 两个需求的检索结果都存在（gather 保持输入顺序，与 requirements 一致）
+    assert set(result["retrieval_results"]) == {"req_p1", "req_p2"}
+    assert result["retrieval_results"]["req_p1"].status == "success"
+    assert result["retrieval_results"]["req_p2"].status == "success"
+    # 无失败时 errors 为空、provenance 每个需求至少一条
+    assert result["retrieval_errors"] == []
+    assert len(result["provenance"]) >= 2
+
+
+async def test_retrieve_data_per_req_timeout_does_not_block_others(
+    mock_hermes: Mock, mock_adapters: AsyncMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """单需求超时不阻塞整体：慢需求记为 timeout 失败，其他需求正常返回。"""
+    # 把超时预算压到极小值，制造慢需求必然超时的场景
+    monkeypatch.setattr(settings, "per_req_timeout", 0.05)
+    # 重新注册带真实 source 的候选 adapter：超时错误的 source 需要真实 DataSource 值
+    mock_cls = Mock(return_value=mock_adapters)
+    mock_cls.source = DataSource.GITHUB
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls]
+    )
+
+    original_single = node_retrieve_single
+
+    async def _slow_single(payload: dict[str, Any]) -> dict[str, Any]:
+        if payload["req_id"] == "req_slow":
+            await asyncio.sleep(0.2)  # 远超 0.05s 超时预算
+        return await original_single(payload)
+
+    # patch 模块内引用：node_retrieve_data 经 _retrieve_single_with_timeout 调用它
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.node_retrieve_single", _slow_single)
+
+    state: dict[str, Any] = {
+        "data_requirements": [
+            DataReq(
+                req_id="req_slow",
+                req_type=DataReqType.CODE,
+                description="慢需求",
+                priority=Priority.REQUIRED,
+                keywords=[],
+            ),
+            DataReq(
+                req_id="req_fast",
+                req_type=DataReqType.CODE,
+                description="快需求",
+                priority=Priority.REQUIRED,
+                keywords=["fast"],
+            ),
+        ]
+    }
+    result = await node_retrieve_data(state)  # 整体不抛异常
+
+    # 慢需求：timeout 型失败，不阻塞整体
+    slow = result["retrieval_results"]["req_slow"]
+    assert slow.status == "error"
+    assert "超时" in slow.error_message
+    # 快需求：不受影响，正常成功
+    fast = result["retrieval_results"]["req_fast"]
+    assert fast.status == "success"
+    # retrieval_errors 含 timeout 类型记录
+    timeout_errors = [
+        e
+        for e in result["retrieval_errors"]
+        if e.req_id == "req_slow" and e.error_type == "timeout"
+    ]
+    assert len(timeout_errors) == 1
+    assert "超时" in timeout_errors[0].error_message

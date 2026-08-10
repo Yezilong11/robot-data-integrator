@@ -9,7 +9,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from rdi.frontend.app import build_req_status_table, manifest_tree, summarize_state
+import pytest
+
+from rdi.frontend.app import (
+    build_req_status_table,
+    manifest_tree,
+    resume_workflow,
+    run_workflow,
+    summarize_state,
+)
 
 
 def _req(req_id: str, req_type: str = "robot_urdf") -> dict[str, Any]:
@@ -190,3 +198,70 @@ def test_summarize_state_plain() -> None:
     assert summary["iteration_count"] == 2
     assert summary["data_requirements"] == [_req("req_a")]
     assert summary["errors"] == ["e1"]
+
+
+# ─── 两阶段真实流程 ───
+
+
+def test_resume_workflow_no_pending(monkeypatch: pytest.MonkeyPatch) -> None:
+    """无待继续运行时给出明确提示，不触碰 graph。"""
+    monkeypatch.setattr("rdi.frontend.app._pending_thread_id", None)
+    status, summary, req_status, tree, manifest, vissues, rcheck, missing, prov = (
+        resume_workflow("satisfied", "")
+    )
+    assert "没有待继续的运行" in status
+    assert summary == {}
+    assert req_status["data"] == []
+    assert tree == ""
+    assert manifest == ""
+    assert vissues == []
+    assert rcheck == {}
+    assert missing == []
+    assert prov == ""
+
+
+def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> None:
+    """真实流程首跑中断：9 元组首元素提示到「数据包审查」继续运行，展示中断态中间结果。"""
+    interrupted_state: dict[str, Any] = {
+        "user_goal": "goal",
+        "data_requirements": [_req("req_a")],
+        "retrieval_results": {"req_a": _result("req_a", source="github")},
+        "validation_issues": [],
+        "runtime_check": {},
+        "missing_items": [],
+        "provenance": ["p1", "p2"],
+        "errors": [],
+    }
+    monkeypatch.setattr(
+        "rdi.frontend.app.run_graph",
+        lambda goal, paper_file, local_files_json="": (interrupted_state, "tid-1", True),
+    )
+
+    result = run_workflow("真实流程", "goal", None, "")
+
+    assert len(result) == 9
+    assert "继续运行" in result[0]
+    assert result[1]["user_goal"] == "goal"
+    assert result[2]["headers"] == [
+        "req_id",
+        "req_type",
+        "状态",
+        "数据源",
+        "是否 fallback",
+        "失败原因",
+    ]
+    assert result[2]["data"][0][0] == "req_a"
+    # 中断态：未到最终展示阶段，tree / manifest 为空
+    assert result[3] == ""
+    assert result[4] == ""
+    assert result[8] == "p1\np2"
+
+
+def test_run_workflow_demo_mode_returns_9_tuple() -> None:
+    """演示流程走 build_demo_state + _format_result，返回完整 9 元组展示数据。"""
+    result = run_workflow("演示流程", "演示目标", None, "")
+    assert len(result) == 9
+    assert result[0] == "运行完成"
+    assert result[1]["user_goal"] == "演示目标"
+    assert result[3]  # package tree 非空
+    assert result[4]  # manifest JSON 非空

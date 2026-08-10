@@ -13,7 +13,7 @@ from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.retrieval import RawData, RawReference, SearchResult
 
 # 降级回退：GraspNet 已知数据集（C3 修复：id 改为真实 HF repo）
 # 已 curl 验证：DravenALG/GraspNet-1Billion 公开可达，含 grasp_label.tar/models.tar 等
@@ -290,6 +290,8 @@ class GraspNetAdapter(BaseAdapter):
         if file_size is not None:
             payload["file_size"] = file_size
         data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        # P0-4：未下载的大文件引用（体积超限或仅 tar 归档时走此分支）
+        ref_url = file_url or f"https://huggingface.co/datasets/{item_id}"
         return RawData(
             source=DataSource.GRASPNET,
             item_id=item_id,
@@ -297,6 +299,12 @@ class GraspNetAdapter(BaseAdapter):
             data=data_bytes,
             url=f"https://huggingface.co/datasets/{item_id}",
             size_bytes=len(data_bytes),
+            reference=RawReference(
+                url=ref_url,
+                download_hint=ref_url,
+                file_size=file_size or 0,
+                reason=reason or "数据集为超大归档，未自动下载，返回 metadata 引用",
+            ),
         )
 
     def _find_file_by_ext(self, tree: list[dict[str, Any]], exts: tuple[str, ...]) -> str | None:

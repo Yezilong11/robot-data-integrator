@@ -121,6 +121,8 @@ class FrankaAdapter(BaseAdapter):
             cached = self.load_from_cache(item_id, suffix=".urdf")
             assert cached is not None  # is_cached 已保证非空
             data_bytes = cached
+        # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产
+        assets = await self._download_xml_with_assets(url, data_bytes)
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,
@@ -128,6 +130,7 @@ class FrankaAdapter(BaseAdapter):
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),
+            assets=assets,
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
@@ -149,6 +152,8 @@ class FrankaAdapter(BaseAdapter):
             cached = self.load_from_cache(item_id, suffix=f".{fmt}")
             assert cached is not None  # is_cached 已保证非空
             data_bytes = cached
+        # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产
+        assets = await self._download_xml_with_assets(url, data_bytes)
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,
@@ -156,4 +161,5 @@ class FrankaAdapter(BaseAdapter):
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),
+            assets=assets,
         )

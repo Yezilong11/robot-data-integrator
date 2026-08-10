@@ -7,6 +7,8 @@
 编译生成可执行的应用实例。
 """
 
+from typing import Any
+
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
@@ -22,7 +24,7 @@ from rdi.graph.nodes import (
 from rdi.graph.state import SystemState
 
 
-def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemState]:
+def build_graph(checkpointer: Any = None) -> CompiledStateGraph[SystemState, None, SystemState, SystemState]:
     """构建并编译 LangGraph 状态图。
 
     工作流节点：
@@ -39,6 +41,16 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
         - human_review → 用户满意 → END
         - human_review → 用户修订 → parse_goal（反馈转目标后重新解析）
         - human_review → 用户不满意 → retrieve_data（带反馈重检索）
+
+    interrupt 策略：采用节点内 interrupt 而非 interrupt_before——仅当
+    state.interrupt_review=True（真实流程）时 human_review 节点才会调用
+    interrupt() 暂停等待用户决策；单次 invoke（不设 interrupt_review 的
+    测试/演示）行为不变，直接按 state.review_decision 走分支。
+
+    Args:
+        checkpointer: 编译时注入的 checkpoint saver。None 时单次执行
+            （测试/演示）；传入 ``MemorySaver()`` 等 checkpointer 时支持
+            interrupt/resume（真实两阶段流程）。
 
     Returns:
         编译后的可执行图实例，调用 .invoke(state) 运行。
@@ -86,8 +98,8 @@ def build_graph() -> CompiledStateGraph[SystemState, None, SystemState, SystemSt
         },
     )
 
-    # ─── 编译图（测试/本地运行场景默认不启用外部 checkpoint） ───
-    # 在 CI/生产中可按需启用 MemorySaver 并传入可配置键
-    app = graph.compile()
+    # ─── 编译图（checkpointer 为 None 时单次执行，测试/演示用；
+    # 传入 MemorySaver 时支持 interrupt/resume，真实流程用） ───
+    app = graph.compile(checkpointer=checkpointer)
 
     return app

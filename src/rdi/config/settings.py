@@ -65,6 +65,11 @@ class Settings(BaseSettings):
         default=3,
         description="Adapter 最大重试次数",
     )
+    per_req_timeout: float = Field(
+        default=60.0,
+        description="单个数据需求检索的总超时预算（秒）。node_retrieve_data 并行执行时，"
+        "每个需求的检索任务单独用 asyncio.timeout 包裹，超时记录为 timeout 型失败，不阻塞其他需求",
+    )
     adapter_rate_limit: int = Field(
         default=10,
         description="每秒最大并发请求数",
@@ -227,6 +232,10 @@ class Settings(BaseSettings):
         default="json",
         description="日志格式：json 或 console",
     )
+
+
+# P0-5: 数据包流水线版本，写入 manifest.package_info.pipeline_version
+PIPELINE_VERSION = "1.0.0"
 
 
 # 全局单例

@@ -94,6 +94,27 @@ class TestFrankaAdapter:
         assert raw.size_bytes > 0
 
     @pytest.mark.asyncio
+    async def test_fetch_fills_assets_for_mesh_references(self) -> None:
+        """P0-3：URDF 引用相对 mesh 时，fetch 返回的 raw.assets 携带资产字节。"""
+        adapter = FrankaAdapter()
+        fake_urdf = (
+            b'<robot name="panda"><link name="base"><visual><geometry>'
+            b'<mesh filename="meshes/base.stl"/>'
+            b"</geometry></visual></link></robot>"
+        )
+        with patch.object(
+            adapter,
+            "_download_bytes",
+            new_callable=AsyncMock,
+            side_effect=[fake_urdf, b"stl-data"],
+        ) as mock_dl:
+            raw = await adapter.fetch("panda")
+        assert raw.assets == {"meshes/base.stl": b"stl-data"}
+        # 主 URDF 一次 + mesh 资产一次
+        assert mock_dl.await_count == 2
+        assert mock_dl.call_args_list[1].args[0].endswith("meshes/base.stl")
+
+    @pytest.mark.asyncio
     async def test_fetch_fallback_panda_plain_urdf(self) -> None:
         """路径 B：panda 返回已展开纯 URDF，可被 yourdfpy 解析。"""
         adapter = FrankaAdapter()

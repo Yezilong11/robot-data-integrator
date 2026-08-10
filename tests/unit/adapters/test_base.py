@@ -372,6 +372,80 @@ class TestBaseAdapterMirrorFallback:
         assert call.kwargs["max_retry"] == 1
 
 
+# ─── 数据包自包含：XML 外部资产下载（P0-3）───
+
+
+class TestBaseAdapterXmlAssets:
+    """_download_xml_with_assets 的单元测试（P0-3 数据包自包含）。"""
+
+    @pytest.mark.asyncio
+    async def test_downloads_relative_mesh_against_xml_dir(self) -> None:
+        """正常情况：URDF 中的相对 mesh 路径以 XML URL 目录为基准下载。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<robot name="r"><link name="base"><visual><geometry>'
+            b'<mesh filename="meshes/base.stl"/>'
+            b"</geometry></visual></link></robot>"
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"mesh-data"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", xml
+            )
+        assert assets == {"meshes/base.stl": b"mesh-data"}
+        mock_dl.assert_awaited_once()
+        # 下载 URL 以 xml_url 所在目录为基准
+        assert mock_dl.call_args.args[0] == "https://example.com/models/meshes/base.stl"
+
+    @pytest.mark.asyncio
+    async def test_invalid_xml_returns_empty(self) -> None:
+        """异常情况：XML 解析失败返回空 dict（降级策略，不抛异常）。"""
+        adapter = _StubAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", b"not <xml"
+            )
+        assert assets == {}
+        mock_dl.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_skips_absolute_urls_and_normalizes_relative(self) -> None:
+        """package:// 与 https:// 绝对引用被跳过；相对路径规范化（去 ./）。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<robot name="r">'
+            b'<link name="a"><visual><geometry><mesh filename="package://pkg/meshes/a.stl"/>'
+            b"</geometry></visual></link>"
+            b'<link name="b"><visual><geometry><mesh filename="https://example.com/meshes/b.stl"/>'
+            b"</geometry></visual></link>"
+            b'<link name="c"><visual><geometry><mesh filename="./meshes/c.stl"/>'
+            b"</geometry></visual></link>"
+            b"</robot>"
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", xml
+            )
+        # 仅相对路径 c 被下载，且前导 ./ 已规范化
+        assert assets == {"meshes/c.stl": b"x"}
+        assert mock_dl.await_count == 1
+        assert mock_dl.call_args.args[0] == "https://example.com/models/meshes/c.stl"
+
+    @pytest.mark.asyncio
+    async def test_no_references_does_not_download(self) -> None:
+        """无 mesh/texture 引用时不额外调用 _download_bytes。"""
+        adapter = _StubAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", b'<robot name="panda"/>'
+            )
+        assert assets == {}
+        mock_dl.assert_not_awaited()
+
+
 # ─── 本地文件缓存测试 ───
 
 

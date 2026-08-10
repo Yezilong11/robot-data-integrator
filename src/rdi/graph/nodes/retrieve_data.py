@@ -1,19 +1,27 @@
 # src/rdi/graph/nodes/retrieve_data.py
 """数据查找节点。
 
-按数据需求清单逐个调用 Adapter 执行查找，
+按数据需求清单并行调用 Adapter 执行查找（每个需求有独立超时预算），
 汇总所有结果后返回 state 更新。
 """
 
+import asyncio
 import time
 from datetime import datetime
 from typing import Any
 
 from rdi.adapters.registry import select_adapter
-from rdi.exceptions import AdapterError
+from rdi.config.settings import settings
+from rdi.exceptions import (
+    AdapterAuthError,
+    AdapterError,
+    AdapterNotFoundError,
+    AdapterRateLimitError,
+    AdapterTimeoutError,
+)
 from rdi.graph.state import SystemState
 from rdi.hermes.engine import HermesEngine
-from rdi.models import DataReqType, RetrievalResult, SearchResult
+from rdi.models import DataReqType, DataSource, RetrievalError, RetrievalResult, SearchResult
 
 # 模块级懒加载 HermesEngine 单例，便于测试 monkeypatch
 _hermes_engine: HermesEngine | None = None
@@ -47,11 +55,95 @@ def _extract_context_keywords(requirements: list[Any]) -> list[str]:
     return context
 
 
-async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
-    """按数据需求清单逐个执行查找，返回合并后的检索结果。
+def _to_retrieval_error(req_id: str, source: DataSource, exc: AdapterError) -> RetrievalError:
+    """把 AdapterError 归类为结构化 RetrievalError。
 
-    原实现通过 ``Send`` 做 fan-out，但 LangGraph 要求普通节点只能返回 dict，
-    因此改为在节点内部顺序调用 ``node_retrieve_single`` 并汇总结果。
+    按异常子类 / HTTP 状态码优先级归类 error_type：
+    rate_limit(429) > timeout(408) > not_found(404) > auth(401/403) > unknown。
+    """
+    if isinstance(exc, AdapterRateLimitError) or exc.status_code == 429:
+        error_type = "rate_limit"
+    elif isinstance(exc, AdapterTimeoutError) or exc.status_code == 408:
+        error_type = "timeout"
+    elif isinstance(exc, AdapterNotFoundError) or exc.status_code == 404:
+        error_type = "not_found"
+    elif isinstance(exc, AdapterAuthError) or exc.status_code in (401, 403):
+        error_type = "auth"
+    else:
+        error_type = "unknown"
+    return RetrievalError(
+        req_id=req_id,
+        source=source,
+        error_type=error_type,
+        error_message=str(exc),
+    )
+
+
+def _first_candidate_source(req_type: str) -> DataSource:
+    """返回需求最先尝试的候选源。
+
+    超时发生时无法确定尝试到哪个 source，而 ``RetrievalError.source`` 是必填
+    字段；``DataSource`` 没有 UNKNOWN 枚举（common.py 不在本任务改动范围），
+    因此用注册表中该需求的第一个候选源近似表示（即单需求正常流程里
+    最先尝试的源，与真实失败源最接近）。
+    """
+    try:
+        adapter_classes = select_adapter(DataReqType(req_type))
+    except ValueError:
+        adapter_classes = []
+    if adapter_classes:
+        return adapter_classes[0].source
+    # 兜底：该需求没有注册任何候选源（异常路径），正常流程不会走到；
+    # 取 GITHUB 仅用于满足 RetrievalError.source 必填约束。
+    return DataSource.GITHUB
+
+
+async def _retrieve_single_with_timeout(payload: dict[str, Any]) -> dict[str, Any]:
+    """单个需求的检索任务：用 ``settings.per_req_timeout`` 独立超时预算包裹。
+
+    超时时返回结构化 timeout 失败（RetrievalResult status=error + RetrievalError
+    error_type=timeout + provenance 记录），不向外抛异常，因此单需求超时
+    不会阻塞 ``asyncio.gather`` 中的其他需求。
+    """
+    req_id = payload["req_id"]
+    start = time.monotonic()
+    try:
+        async with asyncio.timeout(settings.per_req_timeout):
+            return await node_retrieve_single(payload)
+    except asyncio.TimeoutError:
+        elapsed = time.monotonic() - start
+        message = "检索超时（超过 per_req_timeout 秒）"
+        result = RetrievalResult(
+            req_id=req_id,
+            status="error",
+            error_message=message,
+            elapsed_seconds=elapsed,
+        )
+        error = RetrievalError(
+            req_id=req_id,
+            # 超时时不知道尝试到哪个 source，用最先尝试的候选源近似（见 _first_candidate_source）
+            source=_first_candidate_source(payload.get("req_type", "unknown")),
+            error_type="timeout",
+            error_message=message,
+        )
+        provenance = [
+            f"[{datetime.now().isoformat()}] retrieve_data: 检索 {req_id} 超时"
+            f"（超过 per_req_timeout 秒），已跳过，不阻塞其他需求"
+        ]
+        return {
+            "retrieval_results": {req_id: result},
+            "provenance": provenance,
+            "retrieval_errors": [error],
+        }
+
+
+async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
+    """按数据需求清单并行执行查找，返回合并后的检索结果。
+
+    每个需求用独立超时预算（``settings.per_req_timeout``）包裹，通过
+    ``asyncio.gather`` 并发执行：单个需求超时或失败不阻塞其他需求。
+    原实现曾通过 ``Send`` 做 fan-out，但 LangGraph 要求普通节点只能返回
+    dict，因此改为在节点内部用 ``asyncio.gather`` 并行汇总。
     """
     requirements = state.get("data_requirements", [])
     if not requirements:
@@ -62,23 +154,35 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
     context_keywords = _extract_context_keywords(requirements)
     retrieval_results: dict[str, RetrievalResult] = {}
     provenance: list[str] = []
+    retrieval_errors: list[RetrievalError] = []
 
-    for req in requirements:
-        payload = {
-            "req_id": req.req_id,
-            "req_type": req.req_type.value,
-            "description": req.description,
-            "keywords": req.keywords,
-            "fallback_sources": [s.value for s in req.fallback_sources],
-            "context_keywords": context_keywords,
-        }
-        update = await node_retrieve_single(payload)
+    # 为每个需求构造 payload 并并行执行；gather 返回顺序与输入顺序一致，
+    # 超时/成功均由 _retrieve_single_with_timeout 兜底为普通返回。
+    updates = await asyncio.gather(
+        *(
+            _retrieve_single_with_timeout(
+                {
+                    "req_id": req.req_id,
+                    "req_type": req.req_type.value,
+                    "description": req.description,
+                    "keywords": req.keywords,
+                    "fallback_sources": [s.value for s in req.fallback_sources],
+                    "context_keywords": context_keywords,
+                }
+            )
+            for req in requirements
+        )
+    )
+
+    for update in updates:
         retrieval_results.update(update.get("retrieval_results", {}))
         provenance.extend(update.get("provenance", []))
+        retrieval_errors.extend(update.get("retrieval_errors", []))
 
     return {
         "retrieval_results": retrieval_results,
         "provenance": provenance,
+        "retrieval_errors": retrieval_errors,
     }
 
 
@@ -93,7 +197,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         payload: Send 传递的参数字典
 
     Returns:
-        更新 state 的字段：retrieval_results、provenance
+        更新 state 的字段：retrieval_results、provenance、retrieval_errors
     """
     req_id = payload["req_id"]
     req_type = payload.get("req_type", "unknown")
@@ -109,6 +213,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     provenance = [f"[{datetime.now().isoformat()}] retrieve_data: 查找 {req_id} (type={req_type})"]
     if experience_hint:
         provenance.append(experience_hint)
+    retrieval_errors: list[RetrievalError] = []
 
     start = time.monotonic()
 
@@ -205,8 +310,10 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
             return {
                 "retrieval_results": {req_id: result},
                 "provenance": provenance,
+                "retrieval_errors": retrieval_errors,
             }
-        except AdapterError:
+        except AdapterError as exc:
+            retrieval_errors.append(_to_retrieval_error(req_id, adapter_cls.source, exc))
             continue
 
     elapsed = time.monotonic() - start
@@ -215,7 +322,9 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         error_message = ""
     else:
         status = "error"
-        error_message = f"所有候选源均失败: {req_type}"
+        error_message = "所有候选源均失败: " + "; ".join(
+            f"{e.source.value}:{e.error_type}" for e in retrieval_errors
+        )
     sources_used = [last_source] if last_source else []
 
     result = RetrievalResult(
@@ -234,4 +343,5 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "retrieval_results": {req_id: result},
         "provenance": provenance,
+        "retrieval_errors": retrieval_errors,
     }

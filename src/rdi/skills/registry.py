@@ -85,11 +85,16 @@ class SkillRegistry:
             context: 调用方传入的额外上下文，将透传给 Skill.process（如 object_name）。
         """
         if result.data is None or result.status != "success":
+            reason = (
+                f"检索失败[{result.status}]: {result.error_message}"
+                if result.status == "error"
+                else (result.error_message or "无原始数据")
+            )
             return MissingItem(
                 req_id=result.req_id,
                 req_type=req.req_type,
                 description=req.description or "",
-                reason=result.error_message or "无原始数据",
+                reason=reason,
                 fallback_sources=[],
             )
 
@@ -136,6 +141,14 @@ class SkillRegistry:
         # confidence 由 Skill 自身报告；is_inferred 据此推断
         confidence = res.confidence_score
         is_inferred = confidence < 1.0
+        # P0-3 数据包自包含：仅 URDF/MJCF（robot_urdf / sim_config）携带原始字节与
+        # 外部资产（mesh/texture），避免 DATASET 等大文件膨胀 state
+        if req.req_type in (DataReqType.ROBOT_URDF, DataReqType.SIM_CONFIG):
+            raw_bytes: bytes | None = raw.data
+            assets: dict[str, bytes] = raw.assets
+        else:
+            raw_bytes = None
+            assets = {}
         provenance = ProvenanceEntry(
             source=raw.source,
             source_url=raw.url,
@@ -152,12 +165,16 @@ class SkillRegistry:
             canonical_format=res.canonical_format,
             output_path=res.output_path or "",
             data=res.data,
+            raw_bytes=raw_bytes,
+            assets=assets,
+            reference=raw.reference,  # P0-4：未下载大文件引用无条件透传（已下载为 None）
             provenance=provenance,
             completeness_pct=res.completeness_pct,
             confidence_score=confidence,
             is_inferred=is_inferred,
             warnings=res.warnings,
             data_source_quality=res.data_source_quality,
+            is_fallback=result.is_fallback,
         )
 
 

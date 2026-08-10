@@ -154,3 +154,26 @@ class TestGoogleScannedAdapter:
         mesh = trimesh.load(io.BytesIO(raw.data), file_type="obj")
         assert len(mesh.vertices) == 3
         assert len(mesh.faces) == 1
+
+    @pytest.mark.asyncio
+    async def test_google_scanned_metadata_fallback_sets_reference(self) -> None:
+        """P0-4：文件树获取失败触发 _metadata_fallback，携带 RawReference（zip 地址）。
+
+        reference.download_hint 应指向完整 zip 下载地址，供用户手动获取。
+        """
+        adapter = GoogleScannedAdapter()
+        with patch.object(
+            adapter,
+            "_request",
+            new_callable=AsyncMock,
+            side_effect=AdapterError("network down", source="google_scanned"),
+        ):
+            raw = await adapter.fetch("ACE_Coffee_Mug")
+        assert raw.format == "json"
+        assert raw.reference is not None
+        assert raw.reference.url.endswith(".zip")
+        assert ".zip" in raw.reference.download_hint
+        assert raw.reference.reason
+        # payload 中的 zip_url 与 reference.url 一致
+        payload = __import__("json").loads(raw.data)
+        assert payload["zip_url"] == raw.reference.url

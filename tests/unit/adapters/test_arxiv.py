@@ -197,3 +197,38 @@ class TestArxivAdapter:
         ):
             meta = await adapter._fetch_paper_metadata("2304.06524")
         assert meta == {}
+
+    @pytest.mark.asyncio
+    async def test_arxiv_fetch_sets_reference_when_over_threshold(self) -> None:
+        """P0-4：PDF 超阈值返回 metadata 时携带 RawReference（供用户手动获取）。
+
+        即使 _fetch_paper_metadata 返回空 dict（元数据不可得），reference 仍应存在，
+        其 url/download_hint 指向 PDF 下载地址，file_size 为 HEAD 预检到的体积。
+        """
+        from rdi.config.settings import settings
+
+        adapter = ArxivAdapter()
+        big_size = settings.arxiv_max_fetch_bytes + 1
+        with (
+            patch.object(
+                adapter,
+                "_head_content_length",
+                new_callable=AsyncMock,
+                return_value=big_size,
+            ),
+            patch.object(
+                adapter,
+                "_fetch_paper_metadata",
+                new_callable=AsyncMock,
+                return_value={},
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
+        ):
+            raw = await adapter.fetch("2304.06524")
+        assert raw.format == "json"
+        assert raw.reference is not None
+        assert raw.reference.url == "https://arxiv.org/pdf/2304.06524.pdf"
+        assert raw.reference.download_hint == "https://arxiv.org/pdf/2304.06524.pdf"
+        assert raw.reference.file_size == big_size
+        assert "max_fetch_bytes" in raw.reference.reason
+        mock_dl.assert_not_called()

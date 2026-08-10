@@ -6,14 +6,24 @@ Skill，把 ``RawData.data`` 字节解析标准化为 ``ParsedItem``；处理失
 Skill 时装配 ``MissingItem``。``data_requirements`` 缺失某 ``req_id`` 时由原始
 数据格式兜底推断 ``req_type``，推断失败则跳过并记 warning。
 
-返回 state 字段：``parsed_data`` / ``missing_items`` / ``provenance`` / ``errors``。
+返回 state 字段：``parsed_data`` / ``missing_items`` / ``provenance``。
 """
 
+import os
 from datetime import datetime
 from typing import Any
 
 from rdi.graph.state import SystemState
-from rdi.models import DataReq, DataReqType, MissingItem, ParsedItem, Priority, RetrievalResult
+from rdi.models import (
+    DataReq,
+    DataReqType,
+    DataSource,
+    MissingItem,
+    ParsedItem,
+    Priority,
+    RawData,
+    RetrievalResult,
+)
 from rdi.skills import default_registry
 
 # format → DataReqType 兜底映射（data_requirements 缺失该 req_id 时使用）
@@ -86,11 +96,32 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
     传给 SimConfigSkill 生成最小 MJCF。
 
     Returns:
-        更新 state 的字段：parsed_data, missing_items, provenance, errors
+        更新 state 的字段：parsed_data, missing_items, provenance
     """
     now = datetime.now()
     registry = default_registry
-    retrieval_results = state.get("retrieval_results", {})
+    # 本地文件注入：前端通过 state.local_files（req_id → 路径）跳过外部检索，
+    # 直接把本地文件作为 RetrievalResult 参与解析；local 优先于外部检索结果。
+    local_files = state.get("local_files") or {}
+    local_results: dict[str, RetrievalResult] = {}
+    for req_id, path in local_files.items():
+        if not req_id or not path or not os.path.isfile(str(path)):
+            continue
+        with open(str(path), "rb") as fh:
+            data = fh.read()
+        ext = str(path).rsplit(".", 1)[-1].lower() if "." in str(path) else "bin"
+        local_results[req_id] = RetrievalResult(
+            req_id=req_id,
+            status="success",
+            data=RawData(
+                source=DataSource.LOCAL,
+                item_id=str(path),
+                format=ext,
+                data=data,
+                url=f"local://{path}",
+            ),
+        )
+    retrieval_results = {**local_results, **state.get("retrieval_results", {})}
     requirements = state.get("data_requirements", [])
     req_by_id: dict[str, DataReq] = {req.req_id: req for req in requirements}
 
@@ -161,5 +192,4 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
         "parsed_data": parsed_data,
         "missing_items": missing_items,
         "provenance": provenance,
-        "errors": [],
     }

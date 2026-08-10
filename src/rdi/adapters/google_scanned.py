@@ -13,7 +13,7 @@ from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.retrieval import RawData, RawReference, SearchResult
 
 # MeshSkill 支持的格式，按优先级排序
 _MESH_EXTS = (".obj", ".stl", ".ply", ".dae")
@@ -160,11 +160,12 @@ class GoogleScannedAdapter(BaseAdapter):
         """网络/文件不可用时返回明确降级的 metadata JSON。"""
         import json
 
+        zip_url = f"{self.base_url}/models/{item_id}.zip"
         payload = {
             "source": "google_scanned",
             "item_id": item_id,
             "reason": reason,
-            "zip_url": f"{self.base_url}/models/{item_id}.zip",
+            "zip_url": zip_url,
             "mesh_path": mesh_path,
             "mesh_url": mesh_url,
             "file_tree": file_tree or [],
@@ -176,6 +177,12 @@ class GoogleScannedAdapter(BaseAdapter):
             item_id=item_id,
             format="json",
             data=data_bytes,
-            url=f"{self.base_url}/models/{item_id}.zip",
+            url=zip_url,
             size_bytes=len(data_bytes),
+            # P0-4：完整 zip 未下载，记录引用供用户手动获取
+            reference=RawReference(
+                url=zip_url,
+                download_hint=zip_url,
+                reason=reason,
+            ),
         )

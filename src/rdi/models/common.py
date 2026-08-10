@@ -32,6 +32,7 @@ class DataSource(StrEnum):
     ROBOTIQ = "robotiq"
     MUJOCO = "mujoco"
     ISAAC = "isaac"
+    LOCAL = "local"  # 本地文件注入（前端上传路径，跳过外部检索）
 
 
 class DataReqType(StrEnum):

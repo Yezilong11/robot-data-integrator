@@ -10,6 +10,8 @@ import ast
 import contextlib
 import io
 import os
+import posixpath
+import shutil
 import tempfile
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -56,16 +58,93 @@ def _is_dict_like(data: Any) -> bool:
     )
 
 
+def _missing_urdf_assets(urdf_bytes: bytes, base_dir: str) -> list[str]:
+    """返回 URDF 中相对引用但 ``base_dir`` 下缺失的外部资源（规范化路径）。
+
+    yourdfpy 对缺失 mesh 只打 WARNING 不抛异常，故加载后需显式核对
+    自包含性：相对路径引用的 mesh/texture 必须在资产目录中存在，
+    否则数据包无法离线完整加载。绝对 URL（package:// 等）与 xacro 变量
+    不在此检查范围（下载阶段已跳过）。
+    """
+    missing: list[str] = []
+    try:
+        root = ET.fromstring(urdf_bytes)
+    except Exception:  # noqa: BLE001 — XML 非法由 yourdfpy 加载报错，不重复报告
+        return missing
+    for elem in root.iter():
+        tag = elem.tag.split("}")[-1].lower()
+        if tag not in {"mesh", "texture"}:
+            continue
+        rel = (elem.get("filename") or elem.get("file") or "").strip()
+        if not rel:
+            continue
+        if rel.startswith(("package://", "model://", "http://", "https://")):
+            continue
+        if "$(" in rel or rel.startswith("/"):
+            continue
+        if rel.startswith("./"):
+            rel = rel[2:]
+        norm = posixpath.normpath(rel)
+        while norm.startswith("../"):
+            norm = norm[3:]
+        if not norm or norm == "..":
+            continue
+        if not os.path.exists(os.path.join(base_dir, norm)) and norm not in missing:
+            missing.append(norm)
+    return missing
+
+
 def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
-    """校验 URDF 是否能被外部工具加载。"""
-    data = item.data
-    if isinstance(data, bytes):
-        if yourdfpy is None:
+    """校验 URDF 是否能被外部工具加载。
+
+    P0-3 数据包自包含：若 ParsedItem 携带原始字节（raw_bytes）与外部资产
+    （assets），把两者写入临时目录后用 ``load_meshes=True`` 深度校验，并核对
+    相对引用的 mesh/texture 是否齐备（yourdfpy 对缺失 mesh 仅打 WARNING，
+    故需显式检查自包含性）；无 raw_bytes 时维持现状（仅做无网格加载）。
+    """
+    if yourdfpy is None:
+        return ValIssue(
+            severity=Severity.ERROR,
+            req_id=req_id,
+            message="URDF 校验依赖未安装: yourdfpy",
+        )
+    raw_bytes = getattr(item, "raw_bytes", None)
+    if raw_bytes:
+        tmp = tempfile.mkdtemp()
+        try:
+            model_path = os.path.join(tmp, "model.urdf")
+            with open(model_path, "wb") as f:
+                f.write(raw_bytes)
+            # 写入引用的外部资产；剥离前导 ../ 段，防止写入逃逸出临时目录
+            for rel_path, content in (getattr(item, "assets", None) or {}).items():
+                norm_rel = posixpath.normpath(rel_path)
+                while norm_rel.startswith("../"):
+                    norm_rel = norm_rel[3:]
+                if not norm_rel or norm_rel == "..":
+                    continue
+                asset_path = os.path.join(tmp, norm_rel)
+                os.makedirs(os.path.dirname(asset_path), exist_ok=True)
+                with open(asset_path, "wb") as f:
+                    f.write(content)
+            yourdfpy.URDF.load(model_path, load_meshes=True)
+            missing = _missing_urdf_assets(raw_bytes, tmp)
+            if missing:
+                return ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"URDF 无法解析: 引用的外部资源缺失: {', '.join(missing)}",
+                )
+        except Exception as exc:  # noqa: BLE001 - 记录加载失败而非中断
             return ValIssue(
                 severity=Severity.ERROR,
                 req_id=req_id,
-                message="URDF 校验依赖未安装: yourdfpy",
+                message=f"URDF 无法解析: {exc}",
             )
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        return None
+    data = item.data
+    if isinstance(data, bytes):
         try:
             with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as tmp:
                 tmp.write(data)
@@ -327,13 +406,13 @@ def node_validate(state: SystemState) -> dict[str, Any]:
     - URDF / mesh / sim_config / grasp 增加外部工具可加载性校验
 
     Returns:
-        更新 state 的字段：validation_issues, iteration_count, provenance
+        更新 state 的字段：validation_issues, validate_iteration, provenance
     """
     now = datetime.now()
     parsed_data = state.get("parsed_data", {})
     missing_items = state.get("missing_items", [])
     requirements = state.get("data_requirements", [])
-    iteration = state.get("iteration_count", 0) + 1
+    iteration = state.get("validate_iteration", 0) + 1
 
     req_by_id = {req.req_id: req for req in requirements}
     issues: list[ValIssue] = []
@@ -407,7 +486,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
     return {
         "validation_issues": issues,
         "runtime_check": runtime_checks,
-        "iteration_count": iteration,
+        "validate_iteration": iteration,
         "provenance": [
             f"[{now.isoformat()}] validate: 检查 {len(parsed_data)} 项解析数据、"
             f"{len(missing_items)} 项缺失，发现 {len(issues)} 个问题 "

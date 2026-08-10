@@ -69,7 +69,7 @@ def test_node_dispatches_mesh_skill() -> None:
     assert isinstance(item.data, trimesh.Trimesh)
     assert out["provenance"]  # non-empty log
     assert any("mesh" in line and "成功" in line for line in out["provenance"])
-    assert out["errors"] == []
+    assert "errors" not in out  # 节点不再无条件清空 errors（由 state reducer 累积）
 
 
 def test_node_missing_item_on_failure() -> None:
@@ -141,7 +141,74 @@ def test_node_empty_state_returns_empty_dicts() -> None:
     out = node_parse_convert(state)
     assert out["parsed_data"] == {}
     assert out["missing_items"] == []
-    assert out["errors"] == []
+    assert "errors" not in out
+
+
+def test_node_local_file_injection(tmp_path: Path) -> None:
+    """local_files 注入：本地文件作为 RetrievalResult 参与解析，provenance 溯源为 local://。"""
+    local = tmp_path / "hand.stl"
+    local.write_bytes((_SAMPLE_DIR / "hand.stl").read_bytes())
+    req = DataReq(
+        req_id="r1",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+    )
+    state: SystemState = {
+        "data_requirements": [req],
+        "retrieval_results": {},
+        "local_files": {"r1": str(local)},
+    }
+
+    out = node_parse_convert(state)
+
+    assert "r1" in out["parsed_data"]
+    item = out["parsed_data"]["r1"]
+    assert isinstance(item, ParsedItem)
+    assert item.provenance.source == DataSource.LOCAL
+    assert item.provenance.source_url == f"local://{local}"
+    assert item.canonical_format == "trimesh.Trimesh"
+    assert isinstance(item.data, trimesh.Trimesh)
+
+
+def test_node_local_file_skips_missing_path(tmp_path: Path) -> None:
+    """local_files 指向不存在的文件时静默跳过：不产生 parsed_data，也不误报缺失。"""
+    missing = tmp_path / "no_such.stl"
+    req = DataReq(
+        req_id="r1",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+    )
+    state: SystemState = {
+        "data_requirements": [req],
+        "retrieval_results": {},
+        "local_files": {"r1": str(missing)},
+    }
+
+    out = node_parse_convert(state)
+
+    assert "r1" not in out["parsed_data"]
+    assert out["missing_items"] == []  # 无检索结果时不制造缺失项（由 retrieve_data 负责）
+
+
+def test_node_does_not_reset_accumulated_errors() -> None:
+    """节点返回值不含 errors 键：不无条件清空 errors，错误累积交给 state reducer。"""
+    req = DataReq(
+        req_id="r1",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+    )
+    data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+    state = _make_state(
+        [req],
+        {"r1": RetrievalResult(req_id="r1", data=_mesh_raw(data), status="success")},
+    )
+
+    out = node_parse_convert(state)
+
+    assert "errors" not in out
 
 
 def test_node_passes_urdf_mesh_paths_to_sim_config() -> None:

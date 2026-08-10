@@ -20,7 +20,7 @@ def route_after_validate(state: SystemState) -> str:
         "pass" 或 "retry"
     """
     issues = state.get("validation_issues", [])
-    iteration = state.get("iteration_count", 0)
+    iteration = state.get("validate_iteration", 0)
 
     # 超过 3 次重试，强制通过（降级处理）
     if iteration >= 3:

@@ -159,21 +159,25 @@ class TestGetAdapter:
     """get_adapter 工厂函数单元测试。"""
 
     def test_get_adapter_all_sources(self) -> None:
-        """正常情况：每个 DataSource 都能通过 get_adapter 返回 BaseAdapter 实例且 source 正确。"""
+        """正常情况：每个网络 DataSource 都能通过 get_adapter 返回 BaseAdapter 实例且 source 正确。"""
         from rdi.adapters import get_adapter
 
+        # LOCAL 为前端本地文件注入专用源（无网络适配器），跳过
         for source in DataSource:
+            if source is DataSource.LOCAL:
+                continue
             adapter = get_adapter(source)
             assert isinstance(adapter, BaseAdapter), f"{source} 返回的不是 BaseAdapter 实例"
             assert adapter.source == source, f"{source} 返回的 adapter.source 不匹配"
 
     def test_get_adapter_covers_all_sources(self) -> None:
-        """正常情况：_ADAPTER_CLASSES 覆盖所有 DataSource 枚举值。"""
+        """正常情况：_ADAPTER_CLASSES 覆盖除 LOCAL 外的所有 DataSource 枚举值。"""
         from rdi.adapters import _ADAPTER_CLASSES
 
-        assert len(_ADAPTER_CLASSES) == len(DataSource), (
+        # LOCAL 为本地注入专用源，不注册网络适配器
+        assert len(_ADAPTER_CLASSES) == len(DataSource) - 1, (
             f"_ADAPTER_CLASSES 有 {len(_ADAPTER_CLASSES)} 项，"
-            f"DataSource 枚举有 {len(DataSource)} 项"
+            f"DataSource 枚举（除 LOCAL）应有 {len(DataSource) - 1} 项"
         )
 
     def test_get_adapter_unknown_raises(self) -> None:

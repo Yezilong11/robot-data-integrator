@@ -267,3 +267,51 @@ class TestGraspNetAdapter:
         cache_file = tmp_path / "DravenALG_GraspNet-1Billion_grasp_label_0000_labels.npz"
         assert cache_file.is_file()
         assert cache_file.read_bytes() == fake_npz
+
+    # ─── P0-4: 未下载大文件引用 RawReference ───
+
+    def test_build_metadata_sets_reference(self) -> None:
+        """P0-4：_build_metadata 构造 RawReference，url/file_size/reason 正确。"""
+        adapter = GraspNetAdapter()
+        raw = adapter._build_metadata(
+            "DravenALG/GraspNet-1Billion",
+            [],
+            reason="数据集为超大归档",
+            file_path="models.tar",
+            file_url=(
+                "https://hf-mirror.com/datasets/DravenALG/GraspNet-1Billion/"
+                "resolve/main/models.tar"
+            ),
+            file_size=999999999,
+        )
+        assert raw.reference is not None
+        assert raw.reference.url.endswith("resolve/main/models.tar")
+        assert raw.reference.download_hint == raw.reference.url
+        assert raw.reference.file_size == 999999999
+        assert "超大归档" in raw.reference.reason
+
+    def test_build_metadata_reference_default_url(self) -> None:
+        """P0-4：无 file_url 时 reference.url 回退 HF 数据集主页。"""
+        adapter = GraspNetAdapter()
+        raw = adapter._build_metadata("DravenALG/GraspNet-1Billion", [])
+        assert raw.reference is not None
+        assert raw.reference.url == "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion"
+        assert raw.reference.file_size == 0
+        assert "未自动下载" in raw.reference.reason
+
+    @pytest.mark.asyncio
+    async def test_fetch_downloaded_file_keeps_reference_none(self) -> None:
+        """P0-4：正常下载的分支不设置 reference（保持 None）。"""
+        adapter = GraspNetAdapter()
+        fake_npz = b"\x93NPZ"
+        mock_tree = [{"type": "file", "path": "grasp_label/0000_labels.npz"}]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
+        ):
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP)
+        assert raw.format == "npz"
+        assert raw.reference is None
