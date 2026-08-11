@@ -297,9 +297,7 @@ class TestProcessRetrievalResult:
         """RetrievalResult.is_fallback=True（非首选源成功）→ ParsedItem.is_fallback=True。"""
         data = (_SAMPLE_DIR / "hand.stl").read_bytes()
         raw = _make_raw("stl", data, item_id="hand")
-        result = RetrievalResult(
-            req_id="req_001", data=raw, status="success", is_fallback=True
-        )
+        result = RetrievalResult(req_id="req_001", data=raw, status="success", is_fallback=True)
         req = _make_req(DataReqType.MESH)
 
         outcome = SkillRegistry().process_retrieval_result(result, req)
@@ -357,7 +355,9 @@ class TestProcessRetrievalResult:
         )
         assert outcome.is_fallback is True
 
-    def test_is_fallback_true_when_retrieval_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_is_fallback_true_when_retrieval_fallback(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """retrieval.is_fallback=True 而 skill 正常返回 → ParsedItem.is_fallback=True。"""
         outcome = self._assemble_with_fake_skill(
             monkeypatch, retrieval_fallback=True, skill_fallback=False
@@ -398,9 +398,7 @@ class TestProcessRetrievalResult:
 
     def test_grasp_units_coordinate_frame_from_dataset_convention(self) -> None:
         """GRASP（graspnet npz）→ units/coordinate_frame 按 DATASET_CONVENTIONS 透传。"""
-        data = (
-            Path(__file__).parent / "sample_data" / "grasp" / "sample_labels.npz"
-        ).read_bytes()
+        data = (Path(__file__).parent / "sample_data" / "grasp" / "sample_labels.npz").read_bytes()
         raw = RawData(
             source=DataSource.GRASPNET,
             item_id="banana",
@@ -481,9 +479,7 @@ class TestFormatMismatchDetection:
         )
         result = RetrievalResult(req_id="req_001", data=raw, status="success")
         req = _make_req(DataReqType.GRASP)
-        skill_result = StandardResult(
-            success=True, canonical_format="CanonicalGrasp", data="fake"
-        )
+        skill_result = StandardResult(success=True, canonical_format="CanonicalGrasp", data="fake")
         fake_skill = type("_FakeSkill", (), {"process": lambda self, data, **kw: skill_result})()
         monkeypatch.setattr(SkillRegistry, "get_skill", lambda self, req_type: fake_skill)
 

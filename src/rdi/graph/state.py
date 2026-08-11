@@ -52,7 +52,9 @@ class SystemState(TypedDict, total=False):
     user_feedback: list[str]  # 用户反馈记录
     revised_goal: str | None  # revised 反馈转换后的修正目标描述
     query_cache: dict[str, str]  # 查询关键词压缩缓存（key=description hash，value=压缩后关键词）
-    revision_history: list[dict[str, Any]]  # 修订记录（revision 序号/decision/feedback/revised_goal/timestamp，human_review 追加，assemble 写入 manifest）
+    revision_history: list[
+        dict[str, Any]
+    ]  # 修订记录（revision 序号/decision/feedback/revised_goal/timestamp，human_review 追加，assemble 写入 manifest）
     interrupt_review: bool  # 真实流程是否在 human_review 前中断等待用户决策
     review_iteration: int  # 用户审查/修订轮次（独立于 validate 的 validate_iteration）
     local_files: dict[str, str]  # req_id → 本地文件路径（前端注入，跳过外部检索）
@@ -60,7 +62,13 @@ class SystemState(TypedDict, total=False):
     # ─── 元数据（各节点共享） ───
     iteration_count: int  # 历史字段，保留兼容；validate 使用 validate_iteration
     validate_iteration: int  # validate 重试轮次
-    provenance: Annotated[list[str], operator.add]  # 数据溯源日志（时间戳 + 操作描述），累积各节点溯源日志
+    provenance: Annotated[
+        list[str], operator.add
+    ]  # 数据溯源日志（时间戳 + 操作描述），累积各节点溯源日志
     errors: Annotated[list[str], operator.add]  # 累积的错误信息，不被后序节点清空
-    run_id: str  # 本次运行的唯一标识（时间戳-随机短串），流程入口注入；未注入时为空串（兼容单跑/测试）
-    retry_req_ids: Annotated[list[str], operator.add]  # 需重试/重跑的 req_id（human_review 追加，retrieve_data 只处理这些 + 新需求）
+    run_id: (
+        str  # 本次运行的唯一标识（时间戳-随机短串），流程入口注入；未注入时为空串（兼容单跑/测试）
+    )
+    retry_req_ids: Annotated[
+        list[str], operator.add
+    ]  # 需重试/重跑的 req_id（human_review 追加，retrieve_data 只处理这些 + 新需求）

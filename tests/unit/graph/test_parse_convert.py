@@ -364,4 +364,7 @@ def test_strip_numpy_handles_containers(nested: object) -> None:
 
     cleaned = _strip_numpy(nested)
     JsonPlusSerializer().dumps_typed(cleaned)
-    assert not any(isinstance(v, np.generic) for v in (cleaned if isinstance(cleaned, (list, tuple)) else cleaned.values()))
+    assert not any(
+        isinstance(v, np.generic)
+        for v in (cleaned if isinstance(cleaned, (list, tuple)) else cleaned.values())
+    )

@@ -104,7 +104,9 @@ def _mock_hermes(monkeypatch: pytest.MonkeyPatch) -> Mock:
     return hermes
 
 
-async def test_retrieve_data_logs_success_json(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_retrieve_data_logs_success_json(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """retrieve 成功：retrieve.success 含 req_id / source / 耗时 / 状态。"""
     caplog.set_level(logging.DEBUG)
     configure_logging(fmt="json", level="DEBUG")
@@ -138,7 +140,9 @@ async def test_retrieve_data_logs_success_json(caplog: pytest.LogCaptureFixture,
     assert any(d["event"] == "retrieve.start" and d["req_id"] == "req_log" for d in records)
 
 
-async def test_retrieve_data_logs_missing_json(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_retrieve_data_logs_missing_json(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """retrieve missing（无内置数据源）：retrieve.missing 含 req_id / 状态 / 原因。"""
     caplog.set_level(logging.DEBUG)
     configure_logging(fmt="json", level="DEBUG")

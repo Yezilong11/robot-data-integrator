@@ -133,8 +133,7 @@ class TestMuJoCoAdapter:
         """P0-3：MJCF 引用相对 mesh 文件时，fetch 返回的 raw.assets 携带资产字节。"""
         adapter = MuJoCoAdapter()
         fake_xml = (
-            b'<mujoco model="x"><asset><mesh file="meshes/foo.stl"/></asset>'
-            b"<worldbody/></mujoco>"
+            b'<mujoco model="x"><asset><mesh file="meshes/foo.stl"/></asset><worldbody/></mujoco>'
         )
         with patch.object(
             adapter,

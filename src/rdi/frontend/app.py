@@ -68,7 +68,11 @@ def manifest_tree(manifest: Any) -> str:
     if not isinstance(manifest, dict):
         return ""
     paths = sorted(
-        {str(f.get("path", "")).replace("\\", "/") for f in manifest.get("files", []) if f.get("path")}
+        {
+            str(f.get("path", "")).replace("\\", "/")
+            for f in manifest.get("files", [])
+            if f.get("path")
+        }
     )
     if not paths:
         return ""
@@ -380,13 +384,12 @@ def stage_progress_view(state: dict[str, Any]) -> dict[str, str]:
     recorded = to_plain(state.get("stage_progress"))
     completed = recorded if isinstance(recorded, list) else derive_stage_progress(state)
     done = set(completed)
-    return {
-        label: ("完成" if name in done else "未开始")
-        for name, label in STAGE_LABELS.items()
-    }
+    return {label: ("完成" if name in done else "未开始") for name, label in STAGE_LABELS.items()}
 
 
-def run_graph(goal: str, paper_file: Any, local_files_json: str = "") -> tuple[dict[str, Any], str, bool]:
+def run_graph(
+    goal: str, paper_file: Any, local_files_json: str = ""
+) -> tuple[dict[str, Any], str, bool]:
     """真实流程首跑：返回 (state, thread_id, interrupted)。
 
     E1 分步执行：用 ``graph.stream(..., stream_mode="updates")`` 逐节点推进，
@@ -711,7 +714,7 @@ def build_app() -> Any:
             goal = gr.Textbox(label="实验目标", lines=5)
             paper_file = gr.File(label="论文 PDF", file_types=[".pdf"])
             local_files = gr.Textbox(
-                label="本地文件注入（JSON：{\"req_id\": \"路径\"}，真实流程可选）",
+                label='本地文件注入（JSON：{"req_id": "路径"}，真实流程可选）',
                 lines=2,
             )
             review_decision = gr.Radio(

@@ -231,9 +231,7 @@ class GraspSkill(BaseSkill):
                         errors=[f"GraspNet npz 解析失败: {exc}"],
                     )
                 if _is_metadata_payload(decoded):
-                    return self._synthetic_result(
-                        "GraspNet", "返回元数据 JSON（未找到真实 npz）"
-                    )
+                    return self._synthetic_result("GraspNet", "返回元数据 JSON（未找到真实 npz）")
                 return StandardResult(
                     success=False,
                     canonical_format="CanonicalGrasp",
@@ -263,9 +261,7 @@ class GraspSkill(BaseSkill):
             except (ValueError, UnicodeDecodeError):
                 decoded = None
             if decoded is not None and _is_metadata_payload(decoded):
-                return self._synthetic_result(
-                    "DexGraspNet", "返回元数据 JSON（未找到真实 pkl）"
-                )
+                return self._synthetic_result("DexGraspNet", "返回元数据 JSON（未找到真实 pkl）")
 
             # pkl 反序列化：先尝试导入 graspnetAPI 注册 pkl 中的自定义类（用于其
             # __reduce__ 还原），ImportError 时降级为通用 pickle.load 继续尝试。

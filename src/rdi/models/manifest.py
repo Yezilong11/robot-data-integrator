@@ -27,15 +27,21 @@ class ManifestFile(BaseModel):
         default="unknown",
         description="数据来源真实程度：real / synthetic / fallback / unknown（未知来源默认 unknown，不再隐式标 fallback）",
     )
-    is_fallback: bool = Field(default=False, description="是否使用了备选源（经 ParsedItem 从 RetrievalResult 透传）")
+    is_fallback: bool = Field(
+        default=False, description="是否使用了备选源（经 ParsedItem 从 RetrievalResult 透传）"
+    )
     file_size: int = Field(default=0, description="文件大小（字节）；引用未下载时为远端大小")
     downloaded: bool = Field(default=True, description="是否已下载到本地数据包")
     local_path: str = Field(
         default="",
         description="本地文件路径（相对于数据包根目录）；未下载为空字符串",
     )
-    file_url: str = Field(default="", description="原始文件 URL（已下载为来源 URL；引用为远端 URL）")
-    checksum_sha256: str = Field(default="", description="文件 SHA-256（小写 hex）；未计算或引用文件为空字符串")
+    file_url: str = Field(
+        default="", description="原始文件 URL（已下载为来源 URL；引用为远端 URL）"
+    )
+    checksum_sha256: str = Field(
+        default="", description="文件 SHA-256（小写 hex）；未计算或引用文件为空字符串"
+    )
 
 
 class ManifestMissingItem(BaseModel):

@@ -173,8 +173,12 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
     existing = state.get("retrieval_results") or {}
     if retry_req_ids:
         # 只处理失败/新增需求；既有成功项跳过（沿用上一轮结果，不重拉）
-        to_process = [r for r in requirements if r.req_id in retry_req_ids or r.req_id not in existing]
-        to_skip = [r for r in requirements if r.req_id not in retry_req_ids and r.req_id in existing]
+        to_process = [
+            r for r in requirements if r.req_id in retry_req_ids or r.req_id not in existing
+        ]
+        to_skip = [
+            r for r in requirements if r.req_id not in retry_req_ids and r.req_id in existing
+        ]
     else:
         to_process = requirements  # 首次运行 / validate 重试（未设 retry_req_ids）：全部处理
         to_skip = []

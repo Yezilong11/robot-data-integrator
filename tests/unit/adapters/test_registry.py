@@ -64,8 +64,7 @@ class TestAdapterRegistry:
         expected_types = [
             t
             for t in DataReqType
-            if t is not DataReqType.UNKNOWN
-            and t not in self._NO_BUILTIN_SOURCE_TYPES
+            if t is not DataReqType.UNKNOWN and t not in self._NO_BUILTIN_SOURCE_TYPES
         ]
         for req_type in expected_types:
             assert req_type in ADAPTER_REGISTRY, f"Missing {req_type} in ADAPTER_REGISTRY"
@@ -76,9 +75,7 @@ class TestAdapterRegistry:
             assert req_type not in ADAPTER_REGISTRY, (
                 f"{req_type} 不应注册内置 Adapter（无内置数据源）"
             )
-            assert select_adapter(req_type) == [], (
-                f"select_adapter({req_type}) 应返回空列表"
-            )
+            assert select_adapter(req_type) == [], f"select_adapter({req_type}) 应返回空列表"
 
     def test_paper_primary_is_arxiv(self) -> None:
         """正常情况：PAPER 主源是 ArxivAdapter，且包含 PapersWithCodeAdapter。"""

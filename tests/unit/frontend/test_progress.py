@@ -131,9 +131,7 @@ def test_validation_issue_fills_reason_when_result_silent() -> None:
     state = {
         "data_requirements": [_req("req_h")],
         "retrieval_results": {"req_h": _result("req_h", status="missing")},
-        "validation_issues": [
-            {"severity": "error", "req_id": "req_h", "message": "必需需求缺失"}
-        ],
+        "validation_issues": [{"severity": "error", "req_id": "req_h", "message": "必需需求缺失"}],
     }
     row = _rows_of(state)["req_h"]
     assert row[2] == "失败"
@@ -156,9 +154,7 @@ def test_result_source_beats_error_source() -> None:
     state = {
         "data_requirements": [_req("req_j")],
         "retrieval_results": {"req_j": _result("req_j", source="github")},
-        "retrieval_errors": [
-            {"req_id": "req_j", "source": "arxiv", "error_message": "arxiv 失败"}
-        ],
+        "retrieval_errors": [{"req_id": "req_j", "source": "arxiv", "error_message": "arxiv 失败"}],
     }
     row = _rows_of(state)["req_j"]
     assert row[2] == "成功"

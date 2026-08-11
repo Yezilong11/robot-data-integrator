@@ -14,7 +14,9 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # C2 修复：已展开纯 URDF 源（dexsuite/dex-urdf）
 # 钉 commit f5e7132f22108164577fea4c25ef99b5cc0e1900（2026-08-10 pin）
-_PLAIN_URDF_BASE = "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900"
+_PLAIN_URDF_BASE = (
+    "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900"
+)
 _PLAIN_URDF_PATHS: dict[str, str] = {
     "allegro_hand_v4": "robots/hands/allegro_hand/allegro_hand_right.urdf",
     "allegro_hand_right": "robots/hands/allegro_hand/allegro_hand_right.urdf",

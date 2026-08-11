@@ -782,8 +782,6 @@ class BaseAdapter(ABC):
         """
         parts = urlsplit(path)
         query = urlencode(sorted(parse_qsl(parts.query)))
-        normalized = urlunsplit(
-            (parts.scheme, parts.netloc, parts.path, query, parts.fragment)
-        )
+        normalized = urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
         key_str = f"{method}:{normalized}:{sorted(kwargs.items())}"
         return hashlib.md5(key_str.encode()).hexdigest()

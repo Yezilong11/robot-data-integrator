@@ -181,10 +181,16 @@ def _failed_state(decision: str) -> SystemState:
         ],
         retrieval_errors=[
             RetrievalError(
-                req_id="req_001", source=DataSource.GITHUB, error_type="not_found", error_message="404"
+                req_id="req_001",
+                source=DataSource.GITHUB,
+                error_type="not_found",
+                error_message="404",
             ),
             RetrievalError(
-                req_id="req_002", source=DataSource.GITHUB, error_type="timeout", error_message="超时"
+                req_id="req_002",
+                source=DataSource.GITHUB,
+                error_type="timeout",
+                error_message="超时",
             ),
         ],
     )
@@ -209,7 +215,9 @@ def test_unsatisfied_sets_retry_req_ids_dedup_and_keeps_results(
 
 def test_revised_sets_retry_req_ids(monkeypatch: pytest.MonkeyPatch) -> None:
     """revised：同样写入 retry_req_ids（仅重跑失败 req），成功项保留。"""
-    fake = _FakeLLMClient(result=human_review._RevisedGoal(revised_goal="用 UR5 在 PyBullet 中抓取 mug"))
+    fake = _FakeLLMClient(
+        result=human_review._RevisedGoal(revised_goal="用 UR5 在 PyBullet 中抓取 mug")
+    )
     _patch_llm(monkeypatch, fake)
     state = _failed_state("revised")
     merged, update = _run(state)
@@ -234,9 +242,7 @@ def test_satisfied_does_not_set_retry_req_ids(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.parametrize("iteration", [3, 4])
-def test_loop_cap_force_ends_on_4th_review(
-    iteration: int, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_loop_cap_force_ends_on_4th_review(iteration: int, monkeypatch: pytest.MonkeyPatch) -> None:
     """review_iteration 达到上限（>=3，即第 4 次进入）时：即使 review_decision 为 revised 也强制按 satisfied 结束。"""
     fake = _FakeLLMClient()
     _patch_llm(monkeypatch, fake)
@@ -487,9 +493,7 @@ def test_unsatisfied_empty_feedback_keeps_requirements(monkeypatch: pytest.Monke
 # ─── 端到端：human_review(revised) → assemble ───
 
 
-def test_revision_history_reaches_manifest(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_revision_history_reaches_manifest(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """端到端：revised 后走 assemble，manifest.revision_history 非空且字段完整。"""
     fake = _FakeLLMClient(
         result=human_review._RevisedGoal(revised_goal="用 UR5 在 PyBullet 中抓取 mug")

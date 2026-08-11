@@ -256,12 +256,8 @@ class TestGraspNetAdapter:
                 adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz
             ) as mock_dl,
         ):
-            raw1 = await adapter.fetch(
-                "DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP
-            )
-            raw2 = await adapter.fetch(
-                "DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP
-            )
+            raw1 = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP)
+            raw2 = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.GRASP)
         assert raw1.data == fake_npz
         assert raw2.data == fake_npz
         assert raw1.format == "npz"
@@ -283,8 +279,7 @@ class TestGraspNetAdapter:
             reason="数据集为超大归档",
             file_path="models.tar",
             file_url=(
-                "https://hf-mirror.com/datasets/DravenALG/GraspNet-1Billion/"
-                "resolve/main/models.tar"
+                "https://hf-mirror.com/datasets/DravenALG/GraspNet-1Billion/resolve/main/models.tar"
             ),
             file_size=999999999,
         )
@@ -383,9 +378,7 @@ class TestGraspNetAdapterLocalDatasets:
         monkeypatch.setattr(settings, "local_datasets", {"graspnet": str(local_root)})
         adapter = GraspNetAdapter()
         with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_request:
-            raw = await adapter.fetch(
-                "DravenALG/GraspNet-1Billion", req_type=DataReqType.MESH
-            )
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.MESH)
         assert raw.source == DataSource.LOCAL
         assert raw.format == "obj"
         assert raw.data == b"obj-data"
@@ -405,9 +398,7 @@ class TestGraspNetAdapterLocalDatasets:
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_obj),
         ):
-            raw = await adapter.fetch(
-                "DravenALG/GraspNet-1Billion", req_type=DataReqType.MESH
-            )
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.MESH)
         assert raw.source == DataSource.GRASPNET
         assert raw.format == "obj"
         assert raw.data == fake_obj
@@ -423,8 +414,6 @@ class TestGraspNetAdapterLocalDatasets:
         adapter = GraspNetAdapter()
         mock_tree = [{"type": "file", "path": "models/banana/textured.obj", "size": 8}]
         with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
-            raw = await adapter.fetch(
-                "DravenALG/GraspNet-1Billion", req_type=DataReqType.DATASET
-            )
+            raw = await adapter.fetch("DravenALG/GraspNet-1Billion", req_type=DataReqType.DATASET)
         assert raw.source == DataSource.GRASPNET
         assert raw.format == "json"

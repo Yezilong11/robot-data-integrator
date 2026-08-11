@@ -234,9 +234,7 @@ class TestYCBAdapter:
                 "_download_bytes",
                 new_callable=AsyncMock,
                 side_effect=[
-                    AdapterError(
-                        message="annotation download failed", source=DataSource.YCB.value
-                    ),
+                    AdapterError(message="annotation download failed", source=DataSource.YCB.value),
                     fake_obj,
                 ],
             ),

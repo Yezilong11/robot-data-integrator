@@ -78,8 +78,7 @@ def output_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_assemble_writes_structured_subdirs(output_dir: Path) -> None:
     """各类 req_type 落盘到对应子目录，manifest path 与磁盘路径一致。"""
     parsed_data = {
-        req_id: _item(req_id, req_type, fmt)
-        for req_id, (req_type, fmt, _) in _CASES.items()
+        req_id: _item(req_id, req_type, fmt) for req_id, (req_type, fmt, _) in _CASES.items()
     }
     state: SystemState = {
         "parsed_data": parsed_data,
@@ -220,10 +219,7 @@ def test_assemble_assets_in_manifest_and_checksums(output_dir: Path) -> None:
     assert stl.local_path == "robots/meshes/base.stl"
     assert stl.file_size == len(b"stl-bytes")
     assert stl.checksum_sha256 == hashlib.sha256(b"stl-bytes").hexdigest()
-    assert (
-        hashlib.sha256((package_dir / stl.path).read_bytes()).hexdigest()
-        == stl.checksum_sha256
-    )
+    assert hashlib.sha256((package_dir / stl.path).read_bytes()).hexdigest() == stl.checksum_sha256
     assert stl.transformations == ["written_to:robots/meshes/base.stl"]
 
     png = files_by_path["robots/textures/uv.png"]
@@ -341,7 +337,7 @@ def test_assemble_writes_checksum_and_checksums_txt(output_dir: Path) -> None:
     # 磁盘上实际文件字节与 manifest 的 checksum 一致
     assert hashlib.sha256((package_dir / f.path).read_bytes()).hexdigest() == expected
 
-    checksums_txt = (package_dir / "checksums.txt")
+    checksums_txt = package_dir / "checksums.txt"
     assert checksums_txt.is_file()
     lines = checksums_txt.read_text(encoding="utf-8").splitlines()
     assert f"{expected}  {f.path}" in lines
@@ -349,9 +345,7 @@ def test_assemble_writes_checksum_and_checksums_txt(output_dir: Path) -> None:
 
 def test_assemble_status_failed_when_no_files(output_dir: Path) -> None:
     """P0-5：无任何落盘文件 → status=failed。"""
-    out = node_assemble(
-        {"parsed_data": {}, "data_requirements": [], "missing_items": []}
-    )
+    out = node_assemble({"parsed_data": {}, "data_requirements": [], "missing_items": []})
     pkg = out["experiment_package"]
     assert pkg.package_info["status"] == "failed"
 
@@ -407,18 +401,14 @@ def test_assemble_status_partial_when_optional_missing(output_dir: Path) -> None
 
 def test_assemble_status_complete_when_all_success(output_dir: Path) -> None:
     """P0-5：解析全成功无缺失 → status=complete。"""
-    out = node_assemble(
-        {"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}}
-    )
+    out = node_assemble({"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}})
     pkg = out["experiment_package"]
     assert pkg.package_info["status"] == "complete"
 
 
 def test_assemble_package_info_contract(output_dir: Path) -> None:
     """P0-5：package_info 含 pipeline_version/license/citation 契约字段。"""
-    out = node_assemble(
-        {"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}}
-    )
+    out = node_assemble({"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}})
     pkg = out["experiment_package"]
     assert pkg.package_info["pipeline_version"] == PIPELINE_VERSION
     assert pkg.package_info["license"] == ""
@@ -439,18 +429,14 @@ def test_assemble_package_info_run_id_passthrough(output_dir: Path) -> None:
 
 def test_assemble_package_info_run_id_default_empty(output_dir: Path) -> None:
     """B2：state 不含 run_id（单跑/测试）→ package_info.run_id 为空串。"""
-    out = node_assemble(
-        {"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}}
-    )
+    out = node_assemble({"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}})
     pkg = out["experiment_package"]
     assert pkg.package_info["run_id"] == ""
 
 
 def test_assemble_package_info_demo_false(output_dir: Path) -> None:
     """E3：真实流程产物 package_info.demo=false（与演示流程 demo=true 区分）。"""
-    out = node_assemble(
-        {"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}}
-    )
+    out = node_assemble({"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}})
     pkg = out["experiment_package"]
     assert pkg.package_info["demo"] == "false"
 

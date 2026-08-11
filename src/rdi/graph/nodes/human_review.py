@@ -135,7 +135,9 @@ def _apply_feedback_to_requirements(requirements: list[Any], feedback: list[str]
         if isinstance(req, dict):
             # 兜底：state 来自 checkpoint 且 pydantic 重建失败时退回 dict
             new_req = dict(req)
-            new_req["description"] = new_req.get("description", "") + "\n用户反馈: " + "; ".join(feedback)
+            new_req["description"] = (
+                new_req.get("description", "") + "\n用户反馈: " + "; ".join(feedback)
+            )
             new_req["keywords"] = [*(new_req.get("keywords") or []), *(m for m in feedback if m)]
         else:
             new_req = req.model_copy(deep=True)

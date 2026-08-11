@@ -75,10 +75,7 @@ def _format_mismatch_reason(req: DataReq, raw_fmt: str) -> str | None:
     if expected is None or raw_fmt.lower() in expected:
         return None
     label = _REQ_EXPECTED_LABELS.get(req.req_type, str(expected))
-    return (
-        f"需求类型 {req.req_type.value} 期望 {label}，"
-        f"实际返回 {raw_fmt}（类型错配）"
-    )
+    return f"需求类型 {req.req_type.value} 期望 {label}，实际返回 {raw_fmt}（类型错配）"
 
 
 class SkillRegistry:

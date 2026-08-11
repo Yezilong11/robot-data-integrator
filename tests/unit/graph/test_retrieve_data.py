@@ -424,9 +424,7 @@ async def test_retrieve_data_per_req_timeout_does_not_block_others(
     # 重新注册带真实 source 的候选 adapter：超时错误的 source 需要真实 DataSource 值
     mock_cls = Mock(return_value=mock_adapters)
     mock_cls.source = DataSource.GITHUB
-    monkeypatch.setattr(
-        "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls]
-    )
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
 
     original_single = node_retrieve_single
 
@@ -559,7 +557,9 @@ async def test_retrieve_single_fetch_falls_back_without_object_name_kwarg(
 # ─── C5: 仅重跑失败 req（retry_req_ids 选择性处理） ───
 
 
-def _two_req_state(retry_req_ids: list[str] | None, keep_result: RetrievalResult | None) -> dict[str, Any]:
+def _two_req_state(
+    retry_req_ids: list[str] | None, keep_result: RetrievalResult | None
+) -> dict[str, Any]:
     """构造两个需求的 state：req_keep 有既有结果，req_retry 为失败重跑目标。"""
     state: dict[str, Any] = {
         "data_requirements": [
@@ -643,9 +643,7 @@ async def test_retrieve_single_catalog_error_yields_missing_with_diagnostics(
     mock_adapter.search.side_effect = _search_side_effect
     mock_cls = Mock(return_value=mock_adapter)
     mock_cls.source = DataSource.YCB
-    monkeypatch.setattr(
-        "rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls]
-    )
+    monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
 
     payload = {
         "req_id": "req_cat",
@@ -668,6 +666,7 @@ async def test_retrieve_single_catalog_error_then_query_hit_succeeds(
     mock_hermes: Mock, mock_adapters: AsyncMock
 ) -> None:
     """C1 不回归：第一个 query 清单外抛 AdapterCatalogError，后续 query（物体名）命中时仍返回 success。"""
+
     def _search_side_effect(query: str) -> list[SearchResult]:
         if query == "banana grasp":
             raise AdapterCatalogError(
@@ -675,9 +674,7 @@ async def test_retrieve_single_catalog_error_then_query_hit_succeeds(
                 source="ycb",
             )
         if query == "banana":
-            return [
-                SearchResult(item_id="011_banana", title="Banana", source=DataSource.GITHUB)
-            ]
+            return [SearchResult(item_id="011_banana", title="Banana", source=DataSource.GITHUB)]
         return []
 
     mock_adapters.search.side_effect = _search_side_effect

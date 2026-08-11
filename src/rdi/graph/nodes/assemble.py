@@ -198,9 +198,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             asset_entries: list[ManifestFile] = []
             if item.raw_bytes is not None:
                 # P0-3 数据包自包含：原始 XML 与其引用的外部资产直接落盘
-                ext = _ext_for_raw_format(
-                    item.provenance.original_format, item.canonical_format
-                )
+                ext = _ext_for_raw_format(item.provenance.original_format, item.canonical_format)
                 filename = f"{_safe_filename(req_id)}{ext}"
                 rel_path = f"{subdir}/{filename}"
                 target = package_dir / rel_path

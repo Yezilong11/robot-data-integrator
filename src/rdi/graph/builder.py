@@ -25,7 +25,9 @@ from rdi.graph.state import SystemState
 from rdi.logging import configure_logging
 
 
-def build_graph(checkpointer: Any = None) -> CompiledStateGraph[SystemState, None, SystemState, SystemState]:
+def build_graph(
+    checkpointer: Any = None,
+) -> CompiledStateGraph[SystemState, None, SystemState, SystemState]:
     """构建并编译 LangGraph 状态图。
 
     工作流节点：
