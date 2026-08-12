@@ -8,7 +8,7 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rdi.adapters.registry import select_adapter
 from rdi.config.settings import settings
@@ -22,8 +22,12 @@ from rdi.exceptions import (
 )
 from rdi.graph.state import SystemState
 from rdi.hermes.engine import HermesEngine
+from rdi.intelligence import decisions
 from rdi.logging import get_logger
 from rdi.models import DataReqType, DataSource, RetrievalError, RetrievalResult, SearchResult
+
+if TYPE_CHECKING:
+    from rdi.intelligence.schemas import RetrievalPlan
 
 # 模块级懒加载 HermesEngine 单例，便于测试 monkeypatch
 _hermes_engine: HermesEngine | None = None
@@ -186,6 +190,9 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
     retrieval_results: dict[str, RetrievalResult] = dict(existing)  # 以既有结果起步，保留成功项
     provenance: list[str] = []
     retrieval_errors: list[RetrievalError] = []
+    # ② 合并各需求的检索策略规划与 LLM 调用记录（单需求超时路径不产生，取空）
+    retrieval_plan: dict[str, RetrievalPlan] = {}
+    llm_usage: list[dict[str, Any]] = []
     for req in to_skip:
         provenance.append(
             f"[{datetime.now().isoformat()}] retrieve_data: 沿用上一轮结果，不重拉 ({req.req_id})"
@@ -214,11 +221,15 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
         retrieval_results.update(update.get("retrieval_results", {}))
         provenance.extend(update.get("provenance", []))
         retrieval_errors.extend(update.get("retrieval_errors", []))
+        retrieval_plan.update(update.get("retrieval_plan", {}))
+        llm_usage.extend(update.get("llm_usage", []))
 
     return {
         "retrieval_results": retrieval_results,
         "provenance": provenance,
         "retrieval_errors": retrieval_errors,
+        "retrieval_plan": retrieval_plan,
+        "llm_usage": llm_usage,
     }
 
 
@@ -298,20 +309,59 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     priority_index = {src: i for i, src in enumerate(priority_sources)}
     fallback_sources = payload.get("fallback_sources") or []
     fallback_index = {src: i for i, src in enumerate(fallback_sources)}
-    # fallback_sources 顺序为第一优先级；其余源按 Hermes 优先级（priority_index 越小越靠前）排序，
-    # 不在 Hermes 候选列表中的源排最后。
+    # ② 检索策略规划（LLM 决策层）。此时 adapter_classes 必非空（空源已在 D2 路径
+    # 提前返回 missing），LLM 失败返回 None 时走规则兜底：queries/源排序不变，
+    # 仅 provenance 记录降级（decisions 内部已记录具体错误类型日志）。
+    _start = time.monotonic()
+    retrieval_plan = decisions.plan_retrieval(
+        req_type=req_type,
+        description=description,
+        keywords=[str(k) for k in keywords],
+        object_name=str(payload.get("object_name", "") or ""),
+        context_keywords=[str(k) for k in (payload.get("context_keywords") or [])],
+        fallback_sources=fallback_sources,
+        candidate_sources=[cls.source.value for cls in adapter_classes],
+    )
+    llm_usage_entry = {
+        "decision": "retrieval_plan",
+        "req_id": req_id,
+        "status": "ok" if retrieval_plan else "fallback",
+        "model": settings.llm_model,
+        "elapsed": round(time.monotonic() - _start, 3),
+    }
+    if retrieval_plan is None:
+        provenance.append(
+            f"[{datetime.now().isoformat()}] retrieve_data: 检索策略 LLM 降级，使用规则兜底"
+        )
+    # LLM 偏好源为第二优先级（fallback_sources 之后），其余源按 Hermes 优先级排序；
+    # plan 为空时 llm_pref_index 为空 dict，全部取 0 并列，行为与现状完全一致。
+    llm_pref_index = (
+        {src: i for i, src in enumerate(retrieval_plan.preferred_sources)} if retrieval_plan else {}
+    )
+    # fallback_sources 顺序为第一优先级；其次 LLM 偏好源；其余源按 Hermes 优先级
+    # （priority_index 越小越靠前），不在 Hermes 候选列表中的源排最后。
     sorted_adapters = sorted(
         adapter_classes,
         key=lambda cls: (
             fallback_index.get(cls.source.value, len(fallback_sources)),
+            llm_pref_index.get(cls.source.value, len(llm_pref_index)),
             priority_index.get(cls.source.value, len(priority_sources)),
         ),
     )
 
     # C2-fix: Adapter fallback 搜索多使用单 token 匹配，直接传整句中文+英文
     # 会导致无匹配。先尝试完整 query，再逐个尝试 keyword/英文 token。
-    queries = [query]
     seen: set[str] = {query.lower()}
+    # ② LLM 搜索词置前（plan 为空时不产生，行为与现状一致），
+    # 确定性 query/keywords 兜底追加在尾部，全程用 seen 去重。
+    queries: list[str] = []
+    if retrieval_plan and retrieval_plan.queries:
+        for q in retrieval_plan.queries:
+            q_str = str(q).strip()
+            if q_str and q_str.lower() not in seen:
+                seen.add(q_str.lower())
+                queries.append(q_str)
+    queries.append(query)
     if keywords:
         for kw in keywords:
             kw_str = str(kw).strip()
@@ -413,6 +463,8 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 "retrieval_results": {req_id: result},
                 "provenance": provenance,
                 "retrieval_errors": retrieval_errors,
+                "retrieval_plan": {req_id: retrieval_plan} if retrieval_plan else {},
+                "llm_usage": [llm_usage_entry] if llm_usage_entry else [],
             }
         except AdapterError as exc:
             retrieval_errors.append(_to_retrieval_error(req_id, adapter_cls.source, exc))
@@ -464,4 +516,6 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         "retrieval_results": {req_id: result},
         "provenance": provenance,
         "retrieval_errors": retrieval_errors,
+        "retrieval_plan": {req_id: retrieval_plan} if retrieval_plan else {},
+        "llm_usage": [llm_usage_entry] if llm_usage_entry else [],
     }

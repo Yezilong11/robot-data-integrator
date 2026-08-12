@@ -91,8 +91,11 @@ def test_assemble_writes_structured_subdirs(output_dir: Path) -> None:
     pkg = out["experiment_package"]
     package_dir = Path(pkg.output_dir)
 
-    assert len(pkg.files) == len(_CASES)
+    assert len(pkg.files) == len(_CASES) + 1  # +1 为质量解释条目
     for f in pkg.files:
+        if f.req_id == "package":  # 质量解释条目（req_id=package，无对应 _CASES）
+            assert f.path == "quality_explanation.md"
+            continue
         expected_path = _CASES[f.req_id][2]
         assert f.path == expected_path
         # manifest 相对路径与实际磁盘文件一致
@@ -371,7 +374,8 @@ def test_assemble_status_failed_when_required_missing(output_dir: Path) -> None:
     }
     out = node_assemble(state)
     pkg = out["experiment_package"]
-    assert len(pkg.files) == 1
+    # 1 个主文件 + 1 个质量解释条目（解释条目不影响状态推导）
+    assert len(pkg.files) == 2
     assert pkg.package_info["status"] == "failed"
 
 
@@ -493,7 +497,7 @@ def test_assemble_is_fallback_passthrough(output_dir: Path) -> None:
 
 
 def test_assemble_writes_units_json(output_dir: Path) -> None:
-    """D1：units.json 落盘，每 req 记录 units/coordinate_frame/timestamp_epoch。"""
+    """D1：semantic_map.json 落盘（原 units.json 字段保留），每 req 记录 units/coordinate_frame/timestamp_epoch。"""
     item_urdf = _item("req_urdf", DataReqType.ROBOT_URDF, "urdf")
     item_urdf.units = "meter"
     item_urdf.coordinate_frame = "world"
@@ -505,7 +509,7 @@ def test_assemble_writes_units_json(output_dir: Path) -> None:
     out = node_assemble({"parsed_data": {"req_urdf": item_urdf, "req_mesh": item_mesh}})
     package_dir = Path(out["experiment_package"].output_dir)
 
-    units_file = package_dir / "units.json"
+    units_file = package_dir / "semantic_map.json"
     assert units_file.is_file()
     units_meta = json.loads(units_file.read_text(encoding="utf-8"))
 
@@ -513,9 +517,147 @@ def test_assemble_writes_units_json(output_dir: Path) -> None:
         "units": "meter",
         "coordinate_frame": "world",
         "timestamp_epoch": 1710000000.0,
+        "is_llm": False,
     }
     assert units_meta["req_mesh"] == {
         "units": "",
         "coordinate_frame": "",
         "timestamp_epoch": None,
+        "is_llm": False,
     }
+
+
+def test_assemble_semantic_map_with_llm_convention(output_dir: Path) -> None:
+    """D2：state.semantic_map 注入 → semantic_map.json 追加 LLM 语义字段（is_llm=True）。"""
+    from rdi.intelligence.schemas import SemanticConvention
+
+    item = _item("req_grasp", DataReqType.GRASP, "CanonicalGrasp")
+    item.units = "millimeter"
+    item.coordinate_frame = "object_center"
+    item.timestamp_epoch = 1710000000.0
+    conv = SemanticConvention(
+        dataset_name="mygrid",
+        semantic_type="grasp_pose",
+        rotation="quaternion_xyzw",
+        origin="object_center",
+        unit="millimeter",
+        field_map={"trans": "position"},
+        confidence=0.85,
+        needs_human_review=True,
+    )
+    state: SystemState = {
+        "parsed_data": {"req_grasp": item},
+        "semantic_map": {"req_grasp": conv},
+    }
+
+    out = node_assemble(state)
+    package_dir = Path(out["experiment_package"].output_dir)
+
+    meta = json.loads((package_dir / "semantic_map.json").read_text(encoding="utf-8"))
+    entry = meta["req_grasp"]
+    # 原 units.json 字段保留
+    assert entry["units"] == "millimeter"
+    assert entry["coordinate_frame"] == "object_center"
+    assert entry["timestamp_epoch"] == 1710000000.0
+    # LLM 语义字段追加
+    assert entry["semantic_type"] == "grasp_pose"
+    assert entry["rotation"] == "quaternion_xyzw"
+    assert entry["origin"] == "object_center"
+    assert entry["field_map"] == {"trans": "position"}
+    assert entry["confidence"] == 0.85
+    assert entry["needs_human_review"] is True
+    assert entry["is_llm"] is True
+
+
+# ─── ⑤ 质量报告解释：LLM 决策层 / 规则模板兜底 ───
+
+
+@pytest.fixture(autouse=True)
+def _no_llm_explain(monkeypatch: pytest.MonkeyPatch) -> None:
+    """默认禁用 LLM 质量解释（explain_quality 恒返回 None），防真实 API 请求（慢且非确定）。"""
+    monkeypatch.setattr(
+        "rdi.graph.nodes.assemble._decisions.explain_quality",
+        lambda **kwargs: None,
+    )
+
+
+def test_assemble_quality_explanation_llm_success(
+    output_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """⑤ LLM 成功：quality_explanation.md 落盘并标注 LLM 来源，manifest 追加解释条目，包状态不受影响。"""
+    from rdi.intelligence.schemas import QualityExplanation
+
+    qe = QualityExplanation(
+        summary="整体质量良好，数据可直接用于抓取仿真",
+        strengths=["来源可靠", "完整度较高"],
+        risks=["存在部分缺失项"],
+        recommendations=["补充缺失数据"],
+        usage_guidance="适用于 UR5 抓取仿真验证",
+        confidence=0.9,
+    )
+    monkeypatch.setattr(
+        "rdi.graph.nodes.assemble._decisions.explain_quality",
+        lambda **kwargs: qe,
+    )
+    # 空数据包：解释仍生成，且包状态推导/质量报告数字不被解释条目污染
+    out = node_assemble({"parsed_data": {}, "data_requirements": [], "missing_items": []})
+    pkg = out["experiment_package"]
+    package_dir = Path(pkg.output_dir)
+
+    assert out["quality_explanation"] is qe
+    md = package_dir / "quality_explanation.md"
+    assert md.is_file()
+    md_text = md.read_text(encoding="utf-8")
+    assert "由 LLM 基于 manifest.json 生成" in md_text
+    assert "整体质量良好" in md_text
+
+    qf = [f for f in pkg.files if f.path == "quality_explanation.md"]
+    assert len(qf) == 1
+    assert qf[0].format == "md"
+    assert qf[0].req_id == "package"
+    assert qf[0].transformations == ["generated:llm_explanation"]
+    assert qf[0].confidence == 0.9
+    assert qf[0].file_size == len(md_text.encode("utf-8"))
+    assert qf[0].checksum_sha256 == hashlib.sha256(md_text.encode("utf-8")).hexdigest()
+    # 包状态与质量报告数字不受解释条目影响（空数据包仍 failed / fulfilled=0）
+    assert pkg.package_info["status"] == "failed"
+    assert pkg.quality_report.fulfilled == 0
+    assert any("质量解释已生成（LLM 生成）" in line for line in pkg.provenance_log)
+    assert any("质量解释已生成（LLM 生成）" in line for line in out["provenance"])
+
+
+def test_assemble_quality_explanation_rule_fallback(output_dir: Path) -> None:
+    """⑤ LLM 失败（返回 None）：规则模板解释仍落盘，manifest 条目保留，返回值 quality_explanation 为 None。"""
+    out = node_assemble({"parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")}})
+    pkg = out["experiment_package"]
+    package_dir = Path(pkg.output_dir)
+
+    assert out["quality_explanation"] is None
+    md = package_dir / "quality_explanation.md"
+    assert md.is_file()
+    md_text = md.read_text(encoding="utf-8")
+    assert "规则模板生成（LLM 不可用）" in md_text
+    assert "需求总数" in md_text
+
+    qf = [f for f in pkg.files if f.path == "quality_explanation.md"]
+    assert len(qf) == 1
+    assert qf[0].transformations == ["generated:rule_explanation"]
+    assert qf[0].confidence == 0.5
+    # 主文件在前、解释条目在后
+    assert pkg.files[0].path == "objects/req_ok.stl"
+    assert pkg.files[-1].path == "quality_explanation.md"
+    # provenance 记录规则兜底标注（package.provenance_log 与返回值 provenance 均有）
+    assert any("质量解释已生成（规则模板生成）" in line for line in pkg.provenance_log)
+    assert any("质量解释已生成（规则模板生成）" in line for line in out["provenance"])
+
+
+def test_assemble_llm_usage_appends_quality_decision(output_dir: Path) -> None:
+    """⑤ llm_usage 为累积字段（Annotated operator.add）：节点只返回本次 explain_quality 条目（含 elapsed），既有记录由框架拼接。"""
+    out = node_assemble({"llm_usage": [{"decision": "retrieval_plan", "status": "ok", "model": "mock"}]})
+    assert len(out["llm_usage"]) == 1
+    entry = out["llm_usage"][0]
+    assert entry["decision"] == "explain_quality"
+    assert entry["req_id"] == "package"
+    assert entry["status"] == "fallback"
+    assert isinstance(entry["elapsed"], float)
+    assert out["quality_explanation"] is None

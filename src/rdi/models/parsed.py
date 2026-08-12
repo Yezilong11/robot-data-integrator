@@ -77,6 +77,14 @@ class ParsedItem(BaseModel):
         default=None,
         description="数据对应的时间戳（Unix epoch 秒），None=无",
     )
+    semantic_convention: dict[str, Any] | None = Field(
+        default=None,
+        description="LLM 生成的语义约定（SemanticConvention.model_dump()），None=无",
+    )
+    llm_usage: dict[str, Any] | None = Field(
+        default=None,
+        description="本次处理中的 LLM 决策调用记录（decision/status/model/elapsed），None=无",
+    )
 
 
 class MissingItem(BaseModel):
@@ -95,4 +103,8 @@ class MissingItem(BaseModel):
     fallback_sources: list[DataSource] = Field(
         default_factory=list,
         description="可尝试的备选源",
+    )
+    llm_usage: dict[str, Any] | None = Field(
+        default=None,
+        description="本次处理中的 LLM 决策调用记录（decision/status/model/elapsed），None=无",
     )

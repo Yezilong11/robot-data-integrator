@@ -1,23 +1,33 @@
 """Gradio 前端应用入口。
 
 提供演示/真实两种运行模式，支持 PDF 上传、数据包审查、人机交互反馈。
+E5：界面改造为「工作区式」三栏布局，中栏为随阶段切换的 LLM 决策看板，
+展示检索策略规划 / 语义统一 / 质量解释 / 审查建议四个决策点的真实决策过程，
+并诚实标注「LLM 生成」或「规则兜底」。
 """
 
 from __future__ import annotations
 
 import asyncio
+import html as _html
 import importlib
 import json
 import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 ROOT = Path(__file__).resolve().parents[3]
 OUTPUT_ROOT = ROOT / "data" / "output_packages"
 # E3：演示流程产物独立目录，与真实 output_packages 完全隔离
 DEMO_ROOT = ROOT / "data" / "demo_packages"
+
+# 演示模式 LLM 决策调用记录使用的模型名（诚实标注为演示数据）
+_DEMO_LLM_MODEL = "demo-llm"
 
 
 def _new_run_id() -> str:
@@ -104,11 +114,52 @@ def read_uploaded_pdf(file_obj: Any) -> bytes | None:
     return path.read_bytes()
 
 
+# ─── E5：工作区五段阶段（检索 → 转换 → 校验 → 打包 → 审查） ───
+BOARD_STAGES: list[tuple[str, str]] = [
+    ("retrieve_data", "检索"),
+    ("parse_and_convert", "转换"),
+    ("validate", "校验"),
+    ("assemble_package", "打包"),
+    ("human_review", "审查"),
+]
+
+# 决策看板内联样式（gr.HTML 原样渲染 <style>，前缀 rdi- 避免污染全局）
+_DECISION_CSS = """<style>
+.rdi-badge{display:inline-block;padding:1px 10px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;margin-left:6px}
+.rdi-badge-llm{background:#1f6feb}
+.rdi-badge-rule{background:#9a6700}
+.rdi-badge-green{background:#1a7f37}
+.rdi-badge-red{background:#cf222e}
+.rdi-badge-amber{background:#bf8700}
+.rdi-badge-blue{background:#0969da}
+.rdi-badge-gray{background:#6e7781}
+.rdi-panel{border:1px solid #d0d7de;border-radius:8px;margin-bottom:12px;padding:12px 14px}
+.rdi-panel-active{border-color:#1f6feb;box-shadow:0 0 0 1px #1f6feb}
+.rdi-panel-pending{opacity:.6;background:#f6f8fa}
+.rdi-panel h3{margin:0 0 8px;color:#24292f}
+.rdi-plan{border:1px dashed #d0d7de;border-radius:6px;padding:8px 10px;margin:8px 0}
+.rdi-key{color:#57606a;font-size:12px;font-weight:600}
+.rdi-list{margin:4px 0;padding-left:18px}
+.rdi-note{background:#fff8c5;border:1px solid #d4a72c;padding:4px 8px;border-radius:6px;margin-top:8px;font-size:12px}
+.rdi-status-bar{font-size:13px;line-height:2}
+.rdi-progress{margin-top:4px}
+.rdi-seg{display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;margin:0 2px}
+.rdi-seg-done{background:#dafbe1;color:#1a7f37;font-weight:600}
+.rdi-seg-current{background:#1f6feb;color:#fff;font-weight:600}
+.rdi-seg-todo{background:#eaeef2;color:#6e7781}
+.rdi-arrow{color:#8c959f}
+</style>"""
+
+
 def build_demo_state(goal: str, review_decision: str, feedback: str) -> dict[str, Any]:
     """构造演示流程 state：产物写入独立 DEMO_ROOT 目录并标记 demo=true。
 
     演示产物只用于 UI 走查，绝不写入真实 ``data/output_packages``，
     也不与真实流程产物混用目录。
+    E5：补充 LLM 决策层四个决策点（retrieval_plan / semantic_map /
+    quality_explanation / review_suggestions）与 llm_usage 的演示占位数据，
+    供决策看板走查；其中语义统一含一条「规则兜底 + 待人工确认」条目，
+    展示诚实标注与黄色人工确认提示。
     """
     created_at = datetime.now().isoformat(timespec="seconds")
     package_id = f"package-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -179,6 +230,81 @@ def build_demo_state(goal: str, review_decision: str, feedback: str) -> dict[str
         "iteration_count": 1,
         "provenance": provenance,
         "errors": [],
+        # ─── E5：LLM 决策层演示占位（决策看板走查用） ───
+        "retrieval_plan": {
+            "demo-goal": {
+                "queries": ["dexterous hand grasp dataset", "robot urdf hand model"],
+                "preferred_sources": ["dexgrasp", "github"],
+                "reason": "目标涉及灵巧手抓取与机械结构，优先检索 grasp 数据集并回退到公开 URDF 仓库",
+                "confidence": 0.86,
+            }
+        },
+        "semantic_map": {
+            "demo-goal": {
+                "dataset_name": "dexgrasp",
+                "semantic_type": "grasp_pose",
+                "rotation": "quaternion_wxyz",
+                "origin": "object_center",
+                "unit": "meter",
+                "field_map": {"rot": "rotation", "pos": "translation"},
+                "confidence": 0.92,
+                "needs_human_review": False,
+            },
+            # 规则兜底条目：语义由规则推断，且待人工确认（黄条提示）
+            "demo-rule": {
+                "dataset_name": "robotiq",
+                "semantic_type": "robot_urdf",
+                "rotation": "unknown",
+                "origin": "world",
+                "unit": "unknown",
+                "field_map": {"link": "link_name"},
+                "confidence": 0.5,
+                "needs_human_review": True,
+            },
+        },
+        "quality_explanation": {
+            "summary": "数据包整体质量良好，核心资产齐全，可直接用于下游仿真",
+            "strengths": ["URDF 运动学有效", "grasp 姿态完整", "坐标约定明确"],
+            "risks": ["数据来源单一，缺少交叉验证", "完整度略低于 100%"],
+            "recommendations": ["补充第二数据源交叉验证", "人工复核 demo-rule 的语义约定"],
+            "usage_guidance": "可直接用于仿真与抓取实验；使用前请确认坐标系与单位约定",
+            "confidence": 0.88,
+        },
+        "review_suggestions": {
+            "verdict": "satisfied",
+            "issues": ["无阻塞性缺陷", "完整度与置信度均达到阈值"],
+            "rationale": "数据需求全部满足，质量校验通过，建议通过审查",
+            "confidence": 0.9,
+        },
+        "llm_usage": [
+            {
+                "decision": "retrieval_plan",
+                "req_id": "demo-goal",
+                "model": _DEMO_LLM_MODEL,
+                "status": "ok",
+                "elapsed": 1.2,
+            },
+            {
+                # 演示「规则兜底」标注：该条目 LLM 未成功，走规则推断
+                "decision": "unify_semantics",
+                "req_id": "demo-rule",
+                "model": _DEMO_LLM_MODEL,
+                "status": "fallback",
+                "elapsed": 0.0,
+            },
+            {
+                "decision": "explain_quality",
+                "model": _DEMO_LLM_MODEL,
+                "status": "ok",
+                "elapsed": 0.8,
+            },
+            {
+                "decision": "review_suggestions",
+                "model": _DEMO_LLM_MODEL,
+                "status": "ok",
+                "elapsed": 0.6,
+            },
+        ],
     }
 
 
@@ -397,6 +523,10 @@ def run_graph(
     在 human_review（``interrupt_review=True``）触发 ``__interrupt__`` 时停止，
     返回中断态中间结果（供「进度展示」Tab 展示分步状态）。
 
+    E5：中断时把 interrupt payload（含 human_review 生成的审查建议
+    suggestions，source=llm|rule）挂到 ``state["interrupt_payload"]``，
+    供前端「审查」面板在 resume 之前即可展示 LLM 审查建议。
+
     interrupted=True 表示图已在 human_review 前中断，等待用户通过
     ``resume_workflow`` 提供审查决定后继续。
     """
@@ -432,43 +562,62 @@ def run_graph(
     # E1：逐节点流式执行（stream_mode="updates" 每次 yield {node: 部分更新}）。
     # 每完成一个阶段节点即记录；human_review 节点 interrupt() 时
     # yield {"__interrupt__": ...} 并停止，返回中断态中间结果。
-    completed: list[str] = []
-    interrupted = False
-    for chunk in graph.stream(state, config=config, stream_mode="updates"):
-        if "__interrupt__" in chunk:
-            interrupted = True
-            break
-        for node_name in chunk:
-            if node_name in STAGE_ORDER and node_name not in completed:
-                completed.append(node_name)
+    # 图含 async 节点（node_retrieve_data），同步 stream() 会抛
+    # "No synchronous function provided" TypeError，必须用 astream 驱动；
+    # asyncio.run 在 Gradio 回调线程（无运行中事件循环）安全，与 resume_workflow
+    # 既有 asyncio.run(ainvoke) 模式一致。
+    async def _stream_once() -> tuple[dict[str, Any], bool, dict[str, Any] | None, list[str]]:
+        completed: list[str] = []
+        interrupted = False
+        interrupt_payload: dict[str, Any] | None = None
+        async for chunk in graph.astream(state, config=config, stream_mode="updates"):
+            if "__interrupt__" in chunk:
+                interrupted = True
+                # E5：提取 interrupt payload（含审查建议），供审查面板在 resume 前展示
+                for item in chunk.get("__interrupt__", []):
+                    value = getattr(item, "value", None)
+                    if isinstance(value, dict):
+                        interrupt_payload = value
+                break
+            for node_name in chunk:
+                if node_name in STAGE_ORDER and node_name not in completed:
+                    completed.append(node_name)
 
-    snapshot = graph.get_state(config)
-    result = dict(snapshot.values) if snapshot is not None else {}
+        snapshot = graph.get_state(config)
+        result = dict(snapshot.values) if snapshot is not None else {}
+        return result, interrupted, interrupt_payload, completed
+
+    result, interrupted, interrupt_payload, completed = asyncio.run(_stream_once())
     if not result:
         return {"errors": [f"Unexpected graph result: {result!r}"]}, thread_id, interrupted
+    if interrupt_payload:
+        result["interrupt_payload"] = interrupt_payload
     result["stage_progress"] = completed
     return result, thread_id, interrupted
 
 
 def resume_workflow(
     review_decision: str, feedback: str
-) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str, dict[str, str]]:
+) -> tuple[
+    str,
+    dict[str, Any],
+    dict[str, Any],
+    str,
+    str,
+    Any,
+    Any,
+    Any,
+    str,
+    dict[str, str],
+    str,
+    list[dict[str, Any]],
+    str,
+    str,
+]:
     """真实流程第二阶段：用用户决策 resume 已中断的图。"""
     global _pending_thread_id
     if not _pending_thread_id:
-        req_headers, _ = build_req_status_table({})
-        return (
-            "没有待继续的运行，请先点击「运行」。",
-            {},
-            {"headers": req_headers, "data": []},
-            "",
-            "",
-            [],
-            {},
-            [],
-            "",
-            stage_progress_view({}),
-        )
+        return _empty_result("没有待继续的运行，请先点击「运行」。")
 
     from langgraph.types import Command
 
@@ -602,15 +751,367 @@ def get_package_dir(state: dict[str, Any]) -> Path | None:
     return None
 
 
+# ─── E5：LLM 决策层 → UI 映射（决策看板 / 状态条） ───
+
+
+def _decision_source(
+    state: dict[str, Any],
+    decision_name: str,
+    exists: bool,
+    req_id: str | None = None,
+) -> str:
+    """判定某决策点来源标注：优先读 ``state.llm_usage`` 的 status 记录。
+
+    llm_usage 中该 decision 有记录时以其 status 为准（ok→LLM 生成，
+    fallback→规则兜底）；无记录时按字段是否存在兜底推断
+    （存在→LLM 生成，不存在→规则兜底）。req_id 用于逐需求区分标注。
+    """
+    for usage in to_plain(state.get("llm_usage", [])):
+        if not isinstance(usage, dict) or usage.get("decision") != decision_name:
+            continue
+        if req_id is not None and usage.get("req_id") not in (None, req_id):
+            continue
+        return "LLM 生成" if usage.get("status") == "ok" else "规则兜底"
+    return "LLM 生成" if exists else "规则兜底"
+
+
+def _badge_html(source: str) -> str:
+    """决策来源徽章：LLM 生成（蓝）/ 规则兜底（橙），界面必须可区分。"""
+    if source == "LLM 生成":
+        return '<span class="rdi-badge rdi-badge-llm">LLM 生成</span>'
+    return '<span class="rdi-badge rdi-badge-rule">规则兜底</span>'
+
+
+def _status_badge_html(status: str) -> str:
+    """顶部状态徽章：运行中 / 待审查 / 完成 / 失败。"""
+    if "运行失败" in status:
+        return '<span class="rdi-badge rdi-badge-red">失败</span>'
+    if "运行完成" in status:
+        return '<span class="rdi-badge rdi-badge-green">完成</span>'
+    if any(k in status for k in ("继续运行", "已生成中间结果", "待审查")):
+        return '<span class="rdi-badge rdi-badge-amber">待审查</span>'
+    if "请输入" in status or "没有待继续" in status:
+        return '<span class="rdi-badge rdi-badge-gray">待输入</span>'
+    return '<span class="rdi-badge rdi-badge-blue">运行中</span>'
+
+
+def _board_completed(state: dict[str, Any]) -> list[str]:
+    """反推工作区五段中已完成阶段（检索→转换→校验→打包→审查）。
+
+    优先读 ``stage_progress``（真实执行记录），缺失时按 state 字段兜底；
+    ``human_review`` 不在 STAGE_ORDER 中，单独按 review_suggestions 判定。
+    """
+    recorded = to_plain(state.get("stage_progress"))
+    if isinstance(recorded, list):
+        done = set(recorded)
+        out = [name for name, _ in BOARD_STAGES if name in done]
+        if "human_review" not in out and state.get("review_suggestions") is not None:
+            out.append("human_review")
+        return out
+    out: list[str] = []
+    if state.get("retrieval_plan"):
+        out.append("retrieve_data")
+    if state.get("semantic_map"):
+        out.append("parse_and_convert")
+    if "validation_issues" in state:
+        out.append("validate")
+    if state.get("experiment_package") is not None or state.get("quality_explanation") is not None:
+        out.append("assemble_package")
+    if state.get("review_suggestions") is not None:
+        out.append("human_review")
+    return out
+
+
+def _progress_html(state: dict[str, Any]) -> str:
+    """五段进度条（检索→转换→校验→打包→审查），当前阶段高亮。
+
+    当前段 = 下一个待执行阶段；全部完成时最后一段（审查）高亮。
+    """
+    completed = _board_completed(state)
+    current_idx = min(len(completed), len(BOARD_STAGES) - 1)
+    segs: list[str] = []
+    for i, (name, label) in enumerate(BOARD_STAGES):
+        if name in completed and i != current_idx:
+            cls = "rdi-seg-done"
+        elif i == current_idx:
+            cls = "rdi-seg-current"
+        else:
+            cls = "rdi-seg-todo"
+        segs.append(f'<span class="{cls}">{label}</span>')
+    arrow = '<span class="rdi-arrow">→</span>'
+    return '<div class="rdi-progress">' + arrow.join(segs) + "</div>"
+
+
+def build_status_bar(state: dict[str, Any], status: str) -> str:
+    """顶部状态条 HTML：run_id + 状态徽章 + 五段进度。"""
+    run_id = str(state.get("run_id", "") or "")
+    return (
+        '<div class="rdi-status-bar">'
+        f'<span class="rdi-key">run_id</span> <code>{_html.escape(run_id) or "—"}</code>'
+        f"{_status_badge_html(status)}"
+        "<br/>"
+        f"{_progress_html(state)}"
+        "</div>"
+    )
+
+
+def _pending_hint(text: str) -> str:
+    """决策看板面板占位（该阶段尚未执行）。"""
+    return f'<div class="rdi-key">{_html.escape(text)}</div>'
+
+
+def _render_retrieval_body(state: dict[str, Any]) -> str:
+    """检索面板：RetrievalPlan（queries / preferred_sources / reason / confidence）。"""
+    plans = to_plain(state.get("retrieval_plan", {}))
+    if not plans:
+        return _pending_hint("该阶段尚未执行：无检索策略规划记录")
+    items: list[str] = []
+    for req_id, plan in sorted(plans.items()):
+        if not isinstance(plan, dict):
+            continue
+        source = _decision_source(state, "retrieval_plan", True, str(req_id))
+        queries = "；".join(str(q) for q in plan.get("queries", []))
+        sources = "、".join(str(s) for s in plan.get("preferred_sources", []))
+        items.append(
+            "<div class='rdi-plan'>"
+            f"<div><b>{_html.escape(str(req_id))}</b>{_badge_html(source)}</div>"
+            f"<div><span class='rdi-key'>搜索词</span> {_html.escape(queries)}</div>"
+            f"<div><span class='rdi-key'>偏好源</span> {_html.escape(sources)}</div>"
+            f"<div><span class='rdi-key'>理由</span> {_html.escape(str(plan.get('reason', '')))}</div>"
+            f"<div><span class='rdi-key'>置信度</span> {plan.get('confidence', '-')}</div>"
+            "</div>"
+        )
+    return "".join(items)
+
+
+def _render_semantic_body(state: dict[str, Any]) -> str:
+    """转换面板：SemanticConvention（semantic_type / rotation / origin / unit / field_map）。
+
+    needs_human_review=True 时该条目标黄提示「语义待人工确认」。
+    """
+    sm = to_plain(state.get("semantic_map", {}))
+    if not sm:
+        return _pending_hint("该阶段尚未执行：无语义约定记录")
+    items: list[str] = []
+    for req_id, conv in sorted(sm.items()):
+        if not isinstance(conv, dict):
+            continue
+        source = _decision_source(state, "unify_semantics", True, str(req_id))
+        field_map = "、".join(
+            f"{_html.escape(str(k))}→{_html.escape(str(v))}"
+            for k, v in (conv.get("field_map") or {}).items()
+        )
+        note = (
+            '<div class="rdi-note">⚠ 语义待人工确认（needs_human_review=True）</div>'
+            if conv.get("needs_human_review")
+            else ""
+        )
+        items.append(
+            "<div class='rdi-plan'>"
+            f"<div><b>{_html.escape(str(req_id))}</b> "
+            f"{_html.escape(str(conv.get('dataset_name', '')))}"
+            f"{_badge_html(source)}</div>"
+            f"<div><span class='rdi-key'>语义类型</span> {_html.escape(str(conv.get('semantic_type', '')))}</div>"
+            f"<div><span class='rdi-key'>旋转表示</span> {_html.escape(str(conv.get('rotation', '')))}"
+            f"　<span class='rdi-key'>原点</span> {_html.escape(str(conv.get('origin', '')))}"
+            f"　<span class='rdi-key'>单位</span> {_html.escape(str(conv.get('unit', '')))}</div>"
+            f"<div><span class='rdi-key'>字段映射</span> {_html.escape(field_map)}</div>"
+            f"<div><span class='rdi-key'>置信度</span> {conv.get('confidence', '-')}</div>"
+            f"{note}"
+            "</div>"
+        )
+    return "".join(items)
+
+
+def _render_validate_body(state: dict[str, Any]) -> str:
+    """校验面板：沿用现有校验结果（validation_issues / runtime_check / missing_items）。"""
+    issues = to_plain(state.get("validation_issues", []))
+    runtime = to_plain(state.get("runtime_check", {}))
+    missing = to_plain(state.get("missing_items", []))
+    if not issues and not runtime and not missing:
+        return _pending_hint("该阶段尚未执行：暂无校验结果")
+
+    parts: list[str] = [f"<div><span class='rdi-key'>校验问题</span> {len(issues)} 项</div>"]
+    if issues:
+        parts.append("<ul class='rdi-list'>")
+        for issue in issues:
+            if not isinstance(issue, dict):
+                continue
+            severity = issue.get("severity", "?")
+            parts.append(
+                f"<li>[{severity}] {_html.escape(str(issue.get('req_id', '')))}: "
+                f"{_html.escape(str(issue.get('message', '')))}</li>"
+            )
+        parts.append("</ul>")
+    if missing:
+        parts.append(f"<div><span class='rdi-key'>缺失项</span> {len(missing)} 项</div>")
+        parts.append("<ul class='rdi-list'>")
+        for item in missing:
+            if not isinstance(item, dict):
+                continue
+            parts.append(
+                f"<li>{_html.escape(str(item.get('req_id', '')))}: "
+                f"{_html.escape(str(item.get('reason', '')))}</li>"
+            )
+        parts.append("</ul>")
+    if runtime:
+        parts.append(
+            f"<div><span class='rdi-key'>运行时验证</span> "
+            f"{json.dumps(runtime, ensure_ascii=False)}</div>"
+        )
+    return "".join(parts)
+
+
+def _render_quality_body(state: dict[str, Any]) -> str:
+    """打包面板：QualityExplanation（summary / strengths / risks / recommendations）。"""
+    qe = to_plain(state.get("quality_explanation"))
+    if qe is None:
+        source = _decision_source(state, "explain_quality", False)
+        return (
+            '<div class="rdi-plan">'
+            f"质量解释由规则模板生成{_badge_html(source)}"
+            f"<div class='rdi-key'>LLM 未能生成自然语言解释，已降级为规则模板输出</div>"
+            "</div>"
+        )
+    source = _decision_source(state, "explain_quality", True)
+
+    def _ul(key: str, items: Any) -> str:
+        values = items if isinstance(items, list) else []
+        if not values:
+            return ""
+        lis = "".join(f"<li>{_html.escape(str(v))}</li>" for v in values)
+        return f"<div><span class='rdi-key'>{key}</span><ul class='rdi-list'>{lis}</ul></div>"
+
+    return (
+        "<div class='rdi-plan'>"
+        f"<div>{_badge_html(source)}</div>"
+        f"<div><span class='rdi-key'>质量概述</span> {_html.escape(str(qe.get('summary', '')))}</div>"
+        f"{_ul('优势', qe.get('strengths'))}"
+        f"{_ul('风险', qe.get('risks'))}"
+        f"{_ul('改进建议', qe.get('recommendations'))}"
+        f"<div><span class='rdi-key'>使用指引</span> {_html.escape(str(qe.get('usage_guidance', '')))}</div>"
+        f"<div><span class='rdi-key'>置信度</span> {qe.get('confidence', '-')}</div>"
+        "</div>"
+    )
+
+
+def _render_review_body(state: dict[str, Any]) -> str:
+    """审查面板：ReviewSuggestions（verdict / issues / rationale / confidence）。
+
+    优先读 ``state.review_suggestions``（resume 后）；首次中断时读
+    ``state.interrupt_payload.suggestions``（含 source=llm|rule 标注）。
+    """
+    sug = to_plain(state.get("review_suggestions"))
+    payload = state.get("interrupt_payload")
+    payload_sug = None
+    if isinstance(payload, dict) and isinstance(payload.get("suggestions"), dict):
+        payload_sug = to_plain(payload["suggestions"])
+    data = sug or payload_sug
+    if not data:
+        return _pending_hint("等待用户审查：运行在 human_review 中断后将生成审查建议")
+
+    source = data.get("source")
+    if source == "llm":
+        source_label = "LLM 生成"
+    elif source == "rule":
+        source_label = "规则兜底"
+    else:
+        source_label = _decision_source(state, "review_suggestions", True)
+
+    verdict_map = {"satisfied": "满意", "revised": "修订", "unsatisfied": "不满意"}
+    verdict = verdict_map.get(str(data.get("verdict", "")), str(data.get("verdict", "")))
+    issues = data.get("issues", []) if isinstance(data.get("issues", []), list) else []
+    lis = "".join(f"<li>{_html.escape(str(i))}</li>" for i in issues)
+    return (
+        "<div class='rdi-plan'>"
+        f"<div><b>建议结论：{_html.escape(verdict)}</b>{_badge_html(source_label)}</div>"
+        f"<div><span class='rdi-key'>问题清单</span><ul class='rdi-list'>{lis}</ul></div>"
+        f"<div><span class='rdi-key'>理由</span> {_html.escape(str(data.get('rationale', '')))}</div>"
+        f"<div><span class='rdi-key'>置信度</span> {data.get('confidence', '-')}</div>"
+        "</div>"
+    )
+
+
+def build_decision_board(state: dict[str, Any]) -> str:
+    """中栏决策看板 HTML：五个阶段面板，随当前阶段高亮切换。"""
+    completed = _board_completed(state)
+    current = BOARD_STAGES[len(completed) - 1][0] if completed else BOARD_STAGES[0][0]
+    renderers = {
+        "retrieve_data": _render_retrieval_body,
+        "parse_and_convert": _render_semantic_body,
+        "validate": _render_validate_body,
+        "assemble_package": _render_quality_body,
+        "human_review": _render_review_body,
+    }
+    panels: list[str] = [_DECISION_CSS]
+    for name, label in BOARD_STAGES:
+        cls = "rdi-panel rdi-panel-active" if name == current else "rdi-panel rdi-panel-pending"
+        panels.append(f'<div class="{cls}"><h3>{label}</h3>{renderers[name](state)}</div>')
+    return "".join(panels)
+
+
+def semantic_map_json(state: dict[str, Any]) -> str:
+    """右栏 semantic_map.json 内容：优先读包目录落盘文件，否则序列化 state 字段。"""
+    package_dir = get_package_dir(state)
+    if package_dir is not None:
+        file = package_dir / "semantic_map.json"
+        if file.exists():
+            return file.read_text(encoding="utf-8")
+    return json.dumps(to_plain(state.get("semantic_map", {})), ensure_ascii=False, indent=2)
+
+
+# 前端 14 元组展示结构：
+# (status, summary, req_status, tree, manifest, validation_issues, runtime_check,
+#  missing_items, provenance, stage_progress, decision_board, llm_usage,
+#  semantic_map_json, status_bar)
+
+
+def _empty_result(status: str) -> tuple:
+    """空结果 14 元组（空 goal / 无待继续运行 / 「运行中」占位等场景）。"""
+    req_headers, _ = build_req_status_table({})
+    return (
+        status,
+        {},
+        {"headers": req_headers, "data": []},
+        "",
+        "{}",
+        [],
+        {},
+        [],
+        "",
+        stage_progress_view({}),
+        "",
+        [],
+        "{}",
+        build_status_bar({}, status),
+    )
+
+
 def _format_result(
     state: dict[str, Any],
     review_decision: str,
     feedback: str,
-) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str, dict[str, str]]:
-    """把运行结果 state 格式化为前端 10 元组展示数据（run_workflow / resume_workflow 共享）。
+) -> tuple[
+    str,
+    dict[str, Any],
+    dict[str, Any],
+    str,
+    str,
+    Any,
+    Any,
+    Any,
+    str,
+    dict[str, str],
+    str,
+    list[dict[str, Any]],
+    str,
+    str,
+]:
+    """把运行结果 state 格式化为前端 14 元组展示数据（run_workflow / resume_workflow 共享）。
 
-    10 元组 = (status, summary, req_status, tree, manifest, validation_issues,
-    runtime_check, missing_items, provenance, stage_progress)。
+    14 元组 = (status, summary, req_status, tree, manifest, validation_issues,
+    runtime_check, missing_items, provenance, stage_progress, decision_board,
+    llm_usage, semantic_map_json, status_bar)。
     E3：state 无 experiment_package 时按真实失败呈现（错误信息 + 空产物），
     绝不伪造 fallback 数据包文件/目录。
     """
@@ -645,6 +1146,10 @@ def _format_result(
         missing_items,
         "\n".join(str(item) for item in provenance),
         stage_progress_view(state),
+        build_decision_board(state),
+        to_plain(state.get("llm_usage", [])),
+        semantic_map_json(state),
+        build_status_bar(state, status),
     )
 
 
@@ -653,29 +1158,33 @@ def run_workflow(
     goal: str,
     paper_file: Any,
     local_files_json: str,
-) -> tuple[str, dict[str, Any], dict[str, Any], str, str, Any, Any, Any, str, dict[str, str]]:
+) -> tuple[
+    str,
+    dict[str, Any],
+    dict[str, Any],
+    str,
+    str,
+    Any,
+    Any,
+    Any,
+    str,
+    dict[str, str],
+    str,
+    list[dict[str, Any]],
+    str,
+    str,
+]:
     if not goal.strip():
-        req_headers, _ = build_req_status_table({})
-        return (
-            "请输入实验目标。",
-            {},
-            {"headers": req_headers, "data": []},
-            "",
-            "",
-            [],
-            {},
-            [],
-            "",
-            stage_progress_view({}),
-        )
+        return _empty_result("请输入实验目标。")
 
     try:
         if mode == "真实流程":
             state, _tid, interrupted = run_graph(goal, paper_file, local_files_json)
             if interrupted:
                 req_headers, req_rows = build_req_status_table(state)
+                status = "已生成中间结果，请选择审查决定并点击「继续运行」"
                 return (
-                    "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
+                    status,
                     summarize_state(state),
                     {"headers": req_headers, "data": req_rows},
                     "",
@@ -685,6 +1194,10 @@ def run_workflow(
                     to_plain(state.get("missing_items", [])),
                     "\n".join(str(x) for x in to_plain(state.get("provenance", []))),
                     stage_progress_view(state),
+                    build_decision_board(state),
+                    to_plain(state.get("llm_usage", [])),
+                    semantic_map_json(state),
+                    build_status_bar(state, status),
                 )
         else:
             state = build_demo_state(goal, "satisfied", "")
@@ -699,87 +1212,123 @@ def run_workflow(
         return _format_result(state, "satisfied", "")
 
 
+def run_workflow_stream(
+    mode: str,
+    goal: str,
+    paper_file: Any,
+    local_files_json: str,
+) -> Generator[tuple[Any, ...], None, None]:
+    """Gradio 生成器：真实流程运行期间先展示「运行中」徽章，再输出最终 14 元组。"""
+    yield _empty_result("运行中")
+    yield run_workflow(mode, goal, paper_file, local_files_json)
+
+
+def resume_workflow_stream(
+    review_decision: str, feedback: str
+) -> Generator[tuple[Any, ...], None, None]:
+    """Gradio 生成器：resume 期间先展示「运行中」徽章，再输出最终 14 元组。"""
+    yield _empty_result("运行中")
+    yield resume_workflow(review_decision, feedback)
+
+
 def build_app() -> Any:
     gr: Any = importlib.import_module("gradio")
 
     with gr.Blocks(title="Robot Data Integrator") as app:
-        gr.Markdown("# Robot Data Integrator")
+        gr.Markdown("# Robot Data Integrator — LLM 智能决策工作区")
+        gr.Markdown(
+            "双引擎架构：**LLM 智能决策层**（理解 · 规划 · 评估 · 解释）"
+            "+ **确定性执行层**（转换 · 计算 · 校验 · 落盘）。"
+            "中栏决策看板实时展示 LLM 决策过程，并诚实标注「LLM 生成 / 规则兜底」。"
+        )
 
-        with gr.Tab("目标输入"):
-            mode = gr.Radio(
-                choices=["演示流程", "真实流程"],
-                value="演示流程",
-                label="运行模式",
-            )
-            goal = gr.Textbox(label="实验目标", lines=5)
-            paper_file = gr.File(label="论文 PDF", file_types=[".pdf"])
-            local_files = gr.Textbox(
-                label='本地文件注入（JSON：{"req_id": "路径"}，真实流程可选）',
-                lines=2,
-            )
-            review_decision = gr.Radio(
-                choices=["satisfied", "revised", "unsatisfied"],
-                value="satisfied",
-                label="审查决定（真实流程，运行中断后生效）",
-            )
-            feedback = gr.Textbox(label="反馈", lines=3)
-            run_button = gr.Button("运行", variant="primary")
-            resume_button = gr.Button("继续运行")
-            status = gr.Textbox(label="状态", interactive=False)
+        # ── 顶部状态条 ──
+        status_bar = gr.HTML(label="状态条")
 
-        with gr.Tab("进度展示"):
-            progress = gr.JSON(label="state_summary")
-            req_status = gr.Dataframe(
-                label="数据需求状态",
-                headers=["req_id", "req_type", "状态", "数据源", "是否 fallback", "失败原因"],
-                interactive=False,
-            )
-            provenance = gr.Textbox(label="provenance", lines=12, interactive=False)
-            stage_progress = gr.JSON(
-                label="阶段进度（目标解析 → 数据检索 → 解析转换 → 质量校验 → 整合打包）"
-            )
+        with gr.Row():
+            # ── 左栏：输入与控制 ──
+            with gr.Column(scale=1):
+                gr.Markdown("### 输入与控制")
+                mode = gr.Radio(
+                    choices=["演示流程", "真实流程"],
+                    value="真实流程",  # E5：默认真实流程，让评审看到 LLM 真实工作
+                    label="运行模式",
+                )
+                goal = gr.Textbox(label="实验目标", lines=4)
+                paper_file = gr.File(label="论文 PDF", file_types=[".pdf"])
+                local_files = gr.Textbox(
+                    label='本地文件注入（JSON：{"req_id": "路径"}，真实流程可选）',
+                    lines=2,
+                )
+                gr.Markdown("### 数据包审查")
+                review_decision = gr.Radio(
+                    choices=["satisfied", "revised", "unsatisfied"],
+                    value="satisfied",
+                    label="审查决定（真实流程，运行中断后生效）",
+                )
+                feedback = gr.Textbox(label="反馈", lines=2)
+                with gr.Row():
+                    run_button = gr.Button("运行", variant="primary")
+                    resume_button = gr.Button("继续运行")
+                status = gr.Textbox(label="状态", interactive=False)
 
-        with gr.Tab("数据包审查"):
-            tree = gr.Textbox(label="数据包目录", lines=16, interactive=False)
-            manifest = gr.Textbox(label="manifest", lines=18, interactive=False)
+            # ── 中栏：LLM 决策看板（随阶段切换） ──
+            with gr.Column(scale=2):
+                gr.Markdown("### LLM 决策看板")
+                gr.Markdown(
+                    "检索策略规划 → 语义统一 → 质量校验 → 质量解释 → 审查建议，按当前阶段高亮展示"
+                )
+                decision_board = gr.HTML(label="决策看板")
 
-        with gr.Tab("校验与缺失项"):
-            validation_issues = gr.JSON(label="validation_issues")
-            runtime_check = gr.JSON(label="runtime_check（MuJoCo 验证）")
-            missing_items = gr.JSON(label="missing_items")
+            # ── 右栏：输出详情 ──
+            with gr.Column(scale=1):
+                gr.Markdown("### 输出详情")
+                req_status = gr.Dataframe(
+                    label="数据需求状态",
+                    headers=["req_id", "req_type", "状态", "数据源", "是否 fallback", "失败原因"],
+                    interactive=False,
+                )
+                provenance = gr.Textbox(label="provenance 日志", lines=6, interactive=False)
+                tree = gr.Textbox(label="数据包目录树", lines=8, interactive=False)
+                manifest = gr.Textbox(label="manifest.json 摘要", lines=8, interactive=False)
+                semantic_map_display = gr.Textbox(
+                    label="semantic_map.json 内容", lines=6, interactive=False
+                )
+                llm_usage_display = gr.JSON(label="llm_usage（LLM 决策调用记录）")
+                validation_issues = gr.JSON(label="validation_issues")
+                runtime_check = gr.JSON(label="runtime_check（MuJoCo 验证）")
+                missing_items = gr.JSON(label="missing_items")
+                stage_progress = gr.JSON(
+                    label="阶段进度（目标解析 → 数据检索 → 解析转换 → 质量校验 → 整合打包）"
+                )
+
+        outputs = [
+            status,
+            gr.JSON(label="state_summary", visible=False),
+            req_status,
+            tree,
+            manifest,
+            validation_issues,
+            runtime_check,
+            missing_items,
+            provenance,
+            stage_progress,
+            decision_board,
+            llm_usage_display,
+            semantic_map_display,
+            status_bar,
+        ]
 
         run_button.click(
-            fn=run_workflow,
+            fn=run_workflow_stream,
             inputs=[mode, goal, paper_file, local_files],
-            outputs=[
-                status,
-                progress,
-                req_status,
-                tree,
-                manifest,
-                validation_issues,
-                runtime_check,
-                missing_items,
-                provenance,
-                stage_progress,
-            ],
+            outputs=outputs,
         )
 
         resume_button.click(
-            fn=resume_workflow,
+            fn=resume_workflow_stream,
             inputs=[review_decision, feedback],
-            outputs=[
-                status,
-                progress,
-                req_status,
-                tree,
-                manifest,
-                validation_issues,
-                runtime_check,
-                missing_items,
-                provenance,
-                stage_progress,
-            ],
+            outputs=outputs,
         )
 
     return app

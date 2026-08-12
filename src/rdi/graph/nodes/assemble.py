@@ -22,6 +22,8 @@ import numpy as np
 
 from rdi.config.settings import PIPELINE_VERSION, settings
 from rdi.graph.state import SystemState
+from rdi.intelligence import decisions as _decisions
+from rdi.intelligence.schemas import QualityExplanation
 from rdi.logging import get_logger
 from rdi.models import (
     DataReqType,
@@ -171,6 +173,67 @@ def _derive_package_status(
     return "partial" if has_missing else "complete"
 
 
+def _render_llm_quality_md(qe: QualityExplanation) -> str:
+    """把 LLM 生成的质量解释渲染为 markdown 落盘内容（文件头标注来源）。"""
+    return "\n".join(
+        [
+            "# 质量报告解释",
+            "",
+            "> 由 LLM 基于 manifest.json 生成",
+            "",
+            "## 整体概述",
+            qe.summary,
+            "",
+            "## 数据优势",
+            *([f"- {s}" for s in qe.strengths] or ["- （无）"]),
+            "",
+            "## 潜在风险",
+            *([f"- {r}" for r in qe.risks] or ["- （无）"]),
+            "",
+            "## 改进建议",
+            *([f"- {r}" for r in qe.recommendations] or ["- （无）"]),
+            "",
+            "## 使用指引",
+            qe.usage_guidance,
+            "",
+            "## 置信度",
+            f"{qe.confidence:.2f}",
+            "",
+        ]
+    )
+
+
+def _render_rule_quality_md(report: QualityReport, issues: list[str]) -> str:
+    """LLM 不可用时用规则模板渲染质量解释段落（基于质量报告六项数字 + 状态判断）。"""
+    if report.fulfilled == 0:
+        verdict = "数据包为空（无任何落盘文件），无法支撑实验，需重新检索"
+    elif report.missing > 0:
+        verdict = "存在缺失项，数据包部分满足需求，使用前需人工确认缺失项影响"
+    elif report.validation_issues > 0:
+        verdict = "存在校验问题，数据可用性需人工复核后再使用"
+    else:
+        verdict = "需求全部满足且无校验问题，数据包整体可用"
+    return "\n".join(
+        [
+            "# 质量报告解释",
+            "",
+            "> 规则模板生成（LLM 不可用）",
+            "",
+            "## 整体概述",
+            f"需求总数 {report.total_requirements} 项，已满足 {report.fulfilled} 项，"
+            f"缺失 {report.missing} 项，校验问题 {report.validation_issues} 项；"
+            f"平均置信度 {report.avg_confidence:.2f}，平均完整度 {report.avg_completeness:.1f}%",
+            "",
+            "## 校验问题",
+            *([f"- {v}" for v in issues] or ["- 无"]),
+            "",
+            "## 状态判断",
+            verdict,
+            "",
+        ]
+    )
+
+
 def node_assemble(state: SystemState) -> dict[str, Any]:
     """整合打包节点：序列化解析数据落盘并生成 Manifest。
 
@@ -312,10 +375,67 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
     avg_confidence = total_conf / len(manifest_files) if manifest_files else 0.0
     avg_completeness = total_comp / len(manifest_files) if manifest_files else 0.0
 
-    # P0-5：校验和清单，每行 "<sha256>  <path>"，按路径排序保证确定性；缺失校验和的项跳过
+    # ⑤ 质量报告解释：LLM 决策层生成自然语言解释，失败走规则模板兜底（空包同样生成）
+    quality_report = QualityReport(
+        total_requirements=len(requirements),
+        fulfilled=len(manifest_files),
+        missing=len(manifest_missing),
+        validation_issues=len(validation_issues),
+        avg_confidence=avg_confidence,
+        avg_completeness=avg_completeness,
+    )
+    issue_strs = [v if isinstance(v, str) else str(v) for v in validation_issues]
+    _start = time.monotonic()
+    qe = _decisions.explain_quality(
+        total_requirements=quality_report.total_requirements,
+        fulfilled=quality_report.fulfilled,
+        missing=quality_report.missing,
+        validation_issues=issue_strs,
+        avg_confidence=quality_report.avg_confidence,
+        avg_completeness=quality_report.avg_completeness,
+        manifest_summary=f"{len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项",
+    )
+    explain_usage_entry = {
+        "decision": "explain_quality",
+        "req_id": "package",
+        "status": "ok" if qe is not None else "fallback",
+        "model": settings.llm_model,
+        "elapsed": round(time.monotonic() - _start, 3),
+    }
+    if qe is not None:
+        quality_md = _render_llm_quality_md(qe)
+        explain_note, transform_tag, entry_confidence = (
+            "质量解释已生成（LLM 生成）",
+            "generated:llm_explanation",
+            qe.confidence,
+        )
+    else:
+        quality_md = _render_rule_quality_md(quality_report, issue_strs)
+        explain_note, transform_tag, entry_confidence = (
+            "质量解释已生成（规则模板生成）",
+            "generated:rule_explanation",
+            0.5,
+        )
+    quality_entry = ManifestFile(
+        req_id="package",
+        path="quality_explanation.md",
+        format="md",
+        source_url="",
+        retrieved_at=now,
+        transformations=[transform_tag],
+        confidence=entry_confidence,
+        completeness=100.0,
+        downloaded=True,
+        local_path="quality_explanation.md",
+        file_size=len(quality_md.encode("utf-8")),
+        checksum_sha256=hashlib.sha256(quality_md.encode("utf-8")).hexdigest(),
+    )
+    (package_dir / "quality_explanation.md").write_text(quality_md, encoding="utf-8")
+
+    # P0-5：校验和清单（含质量解释文件），每行 "<sha256>  <path>"，按路径排序保证确定性；缺失校验和的项跳过
     checksum_lines = [
         f"{f.checksum_sha256}  {f.path}"
-        for f in sorted(manifest_files, key=lambda f: f.path)
+        for f in sorted([*manifest_files, quality_entry], key=lambda f: f.path)
         if f.checksum_sha256
     ]
     (package_dir / "checksums.txt").write_text(
@@ -338,19 +458,13 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             "citation": "",
             "status": _derive_package_status(len(manifest_files), missing_items, requirements),
         },
-        files=manifest_files,
+        files=[*manifest_files, quality_entry],
         missing_items=manifest_missing,
-        quality_report=QualityReport(
-            total_requirements=len(requirements),
-            fulfilled=len(manifest_files),
-            missing=len(manifest_missing),
-            validation_issues=len(validation_issues),
-            avg_confidence=avg_confidence,
-            avg_completeness=avg_completeness,
-        ),
+        quality_report=quality_report,
         provenance_log=[
             f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
-            f"落盘 {len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项"
+            f"落盘 {len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项",
+            f"[{now.isoformat()}] assemble_package: {explain_note}",
         ],
         runtime_check=state.get("runtime_check", {}),
         revision_history=state.get("revision_history", []),
@@ -361,18 +475,31 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         json.dumps(package.model_dump(mode="json"), ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    # D1: 物理量纲显式化 —— 每个成功落盘 req 的单位/坐标系/时间戳落盘 units.json，
-    # 转换参数（DATASET_CONVENTIONS 约定 + item 元数据）不再只存在于代码常量
-    units_meta = {
-        req_id: {
+    # D1: 物理量纲显式化 —— 每个成功落盘 req 的单位/坐标系/时间戳 + LLM 语义约定
+    # 落盘 semantic_map.json（保留原 units.json 字段，追加语义字段；转换参数不再
+    # 只存在于代码常量，LLM 动态识别的约定随包可溯源）
+    state_semantic = state.get("semantic_map", {}) or {}
+    semantic_map_meta = {}
+    for req_id, item in parsed_data.items():
+        entry = {
             "units": item.units,
             "coordinate_frame": item.coordinate_frame,
             "timestamp_epoch": item.timestamp_epoch,
         }
-        for req_id, item in parsed_data.items()
-    }
-    (package_dir / "units.json").write_text(
-        json.dumps(units_meta, ensure_ascii=False, indent=2),
+        conv = state_semantic.get(req_id)
+        if conv is not None:
+            entry["semantic_type"] = getattr(conv, "semantic_type", None)
+            entry["rotation"] = getattr(conv, "rotation", None)
+            entry["origin"] = getattr(conv, "origin", None)
+            entry["field_map"] = getattr(conv, "field_map", {})
+            entry["confidence"] = getattr(conv, "confidence", None)
+            entry["needs_human_review"] = getattr(conv, "needs_human_review", False)
+            entry["is_llm"] = True
+        else:
+            entry["is_llm"] = False
+        semantic_map_meta[req_id] = entry
+    (package_dir / "semantic_map.json").write_text(
+        json.dumps(semantic_map_meta, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     (package_dir / "provenance.log").write_text(
@@ -380,11 +507,11 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         encoding="utf-8",
     )
 
-    provenance.insert(
-        0,
+    provenance[:0] = [
+        f"[{now.isoformat()}] assemble_package: {explain_note}",
         f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
         f"落盘 {len(manifest_files)} 个文件",
-    )
+    ]
 
     logger.info(
         "assemble.done",
@@ -399,4 +526,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         "experiment_package": package,
         "missing_items": missing_items,
         "provenance": provenance,
+        "quality_explanation": qe,
+        # llm_usage 为累积字段（Annotated operator.add），节点只返回本次条目
+        "llm_usage": [explain_usage_entry],
     }

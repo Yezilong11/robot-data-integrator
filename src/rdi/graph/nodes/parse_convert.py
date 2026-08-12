@@ -6,7 +6,7 @@ Skill，把 ``RawData.data`` 字节解析标准化为 ``ParsedItem``；处理失
 Skill 时装配 ``MissingItem``。``data_requirements`` 缺失某 ``req_id`` 时由原始
 数据格式兜底推断 ``req_type``，推断失败则跳过并记 warning。
 
-返回 state 字段：``parsed_data`` / ``missing_items`` / ``provenance``。
+返回 state 字段：``parsed_data`` / ``missing_items`` / ``provenance`` / ``semantic_map``。
 """
 
 import os
@@ -17,6 +17,7 @@ from typing import Any
 import numpy as np
 
 from rdi.graph.state import SystemState
+from rdi.intelligence.schemas import SemanticConvention
 from rdi.logging import get_logger
 from rdi.models import (
     DataReq,
@@ -174,6 +175,10 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
     parsed_data: dict[str, ParsedItem] = {}
     missing_items: list[MissingItem] = []
     provenance: list[str] = []
+    # D2: LLM 语义统一 —— 未知数据集约定经 LLM 识别后按 req_id 登记（assemble 落盘 semantic_map.json）
+    semantic_map: dict[str, SemanticConvention] = {}
+    # D2: 语义统一的 LLM 决策调用记录，装配进 state.llm_usage（成功与降级都记录）
+    llm_usage_entries: dict[str, dict[str, Any]] = {}
 
     # 预先解析/推断所有 req_id，避免多遍循环重复记录跳过日志
     resolved: dict[str, DataReq] = {}
@@ -211,6 +216,9 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
         start = time.monotonic()
         outcome = registry.process_retrieval_result(result, req, context=context)
         elapsed = time.monotonic() - start
+        usage = getattr(outcome, "llm_usage", None)
+        if usage:
+            llm_usage_entries[req_id] = {**usage, "req_id": req_id}
         skill = registry.get_skill(req.req_type)
         skill_name = skill.skill_name if skill is not None else "no-skill"
         if isinstance(outcome, ParsedItem):
@@ -219,6 +227,15 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
             provenance.append(
                 f"[{now.isoformat()}] parse_convert: {skill_name} 处理 {req_id} → 成功"
             )
+            # D2: 该 req 的语义约定由 LLM 识别 → 登记 state.semantic_map 供 assemble 落盘
+            sc = getattr(outcome, "semantic_convention", None)
+            if sc:
+                convention = SemanticConvention.model_validate(sc)
+                semantic_map[req_id] = convention
+                provenance.append(
+                    f"[{now.isoformat()}] parse_convert: {skill_name} 处理 {req_id} "
+                    f"→ 语义由 LLM 识别（{convention.semantic_type}）"
+                )
         else:
             missing_items.append(outcome)
             status = "missing"
@@ -267,4 +284,6 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
         "parsed_data": parsed_data,
         "missing_items": missing_items,
         "provenance": provenance,
+        "semantic_map": semantic_map,
+        "llm_usage": list(llm_usage_entries.values()),
     }

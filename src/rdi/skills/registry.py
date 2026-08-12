@@ -198,6 +198,7 @@ class SkillRegistry:
                 reason=reason,
                 alternatives=alternatives,
                 fallback_sources=[],
+                llm_usage=res.llm_usage,
             )
 
         # confidence 由 Skill 自身报告；is_inferred 据此推断
@@ -241,6 +242,8 @@ class SkillRegistry:
             units=res.units,
             coordinate_frame=res.coordinate_frame,
             timestamp_epoch=res.timestamp_epoch,
+            semantic_convention=res.semantic_convention,
+            llm_usage=res.llm_usage,
         )
 
 

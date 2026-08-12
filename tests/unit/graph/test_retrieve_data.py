@@ -19,6 +19,7 @@ from rdi.exceptions import (
     AdapterRateLimitError,
 )
 from rdi.graph.nodes.retrieve_data import node_retrieve_data, node_retrieve_single
+from rdi.intelligence.schemas import RetrievalPlan
 from rdi.models.common import DataReqType, DataSource, Priority
 from rdi.models.goal import DataReq
 from rdi.models.retrieval import RawData, RetrievalResult, SearchResult
@@ -52,6 +53,17 @@ def mock_adapters(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     mock_cls = Mock(return_value=mock_adapter)
     monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
     return mock_adapter
+
+
+@pytest.fixture(autouse=True)
+def mock_plan_retrieval(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    """默认把检索策略决策 mock 为降级（返回 None），避免既有用例触发真实 LLM 调用。
+
+    需要验证 LLM 规划生效的用例再自行 monkeypatch 覆盖返回值。
+    """
+    mock = Mock(return_value=None)
+    monkeypatch.setattr("rdi.intelligence.decisions.plan_retrieval", mock)
+    return mock
 
 
 async def test_retrieve_single_calls_hermes_inject_and_record(
@@ -404,8 +416,14 @@ async def test_retrieve_data_parallel_merges_all_reqs(
     }
     result = await node_retrieve_data(state)
 
-    # 返回结构键齐全
-    assert set(result) == {"retrieval_results", "provenance", "retrieval_errors"}
+    # 返回结构键齐全（② 起新增 retrieval_plan / llm_usage 合并字段）
+    assert set(result) == {
+        "retrieval_results",
+        "provenance",
+        "retrieval_errors",
+        "retrieval_plan",
+        "llm_usage",
+    }
     # 两个需求的检索结果都存在（gather 保持输入顺序，与 requirements 一致）
     assert set(result["retrieval_results"]) == {"req_p1", "req_p2"}
     assert result["retrieval_results"]["req_p1"].status == "success"
@@ -785,3 +803,118 @@ async def test_retrieve_data_new_type_missing_in_parallel(
     assert "该类型暂无内置数据源" in calib.error_message
     # 无源新类型不产生 retrieval_errors
     assert result["retrieval_errors"] == []
+
+
+# ─── ② 检索策略规划（LLM 决策层） ───
+
+
+async def test_retrieve_single_uses_llm_plan_queries_and_returns_plan(
+    mock_hermes: Mock, mock_adapters: AsyncMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """② LLM 搜索词置前、确定性 query 兜底在尾部；retrieval_plan/llm_usage 写入返回。"""
+    plan = RetrievalPlan(
+        queries=["foo bar"],
+        preferred_sources=["github"],
+        reason="r",
+        confidence=0.9,
+    )
+    monkeypatch.setattr("rdi.intelligence.decisions.plan_retrieval", Mock(return_value=plan))
+
+    def _search_side_effect(query: str) -> list[SearchResult]:
+        # LLM 词先尝试（无结果），失败后兜底到确定性 query 并命中
+        if query == "foo bar":
+            return []
+        return [SearchResult(item_id="test-1", title="Test", source=DataSource.GITHUB)]
+
+    mock_adapters.search.side_effect = _search_side_effect
+
+    payload = {
+        "req_id": "req_plan",
+        "req_type": "code",
+        "description": "查找代码",
+        "keywords": ["test"],
+    }
+    result = await node_retrieve_single(payload)
+
+    # LLM 搜索词在最前，确定性 query 兜底在其后
+    calls = [c.args[0] for c in mock_adapters.search.call_args_list]
+    assert calls == ["foo bar", "test"]
+    assert result["retrieval_results"]["req_plan"].status == "success"
+    # 返回扩展字段
+    assert result["retrieval_plan"]["req_plan"] is plan
+    expected = {
+        "decision": "retrieval_plan",
+        "req_id": "req_plan",
+        "status": "ok",
+        "model": settings.llm_model,
+    }
+    assert expected.items() <= result["llm_usage"][0].items()
+    assert isinstance(result["llm_usage"][0]["elapsed"], float)
+    # 规划成功不产生降级溯源
+    assert not any("检索策略 LLM 降级" in p for p in result["provenance"])
+
+
+async def test_retrieve_single_llm_plan_fallback_keeps_deterministic_behavior(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """② LLM 降级（返回 None）：provenance 记录降级、queries 仍以确定性 query 起步。"""
+    payload = {
+        "req_id": "req_fb",
+        "req_type": "code",
+        "description": "查找代码",
+        "keywords": ["test"],
+    }
+    result = await node_retrieve_single(payload)
+
+    assert any("检索策略 LLM 降级" in p for p in result["provenance"])
+    calls = [c.args[0] for c in mock_adapters.search.call_args_list]
+    assert calls[0] == "test"
+    assert result["retrieval_plan"] == {}
+    expected = {
+        "decision": "retrieval_plan",
+        "req_id": "req_fb",
+        "status": "fallback",
+        "model": settings.llm_model,
+    }
+    assert expected.items() <= result["llm_usage"][0].items()
+    assert isinstance(result["llm_usage"][0]["elapsed"], float)
+
+
+async def test_retrieve_data_merges_llm_plans_and_usage(
+    mock_hermes: Mock, mock_adapters: AsyncMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """② node_retrieve_data 合并各需求的 retrieval_plan 与 llm_usage。"""
+    plan = RetrievalPlan(
+        queries=["foo bar"],
+        preferred_sources=["github"],
+        reason="r",
+        confidence=0.9,
+    )
+    monkeypatch.setattr("rdi.intelligence.decisions.plan_retrieval", Mock(return_value=plan))
+
+    state: dict[str, Any] = {
+        "data_requirements": [
+            DataReq(
+                req_id="req_p1",
+                req_type=DataReqType.CODE,
+                description="查找抓取代码",
+                priority=Priority.REQUIRED,
+                keywords=["grasp"],
+            ),
+            DataReq(
+                req_id="req_p2",
+                req_type=DataReqType.PAPER,
+                description="查找抓取论文",
+                priority=Priority.REQUIRED,
+                keywords=["grasp"],
+            ),
+        ]
+    }
+    result = await node_retrieve_data(state)
+
+    assert set(result["retrieval_plan"]) == {"req_p1", "req_p2"}
+    assert all(result["retrieval_plan"][rid] is plan for rid in ("req_p1", "req_p2"))
+    assert len(result["llm_usage"]) == 2
+    assert all(
+        u["decision"] == "retrieval_plan" and u["status"] == "ok" for u in result["llm_usage"]
+    )

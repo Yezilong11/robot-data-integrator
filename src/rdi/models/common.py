@@ -195,6 +195,14 @@ class StandardResult(BaseModel):
         default=None,
         description="数据对应的时间戳（Unix epoch 秒），None=无",
     )
+    semantic_convention: dict[str, Any] | None = Field(
+        default=None,
+        description="LLM 生成的语义约定（SemanticConvention.model_dump()），None=无",
+    )
+    llm_usage: dict[str, Any] | None = Field(
+        default=None,
+        description="本次处理中的 LLM 决策调用记录（decision/status/model/elapsed），None=无",
+    )
     data: Any = Field(
         default=None,
         description="处理后的内存中间表示对象（CanonicalRobot/Trimesh/...），供节点装配 ParsedItem 与校验引擎读取",

@@ -15,15 +15,18 @@
 每次循环（revised / unsatisfied）清空旧的 ``retrieval_results``，避免状态污染。
 """
 
+import time
 from datetime import datetime
 from typing import Any
 
 from langgraph.types import interrupt
 from pydantic import BaseModel, Field
 
+from rdi.config import settings
 from rdi.exceptions import LLMParseError, LLMUnavailableError
 from rdi.graph.state import SystemState
-from rdi.intelligence import LLMClient
+from rdi.intelligence import LLMClient, decisions
+from rdi.intelligence.schemas import ReviewSuggestions
 from rdi.logging import get_logger
 
 logger = get_logger(__name__)
@@ -147,6 +150,100 @@ def _apply_feedback_to_requirements(requirements: list[Any], feedback: list[str]
     return updated
 
 
+def _build_rule_suggestions(state: SystemState) -> ReviewSuggestions:
+    """规则兜底审查建议：无缺失项且无校验问题时 satisfied，否则 revised。
+
+    LLM 决策失败（``decisions.suggest_review`` 返回 None）时兜底；
+    confidence 固定 0.5（规则判定，非 LLM 输出）。
+    """
+    validation_issues = state.get("validation_issues", [])
+    missing_items = state.get("missing_items", [])
+    if not missing_items and not validation_issues:
+        return ReviewSuggestions(
+            verdict="satisfied",
+            issues=[],
+            rationale="未发现缺失项与校验问题，可接受当前数据包",
+            confidence=0.5,
+        )
+    issues: list[str] = []
+    for m in missing_items:
+        rid = m.get("req_id") if isinstance(m, dict) else getattr(m, "req_id", "?")
+        reason = m.get("reason") if isinstance(m, dict) else getattr(m, "reason", "")
+        issues.append(f"缺失 {rid}: {reason}")
+    for issue in validation_issues:
+        rid = issue.get("req_id") if isinstance(issue, dict) else getattr(issue, "req_id", "?")
+        message = issue.get("message") if isinstance(issue, dict) else getattr(issue, "message", "")
+        issues.append(f"校验 {rid}: {message}")
+    return ReviewSuggestions(
+        verdict="revised",
+        issues=issues,
+        rationale=(
+            f"存在 {len(missing_items)} 项缺失与 {len(validation_issues)} 项校验问题，"
+            "建议修订后重新解析"
+        ),
+        confidence=0.5,
+    )
+
+
+def _build_suggestions_for_interrupt(
+    state: SystemState,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """为 interrupt payload 构造审查建议 dict 与 llm_usage 记录。
+
+    LLM 决策成功时 source="llm"、status="ok"；失败（返回 None）时用
+    ``_build_rule_suggestions`` 规则兜底，source="rule"、status="fallback"。
+    source 仅用于前端展示，不写入 state.review_suggestions。
+
+    Returns:
+        (suggestions_dict, llm_usage_entry)；suggestions_dict 为 None 表示无建议。
+    """
+    package = state.get("experiment_package")
+    quality_report = getattr(package, "quality_report", None)
+    quality_summary = str(quality_report.model_dump()) if quality_report is not None else ""
+
+    def _summarize(items: list[Any], req_key: str, text_key: str) -> list[str]:
+        """把 dict/模型混合列表压缩为 "req_id: 关键文本" 摘要（文本截断）。"""
+        out: list[str] = []
+        for it in items:
+            rid = it.get(req_key) if isinstance(it, dict) else getattr(it, req_key, "?")
+            text = it.get(text_key) if isinstance(it, dict) else getattr(it, text_key, "")
+            out.append(f"{rid}: {str(text)[:100]}")
+        return out
+
+    revision_history = [
+        f"revision {r.get('revision')}: {r.get('decision')}"
+        for r in state.get("revision_history", [])
+    ]
+    _start = time.monotonic()
+    result = decisions.suggest_review(
+        quality_summary=quality_summary,
+        missing_items=_summarize(state.get("missing_items", []), "req_id", "reason"),
+        validation_issues=_summarize(state.get("validation_issues", []), "req_id", "message"),
+        retrieval_errors=_summarize(state.get("retrieval_errors", []), "req_id", "error_message"),
+        revision_history=revision_history,
+    )
+    if result is None:
+        result = _build_rule_suggestions(state)
+        source, status = "rule", "fallback"
+    else:
+        source, status = "llm", "ok"
+    return (
+        {
+            "verdict": result.verdict,
+            "issues": result.issues,
+            "rationale": result.rationale,
+            "confidence": result.confidence,
+            "source": source,
+        },
+        {
+            "decision": "review_suggestions",
+            "status": status,
+            "model": settings.llm_model,
+            "elapsed": round(time.monotonic() - _start, 3),
+        },
+    )
+
+
 def node_human_review(state: SystemState) -> dict[str, Any]:
     """用户审查节点：根据 ``review_decision`` 走三种分支。
 
@@ -159,6 +256,8 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
       并写入 ``retry_req_ids``（仅重跑失败 req，成功项沿用）；
     - unsatisfied：额外更新 ``revised_goal`` / ``data_requirements``（反馈写回
       需求）/ ``review_iteration``，并写入 ``retry_req_ids``。
+    - interrupt 分支额外写入 ``review_suggestions``（ReviewSuggestions 实例，
+      LLM 或规则生成）与 ``llm_usage``（LLM 决策调用记录）。
 
     除纯 satisfied 外（revised / unsatisfied / 强制结束），向 ``revision_history``
     追加一条修订记录（revision 序号、decision、feedback、revised_goal、timestamp），
@@ -172,6 +271,8 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
         更新 state 的字段（部分更新 dict）。
     """
     now = datetime.now().isoformat()
+    suggestions_dict: dict[str, Any] | None = None
+    llm_usage_entry: dict[str, Any] | None = None
     if state.get("interrupt_review"):
         # 真实流程：等待用户决策（interrupt 返回 resume 值）
         req_ids = []
@@ -179,12 +280,15 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
             rid = r.get("req_id") if isinstance(r, dict) else getattr(r, "req_id", None)
             if rid is not None:
                 req_ids.append(str(rid))
-        resume = interrupt(
-            {
-                "message": "请审查当前数据包，选择 satisfied / revised / unsatisfied",
-                "req_ids": req_ids,
-            }
-        )
+        # LLM 决策层：生成审查建议（失败时规则兜底），仅用于 interrupt payload 展示，不参与决策分支
+        suggestions_dict, llm_usage_entry = _build_suggestions_for_interrupt(state)
+        payload: dict[str, Any] = {
+            "message": "请审查当前数据包，选择 satisfied / revised / unsatisfied",
+            "req_ids": req_ids,
+        }
+        if suggestions_dict is not None:
+            payload["suggestions"] = suggestions_dict
+        resume = interrupt(payload)
         decision = str((resume or {}).get("decision", "satisfied"))
         feedback = (
             [str(m) for m in (resume or {}).get("feedback", [])]
@@ -216,6 +320,11 @@ def node_human_review(state: SystemState) -> dict[str, Any]:
 
     provenance = [f"[{now}] human_review: 审查决定为 {decision}"]
     update: dict[str, Any] = {"review_decision": decision}
+
+    if suggestions_dict is not None:
+        # 审查建议写入 state（ReviewSuggestions 实例，不含 source；source 仅前端展示用）
+        update["review_suggestions"] = ReviewSuggestions.model_validate(suggestions_dict)
+        update["llm_usage"] = [llm_usage_entry] if llm_usage_entry else []
 
     if decision == "satisfied":
         if forced:

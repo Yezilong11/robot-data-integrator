@@ -209,18 +209,35 @@ def test_summarize_state_plain() -> None:
 def test_resume_workflow_no_pending(monkeypatch: pytest.MonkeyPatch) -> None:
     """无待继续运行时给出明确提示，不触碰 graph。"""
     monkeypatch.setattr("rdi.frontend.app._pending_thread_id", None)
-    status, summary, req_status, tree, manifest, vissues, rcheck, missing, prov, stage = (
-        resume_workflow("satisfied", "")
-    )
+    (
+        status,
+        summary,
+        req_status,
+        tree,
+        manifest,
+        vissues,
+        rcheck,
+        missing,
+        prov,
+        stage,
+        decision_board,
+        llm_usage,
+        semantic_map,
+        status_bar,
+    ) = resume_workflow("satisfied", "")
     assert "没有待继续的运行" in status
     assert summary == {}
     assert req_status["data"] == []
     assert tree == ""
-    assert manifest == ""
+    assert manifest == "{}"
     assert vissues == []
     assert rcheck == {}
     assert missing == []
     assert prov == ""
+    assert decision_board == ""
+    assert llm_usage == []
+    assert semantic_map == "{}"
+    assert "待输入" in status_bar  # 无待继续运行 → 待输入徽章
     # 无待继续运行 → 五个阶段均未开始
     assert stage == {
         "目标解析": "未开始",
@@ -232,7 +249,7 @@ def test_resume_workflow_no_pending(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> None:
-    """真实流程首跑中断：10 元组首元素提示到「数据包审查」继续运行，展示中断态中间结果。"""
+    """真实流程首跑中断：14 元组首元素提示到审查选择后继续运行，展示中断态中间结果。"""
     interrupted_state: dict[str, Any] = {
         "user_goal": "goal",
         "data_requirements": [_req("req_a")],
@@ -242,6 +259,21 @@ def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> 
         "missing_items": [],
         "provenance": ["p1", "p2"],
         "errors": [],
+        # E5：LLM 决策层字段（中断态已产出检索规划/语义约定/质量解释）
+        "retrieval_plan": {
+            "req_a": {
+                "queries": ["grasp pose"],
+                "preferred_sources": ["dexgrasp"],
+                "reason": "示例理由",
+                "confidence": 0.8,
+            }
+        },
+        "semantic_map": {"req_a": {"semantic_type": "grasp_pose", "confidence": 0.9}},
+        "quality_explanation": {"summary": "示例质量概述", "confidence": 0.85},
+        "llm_usage": [
+            {"decision": "retrieval_plan", "req_id": "req_a", "status": "ok"},
+            {"decision": "explain_quality", "status": "ok"},
+        ],
     }
     monkeypatch.setattr(
         "rdi.frontend.app.run_graph",
@@ -250,7 +282,7 @@ def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> 
 
     result = run_workflow("真实流程", "goal", None, "")
 
-    assert len(result) == 10
+    assert len(result) == 14
     assert "继续运行" in result[0]
     assert result[1]["user_goal"] == "goal"
     assert result[2]["headers"] == [
@@ -270,12 +302,19 @@ def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> 
     assert result[9]["数据检索"] == "完成"
     assert result[9]["质量校验"] == "完成"
     assert result[9]["整合打包"] == "未开始"
+    # E5：决策看板渲染 LLM 决策内容（检索面板含搜索词与「LLM 生成」标注）
+    assert "LLM 生成" in result[10]
+    assert "grasp pose" in result[10]
+    # E5：llm_usage / semantic_map / 状态条同步输出
+    assert result[11] == interrupted_state["llm_usage"]
+    assert "grasp_pose" in result[12]
+    assert "待审查" in result[13]  # 中断态 → 待审查徽章
 
 
-def test_run_workflow_demo_mode_returns_10_tuple() -> None:
-    """演示流程走 build_demo_state + _format_result，返回完整 10 元组展示数据。"""
+def test_run_workflow_demo_mode_returns_14_tuple() -> None:
+    """演示流程走 build_demo_state + _format_result，返回完整 14 元组展示数据。"""
     result = run_workflow("演示流程", "演示目标", None, "")
-    assert len(result) == 10
+    assert len(result) == 14
     assert result[0] == "运行完成"
     assert result[1]["user_goal"] == "演示目标"
     assert result[3]  # package tree 非空
@@ -291,6 +330,20 @@ def test_run_workflow_demo_mode_returns_10_tuple() -> None:
         "质量校验": "完成",
         "整合打包": "完成",
     }
+    # E5：决策看板含四个决策点演示数据与「LLM 生成 / 规则兜底」诚实标注
+    assert "检索策略规划" in result[10] or "搜索词" in result[10]
+    assert "LLM 生成" in result[10]
+    assert "规则兜底" in result[10]
+    assert "语义待人工确认" in result[10]
+    assert "质量概述" in result[10]
+    assert "建议结论" in result[10]
+    # E5：llm_usage 演示记录（decision/model/status/elapsed）
+    assert result[11]
+    assert result[11][0]["decision"] == "retrieval_plan"
+    assert result[11][0]["status"] == "ok"
+    assert "semantic_type" in result[12]  # semantic_map.json 内容
+    assert "完成" in result[13]  # 演示完整跑完 → 完成徽章
+    assert "run_id" in result[13]  # 状态条含 run_id
 
 
 def test_demo_package_isolated_in_demo_root() -> None:
@@ -328,12 +381,13 @@ def test_real_workflow_failure_no_fallback_package(monkeypatch: pytest.MonkeyPat
     after = _fallback_dirs()
 
     assert before == after  # 未创建任何 fallback 包目录
-    assert len(result) == 10
+    assert len(result) == 14
     assert result[0] == "运行失败"  # 空产物 + 有错误 → 真实失败
     assert result[1]["errors"] == ["backend exploded"]
     assert result[3] == ""  # 无数据包目录树
     assert result[4] == "{}"  # 空产物 manifest
     assert result[8] == ""  # 无 provenance
+    assert "失败" in result[13]  # 失败徽章
 
 
 def test_real_workflow_exception_no_fallback_package(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -349,11 +403,12 @@ def test_real_workflow_exception_no_fallback_package(monkeypatch: pytest.MonkeyP
     after = _fallback_dirs()
 
     assert before == after  # 未创建任何 fallback 包目录
-    assert len(result) == 10
+    assert len(result) == 14
     assert result[0] == "运行失败"
     assert result[1]["errors"] == ["graph crashed"]
     assert result[3] == ""
     assert result[4] == "{}"
+    assert "失败" in result[13]
 
 
 def test_stage_progress_view_explicit_record() -> None:

@@ -20,6 +20,7 @@ import importlib
 import io
 import json
 import pickle
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,6 +28,8 @@ import numpy as np
 from numpy.lib.npyio import NpzFile
 from scipy.spatial.transform import Rotation  # type: ignore[import-untyped]
 
+from rdi.config.settings import settings
+from rdi.intelligence import decisions
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
 from rdi.skills.base import BaseSkill
 
@@ -63,11 +66,17 @@ def _is_metadata_payload(decoded: Any) -> bool:
     return isinstance(decoded, dict) and ("dataset_id" in decoded or "reason" in decoded)
 
 
-def _get_field(grasp: Any, key: str) -> Any:
-    """从原始抓取（dict 或对象）读取字段。"""
+def _get_field(grasp: Any, key: str, field_map: dict[str, str] | None = None) -> Any:
+    """从原始抓取（dict 或对象）读取字段；field_map 提供标准字段名→源字段名反查。"""
+    src_key = key
+    if field_map:
+        for src, std in field_map.items():
+            if std == key:
+                src_key = src
+                break
     if isinstance(grasp, dict):
-        return grasp[key]
-    return getattr(grasp, key)
+        return grasp[src_key]
+    return getattr(grasp, src_key)
 
 
 def _align_z_to(approach: np.ndarray) -> np.ndarray:
@@ -110,22 +119,32 @@ class GraspSkill(BaseSkill):
         """把 ``CanonicalGrasp`` 列表打包为可序列化的 ``{"grasps": [...]}``。"""
         return {"grasps": [self._grasp_to_dict(g) for g in grasps]}
 
-    def standardize_grasps(self, raw_grasps: list[Any], dataset_name: str) -> list[CanonicalGrasp]:
-        """按 ``DATASET_CONVENTIONS`` 标准化原始抓取。
+    def standardize_grasps(
+        self,
+        raw_grasps: list[Any],
+        dataset_name: str,
+        convention: dict[str, str] | None = None,
+        field_map: dict[str, str] | None = None,
+    ) -> list[CanonicalGrasp]:
+        """按约定标准化原始抓取。
 
         旋转 matrix/quaternion_wxyz(重排为 xyzw)/euler/quaternion_xyzw → 四元数 [x,y,z,w]；
-        unit=millimeter 时 position 与 width 除以 1000。KeyError: dataset_name 未知；
+        unit=millimeter 时 position 与 width 除以 1000。``convention`` 提供动态约定
+        （LLM 语义识别）时优先使用，否则查 ``DATASET_CONVENTIONS``；``field_map``
+        提供标准字段名→源字段名反查。KeyError: dataset_name 未知且无 convention；
         ValueError: 旋转字段缺失或无法解析。
         """
-        conv = DATASET_CONVENTIONS[dataset_name]  # KeyError 由调用方捕获
+        conv = convention or DATASET_CONVENTIONS[dataset_name]  # KeyError 由调用方捕获
         rot_kind = conv["rotation"]
         to_meters = conv["unit"] == "millimeter"
         results: list[CanonicalGrasp] = []
         for g in raw_grasps:
-            pos = np.asarray(_get_field(g, "position"), dtype=np.float64).copy()
-            width = float(_get_field(g, "width"))
-            score = float(_get_field(g, "score"))
-            quat_xyzw = np.asarray(self._rotation_from_raw(g, rot_kind).as_quat(), dtype=np.float64)
+            pos = np.asarray(_get_field(g, "position", field_map), dtype=np.float64).copy()
+            width = float(_get_field(g, "width", field_map))
+            score = float(_get_field(g, "score", field_map))
+            quat_xyzw = np.asarray(
+                self._rotation_from_raw(g, rot_kind, field_map).as_quat(), dtype=np.float64
+            )
             if to_meters:
                 pos = pos / 1000.0
                 width = width / 1000.0
@@ -133,20 +152,24 @@ class GraspSkill(BaseSkill):
         return results
 
     @staticmethod
-    def _rotation_from_raw(grasp: Any, rot_kind: str) -> Rotation:
+    def _rotation_from_raw(
+        grasp: Any, rot_kind: str, field_map: dict[str, str] | None = None
+    ) -> Rotation:
         """按约定从原始抓取构造 ``Rotation``。"""
         if rot_kind == "matrix":
             return Rotation.from_matrix(
-                np.asarray(_get_field(grasp, "rotation_matrix"), dtype=np.float64)
+                np.asarray(_get_field(grasp, "rotation_matrix", field_map), dtype=np.float64)
             )
         if rot_kind == "quaternion_wxyz":
-            q = np.asarray(_get_field(grasp, "quaternion"), dtype=np.float64)
+            q = np.asarray(_get_field(grasp, "quaternion", field_map), dtype=np.float64)
             return Rotation.from_quat(np.array([q[1], q[2], q[3], q[0]]))  # wxyz→xyzw
         if rot_kind == "quaternion_xyzw":
-            return Rotation.from_quat(np.asarray(_get_field(grasp, "quaternion"), dtype=np.float64))
+            return Rotation.from_quat(
+                np.asarray(_get_field(grasp, "quaternion", field_map), dtype=np.float64)
+            )
         if rot_kind == "euler":
             return Rotation.from_euler(
-                "xyz", np.asarray(_get_field(grasp, "euler"), dtype=np.float64)
+                "xyz", np.asarray(_get_field(grasp, "euler", field_map), dtype=np.float64)
             )
         raise ValueError(f"未知旋转约定: {rot_kind}")
 
@@ -208,11 +231,7 @@ class GraspSkill(BaseSkill):
         """按数据集约定解析抓取数据，失败降级不抛异常。"""
         dataset_name = str(kwargs.get("dataset_name", "graspnet"))
         if dataset_name not in DATASET_CONVENTIONS:
-            return StandardResult(
-                success=False,
-                canonical_format="CanonicalGrasp",
-                errors=[f"未知数据集约定: {dataset_name}"],
-            )
+            return self._parse_unknown_dataset(data, dataset_name, kwargs)
         name = kwargs.get("name")
         output_path = f"grasps/{name}.json" if name else None
         conv = DATASET_CONVENTIONS[dataset_name]
@@ -293,9 +312,18 @@ class GraspSkill(BaseSkill):
         )
 
     def _finish_standardize(
-        self, raw: Any, dataset_name: str, output_path: str | None
+        self,
+        raw: Any,
+        dataset_name: str,
+        output_path: str | None,
+        convention: dict[str, str] | None = None,
+        field_map: dict[str, str] | None = None,
     ) -> StandardResult:
-        """对已加载的原始抓取列表调用 standardize_grasps 装配结果。"""
+        """对已加载的原始抓取列表调用 standardize_grasps 装配结果。
+
+        ``convention``/``field_map`` 透传给 standardize_grasps，支持 LLM 动态约定
+        覆盖已知数据集；不传时沿用 ``DATASET_CONVENTIONS`` 硬编码约定。
+        """
         if not isinstance(raw, list):
             return StandardResult(
                 success=False,
@@ -303,14 +331,14 @@ class GraspSkill(BaseSkill):
                 errors=[f"{dataset_name} 数据非抓取列表，无法标准化"],
             )
         try:
-            grasps = self.standardize_grasps(raw, dataset_name)
+            grasps = self.standardize_grasps(raw, dataset_name, convention, field_map)
         except (KeyError, ValueError) as exc:
             return StandardResult(
                 success=False,
                 canonical_format="CanonicalGrasp",
                 errors=[f"{dataset_name} 标准化失败: {exc}"],
             )
-        conv = DATASET_CONVENTIONS[dataset_name]
+        conv = convention or DATASET_CONVENTIONS[dataset_name]
         return StandardResult(
             success=True,
             canonical_format="CanonicalGrasp",
@@ -343,6 +371,106 @@ class GraspSkill(BaseSkill):
                     errors=[f"{dataset_name} 数据解析失败（需原始抓取列表）"],
                 )
         return self._finish_standardize(raw, dataset_name, output_path)
+
+    def _parse_unknown_dataset(
+        self, data: bytes, dataset_name: str, kwargs: dict[str, Any]
+    ) -> StandardResult:
+        """未知数据集约定：先尽力解码原始抓取列表，再由 LLM 识别语义约定后标准化。
+
+        LLM 失败（None）或解码失败/非列表时返回现状失败结果（不调用 LLM，因为
+        没有可摘要的数据）；``field_map`` 生效使源字段名与标准字段名解耦；
+        单位换算与旋转解析仍由 ``standardize_grasps`` 确定性执行，LLM 只产出约定。
+        """
+        failure = StandardResult(
+            success=False,
+            canonical_format="CanonicalGrasp",
+            errors=[f"未知数据集约定: {dataset_name}"],
+        )
+        raw: Any = None
+        try:
+            decoded = json.loads(data.decode("utf-8"))
+            if isinstance(decoded, list):
+                raw = decoded
+        except (ValueError, UnicodeDecodeError):
+            pass
+        if raw is None:
+            try:
+                raw = pickle.load(io.BytesIO(data))  # noqa: S301
+            except Exception:  # noqa: BLE001
+                return failure
+        if not isinstance(raw, list) or not raw:
+            return failure
+        first = raw[0]
+        if isinstance(first, dict):
+            field_names = list(first.keys())
+        else:
+            field_names = [n for n in dir(first) if not n.startswith("_")]
+        dtypes = {
+            n: type(first[n] if isinstance(first, dict) else getattr(first, n)).__name__
+            for n in field_names
+        }
+        sample_values = {
+            n: str(first[n] if isinstance(first, dict) else getattr(first, n))[:60]
+            for n in field_names
+        }
+        _start = time.monotonic()
+        sc = decisions.unify_semantics(
+            dataset_name=dataset_name,
+            field_names=field_names,
+            dtypes=dtypes,
+            sample_values=sample_values,
+            expected_fields=[
+                "position",
+                "width",
+                "score",
+                "rotation_matrix",
+                "quaternion",
+                "euler",
+            ],
+        )
+        usage_entry = {
+            "decision": "unify_semantics",
+            "status": "ok" if sc is not None else "fallback",
+            "model": settings.llm_model,
+            "elapsed": round(time.monotonic() - _start, 3),
+        }
+        if sc is None:
+            failure.llm_usage = usage_entry
+            return failure
+        conv = {"rotation": sc.rotation, "origin": sc.origin, "unit": sc.unit}
+        name = kwargs.get("name")
+        output_path = f"grasps/{name}.json" if name else None
+        try:
+            grasps = self.standardize_grasps(
+                raw, dataset_name, convention=conv, field_map=sc.field_map
+            )
+        except (KeyError, ValueError) as exc:
+            # rotation=unknown 或字段缺失时诚实降级，不硬编约定
+            return StandardResult(
+                success=False,
+                canonical_format="CanonicalGrasp",
+                errors=[f"未知数据集约定: {dataset_name}", f"{dataset_name} 标准化失败: {exc}"],
+            )
+        warnings = [
+            f"由 LLM 语义识别补充未知数据集约定: rotation={sc.rotation}, "
+            f"origin={sc.origin}, unit={sc.unit}, 字段映射={sc.field_map}"
+        ]
+        if sc.needs_human_review:
+            warnings.append("语义待人工确认")
+        return StandardResult(
+            success=True,
+            canonical_format="CanonicalGrasp",
+            output_path=output_path,
+            completeness_pct=100.0,
+            confidence_score=round(sc.confidence, 2) if 0 < sc.confidence <= 1 else 0.8,
+            data_source_quality="real",
+            units=conv["unit"],
+            coordinate_frame=conv["origin"],
+            warnings=warnings,
+            semantic_convention=sc.model_dump(),
+            llm_usage=usage_entry,
+            data=self._serialize_grasps(grasps),
+        )
 
     def validate(self, result: StandardResult) -> ValidationReport:
         """校验抓取结果：失败→invalid；任一 position 分量 |.|>1m→WARNING。"""
