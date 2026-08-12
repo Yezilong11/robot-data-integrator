@@ -17,7 +17,7 @@ from .common import (
 from .goal import DataReq, GoalSpec, PaperInfo
 from .manifest import ManifestFile, ManifestMissingItem, PackageManifest, QualityReport
 from .parsed import MissingItem, ParsedItem
-from .retrieval import RawData, RetrievalError, RetrievalResult, SearchResult
+from .retrieval import RawData, RawReference, RetrievalError, RetrievalResult, SearchResult
 
 __all__ = [
     # common
@@ -36,6 +36,7 @@ __all__ = [
     # retrieval
     "SearchResult",
     "RawData",
+    "RawReference",
     "RetrievalResult",
     "RetrievalError",
     # parsed

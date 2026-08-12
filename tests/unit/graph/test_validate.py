@@ -11,8 +11,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 import trimesh
 
+from rdi.graph.nodes.assemble import node_assemble
 from rdi.graph.nodes.validate import node_validate
 from rdi.models import DataReqType, DataSource, ParsedItem, Priority
 from rdi.models.common import ProvenanceEntry, Severity
@@ -66,6 +68,20 @@ def test_validate_empty_data_is_error() -> None:
         i.req_id == "r1" and i.message == "解析数据为空" and i.severity == Severity.ERROR
         for i in out["validation_issues"]
     )
+
+
+def test_validate_iteration_increments() -> None:
+    """validate 使用独立的 validate_iteration 自增（不依赖历史字段 iteration_count）。"""
+    state: SystemState = {"parsed_data": {}, "validate_iteration": 2}
+    out = node_validate(state)
+    assert out["validate_iteration"] == 3
+    assert "iteration_count" not in out  # 不再写历史字段
+
+
+def test_validate_iteration_defaults_to_one() -> None:
+    """state 无 validate_iteration 时从 1 开始计数。"""
+    out = node_validate({"parsed_data": {}})
+    assert out["validate_iteration"] == 1
 
 
 def test_validate_low_completeness_and_confidence_are_warnings() -> None:
@@ -140,6 +156,58 @@ def test_validate_urdf_failure() -> None:
     )
 
 
+def test_validate_urdf_self_contained_assets_passes() -> None:
+    """P0-3：raw_bytes + 完整 assets（自包含）时 load_meshes=True 深度校验通过。"""
+    pytest.importorskip("yourdfpy")
+    mesh_bytes = trimesh.creation.box(extents=[1.0, 1.0, 1.0]).export(file_type="stl")
+    urdf = (
+        b'<robot name="r"><link name="base"><visual><geometry>'
+        b'<mesh filename="meshes/base.stl"/>'
+        b"</geometry></visual></link></robot>"
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.ROBOT_URDF,
+        name="r1",
+        canonical_format="urdf",
+        output_path="robots/r1.urdf",
+        data=urdf,
+        raw_bytes=urdf,
+        assets={"meshes/base.stl": mesh_bytes},
+        provenance=_provenance("urdf"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert not any(
+        i.req_id == "r1" and "URDF 无法解析" in i.message for i in out["validation_issues"]
+    )
+
+
+def test_validate_urdf_missing_asset_is_error() -> None:
+    """P0-3：raw_bytes 引用 assets 中缺失的 mesh 时深度校验报 ERROR。"""
+    pytest.importorskip("yourdfpy")
+    urdf = (
+        b'<robot name="r"><link name="base"><visual><geometry>'
+        b'<mesh filename="meshes/missing.stl"/>'
+        b"</geometry></visual></link></robot>"
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.ROBOT_URDF,
+        name="r1",
+        canonical_format="urdf",
+        output_path="robots/r1.urdf",
+        data=urdf,
+        raw_bytes=urdf,
+        assets={},  # 引用的 mesh 缺失
+        provenance=_provenance("urdf"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert any(
+        i.req_id == "r1" and "URDF 无法解析" in i.message and i.severity == Severity.ERROR
+        for i in out["validation_issues"]
+    )
+
+
 def test_validate_mesh_bytes_success() -> None:
     mesh_bytes = (_SAMPLE_DIR / "mesh" / "hand.stl").read_bytes()
     state: SystemState = {
@@ -167,6 +235,25 @@ def test_validate_mesh_trimesh_object_success() -> None:
     }
     out = node_validate(state)
     assert not any(i.req_id == "r1" and "面片" in i.message for i in out["validation_issues"])
+
+
+def test_validate_mesh_stl_bytes_with_obj_original_format() -> None:
+    """回归：归一化后 data 为 STL bytes、canonical_format="stl"，但原始格式是 obj。
+
+    此前 bytes 加载用 original_format="obj" 去解析 STL bytes 导致误报
+    "Mesh 无法加载"；现在优先用 canonical_format，未知格式才轮询。
+    """
+    mesh_bytes = trimesh.creation.box(extents=[1.0, 1.0, 1.0]).export(file_type="stl")
+    item = _item("r1", DataReqType.MESH, mesh_bytes, fmt="stl")
+    item = item.model_copy(
+        update={"provenance": _provenance(fmt="obj")}
+    )  # canonical_format=stl, original_format=obj
+    state: SystemState = {"parsed_data": {"r1": item}}
+    out = node_validate(state)
+    assert not any(
+        i.req_id == "r1" and ("Mesh 无法加载" in i.message or "面片" in i.message)
+        for i in out["validation_issues"]
+    )
 
 
 def test_validate_mesh_failure_invalid_bytes() -> None:
@@ -323,3 +410,130 @@ def test_validate_loadability_never_crashes() -> None:
     out = node_validate(state)
     assert "validation_issues" in out
     assert isinstance(out["validation_issues"], list)
+
+
+def test_validate_sim_config_mujoco_runtime_passed() -> None:
+    """mujoco 可用时，合法 MJCF 应通过加载 + 一步仿真，runtime_check 记为 passed。"""
+    pytest.importorskip("mujoco")
+    xml_bytes = (_SAMPLE_DIR / "sim" / "sample_mujoco.xml").read_bytes()
+    state: SystemState = {
+        "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, xml_bytes, fmt="xml")},
+    }
+    out = node_validate(state)
+    assert not any(i.req_id == "r1" and "无法解析" in i.message for i in out["validation_issues"])
+    assert out["runtime_check"]["r1"]["status"] == "passed"
+
+
+def test_validate_sim_config_invalid_xml_still_error() -> None:
+    """非法 XML 即使 mujoco 可用仍记为 ERROR，runtime_check 为 failed。"""
+    pytest.importorskip("mujoco")
+    state: SystemState = {
+        "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, b"<not>xml", fmt="xml")},
+    }
+    out = node_validate(state)
+    assert any(
+        i.req_id == "r1" and "XML/MJCF 无法解析" in i.message and i.severity == Severity.ERROR
+        for i in out["validation_issues"]
+    )
+    assert out["runtime_check"]["r1"]["status"] == "failed"
+
+
+def test_validate_sim_config_mujoco_compile_failure_is_error() -> None:
+    """XML 语法合法但 MuJoCo 编译失败（actuator 引用不存在的 joint）记为 ERROR。"""
+    pytest.importorskip("mujoco")
+    bad_mjcf = (
+        b"<mujoco>"
+        b"<worldbody><body><joint name='j1'/><geom type='sphere' size='0.1'/></body></worldbody>"
+        b"<actuator><motor joint='no_such_joint'/></actuator>"
+        b"</mujoco>"
+    )
+    state: SystemState = {
+        "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, bad_mjcf, fmt="mjcf")},
+    }
+    out = node_validate(state)
+    assert any(
+        i.req_id == "r1"
+        and "MJCF 无法通过 MuJoCo 验证" in i.message
+        and i.severity == Severity.ERROR
+        for i in out["validation_issues"]
+    )
+    assert out["runtime_check"]["r1"]["status"] == "failed"
+
+
+def test_validate_sim_config_runtime_check_skipped_without_mujoco(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """mujoco 不可导入时保持 XML 语法校验行为，runtime_check 记为 skipped。"""
+    monkeypatch.setattr("rdi.graph.nodes.validate.mujoco", None)
+    xml_bytes = (_SAMPLE_DIR / "sim" / "sample_mujoco.xml").read_bytes()
+    state: SystemState = {
+        "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, xml_bytes, fmt="xml")},
+    }
+    out = node_validate(state)
+    assert not any(i.req_id == "r1" and "无法解析" in i.message for i in out["validation_issues"])
+    assert out["runtime_check"]["r1"]["status"] == "skipped"
+
+
+def test_validate_sim_config_missing_asset_is_not_error() -> None:
+    """引用外部 mesh 但资源缺失的 MJCF 应降级为 WARNING（资源引用未解析），而非 ERROR。"""
+    pytest.importorskip("mujoco")
+    missing_mesh_mjcf = (
+        b'<mujoco model="x"><asset><mesh name="m" file="no_such_dir/no_such.stl"/></asset>'
+        b"<worldbody><geom type='mesh' mesh='m'/></worldbody></mujoco>"
+    )
+    state: SystemState = {
+        "parsed_data": {"r1": _item("r1", DataReqType.SIM_CONFIG, missing_mesh_mjcf, fmt="xml")},
+    }
+    out = node_validate(state)
+    assert any(i.req_id == "r1" and "资源引用未解析" in i.message for i in out["validation_issues"])
+    assert not any(
+        i.req_id == "r1" and i.severity == Severity.ERROR for i in out["validation_issues"]
+    )
+    assert out["runtime_check"]["r1"]["status"] == "skipped"
+
+
+def test_validate_sim_config_mujoco_with_assets_passes() -> None:
+    """带 assets 的 MJCF（引用外部 mesh）经临时目录加载通过 → runtime_check 为 passed。"""
+    pytest.importorskip("mujoco")
+    mesh_bytes = trimesh.creation.box(extents=[1.0, 1.0, 1.0]).export(file_type="stl")
+    mjcf = (
+        b'<mujoco model="x"><asset><mesh name="m" file="meshes/base.stl"/></asset>'
+        b'<worldbody><geom type="mesh" mesh="m"/></worldbody></mujoco>'
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.SIM_CONFIG,
+        name="r1",
+        canonical_format="xml",
+        output_path="sim/r1.xml",
+        data=mjcf,
+        assets={"meshes/base.stl": mesh_bytes},
+        provenance=_provenance("xml"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert not any(
+        i.req_id == "r1" and i.severity == Severity.ERROR for i in out["validation_issues"]
+    )
+    assert out["runtime_check"]["r1"]["status"] == "passed"
+
+
+def test_validate_runtime_check_written_to_manifest(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """validate 输出的 runtime_check 应被 assemble 写入 PackageManifest。"""
+    pytest.importorskip("mujoco")
+    xml_bytes = (_SAMPLE_DIR / "sim" / "sample_mujoco.xml").read_bytes()
+    item = _item("r1", DataReqType.SIM_CONFIG, xml_bytes, fmt="xml")
+    validate_out = node_validate({"parsed_data": {"r1": item}})
+    assert validate_out["runtime_check"]["r1"]["status"] == "passed"
+
+    monkeypatch.setattr("rdi.graph.nodes.assemble.settings.output_dir", str(tmp_path))
+    assemble_out = node_assemble(
+        {
+            "parsed_data": {"r1": item},
+            "validation_issues": validate_out["validation_issues"],
+            "runtime_check": validate_out["runtime_check"],
+        }
+    )
+    pkg = assemble_out["experiment_package"]
+    assert pkg.runtime_check["r1"]["status"] == "passed"

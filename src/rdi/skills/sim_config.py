@@ -224,9 +224,9 @@ class SimConfigSkill(BaseSkill):
     def generate_minimal_mjcf(self, urdf_path: str | None, mesh_path: str | None) -> bytes:
         """根据 URDF/Mesh 路径生成最小可用 MJCF XML 字节。
 
-        MJCF 包含：天空盒、地面平面、光源；若提供 mesh_path，则在 worldbody
-        中放置一个引用该 mesh 的自由物体。URDF 路径仅在 XML 注释中记录，因为
-        MJCF 的 ``<include>`` 只支持 MJCF 文件，不支持 URDF。
+        MJCF 包含：天空盒、地面平面、光源、默认相机；若提供 mesh_path，则在
+        worldbody 中放置一个引用该 mesh 的自由物体。URDF 路径仅在 XML 注释中
+        记录，因为 MJCF 的 ``<include>`` 只支持 MJCF 文件，不支持 URDF。
         """
         root = etree.Element("mujoco", attrib={"model": "generated_fallback"})
         if urdf_path:
@@ -289,6 +289,12 @@ class SimConfigSkill(BaseSkill):
             "light",
             attrib={"name": "top", "pos": "0 0 3", "dir": "0 0 -1"},
         )
+        # 指导书要求 fallback 场景包含地面和相机
+        etree.SubElement(
+            worldbody,
+            "camera",
+            attrib={"name": "default", "pos": "0 -2 1.5", "xyaxes": "0 0 1 1 0 0"},
+        )
         if mesh_path:
             mesh_name = Path(mesh_path).stem
             body = etree.SubElement(
@@ -329,11 +335,27 @@ class SimConfigSkill(BaseSkill):
             completeness_pct=80.0,
             confidence_score=0.8,
             warnings=warnings,
+            data_source_quality="fallback",
+            is_fallback=True,
             data=xml_bytes,
         )
 
+    @staticmethod
+    def _is_mjcf_xml(data: bytes) -> bool:
+        """轻量判断：字节内容是否为完整 MJCF XML（含 ``<mujoco`` 根与 ``<worldbody``）。
+
+        仅做存在性检查（不完整解析），由调用方先经 ``parse_mujoco`` 保证语法合法。
+        """
+        return b"<mujoco" in data and b"<worldbody" in data
+
     def process(self, data: bytes, **kwargs: Any) -> StandardResult:
-        """按 ``fmt`` 分发解析；非 MJCF 或解析失败时生成最小 MJCF。"""
+        """按 ``fmt`` 分发解析；非 MJCF 或解析失败时生成最小 MJCF。
+
+        C13：当输入本身是完整合法的 MJCF XML（Adapter 从真实场景下载的字节，
+        fmt=mjcf/xml/mujoco）时直接原样返回（直通），保留 mesh 资产 / body /
+        joint / actuator 等真实场景结构，避免 ``parse_mujoco -> to_mjcf`` 重建
+        造成的信息丢失；仅在内容为其他 XML 结构或需从零生成时才走重建/fallback。
+        """
         fmt = str(kwargs.get("fmt", "mjcf")).lower()
         name = kwargs.get("name")
         urdf_path = kwargs.get("urdf_path")
@@ -349,6 +371,19 @@ class SimConfigSkill(BaseSkill):
                     str(mesh_path) if mesh_path else None,
                     output_path,
                     reason=f"MJCF 解析失败: {exc}",
+                )
+            if self._is_mjcf_xml(data):
+                # 真实 MJCF XML 直通：不重建，保留全部真实场景结构
+                warnings = ["场景无物体"] if not scene.objects else []
+                return StandardResult(
+                    success=True,
+                    canonical_format="xml",
+                    output_path=output_path,
+                    completeness_pct=100.0,
+                    confidence_score=1.0,
+                    warnings=warnings,
+                    data_source_quality="real",
+                    data=data,
                 )
             xml_bytes = self.to_mjcf(scene)
             warnings = ["场景无物体"] if not scene.objects else []

@@ -10,12 +10,18 @@ import ast
 import contextlib
 import io
 import os
+import posixpath
+import shutil
 import tempfile
+import time
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from rdi.logging import get_logger
 from rdi.models import DataReqType, Priority, Severity, ValIssue
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from rdi.graph.state import SystemState
@@ -26,16 +32,21 @@ except Exception:  # pragma: no cover - 依赖未安装时优雅降级
     trimesh = None  # type: ignore[assignment]
 
 try:
-    import yourdfpy
+    import yourdfpy  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover - 依赖未安装时优雅降级
-    yourdfpy = None  # type: ignore[assignment]
+    yourdfpy = None
+
+try:
+    import mujoco  # type: ignore[import-untyped]
+except Exception:  # pragma: no cover - 依赖未安装时优雅降级
+    mujoco = None
 
 
 def _is_empty(data: Any) -> bool:
     """判断解析数据是否为空：None、空 bytes/str 或空容器。"""
     if data is None:
         return True
-    if isinstance(data, (bytes, str)):
+    if isinstance(data, str | bytes):
         return len(data) == 0
     try:
         return len(data) == 0
@@ -51,16 +62,93 @@ def _is_dict_like(data: Any) -> bool:
     )
 
 
+def _missing_urdf_assets(urdf_bytes: bytes, base_dir: str) -> list[str]:
+    """返回 URDF 中相对引用但 ``base_dir`` 下缺失的外部资源（规范化路径）。
+
+    yourdfpy 对缺失 mesh 只打 WARNING 不抛异常，故加载后需显式核对
+    自包含性：相对路径引用的 mesh/texture 必须在资产目录中存在，
+    否则数据包无法离线完整加载。绝对 URL（package:// 等）与 xacro 变量
+    不在此检查范围（下载阶段已跳过）。
+    """
+    missing: list[str] = []
+    try:
+        root = ET.fromstring(urdf_bytes)
+    except Exception:  # noqa: BLE001 — XML 非法由 yourdfpy 加载报错，不重复报告
+        return missing
+    for elem in root.iter():
+        tag = elem.tag.split("}")[-1].lower()
+        if tag not in {"mesh", "texture"}:
+            continue
+        rel = (elem.get("filename") or elem.get("file") or "").strip()
+        if not rel:
+            continue
+        if rel.startswith(("package://", "model://", "http://", "https://")):
+            continue
+        if "$(" in rel or rel.startswith("/"):
+            continue
+        if rel.startswith("./"):
+            rel = rel[2:]
+        norm = posixpath.normpath(rel)
+        while norm.startswith("../"):
+            norm = norm[3:]
+        if not norm or norm == "..":
+            continue
+        if not os.path.exists(os.path.join(base_dir, norm)) and norm not in missing:
+            missing.append(norm)
+    return missing
+
+
 def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
-    """校验 URDF 是否能被外部工具加载。"""
-    data = item.data
-    if isinstance(data, bytes):
-        if yourdfpy is None:
+    """校验 URDF 是否能被外部工具加载。
+
+    P0-3 数据包自包含：若 ParsedItem 携带原始字节（raw_bytes）与外部资产
+    （assets），把两者写入临时目录后用 ``load_meshes=True`` 深度校验，并核对
+    相对引用的 mesh/texture 是否齐备（yourdfpy 对缺失 mesh 仅打 WARNING，
+    故需显式检查自包含性）；无 raw_bytes 时维持现状（仅做无网格加载）。
+    """
+    if yourdfpy is None:
+        return ValIssue(
+            severity=Severity.ERROR,
+            req_id=req_id,
+            message="URDF 校验依赖未安装: yourdfpy",
+        )
+    raw_bytes = getattr(item, "raw_bytes", None)
+    if raw_bytes:
+        tmp = tempfile.mkdtemp()
+        try:
+            model_path = os.path.join(tmp, "model.urdf")
+            with open(model_path, "wb") as f:
+                f.write(raw_bytes)
+            # 写入引用的外部资产；剥离前导 ../ 段，防止写入逃逸出临时目录
+            for rel_path, content in (getattr(item, "assets", None) or {}).items():
+                norm_rel = posixpath.normpath(rel_path)
+                while norm_rel.startswith("../"):
+                    norm_rel = norm_rel[3:]
+                if not norm_rel or norm_rel == "..":
+                    continue
+                asset_path = os.path.join(tmp, norm_rel)
+                os.makedirs(os.path.dirname(asset_path), exist_ok=True)
+                with open(asset_path, "wb") as f:
+                    f.write(content)
+            yourdfpy.URDF.load(model_path, load_meshes=True)
+            missing = _missing_urdf_assets(raw_bytes, tmp)
+            if missing:
+                return ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"URDF 无法解析: 引用的外部资源缺失: {', '.join(missing)}",
+                )
+        except Exception as exc:  # noqa: BLE001 - 记录加载失败而非中断
             return ValIssue(
                 severity=Severity.ERROR,
                 req_id=req_id,
-                message="URDF 校验依赖未安装: yourdfpy",
+                message=f"URDF 无法解析: {exc}",
             )
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        return None
+    data = item.data
+    if isinstance(data, bytes):
         try:
             with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as tmp:
                 tmp.write(data)
@@ -107,7 +195,11 @@ def _validate_mesh_loadability(item: Any, req_id: str) -> ValIssue | None:
                 message="Mesh 校验依赖未安装: trimesh",
             )
         try:
-            mesh = _load_mesh_bytes(data, item.provenance.original_format or "")
+            # 优先用 canonical_format（归一化后 MESH 项为 "stl" bytes，原始格式可能
+            # 是 obj 等与内容不一致的源格式）；未知格式由 _load_mesh_bytes 轮询兜底。
+            mesh = _load_mesh_bytes(
+                data, item.canonical_format or item.provenance.original_format or ""
+            )
         except Exception as exc:  # noqa: BLE001
             return ValIssue(
                 severity=Severity.ERROR,
@@ -115,11 +207,11 @@ def _validate_mesh_loadability(item: Any, req_id: str) -> ValIssue | None:
                 message=f"Mesh 无法加载: {exc}",
             )
         try:
-            faces = len(mesh.faces)  # type: ignore[attr-defined]
+            faces = len(mesh.faces)
         except AttributeError:
             # 可能是 Scene，取其中所有 mesh 的面数之和
             try:
-                faces = sum(len(m.faces) for m in mesh.geometry.values())  # type: ignore[union-attr]
+                faces = sum(len(m.faces) for m in mesh.geometry.values())
             except Exception as exc:  # noqa: BLE001
                 return ValIssue(
                     severity=Severity.ERROR,
@@ -142,36 +234,168 @@ def _validate_mesh_loadability(item: Any, req_id: str) -> ValIssue | None:
     return None
 
 
-def _validate_sim_config_loadability(item: Any, req_id: str) -> ValIssue | None:
-    """校验仿真配置（XML/MJCF/Python）语法是否可被外部工具加载。"""
+# mujoco 加载失败中提示外部资源（mesh/texture 文件）缺失的典型错误子串
+_MISSING_ASSET_HINTS = (
+    "could not find",
+    "cannot find",
+    "no such file",
+    "not found",
+    "failed to load",
+    "cannot open",
+    "opening file",
+    "missing file",
+)
+
+
+def _is_missing_asset_error(message: str) -> bool:
+    """判断 mujoco 报错是否为外部资源文件缺失（而非 XML 本身非法）。"""
+    lower = message.lower()
+    return any(hint in lower for hint in _MISSING_ASSET_HINTS)
+
+
+def _mujoco_load(xml_bytes: bytes, assets: dict[str, bytes]) -> None:
+    """用 MuJoCo 加载 MJCF 并运行一步仿真；失败抛异常。
+
+    P0-3：item 带 assets 时把 xml 与外部资源写入临时目录后 ``from_xml_path``
+    加载，使 MJCF 引用的相对路径 mesh/texture 可被解析；无 assets 时维持
+    ``from_xml_string`` 加载。写入时相对路径防目录逃逸：normpath 并剥离
+    前导 ../ 段。
+    """
+    if not assets:
+        model = mujoco.MjModel.from_xml_string(xml_bytes)
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = os.path.join(tmp, "model.xml")
+            with open(model_path, "wb") as f:
+                f.write(xml_bytes)
+            for rel_path, content in assets.items():
+                norm_rel = posixpath.normpath(rel_path)
+                while norm_rel.startswith("../"):
+                    norm_rel = norm_rel[3:]
+                if not norm_rel or norm_rel == "..":
+                    continue
+                asset_path = os.path.join(tmp, norm_rel)
+                os.makedirs(os.path.dirname(asset_path), exist_ok=True)
+                with open(asset_path, "wb") as f:
+                    f.write(content)
+            model = mujoco.MjModel.from_xml_path(model_path)
+    sim_data = mujoco.MjData(model)
+    mujoco.mj_step(model, sim_data)
+
+
+def _mujoco_runtime_check(item: Any, req_id: str) -> tuple[ValIssue | None, dict[str, Any]]:
+    """MuJoCo 运行时验证：加载 MJCF 并运行一步仿真。
+
+    P0-3：item 携带 assets 时把 xml 与外部资源写入临时目录后加载，使 MJCF
+    引用的外部 mesh/texture 可解析，加载通过则 status=passed（不再因缺资源
+    恒为 skipped）。
+
+    资源缺失降级策略：无 assets、或带 assets 但引用资源仍未下载全时，加载会
+    因找不到文件而失败。无 assets 时先尝试写临时文件后用 ``from_xml_path``
+    加载（按文件位置解析相对路径）；仍失败或带 assets 仍缺资源，视为「资源
+    引用未解析」——XML 语法合法但运行时验证无法完成，降级为 WARNING（非
+    ERROR），避免把真实但引用外部资产的 XML 误判为不可运行。其余编译/仿真
+    错误（非法几何、actuator 配置等）视为真实失败，记为 ERROR。
+
+    Returns:
+        (issue, runtime_check)：issue 为失败时的问题记录（成功为 None）；
+        runtime_check 为 ``{status: passed/failed/skipped, detail}``。
+    """
+    if mujoco is None:
+        return None, {"status": "skipped", "detail": "mujoco 未安装，仅做 XML 语法校验"}
+    data = item.data
+    xml_bytes = data if isinstance(data, bytes) else data.encode("utf-8")
+    assets = getattr(item, "assets", None) or {}
+    try:
+        _mujoco_load(xml_bytes, assets)
+    except Exception as exc:  # noqa: BLE001 - 记录 mujoco 加载/仿真失败原因
+        if not _is_missing_asset_error(str(exc)):
+            return (
+                ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"MJCF 无法通过 MuJoCo 验证: {exc}",
+                ),
+                {"status": "failed", "detail": f"MuJoCo 加载/仿真失败: {exc}"},
+            )
+        if assets:
+            # 带 assets 仍缺资源（下载不全）→ 直接降级，无更深的回退
+            return (
+                ValIssue(
+                    severity=Severity.WARNING,
+                    req_id=req_id,
+                    message=f"MJCF 资源引用未解析（跳过运行时验证）: {exc}",
+                ),
+                {"status": "skipped", "detail": f"资源引用未解析: {exc}"},
+            )
+        tmp_path = ""
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as tmp:
+                tmp.write(xml_bytes)
+                tmp_path = tmp.name
+            model = mujoco.MjModel.from_xml_path(tmp_path)
+            sim_data = mujoco.MjData(model)
+            mujoco.mj_step(model, sim_data)
+        except Exception as exc2:  # noqa: BLE001
+            return (
+                ValIssue(
+                    severity=Severity.WARNING,
+                    req_id=req_id,
+                    message=f"MJCF 资源引用未解析（跳过运行时验证）: {exc2}",
+                ),
+                {"status": "skipped", "detail": f"资源引用未解析: {exc2}"},
+            )
+        finally:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp_path)
+    return None, {"status": "passed", "detail": "MuJoCo 加载与一步仿真成功"}
+
+
+def _validate_sim_config_loadability(
+    item: Any, req_id: str
+) -> tuple[ValIssue | None, dict[str, Any] | None]:
+    """校验仿真配置可加载性，返回 (issue, runtime_check)。
+
+    issue 为 ERROR 表示 XML/Python 语法或 MuJoCo 运行时验证失败；
+    runtime_check 记录 MuJoCo 运行时验证结果（status: passed/failed/skipped +
+    detail），非 MJCF 格式（python/urdf）不参与验证，返回 None。
+    """
     fmt = (item.canonical_format or "").lower()
     data = item.data
-    if fmt in ("xml", "mjcf", "urdf") and isinstance(data, (str, bytes)):
+    if fmt in ("xml", "mjcf", "urdf") and isinstance(data, str | bytes):
         try:
             ET.fromstring(data)
         except Exception as exc:  # noqa: BLE001
-            return ValIssue(
-                severity=Severity.ERROR,
-                req_id=req_id,
-                message=f"XML/MJCF 无法解析: {exc}",
+            return (
+                ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"XML/MJCF 无法解析: {exc}",
+                ),
+                {"status": "failed", "detail": f"XML 语法错误: {exc}"},
             )
-    elif (fmt == "python" or fmt.endswith(".py")) and isinstance(data, (str, bytes)):
+        if fmt in ("xml", "mjcf"):
+            return _mujoco_runtime_check(item, req_id)
+    elif (fmt == "python" or fmt.endswith(".py")) and isinstance(data, str | bytes):
         try:
             ast.parse(data)
         except SyntaxError as exc:
-            return ValIssue(
-                severity=Severity.ERROR,
-                req_id=req_id,
-                message=f"Python 仿真配置语法错误: {exc}",
+            return (
+                ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"Python 仿真配置语法错误: {exc}",
+                ),
+                None,
             )
-    return None
+    return None, None
 
 
 def _validate_grasp_loadability(item: Any, req_id: str) -> ValIssue | None:
     """校验抓取数据是否包含必要字段。"""
     data = item.data
     if _is_dict_like(data):
-        keys = set(data.keys()) if hasattr(data, "keys") else set(data)  # type: ignore[arg-type]
+        keys = set(data.keys()) if hasattr(data, "keys") else set(data)
         has_pose_pair = "translations" in keys and "rotations" in keys
         has_grasps = "grasps" in keys
         if not has_pose_pair and not has_grasps:
@@ -183,9 +407,15 @@ def _validate_grasp_loadability(item: Any, req_id: str) -> ValIssue | None:
     return None
 
 
-def _check_loadability(item: Any, req_id: str) -> list[ValIssue]:
-    """根据 req_type 分发到对应可加载性校验函数。"""
+def _check_loadability(item: Any, req_id: str) -> tuple[list[ValIssue], dict[str, Any] | None]:
+    """根据 req_type 分发到对应可加载性校验函数。
+
+    Returns:
+        (issues, runtime_check)：runtime_check 为 SIM_CONFIG 的 MuJoCo 运行时
+        验证结果（{status, detail}），其他类型返回 None。
+    """
     issues: list[ValIssue] = []
+    runtime_check: dict[str, Any] | None = None
     req_type = item.req_type
     try:
         if req_type == DataReqType.ROBOT_URDF:
@@ -197,7 +427,7 @@ def _check_loadability(item: Any, req_id: str) -> list[ValIssue]:
             if issue is not None:
                 issues.append(issue)
         elif req_type == DataReqType.SIM_CONFIG:
-            issue = _validate_sim_config_loadability(item, req_id)
+            issue, runtime_check = _validate_sim_config_loadability(item, req_id)
             if issue is not None:
                 issues.append(issue)
         elif req_type == DataReqType.GRASP:
@@ -212,7 +442,7 @@ def _check_loadability(item: Any, req_id: str) -> list[ValIssue]:
                 message=f"可加载性校验异常: {exc}",
             )
         )
-    return issues
+    return issues, runtime_check
 
 
 def node_validate(state: SystemState) -> dict[str, Any]:
@@ -227,20 +457,23 @@ def node_validate(state: SystemState) -> dict[str, Any]:
     - URDF / mesh / sim_config / grasp 增加外部工具可加载性校验
 
     Returns:
-        更新 state 的字段：validation_issues, iteration_count, provenance
+        更新 state 的字段：validation_issues, validate_iteration, provenance
     """
     now = datetime.now()
+    start = time.monotonic()
     parsed_data = state.get("parsed_data", {})
     missing_items = state.get("missing_items", [])
     requirements = state.get("data_requirements", [])
-    iteration = state.get("iteration_count", 0) + 1
+    iteration = state.get("validate_iteration", 0) + 1
 
     req_by_id = {req.req_id: req for req in requirements}
     issues: list[ValIssue] = []
+    runtime_checks: dict[str, Any] = {}
 
     for req_id, item in parsed_data.items():
+        item_issues: list[ValIssue] = []
         if _is_empty(item.data):
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.ERROR,
                     req_id=req_id,
@@ -249,7 +482,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
         if item.completeness_pct < 100.0:
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
                     req_id=req_id,
@@ -258,7 +491,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
         if item.confidence_score < 1.0:
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
                     req_id=req_id,
@@ -267,7 +500,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
         if item.output_path == "":
-            issues.append(
+            item_issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
                     req_id=req_id,
@@ -276,7 +509,19 @@ def node_validate(state: SystemState) -> dict[str, Any]:
             )
 
         # 可加载性深度校验
-        issues.extend(_check_loadability(item, req_id))
+        load_issues, runtime_check = _check_loadability(item, req_id)
+        item_issues.extend(load_issues)
+        if runtime_check is not None:
+            runtime_checks[req_id] = runtime_check
+        issues.extend(item_issues)
+        logger.info(
+            "validate.item",
+            req_id=req_id,
+            req_type=item.req_type.value,
+            status="pass" if not item_issues else "issues",
+            issue_count=len(item_issues),
+            error_count=sum(1 for i in item_issues if i.severity == Severity.ERROR),
+        )
 
     for m in missing_items:
         req = req_by_id.get(m.req_id)
@@ -297,12 +542,28 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                     message="非必需需求缺失",
                 )
             )
+        logger.warning(
+            "validate.missing",
+            req_id=m.req_id,
+            priority=(req.priority.value if req is not None else "unknown"),
+        )
 
     error_count = sum(1 for i in issues if i.severity == Severity.ERROR)
 
+    logger.info(
+        "validate.done",
+        parsed=len(parsed_data),
+        missing=len(missing_items),
+        issues=len(issues),
+        errors=error_count,
+        iteration=iteration,
+        elapsed_seconds=round(time.monotonic() - start, 3),
+    )
+
     return {
         "validation_issues": issues,
-        "iteration_count": iteration,
+        "runtime_check": runtime_checks,
+        "validate_iteration": iteration,
         "provenance": [
             f"[{now.isoformat()}] validate: 检查 {len(parsed_data)} 项解析数据、"
             f"{len(missing_items)} 项缺失，发现 {len(issues)} 个问题 "

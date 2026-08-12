@@ -1,6 +1,7 @@
 # tests/unit/adapters/test_dexgrasp.py
 """DexGraspAdapter 的单元测试。"""
 
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -8,6 +9,12 @@ import pytest
 from rdi.adapters.dexgrasp import DexGraspAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
+
+
+@pytest.fixture(autouse=True)
+def _isolate_file_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """把本地文件缓存根目录指向临时目录，避免测试互相污染仓库 data/cache/。"""
+    monkeypatch.setattr(DexGraspAdapter, "cache_root", lambda self: tmp_path)
 
 
 class TestDexGraspAdapter:
@@ -98,10 +105,47 @@ class TestDexGraspAdapter:
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npz),
         ):
             raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.GRASP)
-            assert raw.source == DataSource.DEXGRASP
-            assert raw.format == "npz"
-            assert raw.data == fake_npz
-            assert "grasps/0000_grasp.npz" in raw.url
+        assert raw.source == DataSource.DEXGRASP
+        assert raw.format == "npz"
+        assert raw.data == fake_npz
+        assert "grasps/0000_grasp.npz" in raw.url
+        assert raw.metadata["is_real_grasp"] is True
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_grasp_by_object_name(self) -> None:
+        """3.2：GRASP + object_name 命中物体对应的 .pkl 抓取文件，复用本地缓存。"""
+        adapter = DexGraspAdapter()
+        fake_pkl = b"\x80\x05pkl"
+        mock_tree = [
+            {"type": "file", "path": "grasps/0000_grasp.pkl"},
+            {"type": "file", "path": "grasps/011_banana_grasp.pkl"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_pkl
+            ) as mock_dl,
+        ):
+            raw1 = await adapter.fetch(
+                "lhrlhr/DexGraspNet2.0",
+                req_type=DataReqType.GRASP,
+                object_name="banana",
+            )
+            raw2 = await adapter.fetch(
+                "lhrlhr/DexGraspNet2.0",
+                req_type=DataReqType.GRASP,
+                object_name="banana",
+            )
+        assert "011_banana" in raw1.url
+        assert raw1.format == "pkl"
+        assert raw1.data == fake_pkl
+        assert raw1.metadata["is_real_grasp"] is True
+        assert raw2.data == fake_pkl
+        # 仅首次触发下载；二次命中本地缓存
+        mock_dl.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_dexgrasp_fetch_dataset_returns_metadata(self) -> None:
@@ -147,6 +191,65 @@ class TestDexGraspAdapter:
         ]
         with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree):
             raw = await adapter.fetch("lhrlhr/DexGraspNet2.0", req_type=DataReqType.GRASP)
+        assert raw.format == "json"
+        payload = __import__("json").loads(raw.data)
+        assert "grasp" in payload["reason"]
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_grasp_raw_fallback(self) -> None:
+        """Task 13：HF 仓库无单文件时走 DexGraspNet 官方 GitHub raw 单物体 grasp 兜底。"""
+        adapter = DexGraspAdapter()
+        fake_npy = b"\x93NUMPY"
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "grasps.tar.gz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_npy
+            ) as mock_dl,
+        ):
+            raw = await adapter.fetch(
+                "lhrlhr/DexGraspNet2.0",
+                req_type=DataReqType.GRASP,
+                object_name="banana",
+            )
+            # 二次 fetch 命中本地缓存，不重复下载
+            await adapter.fetch(
+                "lhrlhr/DexGraspNet2.0",
+                req_type=DataReqType.GRASP,
+                object_name="banana",
+            )
+        assert raw.format == "npy"
+        assert raw.data == fake_npy
+        assert "raw.githubusercontent.com/PKU-EPIC/DexGraspNet" in raw.url
+        assert "ddg-gd_banana_poisson_002.npy" in raw.url
+        assert raw.metadata["is_real_grasp"] is True
+        mock_dl.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_dexgrasp_fetch_grasp_raw_fallback_fails_silently(self) -> None:
+        """Task 13：raw 兜底下载失败时静默降级为 metadata JSON（不抛异常）。"""
+        adapter = DexGraspAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md"},
+            {"type": "file", "path": "grasps.tar.gz"},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter,
+                "_download_bytes",
+                new_callable=AsyncMock,
+                side_effect=AdapterError(message="download failed", source="dexgrasp"),
+            ),
+        ):
+            raw = await adapter.fetch(
+                "lhrlhr/DexGraspNet2.0",
+                req_type=DataReqType.GRASP,
+                object_name="banana",
+            )
         assert raw.format == "json"
         payload = __import__("json").loads(raw.data)
         assert "grasp" in payload["reason"]

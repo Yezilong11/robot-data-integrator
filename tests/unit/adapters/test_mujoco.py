@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from rdi.adapters.mujoco import MuJoCoAdapter
-from rdi.exceptions import AdapterError
+from rdi.adapters.mujoco import _FALLBACK_SCENES, _FETCH_XML, MuJoCoAdapter
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 
 
@@ -23,7 +23,7 @@ class TestMuJoCoAdapter:
         adapter = MuJoCoAdapter()
         assert (
             adapter.base_url
-            == "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/main"
+            == "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994"
         )
 
     def test_adapter_rate_limit(self) -> None:
@@ -49,15 +49,18 @@ class TestMuJoCoAdapter:
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_search_fallback_no_match_returns_empty(self) -> None:
-        """路径 B 无匹配时返回空列表（不返回全量）。"""
+    async def test_search_fallback_no_match_raises_catalog_error(self) -> None:
+        """路径 B 无匹配时抛 AdapterCatalogError（有源但未收录，不静默空）。"""
         adapter = MuJoCoAdapter()
         with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.side_effect = AdapterError(
                 message="primary failed", source=DataSource.MUJOCO.value
             )
-            results = await adapter.search("zzznomatchxyz")
-        assert results == []
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("zzznomatchxyz")
+        assert "仅收录" in exc_info.value.message
+        assert "有源但未收录" in exc_info.value.message
+        assert f"仅收录 {len(_FALLBACK_SCENES)}" in exc_info.value.message
 
     @pytest.mark.asyncio
     async def test_search_fallback_multi_token_match(self) -> None:
@@ -71,6 +74,43 @@ class TestMuJoCoAdapter:
         assert len(results) > 0
         assert results[0].item_id == "franka_emika_panda"
         mock_scrape.assert_awaited_once()
+
+    # ─── C13: 场景列表 / scene.xml 映射 / 关键词匹配 ───
+
+    def test_fallback_scenes_include_unitree_go2(self) -> None:
+        """C13：unitree_go2 加入降级场景列表，且每条记录均带 keywords。"""
+        ids = {s["id"] for s in _FALLBACK_SCENES}
+        assert "unitree_go2" in ids
+        assert all("keywords" in s and s["keywords"] for s in _FALLBACK_SCENES)
+        go2 = next(s for s in _FALLBACK_SCENES if s["id"] == "unitree_go2")
+        assert go2["keywords"] == ["unitree", "go2", "quadruped"]
+
+    def test_fetch_xml_uses_scene_xml_for_scene_scenes(self) -> None:
+        """C13：franka_emika_panda 与 unitree_go2 均映射到规范的 scene.xml 场景文件。"""
+        assert _FETCH_XML["unitree_go2"] == "unitree_go2/scene.xml"
+        assert _FETCH_XML["franka_emika_panda"].endswith("franka_emika_panda/scene.xml")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("query", "expected_id"),
+        [
+            ("go2", "unitree_go2"),
+            ("unitree robot", "unitree_go2"),
+            ("spot", "boston_dynamics_spot"),
+            ("boston dynamics", "boston_dynamics_spot"),
+            ("panda", "franka_emika_panda"),
+            ("viperx", "aloha"),
+        ],
+    )
+    async def test_search_fallback_keyword_match(self, query: str, expected_id: str) -> None:
+        """C13：keywords 参与 token 匹配，提升真实场景命中率。"""
+        adapter = MuJoCoAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.MUJOCO.value
+            )
+            results = await adapter.search(query)
+        assert any(r.item_id == expected_id for r in results)
 
     @pytest.mark.asyncio
     async def test_fetch_success(self) -> None:
@@ -87,6 +127,25 @@ class TestMuJoCoAdapter:
         assert raw.size_bytes == len(fake_xml)
         assert "aloha/aloha.xml" in raw.url
         mock_dl.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_fills_assets_for_mesh_references(self) -> None:
+        """P0-3：MJCF 引用相对 mesh 文件时，fetch 返回的 raw.assets 携带资产字节。"""
+        adapter = MuJoCoAdapter()
+        fake_xml = (
+            b'<mujoco model="x"><asset><mesh file="meshes/foo.stl"/></asset><worldbody/></mujoco>'
+        )
+        with patch.object(
+            adapter,
+            "_download_bytes",
+            new_callable=AsyncMock,
+            side_effect=[fake_xml, b"stl-data"],
+        ) as mock_dl:
+            raw = await adapter.fetch("aloha")
+        assert raw.assets == {"meshes/foo.stl": b"stl-data"}
+        # 主 XML 一次 + mesh 资产一次
+        assert mock_dl.await_count == 2
+        assert mock_dl.call_args_list[1].args[0].endswith("meshes/foo.stl")
 
     @pytest.mark.asyncio
     async def test_fetch_unknown_scene_raises(self) -> None:

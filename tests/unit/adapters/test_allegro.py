@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import yourdfpy
 
-from rdi.adapters.allegro import AllegroAdapter
-from rdi.exceptions import AdapterError
+from rdi.adapters.allegro import _FALLBACK_MODELS, AllegroAdapter
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 
 
@@ -36,7 +36,8 @@ class TestAllegroAdapter:
         """正常情况：base_url 设置正确（C7 修复后走 pal-robotics）。"""
         adapter = AllegroAdapter()
         assert (
-            adapter.base_url == "https://raw.githubusercontent.com/pal-robotics/allegro_hand/main"
+            adapter.base_url
+            == "https://raw.githubusercontent.com/pal-robotics/allegro_hand/93d7154068345a7e6496654b91c14db93818d9b3"
         )
 
     def test_adapter_rate_limit(self) -> None:
@@ -62,15 +63,18 @@ class TestAllegroAdapter:
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_search_fallback_no_match_returns_empty(self) -> None:
-        """路径 B 无匹配时返回空列表（不返回全量）。"""
+    async def test_search_fallback_no_match_raises_catalog_error(self) -> None:
+        """路径 B 无匹配时抛 AdapterCatalogError（有源但未收录，不静默空）。"""
         adapter = AllegroAdapter()
         with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.side_effect = AdapterError(
                 message="primary failed", source=DataSource.ALLEGRO.value
             )
-            results = await adapter.search("zzznomatchxyz")
-        assert results == []
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("zzznomatchxyz")
+        assert "仅收录" in exc_info.value.message
+        assert "有源但未收录" in exc_info.value.message
+        assert f"仅收录 {len(_FALLBACK_MODELS)}" in exc_info.value.message
 
     @pytest.mark.asyncio
     async def test_fetch_v4_plain_urdf(self) -> None:

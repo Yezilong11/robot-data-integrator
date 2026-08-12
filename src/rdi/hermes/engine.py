@@ -49,7 +49,9 @@ class HermesEngine:
         self.db.store_experience(task_desc, req_type, result_status, sources_used, elapsed_seconds)
         success = result_status == "success"
         for source in sources_used:
-            self.db.update_source_stats(source, success=success, elapsed_seconds=elapsed_seconds)
+            self.db.update_source_stats(
+                source, req_type=req_type, success=success, elapsed_seconds=elapsed_seconds
+            )
         self.evolver.maybe_evolve()
 
     def record_feedback(
@@ -62,6 +64,6 @@ class HermesEngine:
         """记录用户对任务结果的反馈。"""
         self.db.store_feedback(task_desc, feedback_type, feedback_content, corrected_value)
 
-    def get_source_priority(self, req_type: str) -> list[str]:
+    def get_source_priority(self, req_type: str, candidates: list[str] | None = None) -> list[str]:
         """获取当前策略下 req_type 候选数据源的优先级排序。"""
-        return self.evolver.get_source_priority(req_type)
+        return self.evolver.get_source_priority(req_type, candidates=candidates)

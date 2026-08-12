@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import yourdfpy
 
-from rdi.adapters.robotiq import RobotiqAdapter
-from rdi.exceptions import AdapterError
+from rdi.adapters.robotiq import _FALLBACK_MODELS, RobotiqAdapter
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 
 
@@ -37,7 +37,7 @@ class TestRobotiqAdapter:
         adapter = RobotiqAdapter()
         assert (
             adapter.base_url
-            == "https://raw.githubusercontent.com/ros-industrial-attic/robotiq/kinetic-devel"
+            == "https://raw.githubusercontent.com/ros-industrial-attic/robotiq/45196f6558fe8ba9d89bc8a105396c68c3e7e892"
         )
 
     def test_adapter_rate_limit(self) -> None:
@@ -62,15 +62,18 @@ class TestRobotiqAdapter:
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_search_fallback_no_match_returns_empty(self) -> None:
-        """路径 B 无匹配时返回空列表（不返回全量）。"""
+    async def test_search_fallback_no_match_raises_catalog_error(self) -> None:
+        """路径 B 无匹配时抛 AdapterCatalogError（有源但未收录，不静默空）。"""
         adapter = RobotiqAdapter()
         with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.side_effect = AdapterError(
                 message="primary failed", source=DataSource.ROBOTIQ.value
             )
-            results = await adapter.search("zzznomatchxyz")
-        assert results == []
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("zzznomatchxyz")
+        assert "仅收录" in exc_info.value.message
+        assert "有源但未收录" in exc_info.value.message
+        assert f"仅收录 {len(_FALLBACK_MODELS)}" in exc_info.value.message
 
     @pytest.mark.asyncio
     async def test_fetch_primary_success(self) -> None:
