@@ -13,7 +13,7 @@ from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.retrieval import RawData, RawReference, SearchResult
 
 # MeshSkill 支持的格式，按优先级排序
 _MESH_EXTS = (".obj", ".stl", ".ply", ".dae")
@@ -84,6 +84,10 @@ class GoogleScannedAdapter(BaseAdapter):
         Returns:
             RawData 包含 mesh 二进制数据或 metadata JSON
         """
+        # D3: 来源级本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）
+        local = self._try_local_fetch(item_id)
+        if local is not None:
+            return local
         # 1. 取文件树
         try:
             file_tree_info = await self._request("GET", f"/models/{item_id}/tip/files")
@@ -134,6 +138,36 @@ class GoogleScannedAdapter(BaseAdapter):
                 return path
         return None
 
+    def _try_local_fetch(self, item_id: str) -> RawData | None:
+        """本地数据集挂载命中检查（D3）。
+
+        本地目录即模型集合根（settings.local_datasets["google_scanned"]），在
+        ``{item_id}/`` 子树内复用 _find_path_by_ext 递归按扩展名选 mesh 文件。
+        命中返回 source=LOCAL 的 RawData（不发网络请求），未命中返回 None 走网络。
+        """
+        root = self.local_dataset_root()
+        if root is None:
+            return None
+        # 网络版 file_tree 为嵌套 children 结构；本地树为扁平 list（path/size），
+        # _find_path_by_ext 同时兼容两种结构（children 缺失时跳过）。
+        file_tree = self._walk_local_tree(root, item_id)
+        mesh_path = self._find_mesh_path(file_tree)
+        if not mesh_path:
+            return None
+        path = self._find_local_file([mesh_path])
+        if path is None:
+            return None
+        data = path.read_bytes()
+        fmt = mesh_path.rsplit(".", 1)[-1].lower()
+        return RawData(
+            source=DataSource.LOCAL,
+            item_id=item_id,
+            format=fmt,
+            data=data,
+            url=f"local://{self.source.value}/{mesh_path}",
+            size_bytes=len(data),
+        )
+
     def _find_path_by_ext(self, nodes: list[dict[str, Any]], ext: str) -> str | None:
         """按扩展名在 file_tree 中递归查找文件路径。"""
         for node in nodes:
@@ -160,11 +194,12 @@ class GoogleScannedAdapter(BaseAdapter):
         """网络/文件不可用时返回明确降级的 metadata JSON。"""
         import json
 
+        zip_url = f"{self.base_url}/models/{item_id}.zip"
         payload = {
             "source": "google_scanned",
             "item_id": item_id,
             "reason": reason,
-            "zip_url": f"{self.base_url}/models/{item_id}.zip",
+            "zip_url": zip_url,
             "mesh_path": mesh_path,
             "mesh_url": mesh_url,
             "file_tree": file_tree or [],
@@ -176,6 +211,12 @@ class GoogleScannedAdapter(BaseAdapter):
             item_id=item_id,
             format="json",
             data=data_bytes,
-            url=f"{self.base_url}/models/{item_id}.zip",
+            url=zip_url,
             size_bytes=len(data_bytes),
+            # P0-4：完整 zip 未下载，记录引用供用户手动获取
+            reference=RawReference(
+                url=zip_url,
+                download_hint=zip_url,
+                reason=reason,
+            ),
         )

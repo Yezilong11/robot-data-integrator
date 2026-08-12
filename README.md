@@ -165,7 +165,8 @@ HF_ENDPOINT=https://hf-mirror.com  # HuggingFace 镜像（可选）
 ADAPTER_TIMEOUT=30.0           # 适配器超时（秒）
 ADAPTER_MAX_RETRY=3             # 最大重试次数
 ADAPTER_RATE_LIMIT=10           # 速率限制（请求/秒）
-ADAPTER_CACHE_TTL=3600          # 缓存 TTL（秒）
+CACHE_TTL_SECONDS=3600          # 缓存 TTL（秒）
+CACHE_MAX_ENTRIES=256           # 内存缓存最大条目数
 CHROMADB_PATH=./data/experience_db  # Hermes 经验库路径
 OUTPUT_DIR=./data/output_packages  # 输出数据包路径
 LOG_LEVEL=INFO                  # 日志级别
@@ -184,7 +185,8 @@ flowchart TD
     E -->|retry| B
     F --> G[human_review<br/>人机审查]
     G -->|satisfied| H[END]
-    G -->|revise| B
+    G -->|revised| A
+    G -->|unsatisfied| B
 ```
 
 ## 数据源

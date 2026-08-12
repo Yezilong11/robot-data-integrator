@@ -40,18 +40,36 @@ def test_store_and_retrieve_experience(tmp_path: Path) -> None:
 
 
 def test_update_source_stats_accumulates(tmp_path: Path) -> None:
-    """连续 update 两次：success=True 然后 success=False，验证累加正确。"""
+    """连续 update 两次：success=True 然后 success=False，验证 req_type 与全局维度各自累加。"""
     db = make_db(tmp_path)
-    db.update_source_stats(source="github", success=True, elapsed_seconds=10.0)
-    db.update_source_stats(source="github", success=False, elapsed_seconds=20.0)
-    stats = db.get_source_stats()
-    assert len(stats) == 1
-    stat = stats[0]
-    assert stat["source_name"] == "github"
-    assert stat["total_requests"] == 2
-    assert stat["success_count"] == 1
-    # avg = (10*1 + 20) / 2 = 15.0
-    assert stat["avg_elapsed"] == 15.0
+    db.update_source_stats(source="github", req_type="code", success=True, elapsed_seconds=10.0)
+    db.update_source_stats(source="github", req_type="code", success=False, elapsed_seconds=20.0)
+    # 全局维度（req_type="*"）与 req_type 维度独立累加
+    for dim in ("*", "code"):
+        stats = db.get_source_stats(req_type=dim)
+        assert len(stats) == 1
+        stat = stats[0]
+        assert stat["source_name"] == "github"
+        assert stat["req_type"] == dim
+        assert stat["total_requests"] == 2
+        assert stat["success_count"] == 1
+        # avg = (10*1 + 20) / 2 = 15.0
+        assert stat["avg_elapsed"] == 15.0
+
+
+def test_update_source_stats_separates_by_req_type(tmp_path: Path) -> None:
+    """同一源在不同 req_type 下的统计互不影响，且都能过滤查询。"""
+    db = make_db(tmp_path)
+    db.update_source_stats(source="github", req_type="code", success=True, elapsed_seconds=1.0)
+    db.update_source_stats(source="github", req_type="dataset", success=False, elapsed_seconds=2.0)
+    code = db.get_source_stats(source_name="github", req_type="code")
+    dataset = db.get_source_stats(source_name="github", req_type="dataset")
+    assert len(code) == 1
+    assert code[0]["total_requests"] == 1
+    assert code[0]["success_count"] == 1
+    assert len(dataset) == 1
+    assert dataset[0]["total_requests"] == 1
+    assert dataset[0]["success_count"] == 0
 
 
 def test_store_feedback_writes_correctly(tmp_path: Path) -> None:

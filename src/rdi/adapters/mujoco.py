@@ -6,51 +6,73 @@
 无需 API Key，直接 HTTP 下载。
 """
 
+from typing import cast
+
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
 # 降级回退：MuJoCo 已知示例场景（C9/C10 修复：使用 mujoco_menagerie 实际存在的机器人）
-_FALLBACK_SCENES: list[dict[str, str]] = [
+# C13：每条记录增加 keywords（小写）供 token 匹配，提升查询命中率
+_FALLBACK_SCENES: list[dict[str, str | list[str]]] = [
     {
         "id": "franka_emika_panda",
         "title": "Franka Emika Panda",
         "description": "Franka Panda 7-DOF 机械臂 MJCF",
+        "keywords": ["franka", "panda", "arm"],
     },
     {
         "id": "agility_cassie",
         "title": "Agility Cassie",
         "description": "Agility Robotics Cassie 双足机器人",
+        "keywords": ["cassie", "agility", "biped"],
     },
-    {"id": "aloha", "title": "ALOHA", "description": "ALOHA 双臂操作系统"},
+    {
+        "id": "aloha",
+        "title": "ALOHA",
+        "description": "ALOHA 双臂操作系统",
+        "keywords": ["aloha", "viperx", "bimanual"],
+    },
     {
         "id": "anybotics_anymal_b",
         "title": "ANYmal B",
         "description": "ANYbotics ANYmal B 四足机器人",
+        "keywords": ["anymal", "anybotics", "quadruped"],
     },
     {
         "id": "boston_dynamics_spot",
         "title": "BD Spot",
         "description": "Boston Dynamics Spot 四足机器人",
+        "keywords": ["spot", "boston dynamics", "quadruped"],
     },
     {
         "id": "berkeley_humanoid",
         "title": "Berkeley Humanoid",
         "description": "UC Berkeley 人形机器人",
+        "keywords": ["berkeley", "humanoid", "biped"],
+    },
+    {
+        "id": "unitree_go2",
+        "title": "Unitree Go2",
+        "description": "Unitree Go2 四足机器人",
+        "keywords": ["unitree", "go2", "quadruped"],
     },
 ]
 
 # C10 修复：item_id → mujoco_menagerie 仓库 main 分支实际 XML 路径
 # （已 curl 验证：mujoco_menagerie 的 XML 文件名不统一，需逐个映射）
+# C13：franka_emika_panda 与 unitree_go2 改用规范的 scene.xml（场景文件，
+# include 机器人本体 + 相机/地面，是完整的可渲染场景；已通过 GitHub API 验证存在）
 _FETCH_XML: dict[str, str] = {
-    "franka_emika_panda": "franka_emika_panda/panda.xml",
+    "franka_emika_panda": "franka_emika_panda/scene.xml",
     "agility_cassie": "agility_cassie/cassie.xml",
     "aloha": "aloha/aloha.xml",
     "anybotics_anymal_b": "anybotics_anymal_b/anymal_b.xml",
     "boston_dynamics_spot": "boston_dynamics_spot/spot.xml",
     "berkeley_humanoid": "berkeley_humanoid/humanoid.xml",
+    "unitree_go2": "unitree_go2/scene.xml",
 }
 
 
@@ -115,25 +137,38 @@ class MuJoCoAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。
+
+        C13：匹配维度扩展 id/title/description + keywords 列表（任一 token
+        命中任一字段/关键词即返回）。
+        """
         tokens = query.lower().split()
         matched = [
             s
             for s in _FALLBACK_SCENES
             if any(
-                token in s["id"].lower()
-                or token in s["title"].lower()
-                or token in s["description"].lower()
+                token in cast("str", s["id"]).lower()
+                or token in cast("str", s["title"]).lower()
+                or token in cast("str", s["description"]).lower()
+                or any(token in kw for kw in s.get("keywords", []))
                 for token in tokens
             )
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_SCENES)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
-                item_id=s["id"],
-                title=s["title"],
+                item_id=cast("str", s["id"]),
+                title=cast("str", s["title"]),
                 source=DataSource.MUJOCO,
-                url=f"{self.base_url}/{s['id']}",
-                metadata={"description": s["description"]},
+                url=f"{self.base_url}/{cast('str', s['id'])}",
+                metadata={"description": cast("str", s["description"])},
             )
             for s in matched
         ]
@@ -141,9 +176,14 @@ class MuJoCoAdapter(BaseAdapter):
     async def fetch(self, item_id: str) -> RawData:
         """下载 MJCF XML 配置文件。
 
+        D3：本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）。
         C10 修复：删除虚构的 _fetch_primary（readthedocs _static/{id}.xml 不存在），
         直接走 mujoco_menagerie GitHub raw URL。XML 文件名不统一，用 _FETCH_XML 映射。
         """
+        # D3: 本地挂载目录即 mujoco_menagerie 仓库根镜像，相对路径即 _FETCH_XML
+        local = self._local_raw(item_id, self._local_candidates(item_id))
+        if local is not None:
+            return local
         rel_path = _FETCH_XML.get(item_id)
         if not rel_path:
             raise AdapterError(
@@ -152,6 +192,7 @@ class MuJoCoAdapter(BaseAdapter):
             )
         xml_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(xml_url)
+        assets = await self._download_xml_with_assets(xml_url, content)
         return RawData(
             source=DataSource.MUJOCO,
             item_id=item_id,
@@ -159,4 +200,12 @@ class MuJoCoAdapter(BaseAdapter):
             data=content,
             url=xml_url,
             size_bytes=len(content),
+            assets=assets,
         )
+
+    def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:
+        """本地挂载候选 (仓库相对路径, format)，与 fetch 的 URL 路径同构。"""
+        rel_path = _FETCH_XML.get(item_id)
+        if not rel_path:
+            return []
+        return [(rel_path, "xml")]

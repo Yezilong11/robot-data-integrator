@@ -319,6 +319,9 @@ class SensorDataSkill(BaseSkill):
                 completeness_pct=completeness,
                 confidence_score=confidence,
                 warnings=warnings_list,
+                # D1: 传感器信号单位异构（电压/温度/加速度…）无法单一标注，坐标系标注 unknown
+                units="",
+                coordinate_frame="unknown",
             )
 
         if fmt == "bag":

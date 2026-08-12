@@ -96,6 +96,104 @@ def test_get_source_priority_orders_by_success_rate() -> None:
     assert "github" not in ordered
 
 
+def test_get_source_priority_uses_req_type_dimension() -> None:
+    """同一源对不同 req_type 有不同成功率时，排序随 req_type 维度变化。
+
+    github 在 code 维度 100%，在 dataset 维度 0%；
+    code 候选 [github, huggingface, paperswithcode] 中 github 应最前，
+    dataset 候选 [github, huggingface, ...] 中 github 应最后。
+    """
+    db = make_db(
+        [
+            {
+                "source_name": "github",
+                "req_type": "code",
+                "total_requests": 2,
+                "success_count": 2,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+            {
+                "source_name": "github",
+                "req_type": "dataset",
+                "total_requests": 2,
+                "success_count": 0,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+            {
+                "source_name": "huggingface",
+                "req_type": "code",
+                "total_requests": 2,
+                "success_count": 0,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+        ]
+    )
+    evolver = StrategyEvolver(db)
+    code_ordered = evolver.get_source_priority("code")
+    assert code_ordered[0] == "github"
+    dataset_ordered = evolver.get_source_priority("dataset")
+    assert dataset_ordered[-1] == "github"
+
+
+def test_get_source_priority_falls_back_to_global_stats() -> None:
+    """无 req_type 维度统计时，回退到全局（req_type="*"）统计。"""
+    db = make_db(
+        [
+            {
+                "source_name": "github",
+                "req_type": "*",
+                "total_requests": 10,
+                "success_count": 9,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+            {
+                "source_name": "huggingface",
+                "req_type": "*",
+                "total_requests": 10,
+                "success_count": 1,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+        ]
+    )
+    evolver = StrategyEvolver(db)
+    ordered = evolver.get_source_priority("code")
+    # github 全局 90% > huggingface 10%，应排最前
+    assert ordered[0] == "github"
+    assert ordered.index("github") < ordered.index("huggingface")
+
+
+def test_get_source_priority_accepts_explicit_candidates() -> None:
+    """显式传入 candidates 时，按指定候选集排序而非注册表候选。"""
+    db = make_db(
+        [
+            {
+                "source_name": "github",
+                "req_type": "*",
+                "total_requests": 10,
+                "success_count": 9,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+            {
+                "source_name": "arxiv",
+                "req_type": "*",
+                "total_requests": 10,
+                "success_count": 2,
+                "avg_elapsed": 0.5,
+                "last_updated": "",
+            },
+        ]
+    )
+    evolver = StrategyEvolver(db)
+    ordered = evolver.get_source_priority("code", candidates=["arxiv", "github"])
+    assert ordered == ["github", "arxiv"]
+
+
 def test_maybe_evolve_respects_interval() -> None:
     """间隔未到不演化；间隔已到则演化。"""
     db = make_db([])

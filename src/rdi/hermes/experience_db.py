@@ -15,6 +15,9 @@ import chromadb
 from rdi.config import settings
 from rdi.intelligence.embedding import get_embedding
 
+# 全局统计维度的 req_type 占位符：source_stats 中 req_type="*" 表示跨需求类型的全局统计
+GLOBAL_REQ_TYPE = "*"
+
 
 class ExperienceDB:
     """经验库，使用 ChromaDB 存储经验、反馈和数据源统计。"""
@@ -119,9 +122,28 @@ class ExperienceDB:
         # feedback 仅按元数据查询，向量本身无意义。
         self._feedback.add(ids=[fb_id], embeddings=[[0.0]], metadatas=[metadata])
 
-    def get_source_stats(self) -> list[dict[str, Any]]:
-        """返回所有数据源的统计记录。"""
-        results = self._source_stats.get(include=["metadatas"])
+    def get_source_stats(
+        self,
+        source_name: str | None = None,
+        req_type: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """返回数据源统计记录，可按 source_name / req_type 过滤。
+
+        req_type="*"（即 GLOBAL_REQ_TYPE）表示全局统计维度；
+        不传任何参数时返回全部（全局 + 各 req_type）记录。
+        """
+        where: dict[str, Any] = {}
+        conditions: list[dict[str, str]] = []
+        if source_name is not None:
+            conditions.append({"source_name": source_name})
+        if req_type is not None:
+            conditions.append({"req_type": req_type})
+        if conditions:
+            # ChromaDB where 顶层仅允许单个条件，多条件需用 $and
+            where = conditions[0] if len(conditions) == 1 else {"$and": conditions}
+            results = self._source_stats.get(include=["metadatas"], where=where)
+        else:
+            results = self._source_stats.get(include=["metadatas"])
         metadatas = results.get("metadatas") or []
         out: list[dict[str, Any]] = []
         for meta in metadatas:
@@ -130,6 +152,8 @@ class ExperienceDB:
             out.append(
                 {
                     "source_name": meta.get("source_name", ""),
+                    # 兼容旧格式记录（无 req_type 字段）：视为全局统计
+                    "req_type": meta.get("req_type", GLOBAL_REQ_TYPE),
                     "total_requests": int(meta.get("total_requests", 0)),
                     "success_count": int(meta.get("success_count", 0)),
                     "avg_elapsed": float(meta.get("avg_elapsed", 0.0)),
@@ -141,36 +165,44 @@ class ExperienceDB:
     def update_source_stats(
         self,
         source: str,
+        req_type: str,
         success: bool,
         elapsed_seconds: float,
     ) -> None:
-        """累加更新某数据源的统计：请求计数、成功计数、平均耗时。"""
-        existing = self._source_stats.get(ids=[source], include=["metadatas"])
-        metas = existing.get("metadatas") or []
+        """累加更新某数据源在 req_type 维度的统计，并同时累计全局（"*"）统计。
+
+        统计键为 (source_name, req_type)：请求计数、成功计数、平均耗时各自独立累加。
+        """
         now = datetime.datetime.now().isoformat()
-        if metas and metas[0] is not None:
-            meta = metas[0]
-            old_total = int(meta.get("total_requests", 0))
-            old_avg = float(meta.get("avg_elapsed", 0.0))
-            old_success = int(meta.get("success_count", 0))
-            new_total = old_total + 1
-            new_success = old_success + (1 if success else 0)
-            new_avg = (old_avg * old_total + elapsed_seconds) / new_total
-            metadata = {
-                "source_name": source,
-                "total_requests": new_total,
-                "success_count": new_success,
-                "avg_elapsed": new_avg,
-                "last_updated": now,
-            }
-        else:
-            metadata = {
-                "source_name": source,
-                "total_requests": 1,
-                "success_count": 1 if success else 0,
-                "avg_elapsed": elapsed_seconds,
-                "last_updated": now,
-            }
-        # ponytail: 用 [0.0] 占位向量满足 ChromaDB 对 embeddable 字段的强制要求，
-        # source_stats 仅按 id + metadata 查询，向量本身无意义。
-        self._source_stats.upsert(ids=[source], embeddings=[[0.0]], metadatas=[metadata])
+        for dim in (req_type, GLOBAL_REQ_TYPE):
+            doc_id = f"{source}::{dim}"
+            existing = self._source_stats.get(ids=[doc_id], include=["metadatas"])
+            metas = existing.get("metadatas") or []
+            if metas and metas[0] is not None:
+                meta = metas[0]
+                old_total = int(meta.get("total_requests", 0))
+                old_avg = float(meta.get("avg_elapsed", 0.0))
+                old_success = int(meta.get("success_count", 0))
+                new_total = old_total + 1
+                new_success = old_success + (1 if success else 0)
+                new_avg = (old_avg * old_total + elapsed_seconds) / new_total
+                metadata = {
+                    "source_name": source,
+                    "req_type": dim,
+                    "total_requests": new_total,
+                    "success_count": new_success,
+                    "avg_elapsed": new_avg,
+                    "last_updated": now,
+                }
+            else:
+                metadata = {
+                    "source_name": source,
+                    "req_type": dim,
+                    "total_requests": 1,
+                    "success_count": 1 if success else 0,
+                    "avg_elapsed": elapsed_seconds,
+                    "last_updated": now,
+                }
+            # ponytail: 用 [0.0] 占位向量满足 ChromaDB 对 embeddable 字段的强制要求，
+            # source_stats 仅按 id + metadata 查询，向量本身无意义。
+            self._source_stats.upsert(ids=[doc_id], embeddings=[[0.0]], metadatas=[metadata])

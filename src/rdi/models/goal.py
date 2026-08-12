@@ -57,3 +57,7 @@ class DataReq(BaseModel):
         default=None,
         description="期望的标准化格式（如 URDF, STL, NPZ）",
     )
+    object_name: str = Field(
+        default="",
+        description="目标物体名称（从目标文本提取，供抓取/网格检索精确定位文件；空串表示未指定）",
+    )

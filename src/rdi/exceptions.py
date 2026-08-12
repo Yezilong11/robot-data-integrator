@@ -65,6 +65,14 @@ class AdapterAuthError(AdapterError):
     """数据源认证失败（API Key 无效或过期）。"""
 
 
+class AdapterCatalogError(AdapterError):
+    """数据源硬编码清单未收录查询目标。
+
+    与连接类错误（AdapterError）不同：数据源本身可达，但查询目标不在该源
+    硬编码的已知目标清单内（有源但未收录），供上层生成可诊断的 missing 语义。
+    """
+
+
 # ─── 能力执行层异常（Skill） ───
 
 

@@ -8,7 +8,7 @@
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
-from rdi.exceptions import AdapterError
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
@@ -92,7 +92,7 @@ class RobotiqAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时返回空列表。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
         query_lower = query.lower()
         matched = [
             m
@@ -101,6 +101,14 @@ class RobotiqAdapter(BaseAdapter):
             or query_lower in m["title"].lower()
             or query_lower in m["description"].lower()
         ]
+        if not matched:
+            raise AdapterCatalogError(
+                message=(
+                    f"该源仅收录 {len(_FALLBACK_MODELS)} 个已知目标，"
+                    f"未收录 '{query}'（有源但未收录）"
+                ),
+                source=self.source.value,
+            )
         return [
             SearchResult(
                 item_id=m["id"],
@@ -113,16 +121,32 @@ class RobotiqAdapter(BaseAdapter):
         ]
 
     async def fetch(self, item_id: str) -> RawData:
-        """下载 URDF 文件。优先 robotiq.com，失败降级 GitHub raw URL。"""
+        """下载 URDF 文件。优先 robotiq.com，失败降级 GitHub raw URL。
+
+        D3：本地数据集挂载优先——命中本地文件直接返回（不发任何网络请求）。
+        """
+        # D3: 本地挂载目录即 ros-industrial-attic/robotiq 仓库根镜像，相对路径即 _FETCH_PATHS
+        local = self._local_raw(item_id, self._local_candidates(item_id))
+        if local is not None:
+            return local
         try:
             return await self._fetch_primary(item_id)
         except AdapterError:
             return await self._fetch_fallback(item_id)
 
+    def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:
+        """本地挂载候选 (仓库相对路径, format)，与 _fetch_fallback 的 URL 路径同构。"""
+        rel_path = _FETCH_PATHS.get(item_id)
+        if not rel_path:
+            return []
+        fmt = "urdf" if rel_path.endswith(".urdf") else "xacro"
+        return [(rel_path, fmt)]
+
     async def _fetch_primary(self, item_id: str) -> RawData:
         """路径 A：直接 URL 构造（官方页面路径模式）。"""
         url = f"{self._web_url}/products/{item_id}/{item_id}.urdf"
         content = await self._download_bytes(url)
+        assets = await self._download_xml_with_assets(url, content)
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
@@ -130,6 +154,7 @@ class RobotiqAdapter(BaseAdapter):
             data=content,
             url=url,
             size_bytes=len(content),
+            assets=assets,
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
@@ -151,6 +176,7 @@ class RobotiqAdapter(BaseAdapter):
         urdf_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(urdf_url)
         fmt = "urdf" if rel_path.endswith(".urdf") else "xacro"
+        assets = await self._download_xml_with_assets(urdf_url, content)
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
@@ -158,4 +184,5 @@ class RobotiqAdapter(BaseAdapter):
             data=content,
             url=urdf_url,
             size_bytes=len(content),
+            assets=assets,
         )
