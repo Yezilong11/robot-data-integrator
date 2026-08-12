@@ -7,7 +7,9 @@
 
 校准（ponytail: 真实数据 ≠ spec 理想）：``E:\\数据收集\\data2\\sources\\`` 实测无
 ``.bag``，bag 仅兜底；「最大公共采样率」实为最小采样率；``np.asarray([None,1.0])``
-不抛错而产生 nan，故数值列识别需先排除 None 再转 float。
+不抛错而产生 nan，故数值列识别需先排除 None 再转 float；脏字符串（nan/NaN/""/inf/
+-inf/null/none，不区分大小写）已在 ``_to_float_array`` 清洗为 None 后丢弃，不再以
+nan 形式保留污染下游插值（已处理，非仅已知坑）。
 """
 
 import csv
@@ -23,9 +25,16 @@ from rdi.models.common import Severity, StandardResult, ValidationReport, ValIss
 from rdi.skills.base import BaseSkill
 
 # 候选时间戳列/键名（小写匹配），首个命中者生效
-_TIMESTAMP_KEYS = ("timestamp", "time", "t")
+_TIMESTAMP_KEYS = (
+    "timestamp", "time", "t", "time_sec", "t_sec", "secs", "seconds",
+    "stamp", "t_s", "time_s", "timestamp_sec",
+)
 # 缺时间戳列时写入 transformations 的标记，供 process 识别并降级 completeness
 _INFER_FLAG = "infer_timestamps_from_index"
+# 降级（行号兜底）时采样率未知，追加此标记提示下游
+_DEGRADED_RATE_FLAG = "degraded_sample_rate_unknown"
+# 脏字符串（不区分大小写）：清洗为 None 后由 _to_float_array 丢弃该列
+_DIRTY_TOKENS = {"nan", "", "inf", "-inf", "null", "none"}
 _CANONICAL_FORMAT = "SensorDataset"
 
 
@@ -49,11 +58,20 @@ class SensorDataset:
 
 
 def _to_float_array(values: list[Any]) -> np.ndarray | None:
-    """把值列表转为一维 float64 数组；含 None 或非数值时返回 None。"""
-    if any(v is None for v in values):
+    """把值列表转为一维 float64 数组；含 None/脏字符串/非数值时返回 None。
+
+    先把脏字符串（"nan"/"NaN"/""/"inf"/"-inf"/"null"/"none"，不区分大小写）
+    规整为 None，再走现有 ``any(v is None) → return None`` 逻辑：含脏值的列
+    被识别为非纯数值列而丢弃，避免 nan 污染下游插值。
+    """
+    cleaned = [
+        None if (isinstance(v, str) and v.strip().lower() in _DIRTY_TOKENS) else v
+        for v in values
+    ]
+    if any(v is None for v in cleaned):
         return None
     try:
-        return np.asarray(values, dtype=np.float64)
+        return np.asarray(cleaned, dtype=np.float64)
     except (ValueError, TypeError):
         return None
 
@@ -106,6 +124,7 @@ class SensorDataSkill(BaseSkill):
         else:
             timestamps = np.arange(n, dtype=np.float64)
             transformations.append(_INFER_FLAG)
+            transformations.append(_DEGRADED_RATE_FLAG)
 
         signals: dict[str, np.ndarray] = {}
         for name in fieldnames:
@@ -118,7 +137,9 @@ class SensorDataSkill(BaseSkill):
         return SensorDataset(
             timestamps=timestamps,
             signals=signals,
-            sample_rate_hz=_compute_rate(timestamps),
+            sample_rate_hz=(
+                0.0 if _INFER_FLAG in transformations else _compute_rate(timestamps)
+            ),
             source_format="csv",
             transformations=transformations,
         )
@@ -160,6 +181,7 @@ class SensorDataSkill(BaseSkill):
         else:
             timestamps = np.arange(n, dtype=np.float64)
             transformations.append(_INFER_FLAG)
+            transformations.append(_DEGRADED_RATE_FLAG)
 
         signals: dict[str, np.ndarray] = {}
         if isinstance(first, dict):
@@ -175,7 +197,9 @@ class SensorDataSkill(BaseSkill):
         return SensorDataset(
             timestamps=timestamps,
             signals=signals,
-            sample_rate_hz=_compute_rate(timestamps),
+            sample_rate_hz=(
+                0.0 if _INFER_FLAG in transformations else _compute_rate(timestamps)
+            ),
             source_format="json",
             transformations=transformations,
         )
@@ -204,11 +228,14 @@ class SensorDataSkill(BaseSkill):
             n = max((arr.size for arr in signals.values()), default=0)
             timestamps = np.arange(n, dtype=np.float64)
             transformations.append(_INFER_FLAG)
+            transformations.append(_DEGRADED_RATE_FLAG)
 
         return SensorDataset(
             timestamps=timestamps,
             signals=signals,
-            sample_rate_hz=_compute_rate(timestamps),
+            sample_rate_hz=(
+                0.0 if _INFER_FLAG in transformations else _compute_rate(timestamps)
+            ),
             source_format="json",
             transformations=transformations,
         )
@@ -270,6 +297,12 @@ class SensorDataSkill(BaseSkill):
                     success=False,
                     canonical_format=_CANONICAL_FORMAT,
                     errors=[f"{fmt} 解析失败: {exc}"],
+                )
+            if not dataset.signals:
+                return StandardResult(
+                    success=False,
+                    canonical_format=_CANONICAL_FORMAT,
+                    errors=["解析完成但未识别到任何数值信号列，可能是分隔符/表头/格式问题"],
                 )
             warnings_list: list[str] = []
             completeness = 100.0

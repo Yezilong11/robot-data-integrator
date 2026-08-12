@@ -114,3 +114,45 @@ class TestSensorValidate:
         report = SensorDataSkill().validate(result)
         assert report.is_valid is True  # WARNING 不影响 is_valid
         assert any(vi.severity == Severity.WARNING for vi in report.issues)
+
+
+class TestSensorRealDataFixes:
+    """覆盖 spec「SensorDataSkill 真实生数据修复」5 个 scenario。"""
+
+    def test_dirty_string_column_dropped(self) -> None:
+        # 脏字符串列（NaN/nan）被 _to_float_array 清洗为 None 后丢弃，不进 signals
+        result = SensorDataSkill().process(_read("dirty_nan.csv"), fmt="csv")
+        assert result.success is True
+        ds = result.data
+        assert "fx" in ds.signals
+        assert "fz" in ds.signals
+        assert "fy" not in ds.signals  # 含 NaN/nan 脏值，整列丢弃
+
+    def test_degraded_sample_rate_zero(self) -> None:
+        # 缺时间戳列走行号兜底：sample_rate_hz=0.0 + degraded_sample_rate_unknown 标记
+        result = SensorDataSkill().process(_read("no_timestamp.csv"), fmt="csv")
+        assert result.success is True
+        ds = result.data
+        assert ds.sample_rate_hz == 0.0
+        assert "degraded_sample_rate_unknown" in ds.transformations
+
+    def test_empty_signals_fails(self) -> None:
+        # 全非数值列 → signals 空 → 显式失败（不再静默 success=True）
+        result = SensorDataSkill().process(_read("empty_signals.csv"), fmt="csv")
+        assert result.success is False
+        assert result.errors  # 非空，提示分隔符/表头/格式问题
+
+    def test_timestamp_variants_matched(self) -> None:
+        # time_sec 列名变体被识别为时间戳列：confidence=1.0，采样率 100Hz
+        result = SensorDataSkill().process(_read("ts_variants.csv"), fmt="csv")
+        assert result.success is True
+        assert result.confidence_score == 1.0
+        ds = result.data
+        assert abs(ds.sample_rate_hz - 100.0) < 1e-6
+        assert "time_sec" not in ds.signals
+
+    def test_timestamp_column_not_in_signals(self) -> None:
+        # 时间戳列被识别后不进 signals 字典的 keys（语义清晰）
+        result = SensorDataSkill().process(_read("ts_variants.csv"), fmt="csv")
+        assert result.success is True
+        assert "time_sec" not in result.data.signals.keys()
