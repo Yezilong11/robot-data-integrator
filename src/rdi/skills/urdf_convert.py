@@ -11,13 +11,14 @@ xacro 模块时走降级路径，不抛异常（符合 BaseSkill 契约）。
 """
 
 import importlib
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from lxml import etree  # type: ignore[import-untyped]
+from lxml import etree
 
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
 from rdi.skills.base import BaseSkill
@@ -227,7 +228,7 @@ class URDFSkill(BaseSkill):
     def process(self, data: bytes, **kwargs: Any) -> StandardResult:
         fmt = str(kwargs.get("fmt", ""))
         if self._is_xacro(data, fmt):
-            return self._handle_xacro(data)
+            return self._handle_xacro(data, **kwargs)
         try:
             robot = self.parse(data)
         except (etree.XMLSyntaxError, ValueError, TypeError) as exc:
@@ -250,6 +251,9 @@ class URDFSkill(BaseSkill):
             completeness_pct=completeness,
             confidence_score=confidence,
             warnings=warnings,
+            # D1: URDF 几何/惯量约定为米制，坐标系为各 link 自身系
+            units="meter",
+            coordinate_frame="unknown",
             data=robot,
         )
 
@@ -258,32 +262,61 @@ class URDFSkill(BaseSkill):
         """识别 xacro 输入：显式 fmt 标记或内容含 xacro 命名空间/标签。"""
         return fmt == "xacro" or b"xmlns:xacro" in data or b"<xacro:" in data
 
-    def _handle_xacro(self, data: bytes) -> StandardResult:
-        """处理 xacro 输入：模块缺失或展开失败时降级，不抛异常。"""
+    def _handle_xacro(self, data: bytes, **kwargs: Any) -> StandardResult:
+        """处理 xacro 输入：模块可用则展开为 URDF 后解析，否则字符串级降级。"""
         try:
             xacro = importlib.import_module("xacro")
         except ImportError:
-            return StandardResult(
-                success=False,
-                canonical_format="CanonicalRobot",
-                errors=["xacro 展开需要 ROS xacro 模块，请提供已展开的 URDF"],
-            )
+            return self._fallback_xacro(data, **kwargs)
         # xacro 模块可用：尝试展开（需文件路径，写临时文件）
         try:
             expanded = self._expand_xacro(xacro, data)
         except Exception as exc:  # noqa: BLE001 — 任意展开失败均降级
             return StandardResult(
                 success=False,
-                canonical_format="CanonicalRobot",
+                canonical_format="urdf",
                 errors=[f"xacro 展开失败: {exc}"],
             )
         if expanded is None:
             return StandardResult(
                 success=False,
-                canonical_format="CanonicalRobot",
+                canonical_format="urdf",
                 errors=["xacro 展开失败，请提供已展开的 URDF"],
             )
-        return self.process(expanded)
+        # 展开后是纯 URDF，移除 fmt 避免再次命中 xacro 分支
+        process_kwargs = {k: v for k, v in kwargs.items() if k != "fmt"}
+        return self.process(expanded, **process_kwargs)
+
+    @staticmethod
+    def _fallback_clean_xacro(data: bytes) -> bytes:
+        """字符串级 xacro 降级：移除 xacro 标签、替换 $(find pkg) 占位符。"""
+        text = data.decode("utf-8", errors="replace")
+        # 移除成对 <xacro:...>...</xacro:...>
+        text = re.sub(r"<xacro:[^\s>]+[^>]*>.*?</xacro:[^\s>]+>", "", text, flags=re.S)
+        # 移除自闭合 <xacro:.../>
+        text = re.sub(r"<xacro:[^\s>]+[^>]*/>", "", text)
+        # 移除 xacro 命名空间声明
+        text = re.sub(r"xmlns:xacro=['\"][^'\"]*['\"]", "", text)
+        # 替换 $(find package_name) 为占位路径
+        text = re.sub(r"\$\(find\s+([^\s)]+)\)", r"/mock/\1", text)
+        return text.encode("utf-8")
+
+    def _fallback_xacro(self, data: bytes, **kwargs: Any) -> StandardResult:
+        """无 ROS xacro 环境时的降级处理：返回清理后的 URDF 字节。"""
+        cleaned = self._fallback_clean_xacro(data)
+        name = kwargs.get("name")
+        output_path = f"robots/{name}.urdf" if isinstance(name, str) and name else None
+        return StandardResult(
+            success=True,
+            canonical_format="urdf",
+            output_path=output_path,
+            data=cleaned,
+            completeness_pct=80.0,
+            confidence_score=0.8,
+            warnings=["xacro 模块不可用，已使用字符串级降级处理，结果可能不完整"],
+            units="meter",
+            coordinate_frame="unknown",
+        )
 
     @staticmethod
     def _expand_xacro(xacro: Any, data: bytes) -> bytes | None:

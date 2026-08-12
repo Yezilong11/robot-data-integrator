@@ -78,4 +78,5 @@ class ZenodoAdapter(BaseAdapter):
             format="json",
             data=content,
             url=f"https://zenodo.org/records/{item_id}",
+            size_bytes=len(content),
         )

@@ -11,10 +11,11 @@
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import yaml  # type: ignore[import-untyped]
-from lxml import etree  # type: ignore[import-untyped]
+from lxml import etree
 
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
 from rdi.skills.base import BaseSkill
@@ -220,73 +221,210 @@ class SimConfigSkill(BaseSkill):
         }
         return str(yaml.safe_dump(doc, sort_keys=False)).encode("utf-8")
 
+    def generate_minimal_mjcf(self, urdf_path: str | None, mesh_path: str | None) -> bytes:
+        """根据 URDF/Mesh 路径生成最小可用 MJCF XML 字节。
+
+        MJCF 包含：天空盒、地面平面、光源、默认相机；若提供 mesh_path，则在
+        worldbody 中放置一个引用该 mesh 的自由物体。URDF 路径仅在 XML 注释中
+        记录，因为 MJCF 的 ``<include>`` 只支持 MJCF 文件，不支持 URDF。
+        """
+        root = etree.Element("mujoco", attrib={"model": "generated_fallback"})
+        if urdf_path:
+            root.append(etree.Comment(f" URDF reference: {urdf_path} "))
+        if mesh_path:
+            root.append(etree.Comment(f" Mesh reference: {mesh_path} "))
+        etree.SubElement(
+            root,
+            "compiler",
+            attrib={"autolimits": "true", "balanceinertia": "true", "strippath": "false"},
+        )
+        asset = etree.SubElement(root, "asset")
+        if mesh_path:
+            mesh_name = Path(mesh_path).stem
+            etree.SubElement(asset, "mesh", attrib={"file": mesh_path, "name": mesh_name})
+        etree.SubElement(
+            asset,
+            "texture",
+            attrib={
+                "type": "skybox",
+                "builtin": "gradient",
+                "rgb1": "0.3 0.5 0.7",
+                "rgb2": "0 0 0",
+                "width": "512",
+                "height": "512",
+            },
+        )
+        etree.SubElement(
+            asset,
+            "texture",
+            attrib={
+                "name": "grid",
+                "type": "2d",
+                "builtin": "checker",
+                "rgb1": "0.1 0.2 0.3",
+                "rgb2": "0.2 0.3 0.4",
+                "width": "512",
+                "height": "512",
+            },
+        )
+        etree.SubElement(
+            asset,
+            "material",
+            attrib={
+                "name": "grid",
+                "texture": "grid",
+                "texrepeat": "1 1",
+                "texuniform": "true",
+                "reflectance": "0.2",
+            },
+        )
+        worldbody = etree.SubElement(root, "worldbody")
+        etree.SubElement(
+            worldbody,
+            "geom",
+            attrib={"name": "floor", "type": "plane", "size": "100 100 0.1", "material": "grid"},
+        )
+        etree.SubElement(
+            worldbody,
+            "light",
+            attrib={"name": "top", "pos": "0 0 3", "dir": "0 0 -1"},
+        )
+        # 指导书要求 fallback 场景包含地面和相机
+        etree.SubElement(
+            worldbody,
+            "camera",
+            attrib={"name": "default", "pos": "0 -2 1.5", "xyaxes": "0 0 1 1 0 0"},
+        )
+        if mesh_path:
+            mesh_name = Path(mesh_path).stem
+            body = etree.SubElement(
+                worldbody,
+                "body",
+                attrib={"name": "object", "pos": "0 0 0.5"},
+            )
+            etree.SubElement(body, "freejoint", attrib={"name": "object_freejoint"})
+            etree.SubElement(
+                body,
+                "geom",
+                attrib={"name": "object_geom", "type": "mesh", "mesh": mesh_name, "pos": "0 0 0"},
+            )
+        result: bytes = etree.tostring(root, pretty_print=True)
+        return result
+
+    def _fallback_to_mjcf(
+        self,
+        urdf_path: str | None,
+        mesh_path: str | None,
+        output_path: str | None,
+        reason: str,
+    ) -> StandardResult:
+        """生成最小 MJCF 并包装为成功的 StandardResult（带降级警告）。"""
+        xml_bytes = self.generate_minimal_mjcf(urdf_path, mesh_path)
+        warnings = [
+            f"未找到真实 MuJoCo MJCF: {reason}",
+            "已根据 URDF/Mesh 生成最小 MJCF 占位文件",
+        ]
+        if urdf_path:
+            warnings.append(f"参考 URDF: {urdf_path}")
+        if mesh_path:
+            warnings.append(f"参考 Mesh: {mesh_path}")
+        return StandardResult(
+            success=True,
+            canonical_format="mjcf",
+            output_path=output_path,
+            completeness_pct=80.0,
+            confidence_score=0.8,
+            warnings=warnings,
+            data_source_quality="fallback",
+            is_fallback=True,
+            data=xml_bytes,
+        )
+
+    @staticmethod
+    def _is_mjcf_xml(data: bytes) -> bool:
+        """轻量判断：字节内容是否为完整 MJCF XML（含 ``<mujoco`` 根与 ``<worldbody``）。
+
+        仅做存在性检查（不完整解析），由调用方先经 ``parse_mujoco`` 保证语法合法。
+        """
+        return b"<mujoco" in data and b"<worldbody" in data
+
     def process(self, data: bytes, **kwargs: Any) -> StandardResult:
-        """按 ``fmt`` 分发解析，返回标准化结果；失败降级不抛异常。"""
+        """按 ``fmt`` 分发解析；非 MJCF 或解析失败时生成最小 MJCF。
+
+        C13：当输入本身是完整合法的 MJCF XML（Adapter 从真实场景下载的字节，
+        fmt=mjcf/xml/mujoco）时直接原样返回（直通），保留 mesh 资产 / body /
+        joint / actuator 等真实场景结构，避免 ``parse_mujoco -> to_mjcf`` 重建
+        造成的信息丢失；仅在内容为其他 XML 结构或需从零生成时才走重建/fallback。
+        """
         fmt = str(kwargs.get("fmt", "mjcf")).lower()
         name = kwargs.get("name")
-        is_isaac = fmt in ("isaac", "yaml", "usd", "py")
-        ext = "yaml" if is_isaac else "xml"
-        output_path = f"sim_config/{name}.{ext}" if name else None
+        urdf_path = kwargs.get("urdf_path")
+        mesh_path = kwargs.get("mesh_path")
+        output_path = f"sim_config/{name}.xml" if name else None
 
         if fmt in ("mjcf", "xml", "mujoco"):
             try:
                 scene = self.parse_mujoco(data)
             except (etree.XMLSyntaxError, ValueError, TypeError) as exc:
-                return StandardResult(
-                    success=False,
-                    canonical_format="SceneDescription",
-                    errors=[f"MJCF 解析失败: {exc}"],
+                return self._fallback_to_mjcf(
+                    str(urdf_path) if urdf_path else None,
+                    str(mesh_path) if mesh_path else None,
+                    output_path,
+                    reason=f"MJCF 解析失败: {exc}",
                 )
+            if self._is_mjcf_xml(data):
+                # 真实 MJCF XML 直通：不重建，保留全部真实场景结构
+                warnings = ["场景无物体"] if not scene.objects else []
+                return StandardResult(
+                    success=True,
+                    canonical_format="xml",
+                    output_path=output_path,
+                    completeness_pct=100.0,
+                    confidence_score=1.0,
+                    warnings=warnings,
+                    data_source_quality="real",
+                    data=data,
+                )
+            xml_bytes = self.to_mjcf(scene)
             warnings = ["场景无物体"] if not scene.objects else []
             return StandardResult(
                 success=True,
-                canonical_format="SceneDescription",
+                canonical_format="xml",
                 output_path=output_path,
                 completeness_pct=100.0,
+                confidence_score=1.0,
                 warnings=warnings,
-                data=scene,
+                data=xml_bytes,
             )
 
-        if is_isaac:
-            try:
-                scene = self.parse_isaac(data)
-            except ValueError as exc:
-                return StandardResult(
-                    success=False,
-                    canonical_format="SceneDescription",
-                    errors=[f"Isaac 配置解析失败: {exc}"],
-                )
-            warnings = ["Isaac 配置仅做描述性解析，未生成 USD"]
-            if not scene.objects:
-                warnings.append("场景无物体")
-            return StandardResult(
-                success=True,
-                canonical_format="SceneDescription",
-                output_path=output_path,
-                completeness_pct=80.0,
-                confidence_score=0.8,
-                warnings=warnings,
-                data=scene,
-            )
-
-        return StandardResult(
-            success=False,
-            canonical_format="SceneDescription",
-            errors=[f"不支持的仿真配置格式: {fmt}"],
+        # 非 MJCF 格式（Isaac/Python/未知）统一降级为最小 MJCF
+        return self._fallback_to_mjcf(
+            str(urdf_path) if urdf_path else None,
+            str(mesh_path) if mesh_path else None,
+            output_path,
+            reason=f"非 MJCF 格式 ({fmt})，无法直接解析",
         )
 
     def validate(self, result: StandardResult) -> ValidationReport:
         """校验处理结果，构建 ``ValidationReport``。"""
         if not result.success or result.data is None:
             return ValidationReport(is_valid=False, summary="仿真配置解析失败")
-        scene = result.data
-        if not isinstance(scene, SceneDescription):
+        data = result.data
+        if isinstance(data, bytes):
+            try:
+                data = self.parse_mujoco(data)
+            except etree.XMLSyntaxError as exc:
+                return ValidationReport(
+                    is_valid=False,
+                    summary=f"MJCF XML 语法错误: {exc}",
+                )
+        if not isinstance(data, SceneDescription):
             return ValidationReport(
                 is_valid=False,
                 summary="仿真配置解析失败: 中间表示类型错误",
             )
         issues: list[ValIssue] = []
-        if not scene.objects:
+        if not data.objects:
             issues.append(
                 ValIssue(
                     severity=Severity.WARNING,
@@ -298,8 +436,8 @@ class SimConfigSkill(BaseSkill):
             )
         has_error = any(i.severity == Severity.ERROR for i in issues)
         summary = (
-            f"仿真配置校验完成: 物体 {len(scene.objects)} 个，"
-            f"相机 {len(scene.cameras)} 个，问题 {len(issues)} 个"
+            f"仿真配置校验完成: 物体 {len(data.objects)} 个，"
+            f"相机 {len(data.cameras)} 个，问题 {len(issues)} 个"
         )
         return ValidationReport(
             is_valid=not has_error,

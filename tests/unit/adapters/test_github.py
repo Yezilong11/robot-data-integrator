@@ -1,6 +1,9 @@
 # tests/unit/adapters/test_github.py
 """GitHubAdapter 的单元测试。"""
 
+import base64
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from rdi.adapters.github import GitHubAdapter
@@ -64,3 +67,43 @@ class TestGitHubAdapter:
         with pytest.raises(AdapterError) as exc_info:
             await adapter.fetch("nonexistent/repo")
         assert exc_info.value.source == "github"
+
+    @pytest.mark.asyncio
+    async def test_github_search_with_mock(self) -> None:
+        """Mock 驱动：search 通过 _request 返回仓库结果。"""
+        adapter = GitHubAdapter()
+        mock_response = {
+            "items": [
+                {
+                    "full_name": "NVlabs/6-DOF-GraspNet",
+                    "name": "6-DOF-GraspNet",
+                    "html_url": "https://github.com/NVlabs/6-DOF-GraspNet",
+                    "stargazers_count": 500,
+                    "description": "6-DOF GraspNet",
+                    "language": "Python",
+                    "topics": ["grasping"],
+                }
+            ]
+        }
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_response):
+            results = await adapter.search("6-DOF grasp")
+            assert len(results) > 0
+            assert results[0].source == DataSource.GITHUB
+            assert results[0].item_id == "NVlabs/6-DOF-GraspNet"
+            assert results[0].metadata["stars"] == 500
+
+    @pytest.mark.asyncio
+    async def test_github_fetch_with_mock(self) -> None:
+        """Mock 驱动：fetch 返回 RawData 且字段正确。"""
+        adapter = GitHubAdapter()
+        mock_response = {
+            "content": base64.b64encode(b"# Test README").decode(),
+            "html_url": "https://github.com/test",
+        }
+        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_response):
+            raw = await adapter.fetch("test/repo")
+            assert raw.source == DataSource.GITHUB
+            assert raw.item_id == "test/repo"
+            assert raw.format == "markdown"
+            assert raw.data == b"# Test README"
+            assert raw.size_bytes > 0

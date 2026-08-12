@@ -1,0 +1,9 @@
+{
+  "id": "google-bert/bert-base-uncased",
+  "modelId": "google-bert/bert-base-uncased",
+  "tags": ["transformers", "pytorch", "bert"],
+  "pipeline_tag": "fill-mask",
+  "library_name": "transformers",
+  "description": "BERT base model (uncased) pre-trained on English Wikipedia and BooksCorpus.",
+  "url": "https://huggingface.co/google-bert/bert-base-uncased"
+}

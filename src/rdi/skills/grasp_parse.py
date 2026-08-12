@@ -15,6 +15,7 @@
   in-plane r*π/2），completeness_pct 降为 70.0 并记 warning。
 """
 
+import contextlib
 import importlib
 import io
 import json
@@ -32,12 +33,18 @@ from rdi.skills.base import BaseSkill
 
 @dataclass
 class CanonicalGrasp:
-    """标准化抓取姿态中间表示（position 米 shape (3,)、orientation [x,y,z,w] shape (4,)、width 米、score）。"""
+    """标准化抓取姿态中间表示（position 米 shape (3,)、orientation [x,y,z,w] shape (4,)、width 米、score）。
+
+    units 恒为标准化后单位（position/width 均为米制）；frame 按数据集约定填充
+    （camera / object_center / world，未知时 "unknown"）。
+    """
 
     position: np.ndarray
     orientation: np.ndarray
     width: float
     score: float
+    units: str = "meter"
+    frame: str = "unknown"
 
 
 DATASET_CONVENTIONS: dict[str, dict[str, str]] = {
@@ -49,6 +56,11 @@ DATASET_CONVENTIONS: dict[str, dict[str, str]] = {
 
 _APPROX_COMPLETENESS = 70.0  # graspnetAPI 不可用时近似重建旋转的完整度
 _PER_POINT_CAP = 6  # parse_graspnet_npz 每个点最多保留的近似抓取数
+
+
+def _is_metadata_payload(decoded: Any) -> bool:
+    """判断解码后的 JSON 是否为数据集元数据（而非原始抓取列表）。"""
+    return isinstance(decoded, dict) and ("dataset_id" in decoded or "reason" in decoded)
 
 
 def _get_field(grasp: Any, key: str) -> Any:
@@ -82,6 +94,22 @@ class GraspSkill(BaseSkill):
 
     skill_name = "grasp"
 
+    @staticmethod
+    def _grasp_to_dict(grasp: CanonicalGrasp) -> dict[str, Any]:
+        """把 ``CanonicalGrasp`` 转为 JSON 可序列化的 dict（含单位/坐标系标注）。"""
+        return {
+            "position": grasp.position.tolist(),
+            "orientation": grasp.orientation.tolist(),
+            "width": float(grasp.width),
+            "score": float(grasp.score),
+            "units": grasp.units,
+            "frame": grasp.frame,
+        }
+
+    def _serialize_grasps(self, grasps: list[CanonicalGrasp]) -> dict[str, Any]:
+        """把 ``CanonicalGrasp`` 列表打包为可序列化的 ``{"grasps": [...]}``。"""
+        return {"grasps": [self._grasp_to_dict(g) for g in grasps]}
+
     def standardize_grasps(self, raw_grasps: list[Any], dataset_name: str) -> list[CanonicalGrasp]:
         """按 ``DATASET_CONVENTIONS`` 标准化原始抓取。
 
@@ -101,7 +129,7 @@ class GraspSkill(BaseSkill):
             if to_meters:
                 pos = pos / 1000.0
                 width = width / 1000.0
-            results.append(CanonicalGrasp(pos, quat_xyzw, width, score))
+            results.append(CanonicalGrasp(pos, quat_xyzw, width, score, frame=conv["origin"]))
         return results
 
     @staticmethod
@@ -163,7 +191,15 @@ class GraspSkill(BaseSkill):
                         width = w_cand if 0.0 < w_cand < 0.3 else 0.05
                         rmat = r_approach @ Rotation.from_euler("z", r * (np.pi / 2.0)).as_matrix()
                         quat = np.asarray(Rotation.from_matrix(rmat).as_quat(), dtype=np.float64)
-                        grasps.append(CanonicalGrasp(p.copy(), quat, width, sc))
+                        grasps.append(
+                            CanonicalGrasp(
+                                p.copy(),
+                                quat,
+                                width,
+                                sc,
+                                frame=DATASET_CONVENTIONS["graspnet"]["origin"],
+                            )
+                        )
                         if len(grasps) >= cap:
                             return grasps
         return grasps
@@ -179,11 +215,23 @@ class GraspSkill(BaseSkill):
             )
         name = kwargs.get("name")
         output_path = f"grasps/{name}.json" if name else None
+        conv = DATASET_CONVENTIONS[dataset_name]
 
         if dataset_name == "graspnet":
             try:
                 grasps = self.parse_graspnet_npz(data, max_points=int(kwargs.get("max_points", 5)))
             except Exception as exc:  # noqa: BLE001 — 任意解析失败均降级
+                # 数据集接口可能返回元数据 JSON（无真实 npz），交付失败语义（MissingItem）
+                try:
+                    decoded = json.loads(data.decode("utf-8"))
+                except (ValueError, UnicodeDecodeError):
+                    return StandardResult(
+                        success=False,
+                        canonical_format="CanonicalGrasp",
+                        errors=[f"GraspNet npz 解析失败: {exc}"],
+                    )
+                if _is_metadata_payload(decoded):
+                    return self._synthetic_result("GraspNet", "返回元数据 JSON（未找到真实 npz）")
                 return StandardResult(
                     success=False,
                     canonical_format="CanonicalGrasp",
@@ -195,36 +243,54 @@ class GraspSkill(BaseSkill):
                 output_path=output_path,
                 completeness_pct=_APPROX_COMPLETENESS,
                 confidence_score=0.7,
+                data_source_quality="real",
+                units=conv["unit"],
+                coordinate_frame=conv["origin"],
                 warnings=[
                     "graspnetAPI 不可用，旋转矩阵为近似重建"
                     "（approach=point-centroid 外法向 + in-plane r*π/2），"
                     "300 个 frustum 方向无法精确还原"
                 ],
-                data=grasps,
+                data=self._serialize_grasps(grasps),
             )
 
         if dataset_name == "dexgraspnet":
-            # pkl 反序列化依赖 graspnetAPI 自定义类；不可用时直接降级
+            # 数据集接口可能返回元数据 JSON（无真实 pkl），交付失败语义（MissingItem）
             try:
+                decoded = json.loads(data.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                decoded = None
+            if decoded is not None and _is_metadata_payload(decoded):
+                return self._synthetic_result("DexGraspNet", "返回元数据 JSON（未找到真实 pkl）")
+
+            # pkl 反序列化：先尝试导入 graspnetAPI 注册 pkl 中的自定义类（用于其
+            # __reduce__ 还原），ImportError 时降级为通用 pickle.load 继续尝试。
+            with contextlib.suppress(ImportError):
                 importlib.import_module("graspnetAPI")
-            except ImportError:
-                return StandardResult(
-                    success=False,
-                    canonical_format="CanonicalGrasp",
-                    errors=["DexGraspNet pkl 需要 graspnetAPI 才能反序列化"],
-                )
             try:
                 obj = pickle.load(io.BytesIO(data))  # noqa: S301
             except Exception as exc:  # noqa: BLE001
-                return StandardResult(
-                    success=False,
-                    canonical_format="CanonicalGrasp",
-                    errors=[f"DexGraspNet pkl 需要 graspnetAPI 才能反序列化: {exc}"],
-                )
+                return self._synthetic_result("DexGraspNet", f"pkl 反序列化失败: {exc}")
             return self._finish_standardize(obj, dataset_name, output_path)
 
         # ycb / abdataset：尽力解析（json 或 pickle），失败降级
         return self._parse_generic(data, dataset_name, output_path)
+
+    def _synthetic_result(self, source_name: str, reason: str) -> StandardResult:
+        """构造合成占位失败结果：不交付合成抓取，由 registry 装配为 MissingItem。
+
+        数据集仅返回元数据（无真实 npz/pkl）或反序列化失败时返回失败语义；
+        合成抓取仅作诊断参考，真实数据位置在 RawData.reference（供手动获取）。
+        """
+        return StandardResult(
+            success=False,
+            canonical_format="CanonicalGrasp",
+            errors=[
+                f"{source_name} {reason}；原始数据缺失，合成占位仅作参考，真实数据见 reference"
+            ],
+            data_source_quality="fallback",
+            is_fallback=True,
+        )
 
     def _finish_standardize(
         self, raw: Any, dataset_name: str, output_path: str | None
@@ -244,12 +310,16 @@ class GraspSkill(BaseSkill):
                 canonical_format="CanonicalGrasp",
                 errors=[f"{dataset_name} 标准化失败: {exc}"],
             )
+        conv = DATASET_CONVENTIONS[dataset_name]
         return StandardResult(
             success=True,
             canonical_format="CanonicalGrasp",
             output_path=output_path,
             completeness_pct=100.0,
-            data=grasps,
+            data_source_quality="real",
+            units=conv["unit"],
+            coordinate_frame=conv["origin"],
+            data=self._serialize_grasps(grasps),
         )
 
     def _parse_generic(
@@ -278,19 +348,33 @@ class GraspSkill(BaseSkill):
         """校验抓取结果：失败→invalid；任一 position 分量 |.|>1m→WARNING。"""
         if not result.success or result.data is None:
             return ValidationReport(is_valid=False, summary="抓取解析失败")
-        grasps = result.data
-        if not isinstance(grasps, list):
+        data = result.data
+        grasps: list[Any]
+        if isinstance(data, dict):
+            grasps = data.get("grasps", [])
+        elif isinstance(data, list):
+            grasps = data
+        else:
             return ValidationReport(is_valid=False, summary="抓取解析失败: 中间表示类型错误")
         issues: list[ValIssue] = []
         for idx, g in enumerate(grasps):
-            if not isinstance(g, CanonicalGrasp):
+            if isinstance(g, CanonicalGrasp):
+                position = g.position
+            elif isinstance(g, dict):
+                position = np.asarray(g.get("position", []), dtype=np.float64)
+            else:
                 continue
-            if bool(np.any(np.abs(g.position) > 1.0)):
+            if position.size == 0:
+                continue
+            if bool(np.any(np.abs(position) > 1.0)):
+                position_list = (
+                    position.tolist() if isinstance(position, np.ndarray) else list(position)
+                )
                 issues.append(
                     ValIssue(
                         severity=Severity.WARNING,
                         req_id=f"grasp#{idx}",
-                        message=f"抓取点超出工作空间 (position={g.position.tolist()})，请检查坐标系约定",
+                        message=f"抓取点超出工作空间 (position={position_list})，请检查坐标系约定",
                         suggestion="确认坐标系原点与单位是否已统一为米制物体中心系",
                         auto_fixable=False,
                     )

@@ -8,6 +8,7 @@
 
 import json
 import warnings
+from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -28,9 +29,7 @@ class IEEEXploreAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url=settings.ieee_base_url
-            if hasattr(settings, "ieee_base_url") and settings.ieee_base_url
-            else "https://ieeexploreapi.ieee.org/api/v1/search",
+            base_url=settings.ieee_base_url,
             rate_limit=5,
         )
         self.api_key = settings.ieee_api_key
@@ -103,10 +102,11 @@ class IEEEXploreAdapter(BaseAdapter):
             format="json",
             data=raw_bytes,
             url=f"{self.base_url}/?article_number={article_id}",
+            size_bytes=len(raw_bytes),
         )
 
     @staticmethod
-    def _parse_search_results(data: dict) -> list[SearchResult]:
+    def _parse_search_results(data: dict[str, Any]) -> list[SearchResult]:
         """解析 IEEE API 搜索返回的 JSON 数据。"""
         results: list[SearchResult] = []
         for item in data.get("results", []):

@@ -1,16 +1,21 @@
 # src/rdi/adapters/arxiv.py
 """arXiv 论文源 Adapter。
 
-文档：http://export.arxiv.org/api/query
+文档：https://export.arxiv.org/api/query
 速率限制：建议每3秒1次请求
 无需API Key。
+注意：必须用 https，国内网络下 http 明文会被阻断/超时。
 """
+
+import json
 
 from lxml import etree
 
 from rdi.adapters.base import BaseAdapter
+from rdi.config.settings import settings
+from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.retrieval import RawData, RawReference, SearchResult
 
 
 class ArxivAdapter(BaseAdapter):
@@ -20,7 +25,7 @@ class ArxivAdapter(BaseAdapter):
 
     def __init__(self) -> None:
         super().__init__(
-            base_url="http://export.arxiv.org/api",
+            base_url="https://export.arxiv.org/api",
             rate_limit=3,  # arXiv建议每3秒1次
         )
 
@@ -38,19 +43,55 @@ class ArxivAdapter(BaseAdapter):
             "max_results": "10",
             "sortBy": "relevance",
         }
-        xml_data = await self._request("GET", "/query", params=params)
+        xml_data = await self._request_text("GET", "/query", params=params)
         return self._parse_atom_xml(xml_data)
 
     async def fetch(self, arxiv_id: str) -> RawData:
         """下载指定论文的 PDF。
 
+        E1 修复：arXiv PDF 常为多 MB，国内 30s 下载超时。
+        下载前先 HEAD 预检 Content-Length，超过 ``max_fetch_bytes`` 阈值时
+        改返回 metadata JSON（含 url/size/title/abstract），避免下载全量 PDF。
+        HEAD 不可得（None）或文件较小时走原下载流程。
+
         Args:
             arxiv_id: arXiv 论文ID（如 "2304.06524"）
 
         Returns:
-            RawData 包含 PDF 二进制数据
+            RawData：小文件返回 PDF 二进制（format=pdf）；
+            超阈值返回 metadata JSON（format=json，含 url/size/title/abstract）
         """
         pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+        # E1: HEAD 预检体积，超阈值改返回 metadata
+        # arXiv.org 国内下载慢（5MB PDF 常 >30s），用独立的 arxiv_max_fetch_bytes
+        # （默认 2MB）而非全局 max_fetch_bytes（50MB），使典型 arXiv PDF 返回 metadata。
+        size = await self._head_content_length(pdf_url)
+        if size is not None and size > settings.arxiv_max_fetch_bytes:
+            metadata = await self._fetch_paper_metadata(arxiv_id)
+            payload = {
+                "url": pdf_url,
+                "size_bytes": size,
+                "title": metadata.get("title", ""),
+                "abstract": metadata.get("abstract", ""),
+                "arxiv_id": arxiv_id,
+                "note": "PDF exceeds max_fetch_bytes; returning metadata only",
+            }
+            data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            return RawData(
+                source=DataSource.ARXIV,
+                item_id=arxiv_id,
+                format="json",
+                data=data_bytes,
+                url=pdf_url,
+                size_bytes=size,
+                # P0-4：PDF 超阈值未下载，记录引用供用户手动获取
+                reference=RawReference(
+                    url=pdf_url,
+                    file_size=size,
+                    download_hint=pdf_url,
+                    reason="PDF exceeds max_fetch_bytes; returning metadata only",
+                ),
+            )
         pdf_bytes = await self._download_bytes(pdf_url)
         return RawData(
             source=DataSource.ARXIV,
@@ -58,7 +99,29 @@ class ArxivAdapter(BaseAdapter):
             format="pdf",
             data=pdf_bytes,
             url=pdf_url,
+            size_bytes=len(pdf_bytes),
         )
+
+    async def _fetch_paper_metadata(self, arxiv_id: str) -> dict[str, str]:
+        """通过 arXiv API 获取单篇论文的 title/abstract。
+
+        用于超阈值 fetch 时的 metadata 返回。失败时返回空 dict，
+        不阻塞主流程（metadata 字段降级为空字符串）。
+        """
+        try:
+            xml_data = await self._request_text(
+                "GET", "/query", params={"id_list": arxiv_id, "max_results": "1"}
+            )
+        except AdapterError:
+            return {}
+        results = self._parse_atom_xml(xml_data)
+        if not results:
+            return {}
+        first = results[0]
+        return {
+            "title": first.title,
+            "abstract": first.metadata.get("abstract", ""),
+        }
 
     @staticmethod
     def _parse_atom_xml(xml_str: str) -> list[SearchResult]:
