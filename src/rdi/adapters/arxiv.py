@@ -15,7 +15,7 @@ from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.retrieval import RawData, RawReference, SearchResult
 
 
 class ArxivAdapter(BaseAdapter):
@@ -84,6 +84,13 @@ class ArxivAdapter(BaseAdapter):
                 data=data_bytes,
                 url=pdf_url,
                 size_bytes=size,
+                # P0-4：PDF 超阈值未下载，记录引用供用户手动获取
+                reference=RawReference(
+                    url=pdf_url,
+                    file_size=size,
+                    download_hint=pdf_url,
+                    reason="PDF exceeds max_fetch_bytes; returning metadata only",
+                ),
             )
         pdf_bytes = await self._download_bytes(pdf_url)
         return RawData(

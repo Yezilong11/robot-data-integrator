@@ -8,6 +8,7 @@ import pytest
 from bs4 import BeautifulSoup
 
 from rdi.adapters.base import _GITHUB_RAW_FAST_TIMEOUT_S, BaseAdapter, TTLCache
+from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
@@ -109,6 +110,44 @@ class TestBaseAdapter:
         key1 = BaseAdapter._make_cache_key("GET", "/path1", {})
         key2 = BaseAdapter._make_cache_key("GET", "/path2", {})
         assert key1 != key2
+
+    def test_make_cache_key_query_order_insensitive(self) -> None:
+        """缓存键生成：URL query 参数乱序不影响键命中（B3）。"""
+        key1 = BaseAdapter._make_cache_key("GET", "/path?a=1&b=2", {})
+        key2 = BaseAdapter._make_cache_key("GET", "/path?b=2&a=1", {})
+        assert key1 == key2
+
+    def test_make_cache_key_query_empty_value_dropped(self) -> None:
+        """缓存键生成：query 空值参数不影响键命中（空值被丢弃，B3）。"""
+        key1 = BaseAdapter._make_cache_key("GET", "/path?a=1&b=", {})
+        key2 = BaseAdapter._make_cache_key("GET", "/path?a=1", {})
+        assert key1 == key2
+
+    def test_cache_settings_drive_ttl_and_maxsize(self, monkeypatch) -> None:
+        """settings.cache_ttl_seconds / cache_max_entries 驱动 Adapter 内存缓存（B3）。"""
+        from rdi.config.settings import settings
+
+        monkeypatch.setattr(settings, "cache_ttl_seconds", 1)
+        monkeypatch.setattr(settings, "cache_max_entries", 3)
+        adapter = _StubAdapter()
+        assert adapter.cache.ttl == 1
+        assert adapter.cache.maxsize == 3
+        # TTL：1s 内命中，过期后失效
+        adapter.cache["k1"] = "v1"
+        assert "k1" in adapter.cache
+        time.sleep(1.1)
+        assert "k1" not in adapter.cache
+        # maxsize：写入超过 3 条时淘汰最旧条目
+        adapter.cache["a"] = 1
+        time.sleep(0.01)  # 确保时间戳不同
+        adapter.cache["b"] = 2
+        time.sleep(0.01)
+        adapter.cache["c"] = 3
+        adapter.cache["d"] = 4  # 超过 maxsize，淘汰最旧的 a
+        assert "a" not in adapter.cache
+        assert "b" in adapter.cache
+        assert "c" in adapter.cache
+        assert "d" in adapter.cache
 
     @pytest.mark.asyncio
     async def test_request_retries_on_failure(self) -> None:
@@ -370,3 +409,434 @@ class TestBaseAdapterMirrorFallback:
         assert call.args == (primary_url,)
         assert call.kwargs["timeout"] == _GITHUB_RAW_FAST_TIMEOUT_S
         assert call.kwargs["max_retry"] == 1
+
+
+# ─── 数据包自包含：XML 外部资产下载（P0-3）───
+
+
+class TestBaseAdapterXmlAssets:
+    """_download_xml_with_assets 的单元测试（P0-3 数据包自包含）。"""
+
+    @pytest.mark.asyncio
+    async def test_downloads_relative_mesh_against_xml_dir(self) -> None:
+        """正常情况：URDF 中的相对 mesh 路径以 XML URL 目录为基准下载。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<robot name="r"><link name="base"><visual><geometry>'
+            b'<mesh filename="meshes/base.stl"/>'
+            b"</geometry></visual></link></robot>"
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"mesh-data"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", xml
+            )
+        assert assets == {"meshes/base.stl": b"mesh-data"}
+        mock_dl.assert_awaited_once()
+        # 下载 URL 以 xml_url 所在目录为基准
+        assert mock_dl.call_args.args[0] == "https://example.com/models/meshes/base.stl"
+
+    @pytest.mark.asyncio
+    async def test_invalid_xml_returns_empty(self) -> None:
+        """异常情况：XML 解析失败返回空 dict（降级策略，不抛异常）。"""
+        adapter = _StubAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", b"not <xml"
+            )
+        assert assets == {}
+        mock_dl.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_skips_absolute_urls_and_normalizes_relative(self) -> None:
+        """package:// 按相对路径解析下载；https:// 绝对引用跳过；相对路径规范化（去 ./）。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<robot name="r">'
+            b'<link name="a"><visual><geometry><mesh filename="package://pkg/meshes/a.stl"/>'
+            b"</geometry></visual></link>"
+            b'<link name="b"><visual><geometry><mesh filename="https://example.com/meshes/b.stl"/>'
+            b"</geometry></visual></link>"
+            b'<link name="c"><visual><geometry><mesh filename="./meshes/c.stl"/>'
+            b"</geometry></visual></link>"
+            b"</robot>"
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", xml
+            )
+        # package:// 的 rest 与相对路径 c 均被下载，且前导 ./ 已规范化；https:// 跳过
+        assert assets == {
+            "pkg/meshes/a.stl": b"x",
+            "meshes/c.stl": b"x",
+        }
+        assert mock_dl.await_count == 2
+        assert mock_dl.call_args_list[0].args[0] == "https://example.com/models/pkg/meshes/a.stl"
+        assert mock_dl.call_args_list[1].args[0] == "https://example.com/models/meshes/c.stl"
+
+    @pytest.mark.asyncio
+    async def test_no_references_does_not_download(self) -> None:
+        """无 mesh/texture 引用时不额外调用 _download_bytes。"""
+        adapter = _StubAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", b'<robot name="panda"/>'
+            )
+        assert assets == {}
+        mock_dl.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_include_recursively_downloads_nested_mesh(self) -> None:
+        """include 递归：子 XML 的 mesh 也以子 XML 所在目录为基准下载。"""
+        adapter = _StubAdapter()
+        main_xml = b'<robot name="r"><include filename="parts/arm.urdf"/></robot>'
+        child_xml = (
+            b'<robot name="arm"><link name="l"><visual><geometry>'
+            b'<mesh filename="meshes/arm.stl"/>'
+            b"</geometry></visual></link></robot>"
+        )
+
+        def fake_download(url: str) -> bytes:
+            if url.endswith("/models/parts/arm.urdf"):
+                return child_xml
+            if url.endswith("/models/parts/meshes/arm.stl"):
+                return b"arm-mesh"
+            raise AssertionError(f"unexpected url: {url}")
+
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", main_xml
+            )
+        # include 文件本身 + 子 XML 中的 mesh 均被下载，mesh 以子 XML 所在目录为基准
+        assert assets == {
+            "parts/arm.urdf": child_xml,
+            "parts/meshes/arm.stl": b"arm-mesh",
+        }
+        assert mock_dl.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_include_cycle_terminates(self) -> None:
+        """include 循环引用（A→B→A）不无限递归、不抛异常，且不重复下载。"""
+        adapter = _StubAdapter()
+        a_xml = b'<robot name="a"><include filename="b.urdf"/></robot>'
+        b_xml = b'<robot name="b"><include filename="a.urdf"/></robot>'
+
+        def fake_download(url: str) -> bytes:
+            if url.endswith("/models/b.urdf"):
+                return b_xml
+            if url.endswith("/models/a.urdf"):
+                return a_xml
+            raise AssertionError(f"unexpected url: {url}")
+
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/a.urdf", a_xml
+            )
+        assert assets == {"b.urdf": b_xml, "a.urdf": a_xml}
+        # A、B 各只下载一次（seen 去重防环）
+        assert mock_dl.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_include_depth_limit_terminates(self) -> None:
+        """include 嵌套深度超过 _MAX_ASSET_DEPTH 时终止展开，超限链不再下载。"""
+        adapter = _StubAdapter()
+        # 第 n 层文件 include 第 n+1 层；最后一层还带一个 mesh 验证深度边界
+        xmls = {
+            "a.urdf": b'<robot name="a"><include filename="b.urdf"/></robot>',
+            "b.urdf": b'<robot name="b"><include filename="c.urdf"/></robot>',
+            "c.urdf": b'<robot name="c"><include filename="d.urdf"/></robot>',
+            "d.urdf": (
+                b'<robot name="d"><include filename="e.urdf"/><mesh filename="d.stl"/></robot>'
+            ),
+            "e.urdf": b'<robot name="e"><mesh filename="e.stl"/></robot>',
+        }
+
+        def fake_download(url: str) -> bytes:
+            for name, content in xmls.items():
+                if url.endswith(f"/models/{name}"):
+                    return content
+            if url.endswith("/models/d.stl"):
+                return b"d-mesh"
+            raise AssertionError(f"unexpected url: {url}")
+
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/a.urdf", xmls["a.urdf"]
+            )
+        # 深度 0..3 的 include（a/b/c/d）与其 mesh d.stl 下载；e.urdf（第 4 层）终止
+        assert assets == {
+            "b.urdf": xmls["b.urdf"],
+            "c.urdf": xmls["c.urdf"],
+            "d.urdf": xmls["d.urdf"],
+            "d.stl": b"d-mesh",
+        }
+        assert mock_dl.await_count == 4
+
+    @pytest.mark.asyncio
+    async def test_package_url_resolves_relative_and_downloads(self) -> None:
+        """package://<rest> 的 rest 按 XML 目录为基准的相对路径解析下载（panda 语义）。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<robot name="panda"><link name="hand"><visual><geometry>'
+            b'<mesh filename="package://panda_description/meshes/hand.stl"/>'
+            b"</geometry></visual></link></robot>"
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"pkg-mesh"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/repos/panda.urdf", xml
+            )
+        assert assets == {"panda_description/meshes/hand.stl": b"pkg-mesh"}
+        mock_dl.assert_awaited_once()
+        assert mock_dl.call_args.args[0] == (
+            "https://example.com/repos/panda_description/meshes/hand.stl"
+        )
+
+    @pytest.mark.asyncio
+    async def test_invalid_package_url_skipped(self) -> None:
+        """无效 package://（空 rest、绝对路径、仅 .）跳过且不抛异常，assets 不含该项。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<robot name="r">'
+            b'<mesh filename="package://"/>'
+            b'<mesh filename="package:///etc/passwd"/>'
+            b'<mesh filename="package://."/>'
+            b'<mesh filename="package://pkg/good.stl"/>'
+            b"</robot>"
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/panda.urdf", xml
+            )
+        # 仅有效 package:// 被下载
+        assert assets == {"pkg/good.stl": b"x"}
+        assert mock_dl.await_count == 1
+        assert mock_dl.call_args.args[0] == "https://example.com/models/pkg/good.stl"
+
+
+# ─── 本地文件缓存测试 ───
+
+
+class TestBaseAdapterFileCache:
+    """BaseAdapter 本地文件缓存（data/cache/<source>/）方法测试。"""
+
+    @staticmethod
+    def _adapter_with_root(tmp_path) -> BaseAdapter:
+        """构造 stub Adapter 并把缓存根目录指向临时目录。"""
+        adapter = _StubAdapter()
+        adapter.cache_root = lambda: tmp_path  # type: ignore[method-assign]
+        return adapter
+
+    def test_cache_root_dir_name_from_source(self) -> None:
+        """cache_root 目录名默认取 source.value，父级目录为 cache。"""
+        adapter = _StubAdapter()  # source = DataSource.ARXIV
+        root = adapter.cache_root()
+        assert root.name == "arxiv"
+        assert root.parent.name == "cache"
+
+    def test_cache_root_uses_custom_cache_dir_name(self, tmp_path) -> None:
+        """cache_dir_name 覆写后生效。"""
+        adapter = _StubAdapter()
+        adapter.cache_dir_name = "my-source"
+        root = adapter.cache_root()
+        assert root.name == "my-source"
+
+    def test_get_cache_path_sanitizes_item_id(self, tmp_path) -> None:
+        """item_id 中的不安全字符被清洗为下划线，不产生子目录。"""
+        adapter = self._adapter_with_root(tmp_path)
+        path = adapter.get_cache_path("a/b\\c:d e", suffix=".obj")
+        assert path == tmp_path / "a_b_c_d_e.obj"
+        assert path.parent == tmp_path
+
+    def test_get_cache_path_without_suffix(self, tmp_path) -> None:
+        """无 suffix 时直接以 item_id 命名。"""
+        adapter = self._adapter_with_root(tmp_path)
+        assert adapter.get_cache_path("item") == tmp_path / "item"
+
+    def test_save_and_load_roundtrip(self, tmp_path) -> None:
+        """save_to_cache 落盘后 is_cached / load_from_cache 均可命中。"""
+        adapter = self._adapter_with_root(tmp_path)
+        saved = adapter.save_to_cache("item1", b"payload")
+        assert saved == tmp_path / "item1"
+        assert adapter.is_cached("item1")
+        assert adapter.load_from_cache("item1") == b"payload"
+
+    def test_save_creates_nested_dirs(self, tmp_path) -> None:
+        """缓存根目录不存在时自动创建（mkdir parents=True）。"""
+        adapter = _StubAdapter()
+        root = tmp_path / "nested" / "dir"
+        adapter.cache_root = lambda: root  # type: ignore[method-assign]
+        adapter.save_to_cache("x", b"d")
+        assert (root / "x").is_file()
+
+    def test_load_miss_returns_none(self, tmp_path) -> None:
+        """未命中时 load_from_cache 返回 None、is_cached 返回 False。"""
+        adapter = self._adapter_with_root(tmp_path)
+        assert adapter.load_from_cache("missing") is None
+        assert not adapter.is_cached("missing")
+
+    def test_is_cached_false_for_empty_file(self, tmp_path) -> None:
+        """空文件不算有效缓存（非空才命中）。"""
+        adapter = self._adapter_with_root(tmp_path)
+        (tmp_path / "empty").write_bytes(b"")
+        assert not adapter.is_cached("empty")
+        assert adapter.load_from_cache("empty") is None
+
+    def test_suffix_distinguishes_files(self, tmp_path) -> None:
+        """同一 item_id 不同 suffix 互不干扰。"""
+        adapter = self._adapter_with_root(tmp_path)
+        adapter.save_to_cache("item", b"a", suffix=".urdf")
+        adapter.save_to_cache("item", b"b", suffix=".xacro")
+        assert adapter.load_from_cache("item", suffix=".urdf") == b"a"
+        assert adapter.load_from_cache("item", suffix=".xacro") == b"b"
+
+
+# ─── D3 本地数据集挂载测试 ───
+
+
+class TestBaseAdapterLocalDatasets:
+    """D3：来源级本地数据集挂载（settings.local_datasets）基础方法测试。
+
+    使用 _StubAdapter（source=arxiv），local_datasets 键用 "arxiv"。
+    """
+
+    def test_local_dataset_root_unconfigured(self) -> None:
+        """未配置该来源的挂载目录时返回 None。"""
+        adapter = _StubAdapter()
+        assert adapter.local_dataset_root() is None
+
+    def test_local_dataset_root_configured(self, tmp_path, monkeypatch) -> None:
+        """配置且目录存在时返回该目录 Path。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        adapter = _StubAdapter()
+        assert adapter.local_dataset_root() == tmp_path
+
+    def test_local_dataset_root_missing_dir(self, tmp_path, monkeypatch) -> None:
+        """配置指向不存在的目录时返回 None（调用方保持既有网络流程）。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path / "nope")})
+        adapter = _StubAdapter()
+        assert adapter.local_dataset_root() is None
+
+    def test_local_dataset_root_other_source_unaffected(self, tmp_path, monkeypatch) -> None:
+        """配置其他来源的挂载不影响本 adapter。"""
+        monkeypatch.setattr(settings, "local_datasets", {"graspnet": str(tmp_path)})
+        adapter = _StubAdapter()
+        assert adapter.local_dataset_root() is None
+
+    def test_walk_local_tree_flat_paths(self, tmp_path) -> None:
+        """递归扫描：返回相对 root 的正斜杠路径条目。"""
+        (tmp_path / "a").mkdir()
+        (tmp_path / "a" / "b.obj").write_bytes(b"x")
+        (tmp_path / "readme.md").write_bytes(b"y")
+        items = BaseAdapter._walk_local_tree(tmp_path)
+        paths = [i["path"] for i in items]
+        assert "a/b.obj" in paths
+        assert "readme.md" in paths
+        assert all(i["type"] == "file" for i in items)
+
+    def test_walk_local_tree_rel_subdir(self, tmp_path) -> None:
+        """rel_subdir 非空时只扫描其下文件。"""
+        (tmp_path / "025_mug" / "google_16k").mkdir(parents=True)
+        (tmp_path / "025_mug" / "google_16k" / "textured.obj").write_bytes(b"x")
+        (tmp_path / "025_mug" / "google_16k" / "textured.stl").write_bytes(b"y")
+        (tmp_path / "other.txt").write_bytes(b"z")
+        items = BaseAdapter._walk_local_tree(tmp_path, "025_mug/google_16k")
+        paths = [i["path"] for i in items]
+        assert "025_mug/google_16k/textured.obj" in paths
+        assert "025_mug/google_16k/textured.stl" in paths
+        assert "other.txt" not in paths
+
+    def test_walk_local_tree_missing_subdir(self, tmp_path) -> None:
+        """rel_subdir 不存在返回空列表。"""
+        assert BaseAdapter._walk_local_tree(tmp_path, "nope/sub") == []
+
+    def test_find_local_file_hit(self, tmp_path, monkeypatch) -> None:
+        """按相对路径命中本地文件返回对应 Path。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        (tmp_path / "a.urdf").write_bytes(b"data")
+        adapter = _StubAdapter()
+        path = adapter._find_local_file(["a.urdf"])
+        assert path is not None
+        assert path.read_bytes() == b"data"
+
+    def test_find_local_file_miss(self, tmp_path, monkeypatch) -> None:
+        """未命中返回 None。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        adapter = _StubAdapter()
+        assert adapter._find_local_file(["a.urdf"]) is None
+
+    def test_find_local_file_empty_file_skipped(self, tmp_path, monkeypatch) -> None:
+        """空文件（0 字节）跳过，不视为命中。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        (tmp_path / "a.urdf").write_bytes(b"")
+        adapter = _StubAdapter()
+        assert adapter._find_local_file(["a.urdf"]) is None
+
+    def test_find_local_file_path_traversal_blocked(self, tmp_path, monkeypatch) -> None:
+        """路径穿越（../ 越出挂载根）被拦截返回 None。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        secret = tmp_path.parent / "secret.txt"
+        secret.write_bytes(b"top-secret")
+        adapter = _StubAdapter()
+        assert adapter._find_local_file([f"../{secret.name}"]) is None
+
+    def test_local_raw_hit_source_local(self, tmp_path, monkeypatch) -> None:
+        """命中：source=LOCAL、url 带 local://arxiv/ 前缀、data/size 正确。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        (tmp_path / "paper").mkdir()
+        (tmp_path / "paper" / "main.tex").write_bytes(b"% latex")
+        adapter = _StubAdapter()
+        raw = adapter._local_raw("2301.00001", [("paper/main.tex", "tex")])
+        assert raw is not None
+        assert raw.source == DataSource.LOCAL
+        assert raw.format == "tex"
+        assert raw.data == b"% latex"
+        assert raw.url == "local://arxiv/paper/main.tex"
+        assert raw.size_bytes == 7
+
+    def test_local_raw_miss_returns_none(self, tmp_path, monkeypatch) -> None:
+        """候选路径均未命中返回 None。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        adapter = _StubAdapter()
+        assert adapter._local_raw("2301.00001", [("paper/main.tex", "tex")]) is None
+
+    def test_local_raw_unconfigured_returns_none(self) -> None:
+        """未配置挂载返回 None。"""
+        adapter = _StubAdapter()
+        assert adapter._local_raw("2301.00001", [("paper/main.tex", "tex")]) is None
+
+    def test_local_assets_from_xml_reads_local_mesh(self, tmp_path, monkeypatch) -> None:
+        """XML 引用的 mesh 从本地挂载目录读取（不发网络）。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        (tmp_path / "robot" / "meshes").mkdir(parents=True)
+        (tmp_path / "robot" / "meshes" / "base.stl").write_bytes(b"stl-data")
+        xml = b'<robot name="r"><mesh filename="meshes/base.stl"/></robot>'
+        adapter = _StubAdapter()
+        assets = adapter._local_assets_from_xml(xml, "robot")
+        assert assets == {"robot/meshes/base.stl": b"stl-data"}
+
+    def test_local_assets_from_xml_missing_asset_skipped(self, tmp_path, monkeypatch) -> None:
+        """本地缺失的资产跳过，不报错。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        (tmp_path / "robot").mkdir()
+        xml = b'<robot name="r"><mesh filename="meshes/missing.stl"/></robot>'
+        adapter = _StubAdapter()
+        assert adapter._local_assets_from_xml(xml, "robot") == {}
+
+    def test_local_assets_from_xml_invalid_xml_returns_empty(self, tmp_path, monkeypatch) -> None:
+        """非法 XML 返回空 dict（与网络版降级一致）。"""
+        monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
+        adapter = _StubAdapter()
+        assert adapter._local_assets_from_xml(b"not xml at all", "robot") == {}

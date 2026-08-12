@@ -12,6 +12,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from rdi.models.common import Severity
 from rdi.skills.sim_config import (
     Camera,
@@ -52,6 +54,44 @@ def test_parse_mujoco_success() -> None:
     assert len(cam.pos) == 3
     assert cam.fov > 0
     assert result.confidence_score == 1.0
+
+
+# ─── Scenario: 真实 MJCF XML 直通（C13） ───
+
+
+def test_real_mjcf_passthrough_preserves_bytes() -> None:
+    """真实 MJCF XML 原样直通：data 与输入字节一致，不重建，标注真实来源。"""
+    skill = SimConfigSkill()
+    data = _read("sample_mujoco.xml")
+    result = skill.process(data, fmt="mjcf")
+    assert result.success is True
+    assert result.data_source_quality == "real"
+    assert result.canonical_format == "xml"
+    assert result.completeness_pct == 100.0
+    assert result.confidence_score == 1.0
+    assert result.data == data  # 直通：未经过 parse_mujoco -> to_mjcf 重建
+    assert result.warnings == []
+
+
+def test_real_mjcf_passthrough_xml_fmt() -> None:
+    """fmt=xml 同样走直通路径（Adapter 真实场景下载的字节）。"""
+    skill = SimConfigSkill()
+    data = _read("sample_mujoco.xml")
+    result = skill.process(data, fmt="xml")
+    assert result.data_source_quality == "real"
+    assert result.data == data
+    # 直通后仍可二次解析，内省契约不变
+    scene = skill.parse_mujoco(result.data)
+    assert len(scene.objects) >= 1
+    assert len(scene.cameras) >= 1
+
+
+def test_real_mjcf_empty_scene_warns_no_objects() -> None:
+    """直通路径保留「场景无物体」警告（空 worldbody 的真实 MJCF）。"""
+    result = SimConfigSkill().process(_read("empty_scene.xml"), fmt="mjcf")
+    assert result.data_source_quality == "real"
+    assert result.data == _read("empty_scene.xml")
+    assert any("场景无物体" in w for w in result.warnings)
 
 
 # ─── Scenario: MJCF 生成（反向 roundtrip） ───
@@ -178,6 +218,41 @@ def test_generate_minimal_mjcf_without_mesh() -> None:
     assert "<mesh" not in text
     scene = skill.parse_mujoco(xml_bytes)
     assert any(o.name == "floor" for o in scene.objects)
+
+
+# ─── Scenario: fallback 场景包含地面和相机（C13） ───
+
+
+def test_generate_minimal_mjcf_has_ground_and_camera() -> None:
+    """指导书要求：fallback 场景必须含地面平面与相机。"""
+    skill = SimConfigSkill()
+    xml_bytes = skill.generate_minimal_mjcf(urdf_path=None, mesh_path=None)
+    text = xml_bytes.decode("utf-8")
+    assert '<geom name="floor" type="plane"' in text
+    assert "<camera" in text
+    scene = skill.parse_mujoco(xml_bytes)
+    assert any(o.name == "floor" and o.type == "plane" for o in scene.objects)
+    assert len(scene.cameras) >= 1
+    # fallback 路径通过 process 产出时标注 fallback 质量
+    result = skill.process(b"not xml", fmt="mjcf")
+    assert result.data_source_quality == "fallback"
+
+
+# ─── Scenario: 真实/fallback MJCF 可被 mujoco 引擎加载（可选） ───
+
+
+def test_real_mjcf_loadable_in_mujoco() -> None:
+    """mujoco 包已安装时验证直通 XML 可被 MuJoCo 引擎加载；未安装则跳过。"""
+    mujoco = pytest.importorskip("mujoco")
+    result = SimConfigSkill().process(_read("sample_mujoco.xml"), fmt="mjcf")
+    mujoco.MjModel.from_xml_string(result.data.decode("utf-8"))
+
+
+def test_fallback_mjcf_loadable_in_mujoco() -> None:
+    """mujoco 包已安装时验证 fallback 生成的 MJCF 可加载（无外部资产依赖）。"""
+    mujoco = pytest.importorskip("mujoco")
+    xml_bytes = SimConfigSkill().generate_minimal_mjcf(urdf_path=None, mesh_path=None)
+    mujoco.MjModel.from_xml_string(xml_bytes.decode("utf-8"))
 
 
 # ─── validate 契约补充：成功路径无问题 ───
