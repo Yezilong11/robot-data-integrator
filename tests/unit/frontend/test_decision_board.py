@@ -1,11 +1,10 @@
 """LLM 决策看板单元测试。
 
-覆盖 E5 工作区式布局的纯逻辑渲染：
-- ``build_decision_board`` 五面板结构、当前阶段高亮、四决策点内容
-- ``_decision_source`` 的「LLM 生成 / 规则兜底」诚实标注（llm_usage 优先，字段兜底）
+覆盖工作区式改造后的纯逻辑：
+- ``build_decision_board`` 组合视图（灯带 + LLM 分析 + 目标输出）
+- ``_decision_source`` 的「LLM 生成 / 规则兜底」诚实标注
 - ``build_status_bar`` 的 run_id / 状态徽章 / 五段进度条
 - ``semantic_map_json`` 的包落盘文件优先、state 兜底
-- 审查面板的 interrupt payload 建议（source=llm|rule）展示
 纯逻辑测试，不依赖 gradio 真实渲染。
 """
 
@@ -79,29 +78,25 @@ BOARD_OK = {
 }
 
 
-def test_decision_board_contains_five_panels() -> None:
+def test_decision_board_combines_views() -> None:
     board = build_decision_board(BOARD_OK)
-    # 五个阶段面板
+    # 灯带五阶段
     for label in ("检索", "转换", "校验", "打包", "审查"):
-        assert f"<h3>{label}</h3>" in board
-    # 当前阶段 = 最后一个完成阶段（审查）
-    assert "rdi-panel-active" in board
-    # 四决策点内容
-    assert "grasp pose dataset" in board  # 检索 queries
-    assert "quaternion_wxyz" in board  # 语义旋转表示
-    assert "完整度略低" in board  # 校验问题
-    assert "整体良好" in board  # 质量解释
-    assert "建议结论" in board  # 审查建议
-    # 诚实标注：llm_usage ok → LLM 生成
+        assert label in board
+    assert "rdi-wf-current" in board
+    # 组合视图三段
+    assert "LLM 分析" in board
+    assert "目标输出" in board
+    # 当前阶段（审查）的思考文本 + 来源标注
+    assert "校验通过" in board
     assert "LLM 生成" in board
-    assert "规则兜底" not in board
 
 
-def test_decision_board_pending_when_stage_not_run() -> None:
+def test_decision_board_pending() -> None:
     state: dict[str, Any] = {"user_goal": "g"}
     board = build_decision_board(state)
-    assert "尚未执行" in board  # 各面板占位提示
-    assert "规则兜底" in board  # quality_explanation 缺失 → 规则兜底标注
+    assert "该阶段尚未执行" in board
+    assert "LLM 分析" in board
 
 
 def test_decision_source_prefers_llm_usage_status() -> None:
@@ -122,60 +117,6 @@ def test_decision_source_respects_req_id() -> None:
     }
     assert _decision_source(state, "retrieval_plan", True, "r1") == "LLM 生成"
     assert _decision_source(state, "retrieval_plan", True, "r2") == "规则兜底"
-
-
-def test_semantic_human_review_note_rendered() -> None:
-    state = dict(BOARD_OK)
-    state["semantic_map"] = {
-        "req_a": {
-            "semantic_type": "robot_urdf",
-            "rotation": "unknown",
-            "origin": "world",
-            "unit": "unknown",
-            "field_map": {},
-            "confidence": 0.4,
-            "needs_human_review": True,
-        }
-    }
-    board = build_decision_board(state)
-    assert "语义待人工确认" in board
-
-
-def test_review_panel_uses_interrupt_payload_source() -> None:
-    """首次中断（resume 前）：审查面板读 interrupt_payload.suggestions 的 source 标注。"""
-    state: dict[str, Any] = {
-        "interrupt_payload": {
-            "message": "请审查",
-            "suggestions": {
-                "verdict": "revised",
-                "issues": ["缺失 URDF"],
-                "rationale": "必要资产缺失",
-                "confidence": 0.6,
-                "source": "rule",
-            },
-        }
-    }
-    board = build_decision_board(state)
-    assert "建议结论：修订" in board
-    assert "缺失 URDF" in board
-    assert "规则兜底" in board  # source=rule → 规则兜底标注
-
-
-def test_review_panel_llm_source() -> None:
-    state: dict[str, Any] = {
-        "interrupt_payload": {
-            "suggestions": {
-                "verdict": "satisfied",
-                "issues": [],
-                "rationale": "通过",
-                "confidence": 0.9,
-                "source": "llm",
-            }
-        }
-    }
-    board = build_decision_board(state)
-    assert "建议结论：满意" in board
-    assert "LLM 生成" in board
 
 
 def test_status_bar_badges_and_progress() -> None:

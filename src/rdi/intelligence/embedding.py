@@ -29,6 +29,12 @@ class EmbeddingClient:
         self._api_key = api_key if api_key is not None else settings.llm_api_key
         self._base_url = base_url if base_url is not None else settings.llm_base_url
         self._model = model if model is not None else settings.llm_embedding_model
+        if not self._api_key:
+            raise LLMUnavailableError(
+                "LLM API Key 未配置（settings.llm_api_key 为空，请检查 .env 的 LLM_API_KEY）",
+                model=self._model,
+                retry_count=0,
+            )
         self._client = OpenAI(
             api_key=self._api_key,
             base_url=self._base_url,

@@ -123,31 +123,151 @@ BOARD_STAGES: list[tuple[str, str]] = [
     ("human_review", "审查"),
 ]
 
-# 决策看板内联样式（gr.HTML 原样渲染 <style>，前缀 rdi- 避免污染全局）
+# 全局主题覆盖（gr.Blocks(css=...) 注入，黑底橙调 · GitHub 暗色风）
+_THEME_CSS = """
+.gradio-container{background:#0d1117 !important;color:#e6edf3 !important;max-width:none !important}
+body{background:#0d1117 !important}
+.gradio-container .gr-button-primary{background:#f78166 !important;color:#0d1117 !important;border:none !important}
+.gradio-container .gr-button{background:#161b22 !important;color:#e6edf3 !important;border:1px solid #30363d !important}
+.gradio-container input,.gradio-container textarea,.gradio-container select{background:#0d1117 !important;color:#e6edf3 !important;border-color:#30363d !important}
+.gradio-container .tab-nav button{color:#8b949e !important;background:#010409 !important}
+.gradio-container .tab-nav button.selected{color:#f78166 !important;border-color:#f78166 !important}
+.gradio-container label,.gradio-container .label-wrap span{color:#8b949e !important}
+"""
+
+# 工作区内联样式（gr.HTML 原样渲染 <style>，前缀 rdi- 避免污染全局）
 _DECISION_CSS = """<style>
-.rdi-badge{display:inline-block;padding:1px 10px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;margin-left:6px}
-.rdi-badge-llm{background:#1f6feb}
-.rdi-badge-rule{background:#9a6700}
-.rdi-badge-green{background:#1a7f37}
-.rdi-badge-red{background:#cf222e}
-.rdi-badge-amber{background:#bf8700}
-.rdi-badge-blue{background:#0969da}
-.rdi-badge-gray{background:#6e7781}
-.rdi-panel{border:1px solid #d0d7de;border-radius:8px;margin-bottom:12px;padding:12px 14px}
-.rdi-panel-active{border-color:#1f6feb;box-shadow:0 0 0 1px #1f6feb}
-.rdi-panel-pending{opacity:.6;background:#f6f8fa}
-.rdi-panel h3{margin:0 0 8px;color:#24292f}
-.rdi-plan{border:1px dashed #d0d7de;border-radius:6px;padding:8px 10px;margin:8px 0}
-.rdi-key{color:#57606a;font-size:12px;font-weight:600}
-.rdi-list{margin:4px 0;padding-left:18px}
-.rdi-note{background:#fff8c5;border:1px solid #d4a72c;padding:4px 8px;border-radius:6px;margin-top:8px;font-size:12px}
-.rdi-status-bar{font-size:13px;line-height:2}
-.rdi-progress{margin-top:4px}
-.rdi-seg{display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;margin:0 2px}
-.rdi-seg-done{background:#dafbe1;color:#1a7f37;font-weight:600}
-.rdi-seg-current{background:#1f6feb;color:#fff;font-weight:600}
-.rdi-seg-todo{background:#eaeef2;color:#6e7781}
-.rdi-arrow{color:#8c959f}
+:root{
+  --bg:#0d1117;--bg-sidebar:#010409;--bg-panel:#161b22;--bg-elevated:#161b22;
+  --bg-input:#0d1117;--border:#30363d;--border-soft:#21262d;--text:#e6edf3;
+  --text-dim:#8b949e;--text-faint:#6e7681;--accent:#f78166;
+  --accent-soft:rgba(247,129,102,.12);--accent-glow:rgba(247,129,102,.38);
+  --llm:#f78166;--rule:#d29922;--done:#3fb950;--done-soft:rgba(63,185,80,.15);
+  --warn:#d29922;--error:#f85149;
+  --font-ui:"IBM Plex Sans","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+.rdi-app{height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px}
+.rdi-app *{box-sizing:border-box;margin:0;padding:0}
+/* 标题栏 */
+.rdi-titlebar{height:48px;display:flex;align-items:center;gap:14px;padding:0 16px;background:var(--bg-sidebar);border-bottom:1px solid var(--border);flex-shrink:0}
+.rdi-brand{display:flex;align-items:center;gap:10px;font-weight:600}
+.rdi-logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#f78166,#d29922);display:grid;place-items:center;color:#0d1117;font-size:13px;font-weight:700}
+.rdi-brand .rdi-sub{color:var(--text-faint);font-weight:400;font-size:12px}
+.rdi-spacer{flex:1}
+.rdi-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-family:var(--font-mono);border:1px solid var(--border);color:var(--text-dim)}
+.rdi-chip .rdi-dot{width:7px;height:7px;border-radius:50%;background:var(--done)}
+.rdi-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600;font-family:var(--font-mono)}
+.rdi-badge-ok{background:var(--done-soft);color:var(--done);border:1px solid rgba(63,185,80,.3)}
+.rdi-badge-llm{background:var(--accent-soft);color:var(--llm);border:1px solid rgba(247,129,102,.35)}
+.rdi-badge-rule{background:rgba(210,153,34,.14);color:var(--rule);border:1px solid rgba(210,153,34,.3)}
+.rdi-badge-red{background:rgba(248,81,73,.14);color:var(--error);border:1px solid rgba(248,81,73,.3)}
+.rdi-badge-gray{background:var(--bg-elevated);color:var(--text-faint);border:1px solid var(--border)}
+/* 主工作区 */
+.rdi-workspace{flex:1;display:flex;min-height:0}
+.rdi-activitybar{width:52px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:4px;flex-shrink:0}
+.rdi-act{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;color:var(--text-faint);cursor:pointer;position:relative;font-size:18px;transition:.15s;user-select:none}
+.rdi-act:hover{color:var(--text-dim)}
+.rdi-act.active{color:var(--accent);background:var(--bg-elevated)}
+.rdi-act.active::before{content:"";position:absolute;left:-6px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--accent)}
+.rdi-actbar-spacer{flex:1}
+/* 左栏面板 */
+.rdi-sidebar{width:270px;min-width:180px;max-width:460px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.rdi-resizer{width:5px;cursor:col-resize;flex-shrink:0;position:relative;z-index:6;background:transparent}
+.rdi-resizer::before{content:"";position:absolute;left:2px;top:0;bottom:0;width:1px;background:var(--border)}
+.rdi-resizer:hover{background:var(--accent-soft)}
+.rdi-resizer:hover::before{background:var(--accent)}
+.rdi-panel-head{height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:11px;font-weight:600;letter-spacing:.6px;color:var(--text-dim);text-transform:uppercase;border-bottom:1px solid var(--border);flex-shrink:0}
+.rdi-panel-actions{display:flex;gap:6px}
+.rdi-panel-actions span{cursor:pointer;color:var(--text-faint);font-size:14px}
+.rdi-panel-actions span:hover{color:var(--text-dim)}
+.rdi-panel-body{flex:1;overflow:auto;padding:8px 0;font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim)}
+.rdi-panel-body pre{white-space:pre-wrap;word-break:break-all;font-family:var(--font-mono);font-size:12px;line-height:1.7;color:var(--text-dim);padding:8px 12px}
+/* 文件树 */
+.rdi-tree{font-family:var(--font-mono);font-size:12.5px;line-height:1.9}
+.rdi-tree-row{display:flex;align-items:center;gap:6px;padding:2px 10px;white-space:nowrap;color:var(--text-dim);cursor:pointer;position:relative}
+.rdi-tree-row:hover{background:var(--bg-elevated);color:var(--text)}
+.rdi-tree-row.active{background:var(--bg-elevated);color:var(--text)}
+.rdi-tree-row.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.rdi-tree-indent{flex-shrink:0}
+.rdi-tree-chev{width:12px;text-align:center;color:var(--text-faint);flex-shrink:0;font-size:10px}
+.rdi-tree-ico{width:16px;text-align:center;flex-shrink:0}
+.rdi-tree-name{overflow:hidden;text-overflow:ellipsis}
+.rdi-tree-meta{margin-left:auto;font-size:11px;color:var(--text-faint)}
+.rdi-tree-folder{font-weight:500}
+.rdi-pkg-children{padding-left:24px}
+/* 中栏 */
+.rdi-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.rdi-main-scroll{flex:1;overflow:auto;padding:20px 26px;display:flex;flex-direction:column;gap:16px}
+.rdi-section-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text-faint);text-transform:uppercase;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.rdi-section-title::after{content:"";flex:1;height:1px;background:var(--border)}
+/* 灯带 */
+.rdi-wf-rail{display:flex;position:relative;padding:12px 4px 2px;flex-shrink:0}
+.rdi-wf-rail::before{content:"";position:absolute;top:19px;left:8px;right:8px;height:2px;background:var(--border);border-radius:2px}
+.rdi-wf-stop{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1}
+.rdi-wf-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:var(--bg);transition:.3s}
+.rdi-wf-label{font-size:12px;color:var(--text-faint)}
+.rdi-wf-done .rdi-wf-dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+.rdi-wf-done .rdi-wf-label{color:var(--accent)}
+.rdi-wf-current .rdi-wf-dot{background:var(--accent);border-color:#fff;box-shadow:0 0 0 5px var(--accent-glow),0 0 20px var(--accent-glow);animation:rdiPulse 1.5s ease-in-out infinite}
+.rdi-wf-current .rdi-wf-label{color:var(--accent);font-weight:600}
+@keyframes rdiPulse{0%,100%{box-shadow:0 0 0 4px var(--accent-glow),0 0 16px var(--accent-glow)}50%{box-shadow:0 0 0 8px rgba(247,129,102,.16),0 0 26px var(--accent-glow)}}
+/* LLM 分析 */
+.rdi-think{flex:1;min-height:180px;background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:20px 22px;display:flex;flex-direction:column}
+.rdi-think-head{display:flex;align-items:center;gap:9px;padding-bottom:14px;border-bottom:1px solid var(--border-soft);font-size:12px;font-weight:600;color:var(--llm)}
+.rdi-think-head .rdi-stage{color:var(--text-faint);font-weight:400}
+.rdi-think-body{flex:1;display:flex;align-items:center;padding:18px 4px;font-family:var(--font-mono);font-size:14px;line-height:1.9;color:var(--text-dim)}
+/* 目标输出 */
+.rdi-output{border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--bg-panel);flex-shrink:0}
+.rdi-output summary{cursor:pointer;padding:10px 16px;list-style:none;display:flex;align-items:center;gap:12px}
+.rdi-output summary::-webkit-details-marker{display:none}
+.rdi-out-label{color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase}
+.rdi-out-tick{color:var(--done)}
+.rdi-out-title{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.rdi-out-caret{margin-left:auto;color:var(--text-faint)}
+.rdi-out-detail{border-top:1px solid var(--border);padding:12px 16px;font-family:var(--font-mono);font-size:12px;background:var(--bg-sidebar);color:var(--text-dim)}
+.rdi-out-file{display:flex;align-items:center;gap:8px;padding:3px 0}
+.rdi-out-fico{width:16px;text-align:center;flex-shrink:0}
+.rdi-out-fname{overflow:hidden;text-overflow:ellipsis}
+.rdi-out-fsize{margin-left:auto;font-size:11px;color:var(--text-faint)}
+/* 右栏检查器 */
+.rdi-inspector{width:300px;min-width:200px;max-width:520px;background:var(--bg-sidebar);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.rdi-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.rdi-tab{flex:1;padding:10px 0;text-align:center;font-size:12px;color:var(--text-faint);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;user-select:none}
+.rdi-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.rdi-insp-body{flex:1;overflow:auto;padding:16px;font-family:var(--font-mono);font-size:12px;color:var(--text-dim)}
+.rdi-insp-pane pre{white-space:pre-wrap;word-break:break-all;font-family:var(--font-mono);font-size:12px;line-height:1.7;color:var(--text-dim)}
+.rdi-kv{margin-bottom:14px}
+.rdi-kv-k{font-size:11px;color:var(--text-faint);font-weight:600;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase}
+.rdi-kv-v{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);line-height:1.6}
+.rdi-good{color:var(--done)}
+.rdi-warn{color:var(--warn)}
+.rdi-kv-list{margin:0;padding-left:16px}
+.rdi-kv-list li{margin-bottom:4px;font-size:12px;color:var(--text-dim);line-height:1.6}
+/* 底部状态栏 */
+.rdi-statusbar{height:28px;display:flex;align-items:center;gap:16px;padding:0 14px;background:var(--bg-sidebar);border-top:1px solid var(--border);font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);flex-shrink:0}
+.rdi-statusbar .rdi-left{display:flex;align-items:center;gap:16px}
+.rdi-statusbar .rdi-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.rdi-sb{display:flex;align-items:center;gap:6px}
+.rdi-sb .rdi-ok{color:var(--done)}
+.rdi-sb .rdi-llm{color:var(--llm)}
+.rdi-spinner{width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:rdiSpin .8s linear infinite}
+@keyframes rdiSpin{to{transform:rotate(360deg)}}
+.rdi-caret{display:inline-block;width:2px;height:14px;background:var(--accent);margin-left:2px;vertical-align:-2px;animation:rdiBlink 1s steps(1) infinite}
+@keyframes rdiBlink{50%{opacity:0}}
+.rdi-key{color:var(--text-faint);font-weight:600}
+.rdi-req-list{display:flex;flex-direction:column;gap:10px;padding:0 10px}
+.rdi-req-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.rdi-req-title{font-weight:600;color:var(--text);margin-bottom:8px;font-size:13px}
+.rdi-req-line{display:flex;gap:8px;padding:3px 0;font-size:12px}
+.rdi-req-k{color:var(--text-faint);width:64px;flex-shrink:0}
+.rdi-req-v{color:var(--text-dim);word-break:break-all}
+/* 深色滚动条 */
+.rdi-app ::-webkit-scrollbar{width:8px;height:8px}
+.rdi-app ::-webkit-scrollbar-track{background:transparent}
+.rdi-app ::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+.rdi-app ::-webkit-scrollbar-thumb:hover{background:#484f58}
+.rdi-app *{scrollbar-width:thin;scrollbar-color:#30363d transparent}
 </style>"""
 
 
@@ -1032,22 +1152,561 @@ def _render_review_body(state: dict[str, Any]) -> str:
     )
 
 
-def build_decision_board(state: dict[str, Any]) -> str:
-    """中栏决策看板 HTML：五个阶段面板，随当前阶段高亮切换。"""
+def _file_icon(name: str) -> str:
+    """按文件扩展名返回类型图标（VSCode 风格占位）。"""
+    if name.endswith(".json"):
+        return "{}"
+    if name.endswith(".md"):
+        return "#"
+    if name.endswith(".urdf") or name.endswith(".xacro"):
+        return "⧉"
+    if name.endswith(".pkl") or name.endswith(".npz"):
+        return "◈"
+    return "≡"
+
+
+def _format_size(n: Any) -> str:
+    """把字节数格式化为易读大小（B/KB/MB）。"""
+    if n is None:
+        return ""
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return ""
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    return f"{n / (1024 * 1024):.1f} MB"
+
+
+def _tree_row_html(indent: int, name: str, is_dir: bool, size: Any = None) -> str:
+    indent_html = f'<span class="rdi-tree-indent" style="width:{indent * 16}px"></span>'
+    if is_dir:
+        return (
+            '<div class="rdi-tree-row rdi-tree-folder">'
+            f"{indent_html}"
+            '<span class="rdi-tree-chev">▾</span>'
+            '<span class="rdi-tree-ico">📁</span>'
+            f'<span class="rdi-tree-name">{_html.escape(name)}</span>'
+            "</div>"
+        )
+    meta = _format_size(size)
+    return (
+        '<div class="rdi-tree-row">'
+        f"{indent_html}"
+        f'<span class="rdi-tree-ico">{_file_icon(name)}</span>'
+        f'<span class="rdi-tree-name">{_html.escape(name)}</span>'
+        f'<span class="rdi-tree-meta">{meta}</span>'
+        "</div>"
+    )
+
+
+def _package_file_rows(package_dir: Path) -> list[str]:
+    """返回某数据包目录下的文件树行（不含 root 节点，从 0 缩进开始）。"""
+    paths = sorted(
+        str(p.relative_to(package_dir)).replace("\\", "/")
+        for p in package_dir.rglob("*")
+        if p.is_file()
+    )
+    rows: list[str] = []
+    seen_dirs: set[str] = set()
+    for rel in paths:
+        parts = rel.split("/")
+        for i in range(1, len(parts)):
+            prefix = "/".join(parts[:i])
+            if prefix not in seen_dirs:
+                seen_dirs.add(prefix)
+                rows.append(_tree_row_html(i - 1, parts[i - 1], True))
+        try:
+            size = (package_dir / rel).stat().st_size
+        except OSError:
+            size = None
+        rows.append(_tree_row_html(len(parts) - 1, parts[-1], False, size))
+    return rows
+
+
+def _local_package_tree_rows() -> list[str]:
+    """生成本地数据包列表文件树行（分组与数据包均可折叠展开）。"""
+    rows: list[str] = []
+    for root in (OUTPUT_ROOT, DEMO_ROOT):
+        if not root.exists():
+            continue
+        pkgs = sorted(p for p in root.iterdir() if p.is_dir())
+        if not pkgs:
+            continue
+        rows.append(
+            '<div class="rdi-tree-row rdi-tree-folder rdi-group">'
+            '<span class="rdi-tree-chev">▾</span>'
+            '<span class="rdi-tree-ico">📁</span>'
+            f'<span class="rdi-tree-name">{_html.escape(root.name)}</span>'
+            "</div>"
+            '<div class="rdi-group-children">'
+        )
+        for p in pkgs:
+            rows.append(
+                '<div class="rdi-tree-row rdi-pkg" '
+                f'data-group="{_html.escape(root.name)}" data-package="{_html.escape(p.name)}">'
+                '<span class="rdi-tree-indent" style="width:16px"></span>'
+                '<span class="rdi-tree-chev">▸</span>'
+                '<span class="rdi-tree-ico">📦</span>'
+                f'<span class="rdi-tree-name">{_html.escape(p.name)}</span>'
+                "</div>"
+                '<div class="rdi-pkg-children" style="display:none"></div>'
+            )
+        rows.append("</div>")
+    return rows
+
+
+def render_file_tree_html(state: dict[str, Any]) -> str:
+    """VSCode 风格文件树：优先包目录（含真实大小），否则 manifest files[].path 兜底。"""
+    package_dir = get_package_dir(state)
+    sizes: dict[str, Any] = {}
+    if package_dir is not None and package_dir.exists():
+        paths = sorted(
+            str(p.relative_to(package_dir)).replace("\\", "/")
+            for p in package_dir.rglob("*")
+            if p.is_file()
+        )
+        for rel in paths:
+            try:
+                sizes[rel] = (package_dir / rel).stat().st_size
+            except OSError:
+                sizes[rel] = None
+    else:
+        manifest = to_plain(state.get("experiment_package"))
+        paths = sorted(
+            {
+                str(f.get("path", "")).replace("\\", "/")
+                for f in manifest.get("files", [])
+                if isinstance(f, dict) and f.get("path")
+            }
+            if isinstance(manifest, dict)
+            else []
+        )
+        if isinstance(manifest, dict):
+            for f in manifest.get("files", []):
+                if isinstance(f, dict) and f.get("path"):
+                    sizes[str(f["path"]).replace("\\", "/")] = f.get("file_size")
+
+    if not paths:
+        local_rows = _local_package_tree_rows()
+        if local_rows:
+            return '<div class="rdi-tree">' + "".join(local_rows) + "</div>"
+        return '<div class="rdi-key">暂无数据包文件</div>'
+
+    root_name: str | None = None
+    if package_dir is not None and package_dir.exists():
+        root_name = package_dir.name
+    else:
+        manifest = to_plain(state.get("experiment_package"))
+        if isinstance(manifest, dict) and isinstance(manifest.get("package_info"), dict):
+            root_name = str(manifest["package_info"].get("package_id", "")) or None
+
+    rows: list[str] = []
+    if root_name:
+        rows.append(
+            '<div class="rdi-tree-row rdi-tree-folder">'
+            '<span class="rdi-tree-chev">▾</span>'
+            '<span class="rdi-tree-ico">📦</span>'
+            f'<span class="rdi-tree-name">{_html.escape(root_name)}</span>'
+            "</div>"
+        )
+    seen_dirs: set[str] = set()
+    for rel in paths:
+        parts = rel.split("/")
+        for i in range(1, len(parts)):
+            prefix = "/".join(parts[:i])
+            if prefix not in seen_dirs:
+                seen_dirs.add(prefix)
+                rows.append(_tree_row_html(i - 1, parts[i - 1], True))
+        rows.append(_tree_row_html(len(parts) - 1, parts[-1], False, sizes.get(rel)))
+    return '<div class="rdi-tree">' + "".join(rows) + "</div>"
+
+
+def render_workflow_html(state: dict[str, Any]) -> str:
+    """灯带式 5 节点工作流：完成点亮 / 当前呼吸 / 未开始灰点。"""
     completed = _board_completed(state)
-    current = BOARD_STAGES[len(completed) - 1][0] if completed else BOARD_STAGES[0][0]
-    renderers = {
-        "retrieve_data": _render_retrieval_body,
-        "parse_and_convert": _render_semantic_body,
-        "validate": _render_validate_body,
-        "assemble_package": _render_quality_body,
-        "human_review": _render_review_body,
-    }
-    panels: list[str] = [_DECISION_CSS]
-    for name, label in BOARD_STAGES:
-        cls = "rdi-panel rdi-panel-active" if name == current else "rdi-panel rdi-panel-pending"
-        panels.append(f'<div class="{cls}"><h3>{label}</h3>{renderers[name](state)}</div>')
-    return "".join(panels)
+    current_idx = min(len(completed), len(BOARD_STAGES) - 1)
+    stops: list[str] = []
+    for i, (name, label) in enumerate(BOARD_STAGES):
+        if name in completed and i != current_idx:
+            cls = "rdi-wf-done"
+        elif i == current_idx:
+            cls = "rdi-wf-current"
+        else:
+            cls = ""
+        stops.append(
+            '<div class="rdi-wf-stop ' + cls + '">'
+            '<span class="rdi-wf-dot"></span>'
+            f'<span class="rdi-wf-label">{_html.escape(label)}</span>'
+            "</div>"
+        )
+    return '<div class="rdi-wf-rail">' + "".join(stops) + "</div>"
+
+
+def _current_thinking(state: dict[str, Any]) -> tuple[str, str, str]:
+    """反推当前阶段的 LLM 思考文本与来源标注（不含 confidence 数字）。"""
+    completed = _board_completed(state)
+    current_idx = min(len(completed), len(BOARD_STAGES) - 1)
+    name, label = BOARD_STAGES[current_idx]
+    text = "该阶段尚未执行"
+    source = "规则兜底"
+
+    if name == "retrieve_data":
+        plans = to_plain(state.get("retrieval_plan", {}))
+        for req_id, plan in plans.items():
+            if isinstance(plan, dict) and plan.get("reason"):
+                text = str(plan["reason"])
+                source = _decision_source(state, "retrieval_plan", True, str(req_id))
+                break
+    elif name == "parse_and_convert":
+        sm = to_plain(state.get("semantic_map", {}))
+        for req_id, conv in sm.items():
+            if isinstance(conv, dict):
+                text = (
+                    f"语义类型 {conv.get('semantic_type', '?')}，"
+                    f"旋转 {conv.get('rotation', '?')}，原点 {conv.get('origin', '?')}，"
+                    f"单位 {conv.get('unit', '?')}"
+                )
+                source = _decision_source(state, "unify_semantics", True, str(req_id))
+                break
+    elif name == "validate":
+        issues = to_plain(state.get("validation_issues", []))
+        text = f"质量校验发现 {len(issues)} 项问题" if issues else "质量校验通过，无阻塞性问题"
+        source = "规则兜底"
+    elif name == "assemble_package":
+        qe = to_plain(state.get("quality_explanation"))
+        if isinstance(qe, dict) and qe.get("summary"):
+            text = str(qe["summary"])
+            source = _decision_source(state, "explain_quality", True)
+    elif name == "human_review":
+        sug = to_plain(state.get("review_suggestions"))
+        payload = state.get("interrupt_payload")
+        payload_sug = None
+        if isinstance(payload, dict) and isinstance(payload.get("suggestions"), dict):
+            payload_sug = to_plain(payload["suggestions"])
+        data = sug or payload_sug
+        if isinstance(data, dict):
+            if data.get("rationale"):
+                text = str(data["rationale"])
+            elif data.get("issues"):
+                text = "；".join(str(i) for i in data.get("issues", []))
+            src = data.get("source")
+            if src == "llm":
+                source = "LLM 生成"
+            elif src == "rule":
+                source = "规则兜底"
+            else:
+                source = _decision_source(state, "review_suggestions", True)
+
+    return label, text, source
+
+
+def render_llm_analysis_html(state: dict[str, Any]) -> str:
+    """LLM 分析主体视图：思考文本 + 来源标注，不含 confidence 数字。"""
+    label, text, source = _current_thinking(state)
+    badge = _badge_html(source) if source == "LLM 生成" else ""
+    return (
+        '<div class="rdi-think">'
+        '<div class="rdi-think-head"><span>◉</span><span>LLM 分析</span>'
+        f'<span class="rdi-stage">· {_html.escape(label)}</span>'
+        f'<span style="margin-left:auto">{badge}</span>'
+        "</div>"
+        f'<div class="rdi-think-body">{_html.escape(text)}<span class="rdi-caret"></span></div>'
+        "</div>"
+    )
+
+
+def _output_files(state: dict[str, Any]) -> list[tuple[str, Any]]:
+    """返回数据包文件清单 [(相对路径, 大小), ...]，优先包目录，否则 manifest 兜底。"""
+    package_dir = get_package_dir(state)
+    files: list[tuple[str, Any]] = []
+    if package_dir is not None and package_dir.exists():
+        for p in sorted(package_dir.rglob("*")):
+            if p.is_file():
+                rel = str(p.relative_to(package_dir)).replace("\\", "/")
+                try:
+                    size: Any = p.stat().st_size
+                except OSError:
+                    size = None
+                files.append((rel, size))
+        return files
+    manifest = to_plain(state.get("experiment_package"))
+    if isinstance(manifest, dict):
+        for f in manifest.get("files", []):
+            if isinstance(f, dict) and f.get("path"):
+                files.append((str(f["path"]).replace("\\", "/"), f.get("file_size")))
+    return files
+
+
+def render_target_output_html(state: dict[str, Any]) -> str:
+    """目标输出：单行汇总 + 可展开文件清单（图标 + 名称 + 大小）。"""
+    manifest = to_plain(state.get("experiment_package"))
+    if manifest:
+        title = "robot-data-package 已生成"
+    elif state.get("errors"):
+        title = "运行失败，未生成数据包"
+    else:
+        title = "尚未生成数据包"
+
+    detail = "".join(
+        '<div class="rdi-out-file">'
+        f'<span class="rdi-out-fico">{_file_icon(rel)}</span>'
+        f'<span class="rdi-out-fname">{_html.escape(rel)}</span>'
+        f'<span class="rdi-out-fsize">{_format_size(size)}</span>'
+        "</div>"
+        for rel, size in _output_files(state)
+    )
+    return (
+        '<details class="rdi-output">'
+        '<summary><span class="rdi-out-label"><span class="rdi-out-tick">✓</span>目标输出</span>'
+        f'<span class="rdi-out-title">{_html.escape(title)}</span>'
+        '<span class="rdi-out-caret">▾</span></summary>'
+        f'<div class="rdi-out-detail">{detail}</div>'
+        "</details>"
+    )
+
+
+def render_inspector_html(state: dict[str, Any]) -> str:
+    """检查器「详情」Tab：当前文件 / 需求状态 / 语义约定 / 质量校验 / 来源标注。"""
+    files = _output_files(state)
+    current_file = files[0][0] if files else "—"
+
+    req_line = "—"
+    _headers, rows = build_req_status_table(state)
+    if rows:
+        row = rows[0]
+        req_line = f'<span class="rdi-good">{_html.escape(str(row[2]))}</span> · 数据源 {_html.escape(str(row[3] or "—"))}'
+
+    semantic_html = "—"
+    sm = to_plain(state.get("semantic_map", {}))
+    for conv in sm.values():
+        if isinstance(conv, dict):
+            semantic_html = (
+                f"type: {_html.escape(str(conv.get('semantic_type', '?')))}<br>"
+                f"rotation: {_html.escape(str(conv.get('rotation', '?')))}<br>"
+                f"origin: {_html.escape(str(conv.get('origin', '?')))} · "
+                f"unit: {_html.escape(str(conv.get('unit', '?')))}"
+            )
+            break
+
+    qe = to_plain(state.get("quality_explanation"))
+    issues = to_plain(state.get("validation_issues", []))
+    checks: list[str] = []
+    if isinstance(qe, dict):
+        for s in qe.get("strengths", []):
+            checks.append(f'<li class="rdi-good">✓ {_html.escape(str(s))}</li>')
+        for r in qe.get("risks", []):
+            checks.append(f'<li class="rdi-warn">△ {_html.escape(str(r))}</li>')
+    if not checks:
+        checks.append(
+            f'<li class="rdi-warn">△ {len(issues)} 项校验问题</li>'
+            if issues
+            else '<li class="rdi-good">✓ 无校验问题</li>'
+        )
+    quality_html = '<ul class="rdi-kv-list">' + "".join(checks) + "</ul>"
+
+    source_label = _decision_source(state, "explain_quality", bool(qe))
+    if source_label == "规则兜底":
+        source_label = "—"
+
+    def _kv(k: str, v: str) -> str:
+        return f'<div class="rdi-kv"><div class="rdi-kv-k">{k}</div><div class="rdi-kv-v">{v}</div></div>'
+
+    return "".join(
+        [
+            _kv("当前文件", _html.escape(current_file)),
+            _kv("需求状态", req_line),
+            _kv("语义约定", semantic_html),
+            _kv("质量校验", quality_html),
+            _kv("来源标注", f'<span style="color:var(--llm)">{source_label}</span>'),
+        ]
+    )
+
+
+_WORKSPACE_JS = """
+(function () {
+  var acts = document.querySelectorAll('.rdi-act');
+  var panes = document.querySelectorAll('.rdi-sidebar .rdi-pane');
+  var titles = {explorer: '资源管理器', retrieve: '数据检索', decision: '决策', review: '审查', log: '日志', settings: '设置'};
+  var titleEl = document.getElementById('rdi-panel-title');
+  acts.forEach(function (a) {
+    a.addEventListener('click', function () {
+      acts.forEach(function (x) { x.classList.remove('active'); });
+      a.classList.add('active');
+      var p = a.getAttribute('data-panel');
+      panes.forEach(function (n) { n.style.display = (n.getAttribute('data-panel') === p) ? '' : 'none'; });
+      if (titleEl) titleEl.textContent = titles[p] || '';
+    });
+  });
+  var tabs = document.querySelectorAll('.rdi-tab');
+  var insp = document.querySelectorAll('.rdi-insp-pane');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var k = t.getAttribute('data-tab');
+      insp.forEach(function (n) { n.style.display = (n.getAttribute('data-tab') === k) ? '' : 'none'; });
+    });
+  });
+})();
+"""
+
+
+def _req_status_table_html(state: dict[str, Any]) -> str:
+    """数据需求状态：每个需求一张竖排卡片（字段名纵向排列）。"""
+    _headers, rows = build_req_status_table(state)
+    if not rows:
+        return '<div class="rdi-key">暂无数据需求</div>'
+    cards: list[str] = []
+    for row in rows:
+        fields = [
+            ("类型", row[1]),
+            ("状态", row[2]),
+            ("数据源", row[3]),
+            ("fallback", row[4]),
+            ("失败原因", row[5]),
+        ]
+        lines = "".join(
+            '<div class="rdi-req-line">'
+            f'<span class="rdi-req-k">{_html.escape(k)}</span>'
+            f'<span class="rdi-req-v">{_html.escape(str(v or "—"))}</span>'
+            "</div>"
+            for k, v in fields
+        )
+        cards.append(
+            '<div class="rdi-req-card">'
+            f'<div class="rdi-req-title">{_html.escape(str(row[0]))}</div>'
+            f"{lines}"
+            "</div>"
+        )
+    return '<div class="rdi-req-list">' + "".join(cards) + "</div>"
+
+
+def _derive_status(state: dict[str, Any]) -> str:
+    if state.get("errors"):
+        return "运行失败"
+    if state.get("experiment_package"):
+        return "运行完成"
+    return "运行中"
+
+
+def _status_badge(status: str) -> str:
+    if "运行失败" in status:
+        return '<span class="rdi-badge rdi-badge-red">失败</span>'
+    if "运行完成" in status:
+        return '<span class="rdi-badge rdi-badge-ok">完成</span>'
+    if any(k in status for k in ("继续运行", "已生成中间结果", "待审查")):
+        return '<span class="rdi-badge rdi-badge-rule">待审查</span>'
+    if "请输入" in status or "没有待继续" in status:
+        return '<span class="rdi-badge rdi-badge-gray">待输入</span>'
+    return '<span class="rdi-badge rdi-badge-llm">运行中</span>'
+
+
+def build_workspace_html(state: dict[str, Any], status: str) -> str:
+    """完整工作区 HTML：标题栏 + 活动栏 + 左栏 6 面板 + 中栏 + 检查器 + 状态栏。"""
+    run_id = _html.escape(str(state.get("run_id", "") or "—"))
+    file_tree = render_file_tree_html(state)
+    req_table = _req_status_table_html(state)
+    semantic = _html.escape(semantic_map_json(state))
+    missing = _html.escape(
+        json.dumps(to_plain(state.get("missing_items", [])), ensure_ascii=False, indent=2)
+    )
+    provenance = _html.escape(
+        "\n".join(str(x) for x in to_plain(state.get("provenance", []))) or "暂无日志"
+    )
+    llm_usage = _html.escape(
+        json.dumps(to_plain(state.get("llm_usage", [])), ensure_ascii=False, indent=2)
+    )
+    manifest = _html.escape(
+        json.dumps(to_plain(state.get("experiment_package", {})), ensure_ascii=False, indent=2)
+    )
+    llm_count = len(to_plain(state.get("llm_usage", [])))
+    completed_count = len(_board_completed(state))
+    elapsed = sum(
+        float(u.get("elapsed", 0))
+        for u in to_plain(state.get("llm_usage", []))
+        if isinstance(u, dict) and u.get("elapsed")
+    )
+    error_count = len(to_plain(state.get("errors", [])))
+    error_label = "无错误" if error_count == 0 else f"{error_count} 错误"
+
+    return _DECISION_CSS + (
+        '<div class="rdi-app">'
+        '<header class="rdi-titlebar">'
+        '<div class="rdi-brand"><span class="rdi-logo">R</span>Robot Data Integrator'
+        ' <span class="rdi-sub">· LLM 智能决策工作区</span></div>'
+        '<div class="rdi-spacer"></div>'
+        f'<span class="rdi-chip"><span class="rdi-dot"></span>run_id {run_id}</span>'
+        f"{_status_badge(status)}"
+        '<span class="rdi-badge rdi-badge-llm">LLM 引擎</span>'
+        "</header>"
+        '<div class="rdi-workspace">'
+        '<nav class="rdi-activitybar">'
+        '<div class="rdi-act active" data-panel="explorer" title="资源管理器">🗂</div>'
+        '<div class="rdi-act" data-panel="retrieve" title="数据检索">⌕</div>'
+        '<div class="rdi-act" data-panel="decision" title="决策">◉</div>'
+        '<div class="rdi-act" data-panel="review" title="审查">✓</div>'
+        '<div class="rdi-act" data-panel="log" title="日志">▷</div>'
+        '<div class="rdi-act" data-panel="settings" title="设置">⚙</div>'
+        '<div class="rdi-actbar-spacer"></div>'
+        "</nav>"
+        '<aside class="rdi-sidebar" data-min="180" data-max="460">'
+        '<div class="rdi-panel-head"><span id="rdi-panel-title">资源管理器</span>'
+        '<div class="rdi-panel-actions"><span>⟳</span><span>＋</span><span>▾</span></div></div>'
+        f'<div class="rdi-panel-body rdi-pane" data-panel="explorer">{file_tree}</div>'
+        f'<div class="rdi-panel-body rdi-pane" data-panel="retrieve" style="display:none">{req_table}</div>'
+        f'<div class="rdi-panel-body rdi-pane" data-panel="decision" style="display:none"><pre>{semantic}</pre></div>'
+        f'<div class="rdi-panel-body rdi-pane" data-panel="review" style="display:none"><pre>审查决定与反馈请在下方输入区提交\n\nmissing_items\n{missing}</pre></div>'
+        f'<div class="rdi-panel-body rdi-pane" data-panel="log" style="display:none"><pre>provenance 日志\n{provenance}\n\nllm_usage\n{llm_usage}</pre></div>'
+        '<div class="rdi-panel-body rdi-pane" data-panel="settings" style="display:none"><pre>运行模式与本地文件注入请在下方输入区设置</pre></div>'
+        "</aside>"
+        '<div class="rdi-resizer" data-target="sidebar" data-dir="right"></div>'
+        '<main class="rdi-main">'
+        '<div class="rdi-main-scroll">'
+        '<div class="rdi-section-title">工作流 · 实时点亮</div>'
+        f"{render_workflow_html(state)}"
+        '<div class="rdi-section-title">LLM 分析 · 实时思考</div>'
+        f"{render_llm_analysis_html(state)}"
+        '<div class="rdi-section-title">目标输出</div>'
+        f"{render_target_output_html(state)}"
+        "</div>"
+        "</main>"
+        '<div class="rdi-resizer" data-target="inspector" data-dir="left"></div>'
+        '<aside class="rdi-inspector" data-min="200" data-max="520">'
+        '<div class="rdi-tabs">'
+        '<div class="rdi-tab active" data-tab="detail">详情</div>'
+        '<div class="rdi-tab" data-tab="manifest">manifest</div>'
+        '<div class="rdi-tab" data-tab="semantic">语义</div>'
+        '<div class="rdi-tab" data-tab="llm">LLM 调用</div>'
+        "</div>"
+        '<div class="rdi-insp-body">'
+        f'<div class="rdi-insp-pane" data-tab="detail">{render_inspector_html(state)}</div>'
+        f'<div class="rdi-insp-pane" data-tab="manifest" style="display:none"><pre>{manifest}</pre></div>'
+        f'<div class="rdi-insp-pane" data-tab="semantic" style="display:none"><pre>{semantic}</pre></div>'
+        f'<div class="rdi-insp-pane" data-tab="llm" style="display:none"><pre>{llm_usage}</pre></div>'
+        "</div>"
+        "</aside>"
+        "</div>"
+        '<footer class="rdi-statusbar">'
+        '<div class="rdi-left">'
+        f'<span class="rdi-sb">⎇ 阶段 {completed_count}/5</span>'
+        f'<span class="rdi-sb"><span class="rdi-spinner"></span> {_html.escape(status)}</span>'
+        "</div>"
+        '<div class="rdi-right">'
+        f'<span class="rdi-sb"><span class="rdi-llm">◉</span> LLM 调用 <span class="rdi-llm">{llm_count} 次</span></span>'
+        f'<span class="rdi-sb">⧗ 耗时 {elapsed:.1f}s</span>'
+        f'<span class="rdi-sb"><span class="rdi-ok">✓</span> {error_label}</span>'
+        "</div>"
+        "</footer>"
+        "</div>"
+    )
+
+
+def build_decision_board(state: dict[str, Any]) -> str:
+    """中栏决策看板 HTML：完整工作区（活动栏 + 三栏 + 状态栏）。"""
+    return build_workspace_html(state, _derive_status(state))
 
 
 def semantic_map_json(state: dict[str, Any]) -> str:
@@ -1231,104 +1890,98 @@ def resume_workflow_stream(
     yield resume_workflow(review_decision, feedback)
 
 
+def on_action_button(
+    mode: str,
+    goal: str,
+    paper_file: Any,
+    local_files_json: str,
+    review_decision: str,
+    feedback: str,
+) -> tuple:
+    """运行/继续运行合并按钮回调：根据是否有待继续运行切换行为。
+
+    返回 15 元组 = 原 14 元组展示数据 + 按钮文字（"▶ 运行" / "▶ 继续运行"）。
+    """
+    if _pending_thread_id:
+        result = resume_workflow(review_decision, feedback)
+        button = "▶ 运行"
+    else:
+        result = run_workflow(mode, goal, paper_file, local_files_json)
+        button = "▶ 继续运行" if "继续运行" in str(result[0]) else "▶ 运行"
+    return (*result, button)
+
+
 def build_app() -> Any:
     gr: Any = importlib.import_module("gradio")
 
     with gr.Blocks(title="Robot Data Integrator") as app:
-        gr.Markdown("# Robot Data Integrator — LLM 智能决策工作区")
-        gr.Markdown(
-            "双引擎架构：**LLM 智能决策层**（理解 · 规划 · 评估 · 解释）"
-            "+ **确定性执行层**（转换 · 计算 · 校验 · 落盘）。"
-            "中栏决策看板实时展示 LLM 决策过程，并诚实标注「LLM 生成 / 规则兜底」。"
-        )
+        # 完整工作区（活动栏 + 左栏 6 面板 + 中栏 + 检查器 + 状态栏，内联 CSS/JS）
+        decision_board = gr.HTML(label="工作区")
 
-        # ── 顶部状态条 ──
-        status_bar = gr.HTML(label="状态条")
-
+        # 目标输入条
         with gr.Row():
-            # ── 左栏：输入与控制 ──
-            with gr.Column(scale=1):
-                gr.Markdown("### 输入与控制")
-                mode = gr.Radio(
-                    choices=["演示流程", "真实流程"],
-                    value="真实流程",  # E5：默认真实流程，让评审看到 LLM 真实工作
-                    label="运行模式",
-                )
-                goal = gr.Textbox(label="实验目标", lines=4)
-                paper_file = gr.File(label="论文 PDF", file_types=[".pdf"])
-                local_files = gr.Textbox(
-                    label='本地文件注入（JSON：{"req_id": "路径"}，真实流程可选）',
-                    lines=2,
-                )
-                gr.Markdown("### 数据包审查")
-                review_decision = gr.Radio(
-                    choices=["satisfied", "revised", "unsatisfied"],
-                    value="satisfied",
-                    label="审查决定（真实流程，运行中断后生效）",
-                )
-                feedback = gr.Textbox(label="反馈", lines=2)
-                with gr.Row():
-                    run_button = gr.Button("运行", variant="primary")
-                    resume_button = gr.Button("继续运行")
-                status = gr.Textbox(label="状态", interactive=False)
+            pdf_button = gr.Button("＋", scale=0)
+            goal = gr.Textbox(
+                placeholder="描述你的实验目标，如：整合 DexGrasp 抓取数据与灵巧手 URDF…",
+                show_label=False,
+                scale=4,
+            )
+            action_button = gr.Button("▶ 运行", variant="primary", scale=0)
+        paper_file = gr.File(label="论文 PDF", file_types=[".pdf"], visible=False)
 
-            # ── 中栏：LLM 决策看板（随阶段切换） ──
-            with gr.Column(scale=2):
-                gr.Markdown("### LLM 决策看板")
-                gr.Markdown(
-                    "检索策略规划 → 语义统一 → 质量校验 → 质量解释 → 审查建议，按当前阶段高亮展示"
-                )
-                decision_board = gr.HTML(label="决策看板")
+        # 审查与设置
+        with gr.Accordion("审查与设置", open=False):
+            mode = gr.Radio(choices=["演示流程", "真实流程"], value="真实流程", label="运行模式")
+            review_decision = gr.Radio(
+                choices=["satisfied", "revised", "unsatisfied"],
+                value="satisfied",
+                label="审查决定",
+            )
+            feedback = gr.Textbox(label="反馈", lines=2)
+            local_files = gr.Textbox(label='本地文件注入（JSON：{"req_id": "路径"}）', lines=2)
 
-            # ── 右栏：输出详情 ──
-            with gr.Column(scale=1):
-                gr.Markdown("### 输出详情")
-                req_status = gr.Dataframe(
-                    label="数据需求状态",
-                    headers=["req_id", "req_type", "状态", "数据源", "是否 fallback", "失败原因"],
-                    interactive=False,
-                )
-                provenance = gr.Textbox(label="provenance 日志", lines=6, interactive=False)
-                tree = gr.Textbox(label="数据包目录树", lines=8, interactive=False)
-                manifest = gr.Textbox(label="manifest.json 摘要", lines=8, interactive=False)
-                semantic_map_display = gr.Textbox(
-                    label="semantic_map.json 内容", lines=6, interactive=False
-                )
-                llm_usage_display = gr.JSON(label="llm_usage（LLM 决策调用记录）")
-                validation_issues = gr.JSON(label="validation_issues")
-                runtime_check = gr.JSON(label="runtime_check（MuJoCo 验证）")
-                missing_items = gr.JSON(label="missing_items")
-                stage_progress = gr.JSON(
-                    label="阶段进度（目标解析 → 数据检索 → 解析转换 → 质量校验 → 整合打包）"
-                )
+        # 隐藏组件（保留 14 元组契约其余元素）
+        status_text = gr.Textbox(label="状态", visible=False)
+        state_summary = gr.JSON(label="state_summary", visible=False)
+        req_status = gr.Dataframe(visible=False)
+        tree_text = gr.Textbox(visible=False)
+        manifest = gr.Textbox(visible=False)
+        validation_issues = gr.JSON(visible=False)
+        runtime_check = gr.JSON(visible=False)
+        missing_items = gr.JSON(visible=False)
+        provenance = gr.Textbox(visible=False)
+        stage_progress = gr.JSON(visible=False)
+        llm_usage_display = gr.JSON(visible=False)
+        semantic_map_display = gr.Textbox(visible=False)
+        status_bar = gr.HTML(visible=False)
 
         outputs = [
-            status,
-            gr.JSON(label="state_summary", visible=False),
-            req_status,
-            tree,
-            manifest,
-            validation_issues,
-            runtime_check,
-            missing_items,
-            provenance,
-            stage_progress,
-            decision_board,
-            llm_usage_display,
-            semantic_map_display,
-            status_bar,
+            status_text,  # 0  status
+            state_summary,  # 1  summary
+            req_status,  # 2  req_status
+            tree_text,  # 3  tree
+            manifest,  # 4  manifest
+            validation_issues,  # 5  validation_issues
+            runtime_check,  # 6  runtime_check
+            missing_items,  # 7  missing_items
+            provenance,  # 8  provenance
+            stage_progress,  # 9  stage_progress
+            decision_board,  # 10 decision_board（完整工作区）
+            llm_usage_display,  # 11 llm_usage
+            semantic_map_display,  # 12 semantic_map_json
+            status_bar,  # 13 status_bar
+            action_button,  # 14 按钮文字
         ]
 
-        run_button.click(
-            fn=run_workflow_stream,
-            inputs=[mode, goal, paper_file, local_files],
+        action_button.click(
+            fn=on_action_button,
+            inputs=[mode, goal, paper_file, local_files, review_decision, feedback],
             outputs=outputs,
         )
 
-        resume_button.click(
-            fn=resume_workflow_stream,
-            inputs=[review_decision, feedback],
-            outputs=outputs,
+        pdf_button.click(
+            fn=lambda: gr.update(visible=True),
+            outputs=paper_file,
         )
 
     return app
@@ -1338,8 +1991,14 @@ def main() -> None:
     os.environ.setdefault("NO_PROXY", "127.0.0.1,localhost")
     os.environ.setdefault("no_proxy", "127.0.0.1,localhost")
 
+    port = int(os.environ.get("GRADIO_SERVER_PORT", "7861"))
     app = build_app()
-    app.launch(server_name="127.0.0.1", server_port=7860, show_error=True)
+    app.launch(
+        server_name="127.0.0.1",
+        server_port=port,
+        show_error=True,
+        css=_THEME_CSS,
+    )
 
 
 if __name__ == "__main__":

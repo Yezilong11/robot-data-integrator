@@ -40,6 +40,14 @@ class LLMClient:
         self._model = model if model is not None else settings.llm_model
         self._max_retries = max_retries if max_retries is not None else settings.llm_max_retries
         self._temperature = temperature if temperature is not None else settings.llm_temperature
+        # API Key 缺失时抛 LLMUnavailableError（而非让 OpenAI SDK 抛原始报错），
+        # 使上层降级逻辑能统一捕获。
+        if not self._api_key:
+            raise LLMUnavailableError(
+                "LLM API Key 未配置（settings.llm_api_key 为空，请检查 .env 的 LLM_API_KEY）",
+                model=self._model,
+                retry_count=0,
+            )
         # SDK 自带 max_retries=2 会与我们的手写重试叠加，故关闭内置重试
         self._client = OpenAI(
             api_key=self._api_key,

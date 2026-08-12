@@ -302,9 +302,10 @@ def test_run_workflow_real_mode_interrupted(monkeypatch: pytest.MonkeyPatch) -> 
     assert result[9]["数据检索"] == "完成"
     assert result[9]["质量校验"] == "完成"
     assert result[9]["整合打包"] == "未开始"
-    # E5：决策看板渲染 LLM 决策内容（检索面板含搜索词与「LLM 生成」标注）
-    assert "LLM 生成" in result[10]
-    assert "grasp pose" in result[10]
+    # 新组合视图：灯带 + LLM 分析 + 目标输出
+    assert "LLM 分析" in result[10]
+    assert "目标输出" in result[10]
+    assert "rdi-wf-current" in result[10]
     # E5：llm_usage / semantic_map / 状态条同步输出
     assert result[11] == interrupted_state["llm_usage"]
     assert "grasp_pose" in result[12]
@@ -330,13 +331,12 @@ def test_run_workflow_demo_mode_returns_14_tuple() -> None:
         "质量校验": "完成",
         "整合打包": "完成",
     }
-    # E5：决策看板含四个决策点演示数据与「LLM 生成 / 规则兜底」诚实标注
-    assert "检索策略规划" in result[10] or "搜索词" in result[10]
+    # 新组合视图：灯带 + LLM 分析 + 目标输出
+    assert "LLM 分析" in result[10]
+    assert "目标输出" in result[10]
     assert "LLM 生成" in result[10]
-    assert "规则兜底" in result[10]
-    assert "语义待人工确认" in result[10]
-    assert "质量概述" in result[10]
-    assert "建议结论" in result[10]
+    assert "建议通过审查" in result[10]
+    assert "robot-data-package 已生成" in result[10]
     # E5：llm_usage 演示记录（decision/model/status/elapsed）
     assert result[11]
     assert result[11][0]["decision"] == "retrieval_plan"

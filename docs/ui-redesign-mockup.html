@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDI 前端设计稿 · 工作区式改造</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 黑底橙调 · GitHub 暗色风 */
+  --bg:#0d1117;
+  --bg-sidebar:#010409;
+  --bg-panel:#161b22;
+  --bg-elevated:#161b22;
+  --bg-input:#0d1117;
+  --border:#30363d;
+  --border-soft:#21262d;
+  --text:#e6edf3;
+  --text-dim:#8b949e;
+  --text-faint:#6e7681;
+  --accent:#f78166;
+  --accent-soft:rgba(247,129,102,.12);
+  --accent-glow:rgba(247,129,102,.38);
+  --llm:#f78166;
+  --rule:#d29922;
+  --done:#3fb950;
+  --done-soft:rgba(63,185,80,.15);
+  --warn:#d29922;
+  --error:#f85149;
+  --font-ui:"IBM Plex Sans","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-ui);
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-size:14px;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── 顶部标题栏 ── */
+.titlebar{
+  height:48px;display:flex;align-items:center;gap:14px;padding:0 16px;
+  background:var(--bg-sidebar);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.2px}
+.brand .logo{
+  width:26px;height:26px;border-radius:7px;
+  background:linear-gradient(135deg,#f78166,#d29922);
+  display:grid;place-items:center;color:#0d1117;font-size:13px;font-weight:700;
+}
+.brand .sub{color:var(--text-faint);font-weight:400;font-size:12px;margin-left:2px}
+.titlebar .spacer{flex:1}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  font-size:12px;font-family:var(--font-mono);border:1px solid var(--border);color:var(--text-dim);
+}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--done)}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;
+  font-size:12px;font-weight:600;
+}
+.badge-ok{background:var(--done-soft);color:var(--done);border:1px solid rgba(63,185,80,.3)}
+.badge-llm{background:var(--accent-soft);color:var(--llm);border:1px solid rgba(247,129,102,.35)}
+.badge-llm::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--llm)}
+
+/* ── 主工作区（活动栏 + 可拖拽侧栏 + 主区 + 检查器） ── */
+.workspace{flex:1;display:flex;min-height:0}
+.activitybar{
+  width:52px;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:4px;flex-shrink:0;
+}
+.actbtn{
+  width:40px;height:40px;border-radius:9px;display:grid;place-items:center;
+  color:var(--text-faint);cursor:pointer;position:relative;font-size:18px;transition:.15s;
+}
+.actbtn:hover{color:var(--text-dim)}
+.actbtn.active{color:var(--accent);background:var(--bg-elevated)}
+.actbtn.active::before{
+  content:"";position:absolute;left:-6px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--accent);
+}
+.actbar-spacer{flex:1}
+
+/* 可拖拽分隔条 */
+.resizer{width:5px;cursor:col-resize;flex-shrink:0;position:relative;z-index:6;background:transparent}
+.resizer::before{content:"";position:absolute;left:2px;top:0;bottom:0;width:1px;background:var(--border)}
+.resizer:hover{background:var(--accent-soft)}
+.resizer:hover::before{background:var(--accent)}
+
+/* ── 左栏：文件资源管理器 ── */
+.sidebar{
+  width:250px;min-width:180px;max-width:460px;background:var(--bg-sidebar);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;
+}
+.panel-head{
+  height:38px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;font-size:11px;font-weight:600;letter-spacing:.6px;
+  color:var(--text-dim);text-transform:uppercase;border-bottom:1px solid var(--border);
+}
+.panel-head .actions{display:flex;gap:6px}
+.panel-head .actions span{cursor:pointer;color:var(--text-faint);font-size:14px}
+.panel-head .actions span:hover{color:var(--text-dim)}
+.tree{flex:1;overflow:auto;padding:8px 0 20px;font-family:var(--font-mono);font-size:12.5px}
+.tree-row{
+  display:flex;align-items:center;gap:6px;padding:3px 10px;cursor:pointer;
+  color:var(--text-dim);white-space:nowrap;position:relative;
+}
+.tree-row:hover{background:var(--bg-elevated);color:var(--text)}
+.tree-row.active{background:var(--bg-elevated);color:var(--text)}
+.tree-row.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.tree-row .chev{width:14px;text-align:center;color:var(--text-faint);flex-shrink:0;font-size:11px}
+.tree-row .ico{width:16px;text-align:center;flex-shrink:0;font-size:13px}
+.tree-row .name{overflow:hidden;text-overflow:ellipsis}
+.tree-row .meta{margin-left:auto;font-size:11px;color:var(--text-faint)}
+.tree-row.folder{font-weight:500}
+.indent{display:inline-block;flex-shrink:0}
+.file-ico-txt{color:#8b949e}
+.file-ico-json{color:#d29922}
+.file-ico-md{color:#f78166}
+.file-ico-log{color:#6e7681}
+.file-ico-urdf{color:#a371f7}
+.file-ico-grasp{color:#3fb950}
+
+/* ── 中栏：主工作区 ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.main-scroll{flex:1;overflow:auto;padding:22px 28px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.section-title{
+  font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text-faint);
+  text-transform:uppercase;display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.section-title::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* 工作流：灯带式细线挂点 */
+.wf-rail{
+  display:flex;position:relative;padding:14px 4px 2px;flex-shrink:0;
+}
+.wf-rail::before{
+  content:"";position:absolute;top:20px;left:8px;right:8px;height:2px;
+  background:var(--border);border-radius:2px;
+}
+.wf-stop{flex:1;display:flex;flex-direction:column;align-items:center;gap:9px;position:relative;z-index:1}
+.wf-dot{
+  width:14px;height:14px;border-radius:50%;border:2px solid var(--border);
+  background:var(--bg);transition:all .3s ease;
+}
+.wf-stop.done .wf-dot{
+  background:var(--accent);border-color:var(--accent);
+  box-shadow:0 0 8px var(--accent-glow);
+}
+.wf-stop.current .wf-dot{
+  background:var(--accent);border-color:#fff;
+  box-shadow:0 0 0 5px var(--accent-glow),0 0 20px var(--accent-glow);
+  animation:dotPulse 1.5s ease-in-out infinite;
+}
+@keyframes dotPulse{
+  0%,100%{box-shadow:0 0 0 4px var(--accent-glow),0 0 16px var(--accent-glow)}
+  50%{box-shadow:0 0 0 8px rgba(247,129,102,.16),0 0 26px var(--accent-glow)}
+}
+.wf-label{font-size:12px;color:var(--text-faint);transition:color .3s}
+.wf-stop.done .wf-label{color:var(--accent)}
+.wf-stop.current .wf-label{color:var(--accent);font-weight:600}
+
+/* LLM 分析：中栏主体，实时显化思考 */
+.think{
+  flex:1;min-height:180px;background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;
+}
+.think .think-head{
+  display:flex;align-items:center;gap:9px;padding-bottom:14px;
+  border-bottom:1px solid var(--border-soft);font-size:12px;font-weight:600;letter-spacing:.3px;color:var(--llm);
+}
+.think .think-head .brain{font-size:14px}
+.think .think-head .stage{color:var(--text-faint);font-weight:400;letter-spacing:0;font-size:12px}
+.think .think-badge{
+  margin-left:auto;padding:3px 10px;border-radius:999px;font-size:11px;
+  font-family:var(--font-mono);background:var(--accent-soft);color:var(--llm);
+  border:1px solid rgba(247,129,102,.3);font-weight:500;
+}
+.think .think-body{
+  flex:1;display:flex;align-items:center;padding:18px 4px;
+  font-family:var(--font-mono);font-size:14px;line-height:1.9;color:var(--text-dim);
+}
+.think .think-body .hl{color:var(--text);font-weight:500}
+.caret{display:inline-block;width:2px;height:15px;background:var(--accent);margin-left:2px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.thinking{display:inline-flex;gap:3px;align-items:center;margin-left:2px}
+.thinking i{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s infinite}
+.thinking i:nth-child(2){animation-delay:.15s}
+.thinking i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* 目标输出：精简单行，点击展开 */
+.output{
+  background:var(--bg-panel);border:1px solid var(--border);border-radius:9px;
+  overflow:hidden;flex-shrink:0;
+}
+.out-summary{
+  width:100%;display:flex;align-items:center;gap:12px;padding:10px 16px;
+  background:none;border:none;cursor:pointer;text-align:left;font-family:inherit;
+}
+.out-summary:hover{background:var(--bg-elevated)}
+.out-summary .out-label{
+  display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;
+  letter-spacing:.6px;color:var(--accent);text-transform:uppercase;flex-shrink:0;
+}
+.out-summary .out-label .tick{color:var(--done)}
+.out-summary .out-title{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.out-summary .out-caret{color:var(--text-faint);font-size:13px;transition:.2s}
+.output.open .out-caret{transform:rotate(180deg)}
+.out-detail{
+  display:none;border-top:1px solid var(--border);background:var(--bg-sidebar);
+  padding:12px 16px;font-family:var(--font-mono);font-size:12px;
+}
+.output.open .out-detail{display:block}
+.out-file{display:flex;align-items:center;gap:8px;padding:3px 0;color:var(--text-dim)}
+.out-file .f-ico{width:16px;text-align:center;font-size:12px;flex-shrink:0}
+.out-file .f-name{overflow:hidden;text-overflow:ellipsis}
+.out-file .f-size{margin-left:auto;font-size:11px;color:var(--text-faint)}
+
+/* ── 右栏：检查器 ── */
+.inspector{
+  width:270px;min-width:200px;max-width:520px;background:var(--bg-sidebar);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;
+}
+.tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab{
+  flex:1;padding:10px 0;text-align:center;font-size:12px;color:var(--text-faint);
+  cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+}
+.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.insp-body{flex:1;overflow:auto;padding:16px}
+.kv{margin-bottom:14px}
+.kv .k{font-size:11px;color:var(--text-faint);font-weight:600;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase}
+.kv .v{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);line-height:1.6}
+.kv .v .good{color:var(--done)}
+.kv .v .warn{color:var(--warn)}
+.list{margin:0;padding-left:16px}
+.list li{margin-bottom:4px;font-size:12px;color:var(--text-dim);line-height:1.6}
+
+/* ── 底部状态栏 ── */
+.statusbar{
+  height:28px;display:flex;align-items:center;gap:16px;padding:0 14px;
+  background:var(--bg-sidebar);border-top:1px solid var(--border);
+  font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);flex-shrink:0;
+}
+.statusbar .left{display:flex;align-items:center;gap:16px}
+.statusbar .right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.sb-item{display:flex;align-items:center;gap:6px}
+.sb-item .ico{color:var(--text-faint)}
+.sb-item .ok{color:var(--done)}
+.sb-item .llm{color:var(--llm)}
+.spinner{width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 目标输入条 */
+.goalbar{display:flex;align-items:center;gap:12px;padding:14px 28px;border-top:1px solid var(--border);flex-shrink:0}
+.goalbar .goal-input{
+  flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;
+  padding:11px 14px;font-family:var(--font-ui);font-size:14px;color:var(--text);outline:none;transition:.15s;
+}
+.goalbar .goal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.goalbar .goal-input::placeholder{color:var(--text-faint)}
+.goalbar .goal-run{
+  background:var(--accent);color:#0d1117;border:none;padding:11px 22px;border-radius:10px;
+  font-family:var(--font-ui);font-size:14px;font-weight:600;cursor:pointer;transition:.15s;flex-shrink:0;
+}
+.goalbar .goal-run:hover{filter:brightness(1.08)}
+.goalbar .goal-add{
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg-input);color:var(--text-dim);font-size:20px;line-height:1;
+  cursor:pointer;transition:.15s;flex-shrink:0;display:grid;place-items:center;
+}
+.goalbar .goal-add:hover{border-color:var(--accent);color:var(--accent)}
+.goalbar .goal-add.active{color:var(--accent);border-color:var(--accent)}
+.pdf-panel{padding:12px 28px 0;flex-shrink:0}
+.pdf-drop{
+  border:1px dashed var(--border);border-radius:10px;padding:18px;
+  text-align:center;color:var(--text-faint);font-size:13px;cursor:pointer;transition:.15s;
+}
+.pdf-drop:hover{border-color:var(--accent);color:var(--accent)}
+.pdf-file{
+  display:flex;align-items:center;gap:8px;border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;font-family:var(--font-mono);font-size:13px;color:var(--text-dim);
+}
+.pdf-clear{margin-left:auto;cursor:pointer;color:var(--text-faint)}
+.pdf-clear:hover{color:var(--error)}
+</style>
+</head>
+<body>
+
+<!-- 顶部标题栏 -->
+<header class="titlebar">
+  <div class="brand">
+    <span class="logo">R</span>
+    <span>Robot Data Integrator <span class="sub">· LLM 智能决策工作区</span></span>
+  </div>
+  <div class="spacer"></div>
+  <span class="chip"><span class="dot"></span>run_id&nbsp;20260813-9f2a3c</span>
+  <span class="badge badge-ok">✓ 运行中</span>
+  <span class="badge badge-llm">LLM 引擎</span>
+</header>
+
+<!-- 主工作区 -->
+<div class="workspace">
+  <!-- 活动栏 -->
+  <nav class="activitybar">
+    <div class="actbtn active" title="资源管理器">🗂</div>
+    <div class="actbtn" title="数据检索">⌕</div>
+    <div class="actbtn" title="决策看板">◉</div>
+    <div class="actbtn" title="审查">✓</div>
+    <div class="actbtn" title="日志">▷</div>
+    <div class="actbtn" title="设置">⚙</div>
+    <div class="actbar-spacer"></div>
+  </nav>
+
+  <!-- 左栏：文件资源管理器 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="panel-head">
+      <span>数据包</span>
+      <div class="actions"><span>⟳</span><span>＋</span><span>▾</span></div>
+    </div>
+    <div class="tree">
+      <div class="tree-row folder"><span class="chev">▾</span><span class="ico">📦</span><span class="name">package-20260813-9f2a3c</span></div>
+      <div class="tree-row folder"><span class="indent"></span><span class="chev">▾</span><span class="ico">📁</span><span class="name">files</span></div>
+      <div class="tree-row"><span class="indent" style="width:28px"></span><span class="ico file-ico-txt">≡</span><span class="name">goal.txt</span><span class="meta">1.2 KB</span></div>
+      <div class="tree-row"><span class="indent" style="width:28px"></span><span class="ico file-ico-log">≡</span><span class="name">provenance.log</span><span class="meta">3.4 KB</span></div>
+      <div class="tree-row folder"><span class="indent"></span><span class="chev">▾</span><span class="ico">📁</span><span class="name">robots</span></div>
+      <div class="tree-row active"><span class="indent" style="width:28px"></span><span class="ico file-ico-urdf">⧉</span><span class="name">allegro_hand.urdf</span><span class="meta">18 KB</span></div>
+      <div class="tree-row"><span class="indent" style="width:28px"></span><span class="ico file-ico-urdf">⧉</span><span class="name">fr3.xacro</span><span class="meta">9 KB</span></div>
+      <div class="tree-row folder"><span class="indent"></span><span class="chev">▾</span><span class="ico">📁</span><span class="name">objects</span></div>
+      <div class="tree-row"><span class="indent" style="width:28px"></span><span class="ico file-ico-grasp">◈</span><span class="name">dexgrasp.pkl</span><span class="meta">2.1 MB</span></div>
+      <div class="tree-row"><span class="indent" style="width:28px"></span><span class="ico file-ico-grasp">◈</span><span class="name">grasp_labels.npz</span><span class="meta">640 KB</span></div>
+      <div class="tree-row"><span class="indent"></span><span class="ico file-ico-json">{}</span><span class="name">manifest.json</span><span class="meta">2.8 KB</span></div>
+      <div class="tree-row"><span class="indent"></span><span class="ico file-ico-json">{}</span><span class="name">semantic_map.json</span><span class="meta">1.1 KB</span></div>
+      <div class="tree-row"><span class="indent"></span><span class="ico file-ico-md">#</span><span class="name">quality_explanation.md</span><span class="meta">1.6 KB</span></div>
+    </div>
+  </aside>
+
+  <div class="resizer" id="resizerLeft" data-dir="right"></div>
+
+  <!-- 中栏：主工作区 -->
+  <main class="main">
+    <div class="main-scroll">
+
+      <div class="section-title">工作流 · 实时点亮</div>
+      <div class="wf-rail" id="workflow">
+        <div class="wf-stop done" data-node="0"><span class="wf-dot"></span><span class="wf-label">检索</span></div>
+        <div class="wf-stop done" data-node="1"><span class="wf-dot"></span><span class="wf-label">转换</span></div>
+        <div class="wf-stop current" data-node="2"><span class="wf-dot"></span><span class="wf-label">校验</span></div>
+        <div class="wf-stop" data-node="3"><span class="wf-dot"></span><span class="wf-label">打包</span></div>
+        <div class="wf-stop" data-node="4"><span class="wf-dot"></span><span class="wf-label">审查</span></div>
+      </div>
+
+      <div class="section-title">LLM 分析 · 实时思考</div>
+      <div class="think" id="think">
+        <div class="think-head">
+          <span class="brain">◉</span><span>LLM 分析</span>
+          <span class="stage" id="think-stage">校验阶段 · explain_quality</span>
+          <span class="think-badge">LLM 生成</span>
+        </div>
+        <div class="think-body" id="think-text">
+          正在评估数据包质量：<span class="hl">5 项数据需求全部满足</span>，核心资产齐全。
+          检测到 2 处风险 —— <span class="hl">坐标系约定未显式标注</span>、
+          单位字段缺失；建议补充第二数据源交叉验证。<span class="caret"></span>
+        </div>
+      </div>
+
+      <div class="section-title">目标输出</div>
+      <div class="output" id="output">
+        <button class="out-summary" onclick="toggleOut()">
+          <span class="out-label"><span class="tick">✓</span>目标输出</span>
+          <span class="out-title" id="out-title">robot-data-package 已生成</span>
+          <span class="out-caret">▾</span>
+        </button>
+        <div class="out-detail">
+          <div class="out-file"><span class="f-ico file-ico-txt">≡</span><span class="f-name">files/goal.txt</span><span class="f-size">1.2 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-log">≡</span><span class="f-name">files/provenance.log</span><span class="f-size">3.4 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-urdf">⧉</span><span class="f-name">robots/allegro_hand.urdf</span><span class="f-size">18 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-urdf">⧉</span><span class="f-name">robots/fr3.xacro</span><span class="f-size">9 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-grasp">◈</span><span class="f-name">objects/dexgrasp.pkl</span><span class="f-size">2.1 MB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-grasp">◈</span><span class="f-name">objects/grasp_labels.npz</span><span class="f-size">640 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-json">{}</span><span class="f-name">manifest.json</span><span class="f-size">2.8 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-json">{}</span><span class="f-name">semantic_map.json</span><span class="f-size">1.1 KB</span></div>
+          <div class="out-file"><span class="f-ico file-ico-md">#</span><span class="f-name">quality_explanation.md</span><span class="f-size">1.6 KB</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PDF 上传面板（点 + 展开） -->
+    <div class="pdf-panel" id="pdfPanel" style="display:none">
+      <div class="pdf-drop" id="pdfDrop">📄 拖拽或点击上传论文 PDF（可选）</div>
+      <div class="pdf-file" id="pdfFile" style="display:none">📎 paper.pdf <span class="pdf-clear" id="pdfClear">✕</span></div>
+    </div>
+
+    <!-- 目标输入条 -->
+    <div class="goalbar">
+      <button class="goal-add" id="goalAdd" title="上传论文 PDF">＋</button>
+      <input class="goal-input" id="goalInput" placeholder="描述你的实验目标，如：整合 DexGrasp 抓取数据与灵巧手 URDF..." value="整合 DexGrasp 抓取数据与灵巧手 URDF 模型">
+      <button class="goal-run" id="btnRun">▶ 运行</button>
+    </div>
+  </main>
+
+  <div class="resizer" id="resizerRight" data-dir="left"></div>
+
+  <!-- 右栏：检查器 -->
+  <aside class="inspector" id="inspector">
+    <div class="tabs">
+      <div class="tab active">详情</div>
+      <div class="tab">manifest</div>
+      <div class="tab">语义</div>
+      <div class="tab">LLM 调用</div>
+    </div>
+    <div class="insp-body">
+      <div class="kv">
+        <div class="k">当前文件</div>
+        <div class="v">robots/allegro_hand.urdf</div>
+      </div>
+      <div class="kv">
+        <div class="k">需求状态</div>
+        <div class="v"><span class="good">● 成功</span> · 数据源 allegro</div>
+      </div>
+      <div class="kv">
+        <div class="k">语义约定</div>
+        <div class="v">
+          type: <span class="good">robot_urdf</span><br>
+          rotation: <span class="warn">unknown</span><br>
+          origin: world · unit: meter
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">质量校验</div>
+        <div class="v">
+          <ul class="list">
+            <li class="good">✓ URDF 运动学有效</li>
+            <li class="good">✓ 关节限位完整</li>
+            <li class="warn">△ 坐标约定待人工确认</li>
+          </ul>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">来源标注</div>
+        <div class="v"><span style="color:var(--llm)">LLM 生成</span></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- 底部状态栏 -->
+<footer class="statusbar">
+  <div class="left">
+    <span class="sb-item"><span class="ico">⎇</span> 阶段 3/5</span>
+    <span class="sb-item"><span class="spinner"></span> 校验中</span>
+  </div>
+  <div class="right">
+    <span class="sb-item"><span class="ico llm">◉</span> LLM 调用 <span class="llm">4 次</span></span>
+    <span class="sb-item"><span class="ico">⧗</span> 耗时 1.2s</span>
+    <span class="sb-item"><span class="ico ok">✓</span> 无错误</span>
+  </div>
+</footer>
+
+<script>
+// 演示：模拟节点逐个点亮，联动 LLM 思考与目标输出
+const STAGES = [
+  {think:"正在规划检索策略：将目标拆解为 <span class='hl'>灵巧手抓取数据集</span> 与 <span class='hl'>机械结构 URDF</span> 两类需求，优先检索 dexgrasp，回退 github 公开仓库。", stage:"检索阶段 · retrieval_plan", out:"检索策略已生成：3 组搜索词 + 2 个偏好源"},
+  {think:"正在统一数据语义：识别 dexgrasp 为 <span class='hl'>grasp_pose</span>，旋转采用四元数 wxyz、原点为物体中心，字段 rot→rotation / pos→translation。", stage:"转换阶段 · unify_semantics", out:"语义约定已建立：grasp_pose · quaternion_wxyz"},
+  {think:"正在评估数据包质量：<span class='hl'>5 项需求全部满足</span>，URDF 运动学有效、抓取姿态完整。风险：<span class='hl'>坐标约定未标注</span>，建议人工复核。", stage:"校验阶段 · explain_quality", out:"质量校验通过：5/5 需求满足"},
+  {think:"正在整合产物：将 goal / robots / objects 归档为 <span class='hl'>manifest.json</span>，并生成 quality_explanation.md 与 semantic_map.json。", stage:"打包阶段 · assemble_package", out:"数据包已打包：9 个文件"},
+  {think:"正在生成审查建议：无阻塞性缺陷，数据需求全部满足，质量校验通过，<span class='hl'>建议通过审查</span>。", stage:"审查阶段 · review_suggestions", out:"审查建议：satisfied"},
+];
+let idx = 2;
+function render(){
+  const stops = document.querySelectorAll('#workflow .wf-stop');
+  const thinkText = document.getElementById('think-text');
+  const thinkStage = document.getElementById('think-stage');
+  const outTitle = document.getElementById('out-title');
+  stops.forEach((n,i)=>{
+    n.classList.remove('done','current');
+    if(i<idx){ n.classList.add('done'); }
+    else if(i===idx){ n.classList.add('current'); }
+  });
+  const s = STAGES[Math.min(idx, STAGES.length-1)];
+  thinkText.innerHTML = s.think + '<span class="caret"></span>';
+  thinkStage.textContent = s.stage;
+  outTitle.textContent = s.out;
+}
+function toggleOut(){ document.getElementById('output').classList.toggle('open'); }
+
+// 可拖拽侧栏
+function makeResizable(resizer, panel){
+  let startX, startW;
+  resizer.addEventListener('mousedown', e=>{
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const onMove = ev=>{
+      const dir = resizer.dataset.dir;
+      const dx = ev.clientX - startX;
+      const w = dir === 'right' ? startW + dx : startW - dx;
+      const min = parseInt(panel.dataset.min || '180');
+      const max = parseInt(panel.dataset.max || '520');
+      panel.style.width = Math.min(Math.max(w, min), max) + 'px';
+    };
+    const onUp = ()=>{
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
+}
+makeResizable(document.getElementById('resizerLeft'), document.getElementById('sidebar'));
+makeResizable(document.getElementById('resizerRight'), document.getElementById('inspector'));
+
+// PDF 上传（演示交互）
+const goalAdd = document.getElementById('goalAdd');
+const pdfPanel = document.getElementById('pdfPanel');
+const pdfDrop = document.getElementById('pdfDrop');
+const pdfFile = document.getElementById('pdfFile');
+const pdfClear = document.getElementById('pdfClear');
+goalAdd.onclick = ()=>{
+  const open = pdfPanel.style.display !== 'none';
+  pdfPanel.style.display = open ? 'none' : 'block';
+  goalAdd.classList.toggle('active', !open);
+};
+pdfDrop.onclick = ()=>{ pdfDrop.style.display='none'; pdfFile.style.display='flex'; };
+pdfClear.onclick = (e)=>{ e.stopPropagation(); pdfFile.style.display='none'; pdfDrop.style.display='block'; };
+
+// 运行 / 继续运行 合并按钮
+const btnRun = document.getElementById('btnRun');
+btnRun.onclick = ()=>{
+  if(btnRun.textContent.includes('继续运行')){
+    btnRun.textContent = '▶ 运行';
+    idx = STAGES.length;
+    render();
+    document.getElementById('out-title').textContent = 'robot-data-package 已生成 · 9 个文件 · manifest 就绪';
+    document.getElementById('think-text').innerHTML = '流程已完成：数据包通过审查，产物已落盘，可直接用于下游仿真。<span class="caret"></span>';
+    document.getElementById('think-stage').textContent = '完成 · 全部阶段';
+    return;
+  }
+  idx = 0; render();
+  const t = setInterval(()=>{
+    idx++;
+    render();
+    if(idx >= STAGES.length-1){
+      clearInterval(t);
+      btnRun.textContent = '▶ 继续运行';
+    }
+  }, 900);
+};
+render();
+</script>
+</body>
+</html>
