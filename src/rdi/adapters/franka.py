@@ -6,11 +6,17 @@
 无需 API Key，直接 HTTP 下载。
 """
 
+import asyncio
+
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
+
+# 国外主路径（franka.de）访问国内常挂起，主尝试用短超时快速放弃，
+# 转走 fallback（命中集合不变，只缩短耗时），超时时间足以容纳正常网络下的响应。
+_PRIMARY_FAST_TIMEOUT_S = 10.0
 
 # 降级回退：GitHub raw 仓库 URL（owner 已从 frankaemika 迁移至 frankarobotics）
 # 钉 commit ddd2fffd9de44b02ad15b4bbb2bfa2cec4d60d98（2026-08-10 pin）
@@ -51,8 +57,9 @@ class FrankaAdapter(BaseAdapter):
     async def search(self, query: str) -> list[SearchResult]:
         """搜索 Franka 机器人模型。优先网页抓取，失败降级硬编码列表。"""
         try:
-            return await self._search_primary(query)
-        except AdapterError:
+            async with asyncio.timeout(_PRIMARY_FAST_TIMEOUT_S):
+                return await self._search_primary(query)
+        except (AdapterError, TimeoutError):
             return await self._search_fallback(query)
 
     async def _search_primary(self, query: str) -> list[SearchResult]:
@@ -123,8 +130,9 @@ class FrankaAdapter(BaseAdapter):
         if local is not None:
             return local
         try:
-            return await self._fetch_primary(item_id)
-        except AdapterError:
+            async with asyncio.timeout(_PRIMARY_FAST_TIMEOUT_S):
+                return await self._fetch_primary(item_id)
+        except (AdapterError, TimeoutError):
             return await self._fetch_fallback(item_id)
 
     def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:

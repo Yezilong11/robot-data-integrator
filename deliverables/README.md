@@ -13,3 +13,21 @@
 | D | draft_D_robot_urdf_mesh_sim_config.json | 已合并进 problem_set.json |
 | E | rdi_stability_test_checklist.md、前端操作手册.docx | 稳定性清单已评审；操作手册供执行期参考 |
 | F | manage_test_records.py → scripts/，记录模板/分配表 → records/ | 已并入正式结构，见 records/README.md |
+
+## day2
+
+| 角色 | 文件 | 去向 |
+|---|---|---|
+| C | 待归档 | 单源题执行记录 → records/<case_id>/ |
+| D | 待归档 | 单源题执行记录 → records/<case_id>/ |
+| E | 待归档 | 多源题执行记录 → records/<case_id>/ |
+| F | 待归档 | 每日校验/进度 → records/_management/ |
+
+## day3
+
+| 角色 | 文件 | 去向 |
+|---|---|---|
+| C | 待归档 | 单源题执行记录 → records/<case_id>/ |
+| D | 待归档 | 单源题执行记录 → records/<case_id>/ |
+| E | 待归档 | 多源题执行记录 → records/<case_id>/ |
+| F | 待归档 | 每日校验/进度 → records/_management/ |
