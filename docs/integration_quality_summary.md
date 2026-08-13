@@ -40,5 +40,3 @@
 - [x] `uv run ruff format --check src tests` — 106 files already formatted
 - [x] `uv run pytest tests/unit/ -q --tb=short` — 278 passed, 1 skipped
 - [x] `uv run python scripts/test_connectivity.py` — 全部 `[OK]`（15 sources）
-
-

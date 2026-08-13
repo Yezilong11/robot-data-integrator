@@ -37,7 +37,7 @@ except Exception:  # pragma: no cover - 依赖未安装时优雅降级
     yourdfpy = None
 
 try:
-    import mujoco  # type: ignore[import-untyped]
+    import mujoco
 except Exception:  # pragma: no cover - 依赖未安装时优雅降级
     mujoco = None
 
@@ -150,9 +150,9 @@ def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
     data = item.data
     if isinstance(data, bytes):
         try:
-            with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as tmp:
-                tmp.write(data)
-                tmp_path = tmp.name
+            with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as tmpf:
+                tmpf.write(data)
+                tmp_path = tmpf.name
             yourdfpy.URDF.load(tmp_path, load_meshes=False)
         except Exception as exc:  # noqa: BLE001 - 记录加载失败而非中断
             return ValIssue(

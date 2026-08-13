@@ -173,7 +173,7 @@ class GoogleScannedAdapter(BaseAdapter):
         for node in nodes:
             if not isinstance(node, dict):
                 continue
-            node_path = node.get("path", "")
+            node_path = str(node.get("path", ""))
             if node_path.lower().endswith(ext):
                 return node_path
             children = node.get("children")

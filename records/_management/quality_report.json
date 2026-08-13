@@ -1,0 +1,272 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-12T23:49:50+08:00",
+  "strict_mode": false,
+  "problem_set": {
+    "total": 63,
+    "single_source": 55,
+    "multi_source": 8,
+    "p0_total": 11
+  },
+  "progress": {
+    "executed": 0,
+    "judged": 0,
+    "reviewed": 0,
+    "execution_rate": 0.0,
+    "review_rate": 0
+  },
+  "verdicts": {
+    "pass": 0,
+    "pass_with_fallback": 0,
+    "fail": 0,
+    "pass_rate": null,
+    "fallback_rate": null,
+    "fail_rate": null,
+    "usable_rate": null
+  },
+  "quality": {
+    "record_completeness_avg_pct": 0.0,
+    "records_at_least_90_pct": 0,
+    "records_at_least_90_rate": 0,
+    "screenshot_compliance_rate": 0,
+    "validation_error_count": 0
+  },
+  "p0_acceptance": {
+    "usable": 0,
+    "total": 11,
+    "target": 8,
+    "passed": false
+  },
+  "dimensions": {
+    "language": {
+      "EN": {
+        "cases": 29,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "ZH": {
+        "cases": 34,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      }
+    },
+    "source": {
+      "allegro": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "arxiv": {
+        "cases": 5,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "dexgrasp": {
+        "cases": 6,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "franka": {
+        "cases": 8,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "github": {
+        "cases": 8,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "google_scanned": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "graspnet": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "huggingface": {
+        "cases": 5,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "ieee": {
+        "cases": 1,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "isaac": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "mujoco": {
+        "cases": 9,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "paperswithcode": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "robotiq": {
+        "cases": 4,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "ycb": {
+        "cases": 11,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "zenodo": {
+        "cases": 5,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      }
+    },
+    "req_type": {
+      "code": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "dataset": {
+        "cases": 7,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "grasp": {
+        "cases": 12,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "mesh": {
+        "cases": 13,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "paper": {
+        "cases": 9,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "policy_model": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "robot_urdf": {
+        "cases": 17,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "sensor_data": {
+        "cases": 3,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      },
+      "sim_config": {
+        "cases": 11,
+        "judged": 0,
+        "pass": 0,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": null
+      }
+    },
+    "llm_model": {}
+  },
+  "failure_top3": [],
+  "issues": {
+    "problem_set": [],
+    "assignments": [],
+    "records": {}
+  },
+  "acceptance_checks": {
+    "problem_set_valid": true,
+    "assignments_valid": true,
+    "p0_usable_at_least_target": false,
+    "record_completeness_at_least_90_pct": false,
+    "all_cases_executed": false,
+    "all_judged_records_reviewed": false,
+    "no_record_validation_errors": true
+  }
+}

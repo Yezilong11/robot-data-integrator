@@ -1,8 +1,8 @@
 # 第二次联调报告
 
-> 报告日期：2026-08-08  
-> 对应目标：让系统生成包含可被外部工具加载的 URDF / mesh / grasp / sim_config 等真实文件的机器人实验数据包。  
-> 生成数据包：`data/output_packages/package-20260808-181854/`  
+> 报告日期：2026-08-08
+> 对应目标：让系统生成包含可被外部工具加载的 URDF / mesh / grasp / sim_config 等真实文件的机器人实验数据包。
+> 生成数据包：`data/output_packages/package-20260808-181854/`
 > 演示脚本：`scripts/run_second_integration_demo.py`
 
 ---

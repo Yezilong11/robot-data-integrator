@@ -377,7 +377,8 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 raw = await adapter.fetch(search_results[0].item_id, **fetch_kwargs)
             except TypeError:
                 try:
-                    raw = await adapter.fetch(
+                    # 兼容旧 Adapter 的 fetch(item_id, req_type=...) 签名
+                    raw = await adapter.fetch(  # type: ignore[call-arg]
                         search_results[0].item_id, req_type=DataReqType(req_type)
                     )
                 except TypeError:

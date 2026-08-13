@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from rdi.adapters.huggingface import HuggingFaceAdapter
+from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 
@@ -19,9 +20,9 @@ class TestHuggingFaceAdapter:
         assert adapter.source == DataSource.HUGGINGFACE
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 与配置一致（国内环境走 hf-mirror 镜像）。"""
         adapter = HuggingFaceAdapter()
-        assert adapter.base_url == "https://huggingface.co/api"
+        assert adapter.base_url == settings.huggingface_api_url
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 10。"""

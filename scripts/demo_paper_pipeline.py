@@ -8,9 +8,12 @@ validate → assemble 全链路，最终产出非空数据包。
 import asyncio
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rdi.graph.builder import build_graph
-from rdi.graph.state import SystemState
+
+if TYPE_CHECKING:
+    from rdi.graph.state import SystemState
 
 
 async def main() -> None:

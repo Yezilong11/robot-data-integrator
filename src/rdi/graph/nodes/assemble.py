@@ -237,18 +237,18 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                         )
                     )
             else:
-                content, suggested_ext = _serialize_item_data(item.data)
+                serialized, suggested_ext = _serialize_item_data(item.data)
                 ext = suggested_ext or _ext_for_format(item.canonical_format)
                 filename = f"{_safe_filename(req_id)}{ext}"
                 rel_path = f"{subdir}/{filename}"
                 target = package_dir / rel_path
                 target.parent.mkdir(parents=True, exist_ok=True)
-                if isinstance(content, bytes):
-                    target.write_bytes(content)
-                    written_size = len(content)
+                if isinstance(serialized, bytes):
+                    target.write_bytes(serialized)
+                    written_size = len(serialized)
                 else:
-                    target.write_text(content, encoding="utf-8")
-                    written_size = len(content.encode("utf-8"))
+                    target.write_text(serialized, encoding="utf-8")
+                    written_size = len(serialized.encode("utf-8"))
             # P0-5：文件写入成功后统一计算 SHA-256（raw 分支与序列化分支均覆盖；
             # reference 项写入的是 metadata JSON 代理文件，同样可算校验和）
             sha256 = hashlib.sha256(target.read_bytes()).hexdigest()
