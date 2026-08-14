@@ -204,18 +204,22 @@ def test_parse_goal_corrects_misclassified_req_type(
 
 
 @pytest.mark.parametrize(
-    ("initial_type", "description", "expected_type"),
+    ("initial_type", "description", "expected_format", "expected_type"),
     [
         # Day2 回归：检索类目标描述含"抓取/grasp"，但核心是仓库/数据集，
         # 不应被 GRASP 弱关键词兜底误改为 grasp。
-        (DataReqType.CODE, "检索 Franka 抓取相关的开源代码仓库", DataReqType.CODE),
-        (DataReqType.DATASET, "retrieve robot grasp dataset", DataReqType.DATASET),
+        (DataReqType.CODE, "检索 Franka 抓取相关的开源代码仓库", None, DataReqType.CODE),
+        (DataReqType.DATASET, "retrieve robot grasp dataset", None, DataReqType.DATASET),
+        # 真实复现：LLM 判为 GRASP 且配 npz 格式（GRASP 强词 npz 会抢先命中），
+        # 描述含 "dataset" 容器词时仍应优先判 DATASET。
+        (DataReqType.GRASP, "retrieve robot grasp dataset", "npz", DataReqType.DATASET),
     ],
 )
 def test_parse_goal_keeps_code_dataset_for_repo_dataset_targets(
     monkeypatch: pytest.MonkeyPatch,
     initial_type: DataReqType,
     description: str,
+    expected_format: str | None,
     expected_type: DataReqType,
 ) -> None:
     """Day2 回归：code/dataset 需求描述含"抓取/grasp"时保持原类型。"""
@@ -225,6 +229,7 @@ def test_parse_goal_keeps_code_dataset_for_repo_dataset_targets(
             req_type=initial_type,
             description=description,
             priority=Priority.REQUIRED,
+            expected_format=expected_format,
         )
     ]
     _install_fake(

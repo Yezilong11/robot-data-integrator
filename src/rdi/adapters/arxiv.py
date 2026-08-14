@@ -7,8 +7,10 @@
 注意：必须用 https，国内网络下 http 明文会被阻断/超时。
 """
 
+import io
 import json
 
+import fitz  # PyMuPDF（项目依赖，parse_goal 已使用）
 from lxml import etree
 
 from rdi.adapters.base import BaseAdapter
@@ -69,11 +71,11 @@ class ArxivAdapter(BaseAdapter):
         if size is not None and size > settings.arxiv_max_fetch_bytes:
             return await self._metadata_fallback(arxiv_id, pdf_url, size)
         pdf_bytes = await self._download_bytes(pdf_url)
-        if not pdf_bytes.startswith(b"%PDF"):
-            # Day2：国内网络偶发下载到被改写/截断的内容（前端 "Failed to open stream"
-            # 的根因），重试一次；仍无效则显式降级返回 metadata JSON。
+        if not self._is_valid_pdf(pdf_bytes):
+            # Day2：下载到无法打开的 PDF（魔数正确但损坏/截断，前端 "Failed to open
+            # stream" 的现场），重试一次；仍无效则显式降级返回 metadata JSON。
             pdf_bytes = await self._download_bytes(pdf_url)
-        if not pdf_bytes.startswith(b"%PDF"):
+        if not self._is_valid_pdf(pdf_bytes):
             return await self._metadata_fallback(arxiv_id, pdf_url, len(pdf_bytes))
         return RawData(
             source=DataSource.ARXIV,
@@ -115,6 +117,22 @@ class ArxivAdapter(BaseAdapter):
                 reason="PDF unavailable or exceeds max_fetch_bytes; returning metadata only",
             ),
         )
+
+    @staticmethod
+    def _is_valid_pdf(data: bytes) -> bool:
+        """校验字节是能实际打开的 PDF（PyMuPDF 打开成功且有页）。
+
+        先查 %PDF 魔数（fitz 对无魔数内容可能宽容解析），再真正 open 一次；
+        国内网络下可能拿到魔数正确但结构损坏的字节（前端 "Failed to open stream"
+        即此场景），仅魔数不足，需实际打开验证。
+        """
+        if not data.startswith(b"%PDF"):
+            return False
+        try:
+            with fitz.open(stream=io.BytesIO(data), filetype="pdf") as doc:
+                return len(doc) > 0
+        except Exception:
+            return False
 
     async def _fetch_paper_metadata(self, arxiv_id: str) -> dict[str, str]:
         """通过 arXiv API 获取单篇论文的 title/abstract。
