@@ -3,7 +3,7 @@
   "owner": "C",
   "date": "2026-08-14",
   "branch": "feat/arch-langgraph",
-  "execution": "第三轮重跑（项目优化后，中间态+最终态截图）",
+  "execution": "第四轮重跑（项目再次优化后，中间态+最终态截图）",
   "purpose": "Day2-C 计划重跑：每题记录（解析结果 / 命中源 / data_source_quality / 错误类型）汇总",
   "cases": [
     {
@@ -22,7 +22,7 @@
       "case_id": "ss_github_001",
       "input": "检索 Franka 抓取开源仓库",
       "parse_result": { "req_list": ["code"], "vs_expected": "match" },
-      "parse_result_note": "parse_goal 优化后正确解析为 CODE（上一轮误判 grasp）",
+      "parse_result_note": "parse_goal 优化后正确解析为 CODE（连续两轮正确）",
       "hit_source": "github",
       "data_source_quality": "unknown",
       "data_source_quality_note": "命中 github（franka_ros README），落包 1 个文件（CodeRepoSummary JSON），缺失 0",
@@ -34,16 +34,16 @@
     {
       "case_id": "ss_huggingface_001",
       "input": "检索 robot grasp dataset",
-      "parse_result": { "req_list": ["grasp"], "vs_expected": "mismatch" },
-      "parse_result_note": "LLM 误判为 grasp（应为 dataset），'grasp' 歧义复现（第三轮）",
-      "hit_source": "graspnet",
-      "data_source_quality": "unknown",
-      "data_source_quality_note": "命中 graspnet 源但无真实文件落包（DATASET 优先级 GitHub→HF→Zenodo→GraspNet→…，grasp 需求命中 graspnet）",
-      "error_type": "none",
-      "error_type_note": "前端无显式错误类型；整体失败源于 parse 误判（P1_PARSE）",
+      "parse_result": { "req_list": ["dataset"], "vs_expected": "match" },
+      "parse_result_note": "grasp 歧义消解生效：正确解析为 DATASET（前 3 轮误判 GRASP）",
+      "hit_source": "github",
+      "data_source_quality": "n/a",
+      "data_source_quality_note": "DATASET 候选 GitHub→HF→Zenodo→…，github 源检索超时（超过 per_req_timeout），无文件落包",
+      "error_type": "timeout",
+      "error_type_note": "检索超时（超过 per_req_timeout 秒）",
       "verdict": "FAIL",
-      "failure_category": "P1_PARSE"
+      "failure_category": "P2_RETRIEVE"
     }
   ],
-  "notes": "本轮 3 题：ss_github_001 提升为 PASS（parse_goal 优化生效，正确解析 CODE 并命中 github）；ss_arxiv_001 仍 P4_FORMAT（PDF 打开失败，检索成功）；ss_huggingface_001 仍 P1_PARSE（LLM grasp 歧义误判复现）。前端已重启加载优化后代码（旧实例 10:18 启动、15:17 代码更新后重启）。"
+  "notes": "本轮 3 题：ss_huggingface_001 目标解析修复生效（DATASET 正确解析，grasp 歧义消解），但检索阶段超时（P2_RETRIEVE）；ss_github_001 稳定 PASS（连续两轮）；ss_arxiv_001 仍 P4_FORMAT（PDF 打开失败，跨轮复现）。前端已重启加载 16:13 优化后代码（parse_goal 关键词表 + arxiv _is_valid_pdf 校验）。"
 }

@@ -3,7 +3,7 @@
   "case_id": "ss_arxiv_001",
   "input": "检索 robot grasping 的论文",
   "executor": "C",
-  "executed_at": "2026-08-14T15:22:55",
+  "executed_at": "2026-08-14T16:16:12",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -32,7 +32,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-152249",
+      "dir": "data/output_packages/package-20260814-161606",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -75,5 +75,5 @@
   "verdict": "FAIL",
   "failure_category": "P4_FORMAT",
   "failure_reason": "无法打开 PDF: Failed to open stream",
-  "notes": "Day2-C 重跑（项目优化后，中间态+最终态截图），feat/arch-langgraph"
+  "notes": "Day2-C 重跑（项目优化后第四轮，中间态+最终态截图），feat/arch-langgraph"
 }
