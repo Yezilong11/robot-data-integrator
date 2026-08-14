@@ -3,7 +3,7 @@
   "owner": "C",
   "date": "2026-08-14",
   "branch": "feat/arch-langgraph",
-  "execution": "第二轮重跑（中间态+最终态截图）",
+  "execution": "第四轮重跑（项目再次优化后，中间态+最终态截图）",
   "purpose": "Day2-C 计划重跑：每题记录（解析结果 / 命中源 / data_source_quality / 错误类型）汇总",
   "cases": [
     {
@@ -12,7 +12,7 @@
       "parse_result": { "req_list": ["paper"], "vs_expected": "match" },
       "hit_source": "arxiv",
       "data_source_quality": "n/a",
-      "data_source_quality_note": "检索成功但 PDF 解析失败，无文件落包，无法从 manifest 判定",
+      "data_source_quality_note": "检索命中真实论文（arxiv），但 PDF 打开失败（Failed to open stream），无文件落包",
       "error_type": "other",
       "error_type_note": "检索阶段无 timeout/rate_limit/not_found/auth 错误；失败在解析阶段：pdf_open_failed（Failed to open stream）",
       "verdict": "FAIL",
@@ -21,29 +21,29 @@
     {
       "case_id": "ss_github_001",
       "input": "检索 Franka 抓取开源仓库",
-      "parse_result": { "req_list": ["grasp"], "vs_expected": "mismatch" },
-      "parse_result_note": "LLM 误判为 grasp（应为 code），'抓取'歧义",
-      "hit_source": "graspnet",
-      "data_source_quality": "n/a",
-      "data_source_quality_note": "graspnet 返回元数据 JSON（未找到真实 npz），真实数据缺失未落包",
-      "error_type": "not_found",
-      "error_type_note": "命中 graspnet 但无真实 grasp 文件（大文件预检路径）",
-      "verdict": "FAIL",
-      "failure_category": "P1_PARSE"
+      "parse_result": { "req_list": ["code"], "vs_expected": "match" },
+      "parse_result_note": "parse_goal 优化后正确解析为 CODE（连续两轮正确）",
+      "hit_source": "github",
+      "data_source_quality": "unknown",
+      "data_source_quality_note": "命中 github（franka_ros README），落包 1 个文件（CodeRepoSummary JSON），缺失 0",
+      "error_type": "none",
+      "error_type_note": "检索/解析/打包均无错误",
+      "verdict": "PASS",
+      "failure_category": null
     },
     {
       "case_id": "ss_huggingface_001",
       "input": "检索 robot grasp dataset",
-      "parse_result": { "req_list": ["grasp"], "vs_expected": "mismatch" },
-      "parse_result_note": "LLM 误判为 grasp（应为 dataset），'grasp'歧义",
-      "hit_source": "graspnet",
+      "parse_result": { "req_list": ["dataset"], "vs_expected": "match" },
+      "parse_result_note": "grasp 歧义消解生效：正确解析为 DATASET（前 3 轮误判 GRASP）",
+      "hit_source": "github",
       "data_source_quality": "n/a",
-      "data_source_quality_note": "graspnet 返回元数据 JSON（未找到真实 npz），真实数据缺失未落包",
-      "error_type": "not_found",
-      "error_type_note": "命中 graspnet 但无真实 grasp 文件（大文件预检路径）",
+      "data_source_quality_note": "DATASET 候选 GitHub→HF→Zenodo→…，github 源检索超时（超过 per_req_timeout），无文件落包",
+      "error_type": "timeout",
+      "error_type_note": "检索超时（超过 per_req_timeout 秒）",
       "verdict": "FAIL",
-      "failure_category": "P1_PARSE"
+      "failure_category": "P2_RETRIEVE"
     }
   ],
-  "notes": "本轮 3 题均 FAIL：arxiv 为 PDF 解析失败（P4_FORMAT，检索成功；上一轮同题为 per_req_timeout 超时 P2_RETRIEVE，LLM/网络非确定性），github/huggingface 为 LLM grasp 歧义误判（P1_PARSE）叠加 graspnet 无真实 npz（not_found）。中间态截图（human_review 中断时）与最终态截图均已归档。"
+  "notes": "本轮 3 题：ss_huggingface_001 目标解析修复生效（DATASET 正确解析，grasp 歧义消解），但检索阶段超时（P2_RETRIEVE）；ss_github_001 稳定 PASS（连续两轮）；ss_arxiv_001 仍 P4_FORMAT（PDF 打开失败，跨轮复现）。前端已重启加载 16:13 优化后代码（parse_goal 关键词表 + arxiv _is_valid_pdf 校验）。"
 }

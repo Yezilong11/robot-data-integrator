@@ -3,7 +3,7 @@
   "case_id": "ss_arxiv_001",
   "input": "检索 robot grasping 的论文",
   "executor": "C",
-  "executed_at": "2026-08-14T10:27:31",
+  "executed_at": "2026-08-14T16:16:12",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,7 +13,7 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "paper"
+        "PAPER"
       ],
       "vs_expected": "match"
     },
@@ -21,9 +21,9 @@
       {
         "req_id": "req_000",
         "source": "arxiv",
-        "quality": "n/a",
+        "quality": "unknown",
         "error": null,
-        "error_type": "other"
+        "error_type": "none"
       }
     ],
     "validate": {
@@ -32,7 +32,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-102711",
+      "dir": "data/output_packages/package-20260814-161606",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -74,6 +74,6 @@
   ],
   "verdict": "FAIL",
   "failure_category": "P4_FORMAT",
-  "failure_reason": "检索命中 arxiv 且成功，但解析阶段无法打开 PDF（Failed to open stream），数据包 0 文件",
-  "notes": "Day2-C 重跑（中间态+最终态截图），feat/arch-langgraph"
+  "failure_reason": "无法打开 PDF: Failed to open stream",
+  "notes": "Day2-C 重跑（项目优化后第四轮，中间态+最终态截图），feat/arch-langgraph"
 }

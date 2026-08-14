@@ -1,7 +1,7 @@
 # Day 2：C（数据工程师）交付物
 
 > 分支：`feat/arch-langgraph`
-> 执行日期：2026-08-14（Day2-C 计划重跑）
+> 执行日期：2026-08-14（Day2-C 计划重跑，项目优化后第四轮）
 > 依据：`Day2-C单源执行启动计划.md` + `problem_set_c_draft.json` + `判定口径纪要_C数据源类.md`
 
 ## 目录结构
@@ -26,12 +26,12 @@ deliverables/day2/C/
 
 > 截图命名：01 目标输入 / 02 进度展示 / 03 校验与缺失项 / 04 数据包审查（均全页）。
 
-## 执行结果（第二轮，中间态+最终态）
+## 执行结果（第四轮，项目再次优化后重跑）
 
 | case_id | input | 解析结果 | 命中源 | quality | 错误类型 | verdict |
 |---|---|---|---|---|---|---|
 | ss_arxiv_001 | 检索 robot grasping 的论文 | [paper] ✓ | arxiv | n/a | other（PDF 解析失败） | FAIL / P4_FORMAT |
-| ss_github_001 | 检索 Franka 抓取开源仓库 | [grasp] ✗（应 code） | graspnet | n/a | not_found | FAIL / P1_PARSE |
-| ss_huggingface_001 | 检索 robot grasp dataset | [grasp] ✗（应 dataset） | graspnet | n/a | not_found | FAIL / P1_PARSE |
+| ss_github_001 | 检索 Franka 抓取开源仓库 | [code] ✓ | github | unknown | none | **PASS** |
+| ss_huggingface_001 | 检索 robot grasp dataset | [dataset] ✓ | github | n/a | timeout（检索超时） | FAIL / P2_RETRIEVE |
 
-> 详情见 `observations_c_20260814.json` 与各 `record.json`；执行过程问题与分支差异见 `summary_c_20260814.md`。
+> 本轮相对上一轮改善：**ss_huggingface_001 目标解析已修复**（grasp 歧义消解：正确解析为 DATASET，之前 3 轮误判 GRASP），但检索阶段超时（DATASET 候选 GitHub→HF→Zenodo→…，github 源检索超时），整题仍 FAIL / P2_RETRIEVE。ss_arxiv_001 仍 P4_FORMAT（PDF 打开失败）；ss_github_001 稳定 PASS。详情见 `observations_c_20260814.json` 与各 `record.json`；执行过程问题见 `summary_c_20260814.md`。

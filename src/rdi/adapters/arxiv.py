@@ -7,8 +7,10 @@
 注意：必须用 https，国内网络下 http 明文会被阻断/超时。
 """
 
+import io
 import json
 
+import fitz  # PyMuPDF（项目依赖，parse_goal 已使用）
 from lxml import etree
 
 from rdi.adapters.base import BaseAdapter
@@ -67,32 +69,14 @@ class ArxivAdapter(BaseAdapter):
         # （默认 2MB）而非全局 max_fetch_bytes（50MB），使典型 arXiv PDF 返回 metadata。
         size = await self._head_content_length(pdf_url)
         if size is not None and size > settings.arxiv_max_fetch_bytes:
-            metadata = await self._fetch_paper_metadata(arxiv_id)
-            payload = {
-                "url": pdf_url,
-                "size_bytes": size,
-                "title": metadata.get("title", ""),
-                "abstract": metadata.get("abstract", ""),
-                "arxiv_id": arxiv_id,
-                "note": "PDF exceeds max_fetch_bytes; returning metadata only",
-            }
-            data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-            return RawData(
-                source=DataSource.ARXIV,
-                item_id=arxiv_id,
-                format="json",
-                data=data_bytes,
-                url=pdf_url,
-                size_bytes=size,
-                # P0-4：PDF 超阈值未下载，记录引用供用户手动获取
-                reference=RawReference(
-                    url=pdf_url,
-                    file_size=size,
-                    download_hint=pdf_url,
-                    reason="PDF exceeds max_fetch_bytes; returning metadata only",
-                ),
-            )
+            return await self._metadata_fallback(arxiv_id, pdf_url, size)
         pdf_bytes = await self._download_bytes(pdf_url)
+        if not self._is_valid_pdf(pdf_bytes):
+            # Day2：下载到无法打开的 PDF（魔数正确但损坏/截断，前端 "Failed to open
+            # stream" 的现场），重试一次；仍无效则显式降级返回 metadata JSON。
+            pdf_bytes = await self._download_bytes(pdf_url)
+        if not self._is_valid_pdf(pdf_bytes):
+            return await self._metadata_fallback(arxiv_id, pdf_url, len(pdf_bytes))
         return RawData(
             source=DataSource.ARXIV,
             item_id=arxiv_id,
@@ -101,6 +85,54 @@ class ArxivAdapter(BaseAdapter):
             url=pdf_url,
             size_bytes=len(pdf_bytes),
         )
+
+    async def _metadata_fallback(self, arxiv_id: str, pdf_url: str, size: int) -> RawData:
+        """PDF 不可用（超阈值或下载内容非有效 PDF）时，显式降级返回 metadata JSON。
+
+        包内记录 url/size/title/abstract 与 ``download_hint``（供用户手动获取），
+        符合"降级必须显式"的判定口径。
+        """
+        metadata = await self._fetch_paper_metadata(arxiv_id)
+        payload = {
+            "url": pdf_url,
+            "size_bytes": size,
+            "title": metadata.get("title", ""),
+            "abstract": metadata.get("abstract", ""),
+            "arxiv_id": arxiv_id,
+            "note": "PDF unavailable or exceeds max_fetch_bytes; returning metadata only",
+        }
+        data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        return RawData(
+            source=DataSource.ARXIV,
+            item_id=arxiv_id,
+            format="json",
+            data=data_bytes,
+            url=pdf_url,
+            size_bytes=size,
+            # PDF 不可用，记录引用供用户手动获取
+            reference=RawReference(
+                url=pdf_url,
+                file_size=size,
+                download_hint=pdf_url,
+                reason="PDF unavailable or exceeds max_fetch_bytes; returning metadata only",
+            ),
+        )
+
+    @staticmethod
+    def _is_valid_pdf(data: bytes) -> bool:
+        """校验字节是能实际打开的 PDF（PyMuPDF 打开成功且有页）。
+
+        先查 %PDF 魔数（fitz 对无魔数内容可能宽容解析），再真正 open 一次；
+        国内网络下可能拿到魔数正确但结构损坏的字节（前端 "Failed to open stream"
+        即此场景），仅魔数不足，需实际打开验证。
+        """
+        if not data.startswith(b"%PDF"):
+            return False
+        try:
+            with fitz.open(stream=io.BytesIO(data), filetype="pdf") as doc:
+                return len(doc) > 0
+        except Exception:
+            return False
 
     async def _fetch_paper_metadata(self, arxiv_id: str) -> dict[str, str]:
         """通过 arXiv API 获取单篇论文的 title/abstract。

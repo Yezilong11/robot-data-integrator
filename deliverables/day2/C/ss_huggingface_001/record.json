@@ -3,7 +3,7 @@
   "case_id": "ss_huggingface_001",
   "input": "检索 robot grasp dataset",
   "executor": "C",
-  "executed_at": "2026-08-14T10:28:36",
+  "executed_at": "2026-08-14T16:20:10",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,17 +13,17 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "grasp"
+        "DATASET"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "graspnet",
+        "source": "github",
         "quality": "n/a",
-        "error": null,
-        "error_type": "not_found"
+        "error": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "error_type": "timeout"
       }
     ],
     "validate": {
@@ -32,7 +32,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-102816",
+      "dir": "data/output_packages/package-20260814-162005",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -73,7 +73,7 @@
     }
   ],
   "verdict": "FAIL",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "LLM 将'检索 robot grasp dataset'误判为 req_type=grasp（应为 dataset）；命中 graspnet 仅返回元数据 JSON（未找到真实 npz），数据包 0 文件",
-  "notes": "Day2-C 重跑（中间态+最终态截图），feat/arch-langgraph"
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+  "notes": "Day2-C 重跑（项目优化后第四轮，中间态+最终态截图），feat/arch-langgraph"
 }

@@ -79,6 +79,20 @@ def _extract_paper_text(paper_pdf: bytes | None) -> str | None:
 # 弱关键词（通用词）仅在 req_type 为非具体类型（code / dataset / unknown）时兜底，
 # 避免误伤已正确分类的具体需求（如 grasp 需求的描述里出现 "robot"）。
 _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
+    # 检索容器类目标最优先：描述含仓库/数据集专词时先判 CODE/DATASET。
+    # Day2 回归：LLM 把 "retrieve robot grasp dataset" 判为 GRASP 且配 expected_format=npz 时，
+    # GRASP 强词 npz 会抢先命中；把 CODE/DATASET 提到最前，容器专词优先于数据格式词。
+    DataReqType.CODE: (
+        "开源仓库",
+        "代码仓库",
+        "源代码",
+        "开源代码",
+        "github",
+        "codebase",
+        "repository",
+        "repo",
+    ),
+    DataReqType.DATASET: ("dataset", "数据集"),
     DataReqType.ROBOT_URDF: ("urdf", "xacro"),
     DataReqType.MESH: ("mesh", "3d model", "obj", "stl", "ply", "dae", "glb"),
     DataReqType.GRASP: (

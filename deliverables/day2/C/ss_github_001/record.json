@@ -3,7 +3,7 @@
   "case_id": "ss_github_001",
   "input": "检索 Franka 抓取开源仓库",
   "executor": "C",
-  "executed_at": "2026-08-14T10:28:04",
+  "executed_at": "2026-08-14T16:16:50",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,29 +13,29 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "grasp"
+        "CODE"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "graspnet",
-        "quality": "n/a",
+        "source": "github",
+        "quality": "unknown",
         "error": null,
-        "error_type": "not_found"
+        "error_type": "none"
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 0,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-102744",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "data/output_packages/package-20260814-161643",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -72,8 +72,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "LLM 将'检索 Franka 抓取开源仓库'误判为 req_type=grasp（应为 code）；命中 graspnet 仅返回元数据 JSON（未找到真实 npz），数据包 0 文件",
-  "notes": "Day2-C 重跑（中间态+最终态截图），feat/arch-langgraph"
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day2-C 重跑（项目优化后第四轮，中间态+最终态截图），feat/arch-langgraph"
 }
