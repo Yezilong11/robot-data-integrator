@@ -1,9 +1,8 @@
-"""Gradio 前端应用入口。
+"""前端渲染与运行逻辑库（FastAPI 静态前端复用）。
 
-提供演示/真实两种运行模式，支持 PDF 上传、数据包审查、人机交互反馈。
-E5：界面改造为「工作区式」三栏布局，中栏为随阶段切换的 LLM 决策看板，
-展示检索策略规划 / 语义统一 / 质量解释 / 审查建议四个决策点的真实决策过程，
-并诚实标注「LLM 生成」或「规则兜底」。
+提供演示/真实两种运行模式的工作流封装（``run_graph`` / ``resume_workflow``）
+与工作区 HTML 渲染函数（``build_workspace_html`` 及各 ``render_*``）。
+原 Gradio 前端 UI 已废弃，仅保留本模块的纯逻辑函数供 ``rdi.server`` 调用。
 """
 
 from __future__ import annotations
@@ -12,14 +11,10 @@ import asyncio
 import html as _html
 import importlib
 import json
-import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 OUTPUT_ROOT = ROOT / "data" / "output_packages"
@@ -123,19 +118,7 @@ BOARD_STAGES: list[tuple[str, str]] = [
     ("human_review", "审查"),
 ]
 
-# 全局主题覆盖（gr.Blocks(css=...) 注入，黑底橙调 · GitHub 暗色风）
-_THEME_CSS = """
-.gradio-container{background:#0d1117 !important;color:#e6edf3 !important;max-width:none !important}
-body{background:#0d1117 !important}
-.gradio-container .gr-button-primary{background:#f78166 !important;color:#0d1117 !important;border:none !important}
-.gradio-container .gr-button{background:#161b22 !important;color:#e6edf3 !important;border:1px solid #30363d !important}
-.gradio-container input,.gradio-container textarea,.gradio-container select{background:#0d1117 !important;color:#e6edf3 !important;border-color:#30363d !important}
-.gradio-container .tab-nav button{color:#8b949e !important;background:#010409 !important}
-.gradio-container .tab-nav button.selected{color:#f78166 !important;border-color:#f78166 !important}
-.gradio-container label,.gradio-container .label-wrap span{color:#8b949e !important}
-"""
-
-# 工作区内联样式（gr.HTML 原样渲染 <style>，前缀 rdi- 避免污染全局）
+# 工作区内联样式（原样渲染 <style>，前缀 rdi- 避免污染全局）
 _DECISION_CSS = """<style>
 :root{
   --bg:#0d1117;--bg-sidebar:#010409;--bg-panel:#161b22;--bg-elevated:#161b22;
@@ -160,6 +143,7 @@ _DECISION_CSS = """<style>
 .rdi-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600;font-family:var(--font-mono)}
 .rdi-badge-ok{background:var(--done-soft);color:var(--done);border:1px solid rgba(63,185,80,.3)}
 .rdi-badge-llm{background:var(--accent-soft);color:var(--llm);border:1px solid rgba(247,129,102,.35)}
+.rdi-badge-llm::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--llm)}
 .rdi-badge-rule{background:rgba(210,153,34,.14);color:var(--rule);border:1px solid rgba(210,153,34,.3)}
 .rdi-badge-red{background:rgba(248,81,73,.14);color:var(--error);border:1px solid rgba(248,81,73,.3)}
 .rdi-badge-gray{background:var(--bg-elevated);color:var(--text-faint);border:1px solid var(--border)}
@@ -171,6 +155,8 @@ _DECISION_CSS = """<style>
 .rdi-act.active{color:var(--accent);background:var(--bg-elevated)}
 .rdi-act.active::before{content:"";position:absolute;left:-6px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--accent)}
 .rdi-actbar-spacer{flex:1}
+.rdi-activity-action{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;color:var(--text-faint);cursor:pointer;font-size:18px;transition:.15s;user-select:none}
+.rdi-activity-action:hover{color:var(--accent)}
 /* 左栏面板 */
 .rdi-sidebar{width:270px;min-width:180px;max-width:460px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .rdi-resizer{width:5px;cursor:col-resize;flex-shrink:0;position:relative;z-index:6;background:transparent}
@@ -192,6 +178,11 @@ _DECISION_CSS = """<style>
 .rdi-tree-indent{flex-shrink:0}
 .rdi-tree-chev{width:12px;text-align:center;color:var(--text-faint);flex-shrink:0;font-size:10px}
 .rdi-tree-ico{width:16px;text-align:center;flex-shrink:0}
+.rdi-file-txt{color:#8b949e}
+.rdi-file-json{color:#d29922}
+.rdi-file-md{color:#f78166}
+.rdi-file-urdf{color:#a371f7}
+.rdi-file-grasp{color:#3fb950}
 .rdi-tree-name{overflow:hidden;text-overflow:ellipsis}
 .rdi-tree-meta{margin-left:auto;font-size:11px;color:var(--text-faint)}
 .rdi-tree-folder{font-weight:500}
@@ -217,6 +208,7 @@ _DECISION_CSS = """<style>
 .rdi-think-head{display:flex;align-items:center;gap:9px;padding-bottom:14px;border-bottom:1px solid var(--border-soft);font-size:12px;font-weight:600;color:var(--llm)}
 .rdi-think-head .rdi-stage{color:var(--text-faint);font-weight:400}
 .rdi-think-body{flex:1;display:flex;align-items:center;padding:18px 4px;font-family:var(--font-mono);font-size:14px;line-height:1.9;color:var(--text-dim)}
+.rdi-think-badge{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:11px;font-family:var(--font-mono);background:var(--accent-soft);color:var(--llm);border:1px solid rgba(247,129,102,.3);font-weight:500;flex-shrink:0}
 /* 目标输出 */
 .rdi-output{border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--bg-panel);flex-shrink:0}
 .rdi-output summary{cursor:pointer;padding:10px 16px;list-style:none;display:flex;align-items:center;gap:12px}
@@ -1165,6 +1157,19 @@ def _file_icon(name: str) -> str:
     return "≡"
 
 
+def _file_icon_class(name: str) -> str:
+    """文件类型图标的颜色 class（设计稿：json 琥珀 / md 珊瑚 / urdf 紫 / grasp 绿）。"""
+    if name.endswith(".json"):
+        return "rdi-file-json"
+    if name.endswith(".md"):
+        return "rdi-file-md"
+    if name.endswith(".urdf") or name.endswith(".xacro"):
+        return "rdi-file-urdf"
+    if name.endswith(".pkl") or name.endswith(".npz"):
+        return "rdi-file-grasp"
+    return "rdi-file-txt"
+
+
 def _format_size(n: Any) -> str:
     """把字节数格式化为易读大小（B/KB/MB）。"""
     if n is None:
@@ -1195,35 +1200,58 @@ def _tree_row_html(indent: int, name: str, is_dir: bool, size: Any = None) -> st
     return (
         '<div class="rdi-tree-row">'
         f"{indent_html}"
-        f'<span class="rdi-tree-ico">{_file_icon(name)}</span>'
+        f'<span class="rdi-tree-ico {_file_icon_class(name)}">{_file_icon(name)}</span>'
         f'<span class="rdi-tree-name">{_html.escape(name)}</span>'
         f'<span class="rdi-tree-meta">{meta}</span>'
         "</div>"
     )
 
 
+def _nested_tree_rows(paths: list[str], sizes: dict[str, Any], start_indent: int = 0) -> list[str]:
+    """把扁平路径列表转成嵌套可折叠树（目录用 rdi-group 包裹 children）。"""
+    tree: dict[str, dict[str, Any]] = {}
+    for rel in paths:
+        parts = rel.split("/")
+        node = tree
+        for part in parts[:-1]:
+            node = node.setdefault(part, {"type": "dir", "children": {}})["children"]
+        node[parts[-1]] = {"type": "file", "size": sizes.get(rel)}
+
+    def render(name: str, meta: dict[str, Any], indent: int) -> str:
+        if meta["type"] == "file":
+            return _tree_row_html(indent, name, False, meta.get("size"))
+        children = meta["children"]
+        items = sorted(children.items(), key=lambda kv: (0 if kv[1]["type"] == "dir" else 1, kv[0]))
+        inner = "".join(render(cn, cv, indent + 1) for cn, cv in items)
+        indent_html = f'<span class="rdi-tree-indent" style="width:{indent * 16}px"></span>'
+        return (
+            '<div class="rdi-tree-row rdi-tree-folder rdi-group">'
+            f"{indent_html}"
+            '<span class="rdi-tree-chev">▾</span>'
+            '<span class="rdi-tree-ico">📁</span>'
+            f'<span class="rdi-tree-name">{_html.escape(name)}</span>'
+            "</div>"
+            f'<div class="rdi-group-children">{inner}</div>'
+        )
+
+    items = sorted(tree.items(), key=lambda kv: (0 if kv[1]["type"] == "dir" else 1, kv[0]))
+    return [render(cn, cv, start_indent) for cn, cv in items]
+
+
 def _package_file_rows(package_dir: Path) -> list[str]:
-    """返回某数据包目录下的文件树行（不含 root 节点，从 0 缩进开始）。"""
+    """返回某数据包目录下的文件树行（嵌套可折叠，从 0 缩进开始）。"""
     paths = sorted(
         str(p.relative_to(package_dir)).replace("\\", "/")
         for p in package_dir.rglob("*")
         if p.is_file()
     )
-    rows: list[str] = []
-    seen_dirs: set[str] = set()
+    sizes: dict[str, Any] = {}
     for rel in paths:
-        parts = rel.split("/")
-        for i in range(1, len(parts)):
-            prefix = "/".join(parts[:i])
-            if prefix not in seen_dirs:
-                seen_dirs.add(prefix)
-                rows.append(_tree_row_html(i - 1, parts[i - 1], True))
         try:
-            size = (package_dir / rel).stat().st_size
+            sizes[rel] = (package_dir / rel).stat().st_size
         except OSError:
-            size = None
-        rows.append(_tree_row_html(len(parts) - 1, parts[-1], False, size))
-    return rows
+            sizes[rel] = None
+    return _nested_tree_rows(paths, sizes)
 
 
 def _local_package_tree_rows() -> list[str]:
@@ -1306,21 +1334,17 @@ def render_file_tree_html(state: dict[str, Any]) -> str:
     rows: list[str] = []
     if root_name:
         rows.append(
-            '<div class="rdi-tree-row rdi-tree-folder">'
+            '<div class="rdi-tree-row rdi-tree-folder rdi-group">'
             '<span class="rdi-tree-chev">▾</span>'
             '<span class="rdi-tree-ico">📦</span>'
             f'<span class="rdi-tree-name">{_html.escape(root_name)}</span>'
             "</div>"
+            '<div class="rdi-group-children">'
         )
-    seen_dirs: set[str] = set()
-    for rel in paths:
-        parts = rel.split("/")
-        for i in range(1, len(parts)):
-            prefix = "/".join(parts[:i])
-            if prefix not in seen_dirs:
-                seen_dirs.add(prefix)
-                rows.append(_tree_row_html(i - 1, parts[i - 1], True))
-        rows.append(_tree_row_html(len(parts) - 1, parts[-1], False, sizes.get(rel)))
+        rows.extend(_nested_tree_rows(paths, sizes, start_indent=1))
+        rows.append("</div>")
+    else:
+        rows.extend(_nested_tree_rows(paths, sizes))
     return '<div class="rdi-tree">' + "".join(rows) + "</div>"
 
 
@@ -1403,15 +1427,30 @@ def _current_thinking(state: dict[str, Any]) -> tuple[str, str, str]:
     return label, text, source
 
 
+# 阶段 → LLM 决策点名称（设计稿 stage 文案格式：校验阶段 · explain_quality）
+_STAGE_DECISION: dict[str, str] = {
+    "retrieve_data": "retrieval_plan",
+    "parse_and_convert": "unify_semantics",
+    "validate": "explain_quality",
+    "assemble_package": "assemble_package",
+    "human_review": "review_suggestions",
+}
+
+
 def render_llm_analysis_html(state: dict[str, Any]) -> str:
     """LLM 分析主体视图：思考文本 + 来源标注，不含 confidence 数字。"""
     label, text, source = _current_thinking(state)
-    badge = _badge_html(source) if source == "LLM 生成" else ""
+    completed = _board_completed(state)
+    current_idx = min(len(completed), len(BOARD_STAGES) - 1)
+    name, _ = BOARD_STAGES[current_idx]
+    stage_txt = f"{label}阶段 · {_STAGE_DECISION.get(name, name)}"
+    # 规则兜底不显示来源标注（用户要求），仅 LLM 生成时展示 pill 徽章
+    badge = '<span class="rdi-think-badge">LLM 生成</span>' if source == "LLM 生成" else ""
     return (
         '<div class="rdi-think">'
         '<div class="rdi-think-head"><span>◉</span><span>LLM 分析</span>'
-        f'<span class="rdi-stage">· {_html.escape(label)}</span>'
-        f'<span style="margin-left:auto">{badge}</span>'
+        f'<span class="rdi-stage">· {_html.escape(stage_txt)}</span>'
+        f"{badge}"
         "</div>"
         f'<div class="rdi-think-body">{_html.escape(text)}<span class="rdi-caret"></span></div>'
         "</div>"
@@ -1452,7 +1491,7 @@ def render_target_output_html(state: dict[str, Any]) -> str:
 
     detail = "".join(
         '<div class="rdi-out-file">'
-        f'<span class="rdi-out-fico">{_file_icon(rel)}</span>'
+        f'<span class="rdi-out-fico {_file_icon_class(rel)}">{_file_icon(rel)}</span>'
         f'<span class="rdi-out-fname">{_html.escape(rel)}</span>'
         f'<span class="rdi-out-fsize">{_format_size(size)}</span>'
         "</div>"
@@ -1599,9 +1638,9 @@ def _status_badge(status: str) -> str:
         return '<span class="rdi-badge rdi-badge-ok">完成</span>'
     if any(k in status for k in ("继续运行", "已生成中间结果", "待审查")):
         return '<span class="rdi-badge rdi-badge-rule">待审查</span>'
-    if "请输入" in status or "没有待继续" in status:
+    if any(k in status for k in ("待输入", "请输入", "没有待继续")):
         return '<span class="rdi-badge rdi-badge-gray">待输入</span>'
-    return '<span class="rdi-badge rdi-badge-llm">运行中</span>'
+    return '<span class="rdi-badge rdi-badge-ok">运行中</span>'
 
 
 def build_workspace_html(state: dict[str, Any], status: str) -> str:
@@ -1651,10 +1690,15 @@ def build_workspace_html(state: dict[str, Any], status: str) -> str:
         '<div class="rdi-act" data-panel="log" title="日志">▷</div>'
         '<div class="rdi-act" data-panel="settings" title="设置">⚙</div>'
         '<div class="rdi-actbar-spacer"></div>'
+        '<div class="rdi-activity-action" data-action="new-session" title="新会话（清空输入并重新开始）">↻</div>'
         "</nav>"
         '<aside class="rdi-sidebar" data-min="180" data-max="460">'
         '<div class="rdi-panel-head"><span id="rdi-panel-title">资源管理器</span>'
-        '<div class="rdi-panel-actions"><span>⟳</span><span>＋</span><span>▾</span></div></div>'
+        '<div class="rdi-panel-actions">'
+        '<span data-action="refresh" title="刷新">⟳</span>'
+        '<span data-action="expand" title="全部展开">＋</span>'
+        '<span data-action="collapse" title="全部折叠">▾</span>'
+        "</div></div>"
         f'<div class="rdi-panel-body rdi-pane" data-panel="explorer">{file_tree}</div>'
         f'<div class="rdi-panel-body rdi-pane" data-panel="retrieve" style="display:none">{req_table}</div>'
         f'<div class="rdi-panel-body rdi-pane" data-panel="decision" style="display:none"><pre>{semantic}</pre></div>'
@@ -1693,6 +1737,7 @@ def build_workspace_html(state: dict[str, Any], status: str) -> str:
         '<div class="rdi-left">'
         f'<span class="rdi-sb">⎇ 阶段 {completed_count}/5</span>'
         f'<span class="rdi-sb"><span class="rdi-spinner"></span> {_html.escape(status)}</span>'
+        '<span class="rdi-sb rdi-stage-text" id="rdi-stage-text"></span>'
         "</div>"
         '<div class="rdi-right">'
         f'<span class="rdi-sb"><span class="rdi-llm">◉</span> LLM 调用 <span class="rdi-llm">{llm_count} 次</span></span>'
@@ -1869,137 +1914,3 @@ def run_workflow(
             # 演示流程本地写盘异常：保留失败展示（demo 标记，写独立 DEMO_ROOT）
             state = build_failure_state(goal, paper_file, "satisfied", "", str(exc))
         return _format_result(state, "satisfied", "")
-
-
-def run_workflow_stream(
-    mode: str,
-    goal: str,
-    paper_file: Any,
-    local_files_json: str,
-) -> Generator[tuple[Any, ...], None, None]:
-    """Gradio 生成器：真实流程运行期间先展示「运行中」徽章，再输出最终 14 元组。"""
-    yield _empty_result("运行中")
-    yield run_workflow(mode, goal, paper_file, local_files_json)
-
-
-def resume_workflow_stream(
-    review_decision: str, feedback: str
-) -> Generator[tuple[Any, ...], None, None]:
-    """Gradio 生成器：resume 期间先展示「运行中」徽章，再输出最终 14 元组。"""
-    yield _empty_result("运行中")
-    yield resume_workflow(review_decision, feedback)
-
-
-def on_action_button(
-    mode: str,
-    goal: str,
-    paper_file: Any,
-    local_files_json: str,
-    review_decision: str,
-    feedback: str,
-) -> tuple:
-    """运行/继续运行合并按钮回调：根据是否有待继续运行切换行为。
-
-    返回 15 元组 = 原 14 元组展示数据 + 按钮文字（"▶ 运行" / "▶ 继续运行"）。
-    """
-    if _pending_thread_id:
-        result = resume_workflow(review_decision, feedback)
-        button = "▶ 运行"
-    else:
-        result = run_workflow(mode, goal, paper_file, local_files_json)
-        button = "▶ 继续运行" if "继续运行" in str(result[0]) else "▶ 运行"
-    return (*result, button)
-
-
-def build_app() -> Any:
-    gr: Any = importlib.import_module("gradio")
-
-    with gr.Blocks(title="Robot Data Integrator") as app:
-        # 完整工作区（活动栏 + 左栏 6 面板 + 中栏 + 检查器 + 状态栏，内联 CSS/JS）
-        decision_board = gr.HTML(label="工作区")
-
-        # 目标输入条
-        with gr.Row():
-            pdf_button = gr.Button("＋", scale=0)
-            goal = gr.Textbox(
-                placeholder="描述你的实验目标，如：整合 DexGrasp 抓取数据与灵巧手 URDF…",
-                show_label=False,
-                scale=4,
-            )
-            action_button = gr.Button("▶ 运行", variant="primary", scale=0)
-        paper_file = gr.File(label="论文 PDF", file_types=[".pdf"], visible=False)
-
-        # 审查与设置
-        with gr.Accordion("审查与设置", open=False):
-            mode = gr.Radio(choices=["演示流程", "真实流程"], value="真实流程", label="运行模式")
-            review_decision = gr.Radio(
-                choices=["satisfied", "revised", "unsatisfied"],
-                value="satisfied",
-                label="审查决定",
-            )
-            feedback = gr.Textbox(label="反馈", lines=2)
-            local_files = gr.Textbox(label='本地文件注入（JSON：{"req_id": "路径"}）', lines=2)
-
-        # 隐藏组件（保留 14 元组契约其余元素）
-        status_text = gr.Textbox(label="状态", visible=False)
-        state_summary = gr.JSON(label="state_summary", visible=False)
-        req_status = gr.Dataframe(visible=False)
-        tree_text = gr.Textbox(visible=False)
-        manifest = gr.Textbox(visible=False)
-        validation_issues = gr.JSON(visible=False)
-        runtime_check = gr.JSON(visible=False)
-        missing_items = gr.JSON(visible=False)
-        provenance = gr.Textbox(visible=False)
-        stage_progress = gr.JSON(visible=False)
-        llm_usage_display = gr.JSON(visible=False)
-        semantic_map_display = gr.Textbox(visible=False)
-        status_bar = gr.HTML(visible=False)
-
-        outputs = [
-            status_text,  # 0  status
-            state_summary,  # 1  summary
-            req_status,  # 2  req_status
-            tree_text,  # 3  tree
-            manifest,  # 4  manifest
-            validation_issues,  # 5  validation_issues
-            runtime_check,  # 6  runtime_check
-            missing_items,  # 7  missing_items
-            provenance,  # 8  provenance
-            stage_progress,  # 9  stage_progress
-            decision_board,  # 10 decision_board（完整工作区）
-            llm_usage_display,  # 11 llm_usage
-            semantic_map_display,  # 12 semantic_map_json
-            status_bar,  # 13 status_bar
-            action_button,  # 14 按钮文字
-        ]
-
-        action_button.click(
-            fn=on_action_button,
-            inputs=[mode, goal, paper_file, local_files, review_decision, feedback],
-            outputs=outputs,
-        )
-
-        pdf_button.click(
-            fn=lambda: gr.update(visible=True),
-            outputs=paper_file,
-        )
-
-    return app
-
-
-def main() -> None:
-    os.environ.setdefault("NO_PROXY", "127.0.0.1,localhost")
-    os.environ.setdefault("no_proxy", "127.0.0.1,localhost")
-
-    port = int(os.environ.get("GRADIO_SERVER_PORT", "7861"))
-    app = build_app()
-    app.launch(
-        server_name="127.0.0.1",
-        server_port=port,
-        show_error=True,
-        css=_THEME_CSS,
-    )
-
-
-if __name__ == "__main__":
-    main()

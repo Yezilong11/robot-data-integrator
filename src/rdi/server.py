@@ -124,6 +124,7 @@ def _run_pipeline(
     result["stage_progress"] = completed
 
     if interrupted:
+        _TASKS[task_id]["interrupted"] = True
         req_headers, req_rows = fe.build_req_status_table(result)
         status = "已生成中间结果，请选择审查决定并点击「继续运行」"
         return (
@@ -155,12 +156,20 @@ def _run_task(task_id: str, req: RunRequest) -> None:
         task["error"] = str(exc)
     finally:
         task["done"] = True
+        # 完成后 10 分钟清理，避免 _TASKS 无限累积内存（保留窗口期供前端回查结果）
+        threading.Timer(600, _TASKS.pop, args=(task_id, None)).start()
 
 
 @app.post("/api/run")
 def api_run(req: RunRequest) -> dict[str, str]:
     task_id = str(uuid.uuid4())
-    _TASKS[task_id] = {"done": False, "stage_progress": [], "result": None, "error": None}
+    _TASKS[task_id] = {
+        "done": False,
+        "stage_progress": [],
+        "result": None,
+        "error": None,
+        "interrupted": False,
+    }
     threading.Thread(target=_run_task, args=(task_id, req), daemon=True).start()
     return {"task_id": task_id}
 
@@ -182,7 +191,12 @@ def api_result(task_id: str) -> dict[str, Any]:
     task = _TASKS.get(task_id)
     if task is None:
         return {"error": "not found"}
-    return {"done": task["done"], "result": task.get("result"), "error": task.get("error")}
+    return {
+        "done": task["done"],
+        "result": task.get("result"),
+        "error": task.get("error"),
+        "interrupted": task.get("interrupted", False),
+    }
 
 
 @app.post("/api/resume")

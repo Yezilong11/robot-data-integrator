@@ -17,7 +17,7 @@ Robot Data Integrator (RDI) 是一个基于 LLM 驱动的智能工作流系统�
   - `files/req_001.stl` — YCB 香蕉 mesh
   - `files/req_002.xml` — MuJoCo MJCF 场景
   - `files/req_003.json` — grasp 元数据 / synthetic grasp
-- **当前测试状态**：393 passed / 1 skipped / 9 deselected。
+- **当前测试状态**：766 passed / 1 skipped / 7 deselected。
 
 ## 核心特性
 
@@ -26,7 +26,7 @@ Robot Data Integrator (RDI) 是一个基于 LLM 驱动的智能工作流系统�
 - **15 种数据源适配器** — 覆盖论文、代码、数据集、URDF、网格、抓取、仿真、策略模型、传感器数据
 - **Hermes 持续学习引擎** — 基于 ChromaDB 的经验库与策略演化，按成功率动态调整数据源优先级
 - **OpenAI 兼容 LLM 接入** — 通过 `LLM_BASE_URL` 一行切换 Qwen / DeepSeek / GLM / OpenAI
-- **Gradio 前端** — 支持演示/真实两种运行模式、PDF 上传、数据包可视化审查
+- **FastAPI + 工作区式前端** — 原生 HTML/CSS/JS 实现工作区三栏布局，支持演示/真实两种运行模式、PDF 上传、数据包可视化审查
 
 ## 项目结构
 
@@ -76,8 +76,11 @@ src/rdi/
 │   ├── sim_config.py     #   仿真配置生成
 │   ├── policy_interface.py  # 策略/权重接口
 │   └── sensor_data.py    #   传感器数据处理
-└── frontend/         # Gradio 前端应用
-    └── app.py        #   Web UI 入口
+├── server.py         # FastAPI 后端（薄封装工作流，静态前端轮询调用）
+├── frontend/         # 前端渲染与运行逻辑库
+│   └── app.py        #   工作区 HTML 渲染 + run_graph / resume 工作流封装
+└── static/           # 静态前端
+    └── index.html    #   工作区 UI（活动栏/文件树/灯带/检查器/状态栏）
 ```
 
 ## 快速开始
@@ -105,8 +108,8 @@ cp .env.example .env
 ### 运行
 
 ```bash
-# 启动 Gradio 前端
-uv run python -m rdi.frontend.app
+# 启动 FastAPI 后端 + 静态前端（浏览器访问 http://127.0.0.1:8000）
+uv run python -m rdi.server
 
 # 运行第二次联调 demo（生成 URDF + STL + MJCF XML + grasp JSON 数据包）
 uv run python scripts/run_second_integration_demo.py
@@ -216,7 +219,7 @@ flowchart TD
 | HTTP 客户端 | aiohttp + httpx |
 | 机器人数据处理 | trimesh, lxml, numpy, scipy |
 | PDF 解析 | PyMuPDF (fitz) |
-| 前端 | Gradio |
+| 前端 | FastAPI + 原生 HTML/CSS/JS（工作区式 UI） |
 | 日志 | structlog |
 | 包管理 | uv + hatchling |
 
