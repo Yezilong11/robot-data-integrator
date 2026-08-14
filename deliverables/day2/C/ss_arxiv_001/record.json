@@ -3,7 +3,7 @@
   "case_id": "ss_arxiv_001",
   "input": "检索 robot grasping 的论文",
   "executor": "C",
-  "executed_at": "2026-08-14T16:16:12",
+  "executed_at": "2026-08-14T21:13:03",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -21,21 +21,41 @@
       {
         "req_id": "req_000",
         "source": "arxiv",
-        "quality": "unknown",
+        "quality": "fallback",
         "error": null,
-        "error_type": "none"
+        "error_type": "none",
+        "note": "命中 arxiv 真实论文（Robust Object Manipulation for Tactile-based Blind Grasping, arxiv 1709.02924v5），PDF 3.2MB 超 arxiv_max_fetch_bytes(2MB) 阈值，fetch 显式降级返回 metadata JSON（format=json，is_fallback=true），PaperSkill fmt=json 消费适配后成功落包"
       }
     ],
     "validate": {
-      "errors": 1,
-      "warnings": 0,
-      "runtime_check": "empty"
+      "errors": 0,
+      "warnings": 3,
+      "runtime_check": "empty",
+      "warning_notes": "validation_issues=3 均为 warning：完整度不足 60.0%、置信度不足 0.60、输出路径为空（metadata 降级路径固有），无 error"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-161606",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "data/output_packages/package-20260814-211317",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "json",
+          "source_url": "https://arxiv.org/pdf/1709.02924v5.pdf",
+          "is_fallback": true,
+          "completeness": 60.0,
+          "downloaded": false,
+          "size_bytes": 3197996
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3
+      }
     }
   },
   "screenshots": [
@@ -72,8 +92,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P4_FORMAT",
-  "failure_reason": "无法打开 PDF: Failed to open stream",
-  "notes": "Day2-C 重跑（项目优化后第四轮，中间态+最终态截图），feat/arch-langgraph"
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day2-C 重跑（项目优化后第五轮，ad2581f fmt=json 消费适配生效）：arxiv PDF 超阈值显式降级 metadata JSON，PaperSkill 正确消费（is_fallback=true），包完整落盘 1 文件，缺失 0，无 ERROR。由前 4 轮 FAIL/P4_FORMAT 转为 PASS_WITH_FALLBACK。feat/arch-langgraph"
 }

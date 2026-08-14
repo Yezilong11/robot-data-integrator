@@ -3,7 +3,7 @@
   "case_id": "ss_github_001",
   "input": "检索 Franka 抓取开源仓库",
   "executor": "C",
-  "executed_at": "2026-08-14T16:16:50",
+  "executed_at": "2026-08-14T21:14:27",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -21,21 +21,41 @@
       {
         "req_id": "req_000",
         "source": "github",
-        "quality": "unknown",
+        "quality": "real",
         "error": null,
-        "error_type": "none"
+        "error_type": "none",
+        "note": "命中 github 真实仓库 franka_ros（frankarobotics/franka_ros develop README），is_fallback=false，下载成功"
       }
     ],
     "validate": {
       "errors": 0,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "empty",
+      "warning_notes": "validation_issues=0"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-161643",
+      "dir": "data/output_packages/package-20260814-211436",
       "status": "complete",
       "file_count": 1,
-      "missing_items": 0
+      "missing_items": 0,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "CodeRepoSummary",
+          "source_url": "https://github.com/frankarobotics/franka_ros/blob/develop/README.md",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 701
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0
+      }
     }
   },
   "screenshots": [
@@ -75,5 +95,5 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day2-C 重跑（项目优化后第四轮，中间态+最终态截图），feat/arch-langgraph"
+  "notes": "Day2-C 重跑（项目优化后第五轮）：稳定 PASS（连续三轮），正确解析 CODE，命中 github（franka_ros），落包 1 文件 CodeRepoSummary，缺失 0。feat/arch-langgraph"
 }
