@@ -27,13 +27,23 @@ def _new_run_id() -> str:
 
 def to_plain(value: Any) -> Any:
     if hasattr(value, "model_dump"):
-        return to_plain(value.model_dump(mode="json"))
+        try:
+            return to_plain(value.model_dump(mode="json"))
+        except Exception:
+            # 二进制 bytes（如 URDF/STL 资产）在 mode="json" 下 pydantic 按 utf-8
+            # 解码失败，回退 mode="python" 后由 bytes 分支转为占位描述。
+            try:
+                return to_plain(value.model_dump(mode="python"))
+            except Exception:
+                return str(value)
     if isinstance(value, dict):
         return {str(k): to_plain(v) for k, v in value.items()}
     if isinstance(value, list | tuple | set):
         return [to_plain(v) for v in value]
     if isinstance(value, datetime):
         return value.isoformat()
+    if isinstance(value, bytes):
+        return f"<bytes len={len(value)}>"
     if isinstance(value, str | int | float | bool) or value is None:
         return value
     return str(value)

@@ -785,3 +785,65 @@ async def test_retrieve_data_new_type_missing_in_parallel(
     assert "该类型暂无内置数据源" in calib.error_message
     # 无源新类型不产生 retrieval_errors
     assert result["retrieval_errors"] == []
+
+
+async def test_retrieve_single_source_timeout_falls_back_to_next_source(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """E6: 首个候选源检索超时时，记录 timeout 错误并继续尝试下一个候选源。
+
+    回归场景：GitHub 源（fallback 首选、国内网络慢）占满整个 per_req_timeout
+    预算导致 Zenodo 无执行机会（package-20260812-163536 检索超时）。
+    修复后每源均分子预算，GitHub 超时即跳过，Zenodo 仍能成功。
+    """
+    zenodo_mock = AsyncMock()
+    zenodo_mock.search.return_value = [
+        SearchResult(item_id="zo-1", title="Zenodo", source=DataSource.ZENODO)
+    ]
+    zenodo_mock.fetch.return_value = RawData(
+        source=DataSource.ZENODO,
+        item_id="zo-1",
+        format="csv",
+        data=b"timestamp,fx\n0,0.1\n",
+        url="https://zenodo.org/zo-1",
+    )
+
+    class SlowGitHubAdapter:
+        source = DataSource.GITHUB
+
+        async def search(self, query: str) -> list[SearchResult]:
+            await asyncio.sleep(0.5)  # 超过源级预算，模拟 GitHub API 挂起
+            raise AssertionError("源级超时应已中断，不应到达这里")
+
+    class FakeZenodoAdapter:
+        source = DataSource.ZENODO
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await zenodo_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await zenodo_mock.fetch(item_id, req_type=req_type)
+
+    # GitHub 优先（mock_hermes 默认优先级），但会源级超时；Zenodo 随后成功
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter",
+        lambda req_type: [SlowGitHubAdapter, FakeZenodoAdapter],
+    )
+    # per_req_timeout=0.05s、2 个源 → source_timeout=0.025s
+    monkeypatch.setattr(settings, "per_req_timeout", 0.05)
+
+    payload = {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "description": "force torque sensor time series",
+        "keywords": [],
+        "fallback_sources": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_000"]
+    assert retrieval.status == "success"
+    assert retrieval.source == DataSource.ZENODO
+    # 源级超时被记录为 timeout 错误，但不阻塞后续源
+    assert any(e.error_type == "timeout" for e in result["retrieval_errors"])
+    zenodo_mock.search.assert_called_once()

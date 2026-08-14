@@ -1,0 +1,89 @@
+{
+  "case_id": "ss_ycb_001",
+  "input": "获取 YCB 数据集中的香蕉（banana）mesh 模型",
+  "executed_at": "2026-08-14T15:23:02",
+  "thread_id": "751192f4-3644-4c26-97e4-afd9d1662a69",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "description": "YCB banana 的 3D 网格模型",
+          "expected_format": "STL",
+          "object_name": "banana"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "ycb",
+        "elapsed_seconds": 38.43,
+        "data_format": "obj",
+        "data_size": 1431169,
+        "data_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152302",
+      "package_id": "package-20260814-152302",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "files": [
+        {
+          "path": "objects/req_000.stl",
+          "format": "stl",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        }
+      ],
+      "runtime_check": {}
+    },
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260814-152302\n- checksums.txt\n- manifest.json\n- objects\n  - req_000.stl\n- provenance.log\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152302",
+    "checks": {
+      "mesh": {
+        "file": "objects\\req_000.stl",
+        "status": "passed",
+        "faces": 16384,
+        "vertices": 8194
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "objects/req_000.stl",
+      "provenance.log",
+      "units.json"
+    ]
+  }
+}

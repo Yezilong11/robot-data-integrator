@@ -122,3 +122,18 @@ def test_system_prompt_few_shot_covers_four_types_and_languages() -> None:
 def test_system_prompt_schema_mentions_unknown_req_type() -> None:
     """Schema 的 req_type 枚举应包含 unknown，供后处理标记未识别需求。"""
     assert "unknown" in GOAL_PARSING_SYSTEM
+
+
+def test_system_prompt_explains_sensor_data() -> None:
+    """sensor_data 应在拆分规则与示例中明确说明，且 fallback_sources 非空。"""
+    # 枚举列表含 sensor_data（拆分规则 / 示例中也应出现）
+    assert "sensor_data" in GOAL_PARSING_SYSTEM
+    # 拆分规则含传感器识别说明
+    assert "传感器" in GOAL_PARSING_SYSTEM
+    assert "时序数据" in GOAL_PARSING_SYSTEM
+    # few-shot 示例 14 覆盖 sensor_data 完整输出
+    assert "示例 14" in GOAL_PARSING_SYSTEM
+    # 传感器示例 fallback_sources 非空且 Zenodo 优先（GitHub 检索仅返回 README，
+    # 不适合传感器时序数据；Zenodo 收录真实数据集），
+    # 唯一带 expected_format: CSV 的条目即示例 14 的 sensor_data
+    assert '"fallback_sources": ["zenodo", "github"], "expected_format": "CSV"' in GOAL_PARSING_SYSTEM

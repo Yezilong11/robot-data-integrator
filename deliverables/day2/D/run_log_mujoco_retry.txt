@@ -1,0 +1,115 @@
+﻿
+===== ss_mujoco_001: 获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置 =====
+.venv\Scripts\python.exe : HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/
+1.1 200 OK"
+At line:15 char:5408
++ ... EOUT="180"; .venv\Scripts\python.exe deliverables\day2\D\run_day2_d_c ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (HTTP Request: P...TTP/1.1 200 OK":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+{"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:29:57.283984"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:29:59.955098"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "status": "success", "source": "franka", "is_fallback": false, "elapsed
+_seconds": 163.859, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:32:43.772160"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "status": "success", "source": "mujoco", "is_fallback": false, "elapsed
+_seconds": 169.022, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:32:49.541424"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "success", "elapsed_seconds": 0.361, "event"
+: "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:32:51.887531"}
+{"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "success", "elapsed_seconds": 0.036, "
+event": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:32:51.924350"}
+{"parsed": 2, "missing": 0, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:3
+2:51.924764"}
+Unable to resolve filename: package://meshes/collision/link0.obj
+Can't find package://meshes/collision/link0.obj
+Unable to resolve filename: package://meshes/visual/link1.obj
+Can't find package://meshes/visual/link1.obj
+Unable to resolve filename: package://meshes/visual/link2.obj
+Can't find package://meshes/visual/link2.obj
+Unable to resolve filename: package://meshes/visual/link3.obj
+Can't find package://meshes/visual/link3.obj
+Unable to resolve filename: package://meshes/visual/link4.obj
+Can't find package://meshes/visual/link4.obj
+Unable to resolve filename: package://meshes/visual/link5.obj
+Can't find package://meshes/visual/link5.obj
+Unable to resolve filename: package://meshes/visual/link6.obj
+Can't find package://meshes/visual/link6.obj
+Unable to resolve filename: package://meshes/collision/link7.obj
+Can't find package://meshes/collision/link7.obj
+Unable to resolve filename: package://meshes/visual/hand.obj
+Can't find package://meshes/visual/hand.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+{"req_id": "req_000", "req_type": "robot_urdf", "status": "issues", "issue_count": 2, "error_count": 0, "event": "valid
+ate.item", "level": "info", "timestamp": "2026-08-14T15:32:52.611484"}
+{"req_id": "req_001", "req_type": "sim_config", "status": "pass", "issue_count": 0, "error_count": 0, "event": "validat
+e.item", "level": "info", "timestamp": "2026-08-14T15:32:54.224638"}
+{"parsed": 2, "missing": 0, "issues": 2, "errors": 0, "iteration": 1, "elapsed_seconds": 2.298, "event": "validate.done
+", "level": "info", "timestamp": "2026-08-14T15:32:54.225150"}
+{"package_id": "package-20260814-153254", "files": 88, "missing": 0, "status": "complete", "elapsed_seconds": 0.822, "e
+vent": "assemble.done", "level": "info", "timestamp": "2026-08-14T15:32:55.050051"}
+Deserializing unregistered type rdi.models.goal.GoalSpec from checkpoint. This will be blocked in a future version. Set
+ LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal'
+, 'GoalSpec')]
+Deserializing unregistered type rdi.models.common.DataReqType from checkpoint. This will be blocked in a future version
+. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.
+common', 'DataReqType')]
+Deserializing unregistered type rdi.models.common.Priority from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Priority')]
+Deserializing unregistered type rdi.models.common.DataSource from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.c
+ommon', 'DataSource')]
+Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set 
+LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal',
+ 'DataReq')]
+Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future 
+version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.
+models.retrieval', 'RetrievalResult')]
+Deserializing unregistered type rdi.models.parsed.ParsedItem from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.p
+arsed', 'ParsedItem')]
+Deserializing unregistered type rdi.models.common.Severity from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Severity')]
+Deserializing unregistered type rdi.models.common.ValIssue from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'ValIssue')]
+Deserializing unregistered type rdi.models.manifest.PackageManifest from checkpoint. This will be blocked in a future v
+ersion. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.m
+odels.manifest', 'PackageManifest')]
+Traceback (most recent call last):
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 297, in <module>
+    main()
+    ~~~~^^
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 262, in main
+    "retrieve": extract_retrieve(state),
+                ~~~~~~~~~~~~~~~~^^^^^^^
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 80, in extract_retrieve
+    results = to_plain(state.get("retrieval_results", {})) or {}
+              ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 51, in to_plain
+    return {str(k): to_plain(v) for k, v in value.items()}
+                    ~~~~~~~~^^^
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 49, in to_plain
+    return to_plain(value.model_dump(mode="json"))
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\robot-data-integrator-latest\.venv\Lib\site-packages\pydantic\main.py", line 475, in model_dump
+    return self.__pydantic_serializer__.to_python(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<13 lines>...
+        polymorphic_serialization=polymorphic_serialization,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc8 in position 80: invalid utf-8
