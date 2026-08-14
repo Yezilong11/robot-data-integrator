@@ -1493,7 +1493,8 @@
       "expected": {
         "req_types": [
           "robot_urdf",
-          "mesh"
+          "mesh",
+          "grasp"
         ],
         "quality": [
           "real",

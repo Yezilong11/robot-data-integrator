@@ -9,7 +9,8 @@
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "branch": "feat/arch-langgraph",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "D 执行环境（commit 未提供）",
     "per_req_timeout_note": "首次默认 60s 预算超时 FAIL；重跑将 PER_REQ_TIMEOUT=180 后 PASS（见 notes）"
   },
   "layer": "single_source",
@@ -22,8 +23,8 @@
         "robot_urdf",
         "sim_config"
       ],
-      "vs_expected": "mismatch",
-      "note": "LLM 额外解析出 robot_urdf 需求（scene.xml 转换所需机器人 URDF），核心 sim_config 需求命中；多需求路径可接受",
+      "vs_expected": "partial",
+      "note": "LLM 额外解析出 robot_urdf 需求（scene.xml 转换所需机器人 URDF），核心 sim_config 需求命中题设源；按纪要 §7 多需求补充源口径，补充需求成功获取不判降级，partial 达标",
       "requirements": [
         {
           "req_id": "req_000",
@@ -40,25 +41,29 @@
     "retrieve": [
       {
         "req_id": "req_000",
+        "req_type": "robot_urdf",
         "source": "franka",
         "status": "success",
         "elapsed_seconds": 81.58,
-        "data_format": "urdf",
+        "format": "urdf",
         "data_size_bytes": 11263,
         "data_url": "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
-        "quality": "unknown",
+        "quality": "real",
+        "is_fallback": false,
         "error": null,
         "error_type": null
       },
       {
         "req_id": "req_001",
+        "req_type": "sim_config",
         "source": "mujoco",
         "status": "success",
         "elapsed_seconds": 91.44,
-        "data_format": "xml",
+        "format": "xml",
         "data_size_bytes": 819,
         "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
         "quality": "real",
+        "is_fallback": false,
         "error": null,
         "error_type": null
       }
@@ -71,9 +76,12 @@
     },
     "package": {
       "dir": "data/output_packages/package-20260814-154110",
+      "manifest_path": "data/output_packages/package-20260814-154110/manifest.json",
       "status": "complete",
       "file_count": 88,
       "missing_items": 0,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
       "avg_confidence": 0.9568,
       "avg_completeness": 95.68
     },

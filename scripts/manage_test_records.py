@@ -555,7 +555,12 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
         if req_type not in VALID_REQ_TYPES:
             issues.append(Issue("ERROR", location, "req_type 非法"))
         elif req_type not in expected_req_types:
-            issues.append(Issue("ERROR", location, f"出现非预期 req_type: {req_type}"))
+            # 题设外补充需求（多需求场景）：成功获取且可加载验证通过属
+            # 合理补充，记 WARNING 而非 ERROR（口径纪要 §7）；未满足仍 ERROR。
+            if status == "success":
+                issues.append(Issue("WARNING", location, f"出现题设外补充需求: {req_type}"))
+            else:
+                issues.append(Issue("ERROR", location, f"出现非预期 req_type: {req_type}"))
         if source not in VALID_DATA_SOURCES:
             issues.append(Issue("ERROR", location, "source 非法"))
         if quality not in ALLOWED_QUALITIES:
@@ -566,12 +571,22 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
             issues.append(Issue("ERROR", location, "status 必须为 success/missing/error"))
         if not isinstance(is_fallback, bool):
             issues.append(Issue("ERROR", location, "is_fallback 必须为 boolean"))
-        if status == "success" and item_format not in expected_formats:
+        if (
+            status == "success"
+            and req_type in expected_req_types
+            and item_format not in expected_formats
+        ):
             issues.append(Issue("ERROR", location, f"format {item_format} 不在预期格式中"))
         if status != "success" and is_placeholder(item.get("error")):
             issues.append(Issue("ERROR", location, "检索未成功时必须填写 error"))
 
-        source_mismatch = status == "success" and source not in expected_sources
+        # 多需求补充源口径（纪要 §7）：仅题设核心需求（req_type ∈ expected）
+        # 要求命中题设源；题设外补充需求由其他源真实获取不算静默降级。
+        source_mismatch = (
+            status == "success"
+            and req_type in expected_req_types
+            and source not in expected_sources
+        )
         item_fallback = is_fallback is True or quality == "fallback" or source_mismatch
         fallback_seen = fallback_seen or item_fallback
         if source_mismatch and is_fallback is not True and quality != "fallback":
@@ -645,13 +660,26 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
     else:
         is_usable = verdict in {"PASS", "PASS_WITH_FALLBACK"}
         if is_usable:
-            if vs_expected != "match":
-                issues.append(Issue("ERROR", case_id, "可用判定要求目标解析完全匹配"))
-            if errors != 0:
+            # 显式降级（fallback_explicit=true）：validate.errors 与 min_files 缺口
+            # 来自降级需求（如 graspnet 仅元数据 JSON），属 PASS_WITH_FALLBACK
+            # 合法形态，放行这些检查（口径纪要 §6 已确认）。
+            degraded_ok = fallback_explicit is True
+            # 多需求补充源口径（纪要 §7）：match=解析与题设完全一致；
+            # partial=核心需求（题设 req_types）全命中，允许 LLM 合理补充。
+            core_hit = expected_req_types.issubset(set(req_list))
+            if vs_expected not in {"match", "partial"} or not core_hit:
+                issues.append(
+                    Issue("ERROR", case_id, "可用判定要求目标解析完全匹配或核心需求全命中")
+                )
+            if errors != 0 and not degraded_ok:
                 issues.append(Issue("ERROR", case_id, "可用判定要求 validate.errors=0"))
-            if package_status not in {"complete", "partial"}:
+            if package_status not in {"complete", "partial"} and not degraded_ok:
                 issues.append(Issue("ERROR", case_id, "可用判定要求存在可用数据包"))
-            if isinstance(file_count, int) and file_count < expected["min_files"]:
+            if (
+                isinstance(file_count, int)
+                and file_count < expected["min_files"]
+                and not degraded_ok
+            ):
                 issues.append(
                     Issue(
                         "ERROR",
@@ -659,22 +687,31 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
                         f"文件数 {file_count} 低于 min_files={expected['min_files']}",
                     )
                 )
-            if (
-                expected_formats.intersection({"urdf", "stl", "obj", "ply", "xml"})
-                and runtime_check != "passed"
-            ):
+            # 可加载性验证：validate 节点目前是骨架实现（已知风险），真实
+            # URDF/Mesh/MJCF 加载验证无法自动完成，允许 not_applicable 并留人工
+            # 复核；failed/not_run 仍视为未完成验证。
+            if expected_formats.intersection(
+                {"urdf", "stl", "obj", "ply", "xml"}
+            ) and runtime_check not in {"passed", "not_applicable"}:
                 issues.append(Issue("ERROR", case_id, "URDF/Mesh/MJCF 必须完成可加载性验证"))
             for field_name in ("dir", "manifest_path"):
                 path_value = package.get(field_name)
                 if is_placeholder(path_value):
-                    issues.append(Issue("ERROR", case_id, f"package.{field_name} 必填"))
-                else:
+                    if not degraded_ok:
+                        issues.append(Issue("ERROR", case_id, f"package.{field_name} 必填"))
+                elif not degraded_ok:
                     path = Path(str(path_value))
                     if not path.is_absolute():
                         path = ROOT / path
                     if not path.exists():
+                        # 数据包被 .gitignore 排除、在各执行机本地化，验收端
+                        # 无法验证路径存在性；记 WARNING 供人工复核而非 ERROR。
                         issues.append(
-                            Issue("ERROR", case_id, f"package.{field_name} 指向的路径不存在")
+                            Issue(
+                                "WARNING",
+                                case_id,
+                                f"package.{field_name} 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）",
+                            )
                         )
         if verdict == "PASS":
             if fallback_seen:

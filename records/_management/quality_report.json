@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-12T23:49:50+08:00",
+  "generated_at": "2026-08-14T21:40:35+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -9,27 +9,27 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 0,
-    "judged": 0,
+    "executed": 2,
+    "judged": 2,
     "reviewed": 0,
-    "execution_rate": 0.0,
-    "review_rate": 0
+    "execution_rate": 0.0317,
+    "review_rate": 0.0
   },
   "verdicts": {
     "pass": 0,
-    "pass_with_fallback": 0,
-    "fail": 0,
-    "pass_rate": null,
-    "fallback_rate": null,
-    "fail_rate": null,
-    "usable_rate": null
+    "pass_with_fallback": 1,
+    "fail": 1,
+    "pass_rate": 0.0,
+    "fallback_rate": 0.5,
+    "fail_rate": 0.5,
+    "usable_rate": 0.5
   },
   "quality": {
-    "record_completeness_avg_pct": 0.0,
-    "records_at_least_90_pct": 0,
-    "records_at_least_90_rate": 0,
-    "screenshot_compliance_rate": 0,
-    "validation_error_count": 0
+    "record_completeness_avg_pct": 100.0,
+    "records_at_least_90_pct": 2,
+    "records_at_least_90_rate": 1.0,
+    "screenshot_compliance_rate": 0.5,
+    "validation_error_count": 1
   },
   "p0_acceptance": {
     "usable": 0,
@@ -41,19 +41,19 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
         "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fail": 1,
+        "usable_rate": 0.0
       },
       "ZH": {
         "cases": 34,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       }
     },
     "source": {
@@ -75,11 +75,11 @@
       },
       "dexgrasp": {
         "cases": 6,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "franka": {
         "cases": 8,
@@ -91,11 +91,11 @@
       },
       "github": {
         "cases": 8,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
         "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fail": 1,
+        "usable_rate": 0.0
       },
       "google_scanned": {
         "cases": 3,
@@ -107,11 +107,11 @@
       },
       "graspnet": {
         "cases": 3,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "huggingface": {
         "cases": 5,
@@ -155,19 +155,19 @@
       },
       "robotiq": {
         "cases": 4,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
         "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fail": 1,
+        "usable_rate": 0.0
       },
       "ycb": {
         "cases": 11,
-        "judged": 0,
+        "judged": 2,
         "pass": 0,
-        "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fallback": 1,
+        "fail": 1,
+        "usable_rate": 0.5
       },
       "zenodo": {
         "cases": 5,
@@ -196,20 +196,20 @@
         "usable_rate": null
       },
       "grasp": {
-        "cases": 12,
-        "judged": 0,
+        "cases": 13,
+        "judged": 2,
         "pass": 0,
-        "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fallback": 1,
+        "fail": 1,
+        "usable_rate": 0.5
       },
       "mesh": {
         "cases": 13,
-        "judged": 0,
+        "judged": 2,
         "pass": 0,
-        "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fallback": 1,
+        "fail": 1,
+        "usable_rate": 0.5
       },
       "paper": {
         "cases": 9,
@@ -229,11 +229,11 @@
       },
       "robot_urdf": {
         "cases": 17,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
         "fallback": 0,
-        "fail": 0,
-        "usable_rate": null
+        "fail": 1,
+        "usable_rate": 0.0
       },
       "sensor_data": {
         "cases": 3,
@@ -252,21 +252,36 @@
         "usable_rate": null
       }
     },
-    "llm_model": {}
+    "llm_model": {
+      "qwen-plus": 2
+    }
   },
-  "failure_top3": [],
+  "failure_top3": [
+    {
+      "category": "P2_RETRIEVE",
+      "count": 1
+    }
+  ],
   "issues": {
     "problem_set": [],
     "assignments": [],
-    "records": {}
+    "records": {
+      "ms_004": [
+        {
+          "severity": "ERROR",
+          "location": "ms_004",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ]
+    }
   },
   "acceptance_checks": {
     "problem_set_valid": true,
     "assignments_valid": true,
     "p0_usable_at_least_target": false,
-    "record_completeness_at_least_90_pct": false,
+    "record_completeness_at_least_90_pct": true,
     "all_cases_executed": false,
     "all_judged_records_reviewed": false,
-    "no_record_validation_errors": true
+    "no_record_validation_errors": false
   }
 }

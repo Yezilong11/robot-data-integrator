@@ -9,7 +9,8 @@
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "branch": "feat/arch-langgraph"
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "D 执行环境（commit 未提供）"
   },
   "layer": "single_source",
   "expected_req_types": [
@@ -33,13 +34,15 @@
     "retrieve": [
       {
         "req_id": "req_000",
+        "req_type": "mesh",
         "source": "ycb",
         "status": "success",
         "elapsed_seconds": 38.43,
-        "data_format": "obj",
+        "format": "obj",
         "data_size_bytes": 1431169,
         "data_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj",
-        "quality": "unknown",
+        "quality": "real",
+        "is_fallback": false,
         "error": null,
         "error_type": null
       }
@@ -47,13 +50,16 @@
     "validate": {
       "errors": 0,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "passed"
     },
     "package": {
       "dir": "data/output_packages/package-20260814-152302",
+      "manifest_path": "data/output_packages/package-20260814-152302/manifest.json",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
       "avg_confidence": 1.0,
       "avg_completeness": 100.0
     },

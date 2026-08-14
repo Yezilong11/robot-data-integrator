@@ -132,3 +132,12 @@
 - [x] ycb/github 归属：随 C+D 合并定案——ycb mesh×3 归 D（ss_ycb_001~003）、grasp×2 归 C（ss_ycb_004/005）；ss_github_002 保留 C（A 2026-08-12）
 - [x] P0 验收线口径：C+D 合并后 **11 个 P0**，通过率 **≥ 2/3（≥8/11 生成可用数据包）**；**PASS + PASS_WITH_FALLBACK 均算通过，仅 FAIL 不算**（A 2026-08-12 确认）
 - [x] 多源 ms_001~008 采用：由 D 的 multi_source_notes 转正式题（A 2026-08-12 确认）
+- [x] graspnet/dexgrasp 仅返回元数据 JSON（无真实 npz/pkl）：按**显式降级**处理——missing_items 含 reason + alternatives（可追溯），判定 **PASS_WITH_FALLBACK**；validate 缺失项与 min_files 缺口对显式降级需求放行（工具 `fallback_explicit=true` 时跳过 errors/file_count 检查）（A 2026-08-14 确认）
+- [x] ms_004 题设补 `grasp` 需求：目标 "UR5 with Robotiq 2F-85 grasps YCB apple" 语义含抓取数据需求，系统解析出 grasp 属预期（A 2026-08-14 确认）
+
+---
+
+## 7. 补充决策（A 2026-08-14 拍板，执行期判定唯一依据）
+
+- [x] **多需求补充源口径**：题设核心需求（`expected.req_types`）全部命中且命中题设源 → 该维度无降级；LLM 额外解析出的**题设外补充需求**（如 ss_mujoco_001 的 robot_urdf 由 franka 源补足）成功获取且可加载验证通过 → **不算静默降级**，记录 `vs_expected=partial` 达标，verdict 可记 PASS。补充需求未满足仍记 ERROR。校验工具同步修订：`source_mismatch`/format 检查仅对核心需求生效，题设外 req_type 成功获取记 WARNING（A 2026-08-14 确认，D 的 ss_mujoco_001 适用）
+- [x] **package.dir/manifest_path 跨机校验降级**：数据包被 `.gitignore` 排除、在各执行机本地化，验收端无法验证路径存在性 → 路径存在性检查由 ERROR 降为 WARNING（人工复核）；字段必填性（placeholder）保持 ERROR（A 2026-08-14 确认）

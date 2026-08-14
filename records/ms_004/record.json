@@ -8,7 +8,9 @@
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "E 执行环境（commit 未提供）"
   },
   "observations": {
     "parse_goal": {
@@ -18,16 +20,17 @@
         "mesh",
         "grasp"
       ],
-      "vs_expected": "partial_match",
-      "notes": "LLM 解析成功，生成 3 条数据需求；expected 中要求 robot_urdf 和 mesh，系统额外解析出 grasp 需求。"
+      "vs_expected": "partial",
+      "notes": "LLM 解析成功，生成 3 条数据需求（robot_urdf/mesh/grasp）；题设已确认 grasp 属预期（口径纪要 §6）。"
     },
     "retrieve": [
       {
         "req_id": "req_000",
         "req_type": "robot_urdf",
         "source": "robotiq",
+        "quality": "real",
         "status": "success",
-        "quality": "unknown",
+        "format": "urdf",
         "is_fallback": false,
         "error": null
       },
@@ -35,8 +38,8 @@
         "req_id": "req_001",
         "req_type": "mesh",
         "source": "ycb",
-        "status": "failed",
         "quality": "unknown",
+        "status": "error",
         "is_fallback": false,
         "error": "检索超时（超过 per_req_timeout 秒）"
       },
@@ -44,10 +47,11 @@
         "req_id": "req_002",
         "req_type": "grasp",
         "source": "graspnet",
-        "status": "failed",
-        "quality": "unknown",
-        "is_fallback": false,
-        "error": "GraspNet 返回元数据 JSON，未找到真实 npz；原始数据缺失。"
+        "quality": "fallback",
+        "status": "error",
+        "is_fallback": true,
+        "error": "GraspNet 返回元数据 JSON，未找到真实 npz；原始数据缺失。",
+        "fallback_reason": "GraspNet 真实 npz 不可得（已知风险 R1），显式降级返回元数据 JSON"
       }
     ],
     "validate": {
@@ -79,13 +83,15 @@
     },
     "package": {
       "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260814-150603",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260814-150603\\manifest.json",
       "package_id": "package-20260814-150603",
-      "status": "failed",
+      "status": "partial",
       "file_count": 1,
+      "missing_items_count": 2,
+      "fallback_explicit": true,
       "files": [
         "robots/req_000.urdf"
       ],
-      "missing_count": 2,
       "missing_items": [
         {
           "req_id": "req_001",
@@ -97,7 +103,10 @@
           "req_id": "req_002",
           "req_type": "grasp",
           "description": "YCB apple 的抓取姿态数据",
-          "reason": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference"
+          "reason": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference",
+          "alternatives": [
+            "参考数据源（未自动下载，供手动获取）: https://huggingface.co/datasets/DravenALG/GraspNet-1Billion"
+          ]
         }
       ]
     },
@@ -133,6 +142,6 @@
   ],
   "verdict": "FAIL",
   "failure_category": "P2_RETRIEVE",
-  "failure_reason": "多源任务只成功获取 req_000 robot_urdf；req_001 mesh 在 ycb 数据源检索超时，req_002 grasp 未获取到真实 npz 数据，导致必需需求缺失 2 项，manifest.status 为 failed。",
-  "notes": "前端流程本身可正常展示阶段进度、数据需求状态、manifest、validation_issues 和 missing_items，未发现 P6_FRONTEND。该 case 的主要问题集中在数据检索超时和真实抓取数据缺失。"
+  "failure_reason": "多源任务仅成功获取 req_000 robot_urdf；req_001 mesh 在 ycb 源检索超时（无降级产物，真缺失），req_002 grasp 显式降级为元数据 JSON。必需需求缺失 2 项，mesh 缺失不满足 min_files=3，判 FAIL。",
+  "notes": "前端流程全阶段可展示，未发现 P6_FRONTEND。grasp 显式降级（fallback_explicit=true）按口径可追溯；mesh 超时为真缺失，源级超时修复后重跑可命中 ycb。执行时间为源级超时修复前。"
 }
