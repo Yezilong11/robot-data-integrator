@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_huggingface_001",
+  "input": "检索 robot grasp dataset",
+  "executor": "C",
+  "executed_at": "2026-08-14T21:15:46",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "zenodo",
+        "status": "success",
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "DATASET 候选 GitHub→HF→Zenodo 中 github/huggingface 在源级子预算内未命中，zenodo 兜底命中",
+        "note": "DATASET 候选 GitHub→HF→Zenodo→…，github/huggingface 源在源级子预算内未命中，zenodo 兜底命中（is_fallback=true）。实际命中源为 zenodo，非题设 huggingface（registry 优先级所致）"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "passed",
+      "warning_notes": "validation_issues=0"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260814-211617",
+      "manifest_path": "data/output_packages/package-20260814-211617/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "DatasetSummary",
+          "source_url": "https://zenodo.org/records/21934640",
+          "is_fallback": true,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 504
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0
+      }
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day2-C 重跑（项目优化后第五轮）：由前轮 FAIL/P2_RETRIEVE（github 首源检索超时）转为 PASS_WITH_FALLBACK——源级子预算（per_req_timeout/候选源数）生效，github/hf 子预算内未命中后 zenodo 兜底命中，包完整落盘 1 文件（DatasetSummary），缺失 0，无 ERROR。两处待 A 关注：(1) 命中源偏移：题设 huggingface，实际命中 zenodo；(2) 检索相关性：zenodo 返回数据集主题为 deepfakes/巴西选举（非 robot grasp），相关性存疑，建议 A 评估检索相关性质量。feat/arch-langgraph"
+}

@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_ycb_001",
+  "input": "获取 YCB 数据集中的香蕉（banana）mesh 模型",
+  "executor": "D",
+  "executed_at": "2026-08-14T15:23:02",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "D 执行环境（commit 未提供）"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "mesh"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "expected_format": "STL",
+          "object_name": "banana"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "ycb",
+        "status": "success",
+        "elapsed_seconds": 38.43,
+        "format": "obj",
+        "data_size_bytes": 1431169,
+        "data_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "passed"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260814-152302",
+      "manifest_path": "data/output_packages/package-20260814-152302/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    },
+    "loadability": {
+      "mesh": {
+        "file": "objects/req_000.stl",
+        "status": "passed",
+        "faces": 16384,
+        "vertices": 8194
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(1) 与磁盘数据文件一致；objects/ 顶层分类齐全，仅差 4 个包级元数据文件（checksums/manifest/provenance/units）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "真实流程 run_graph+resume（与前端一致）执行。LLM 解析正确（req=[mesh]）；ycb 源命中 011_banana/google_16k/textured.obj（OBJ 1.43MB，38.43s），转换 STL 落包 objects/req_000.stl。可加载性：trimesh 加载 faces=16384>0，通过。目录结构核验与 manifest 一致。注意：manifest 中 data_source_quality 标记为 'unknown'（YCB adapter 未标注真实度），实际数据为 YCB 真实 mesh；expected.quality 允许 real/fallback。截图（中间态+最终态）已归档。"
+}

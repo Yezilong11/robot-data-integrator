@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-14T21:40:35+08:00",
+  "generated_at": "2026-08-14T22:02:35+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -9,30 +9,30 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 2,
-    "judged": 2,
+    "executed": 7,
+    "judged": 7,
     "reviewed": 0,
-    "execution_rate": 0.0317,
+    "execution_rate": 0.1111,
     "review_rate": 0.0
   },
   "verdicts": {
-    "pass": 0,
-    "pass_with_fallback": 1,
+    "pass": 3,
+    "pass_with_fallback": 3,
     "fail": 1,
-    "pass_rate": 0.0,
-    "fallback_rate": 0.5,
-    "fail_rate": 0.5,
-    "usable_rate": 0.5
+    "pass_rate": 0.4286,
+    "fallback_rate": 0.4286,
+    "fail_rate": 0.1429,
+    "usable_rate": 0.8571
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 2,
+    "records_at_least_90_pct": 7,
     "records_at_least_90_rate": 1.0,
-    "screenshot_compliance_rate": 0.5,
+    "screenshot_compliance_rate": 0.8571,
     "validation_error_count": 1
   },
   "p0_acceptance": {
-    "usable": 0,
+    "usable": 5,
     "total": 11,
     "target": 8,
     "passed": false
@@ -41,16 +41,16 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 1,
-        "pass": 0,
-        "fallback": 0,
+        "judged": 4,
+        "pass": 1,
+        "fallback": 2,
         "fail": 1,
-        "usable_rate": 0.0
+        "usable_rate": 0.75
       },
       "ZH": {
         "cases": 34,
-        "judged": 1,
-        "pass": 0,
+        "judged": 3,
+        "pass": 2,
         "fallback": 1,
         "fail": 0,
         "usable_rate": 1.0
@@ -67,11 +67,11 @@
       },
       "arxiv": {
         "cases": 5,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "dexgrasp": {
         "cases": 6,
@@ -91,11 +91,11 @@
       },
       "github": {
         "cases": 8,
-        "judged": 1,
-        "pass": 0,
+        "judged": 2,
+        "pass": 1,
         "fallback": 0,
         "fail": 1,
-        "usable_rate": 0.0
+        "usable_rate": 0.5
       },
       "google_scanned": {
         "cases": 3,
@@ -115,11 +115,11 @@
       },
       "huggingface": {
         "cases": 5,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "ieee": {
         "cases": 1,
@@ -139,11 +139,11 @@
       },
       "mujoco": {
         "cases": 9,
-        "judged": 0,
-        "pass": 0,
+        "judged": 1,
+        "pass": 1,
         "fallback": 0,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "paperswithcode": {
         "cases": 3,
@@ -163,11 +163,11 @@
       },
       "ycb": {
         "cases": 11,
-        "judged": 2,
-        "pass": 0,
+        "judged": 3,
+        "pass": 1,
         "fallback": 1,
         "fail": 1,
-        "usable_rate": 0.5
+        "usable_rate": 0.6667
       },
       "zenodo": {
         "cases": 5,
@@ -181,19 +181,19 @@
     "req_type": {
       "code": {
         "cases": 3,
-        "judged": 0,
-        "pass": 0,
+        "judged": 1,
+        "pass": 1,
         "fallback": 0,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "dataset": {
         "cases": 7,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "grasp": {
         "cases": 13,
@@ -205,19 +205,19 @@
       },
       "mesh": {
         "cases": 13,
-        "judged": 2,
-        "pass": 0,
+        "judged": 3,
+        "pass": 1,
         "fallback": 1,
         "fail": 1,
-        "usable_rate": 0.5
+        "usable_rate": 0.6667
       },
       "paper": {
         "cases": 9,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "policy_model": {
         "cases": 3,
@@ -245,15 +245,15 @@
       },
       "sim_config": {
         "cases": 11,
-        "judged": 0,
-        "pass": 0,
+        "judged": 1,
+        "pass": 1,
         "fallback": 0,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       }
     },
     "llm_model": {
-      "qwen-plus": 2
+      "qwen-plus": 7
     }
   },
   "failure_top3": [
@@ -271,6 +271,47 @@
           "severity": "ERROR",
           "location": "ms_004",
           "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_github_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_github_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_github_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_mujoco_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_001.retrieve[0]",
+          "message": "出现题设外补充需求: robot_urdf"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_ycb_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         }
       ]
     }
