@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "name": "rootcause_c_20260814",
+  "executor": "C",
+  "generated_at": "2026-08-14",
+  "basis": "Day2+Day3 数据源类 FAIL 根因初判（指向具体 adapter / 节点）",
+  "summary": {
+    "total_cases": 43,
+    "pass": 4,
+    "pass_with_fallback": 2,
+    "fail": 37,
+    "fail_rate": "86%",
+    "note": "FAIL 分类口径见 判定口径纪要_C数据源类.md；执行人如实记录，不判执行责任"
+  },
+  "rootcauses": [
+    {
+      "code": "P1_PARSE",
+      "count": 14,
+      "name": "LLM 目标解析歧义误判（grasp/抓取 过度放大）",
+      "target": "parse_goal 节点（非 adapter）",
+      "cases": [
+        "ss_github_003", "ss_github_005", "ss_graspnet_001", "ss_huggingface_003",
+        "ss_huggingface_004", "ss_mujoco_001", "ss_isaac_001", "ss_isaac_002",
+        "ss_paperswithcode_002", "ss_zenodo_001", "ss_zenodo_002", "ss_zenodo_003",
+        "ss_zenodo_004", "ss_zenodo_005"
+      ],
+      "detail": "目标含 grasp/抓取 时 LLM 倾向解析为 GRASP，而非 DATASET/SENSOR_DATA/CODE 等实际类型；含仿真/场景 时误判为 PAPER/ROBOT_URDF 而非 SIM_CONFIG。",
+      "suggestion": "parse_goal 节点提示词补充类型判定约束（如'抓取数据集→DATASET 而非 GRASP'），或引入类型黑名单后按候选源重判"
+    },
+    {
+      "code": "P2_RETRIEVE",
+      "count": 6,
+      "name": "检索超时（超过 per_req_timeout 秒）",
+      "target": "retrieve_data 节点 / GraspNetAdapter、HuggingFaceAdapter",
+      "cases": [
+        "ss_dexgrasp_001", "ss_dexgrasp_002", "ss_dexgrasp_003",
+        "ss_dexgrasp_004", "ss_dexgrasp_005", "ss_huggingface_005"
+      ],
+      "detail": "dexgrasp 系命中 graspnet 源后检索超时；huggingface_005 灵巧操作策略权重检索超时。",
+      "suggestion": "核查 graspnet 检索实现（可能命中远程大目录枚举慢）；HF 侧确认 query 与超时预算匹配"
+    },
+    {
+      "code": "P3_SOURCE",
+      "count": 5,
+      "name": "数据源 fetch 失败",
+      "target": "GithubAdapter（POLICY_MODEL）、GraspNetAdapter、YcbAdapter",
+      "cases": ["ss_github_004", "ss_graspnet_002", "ss_ycb_001", "ss_ycb_002", "ss_ycb_004"],
+      "detail": "github_004: model_info.json 解析失败（Expecting value char 0）；graspnet_002: 未找到真实 npz；ycb 系 grasp/mesh fetch 未找到文件或返回元数据 JSON。",
+      "suggestion": "github POLICY_MODEL 链路确认拉取 model_info.json 而非 config.json；ycb/graspnet 确认 fetch 数据契约"
+    },
+    {
+      "code": "P4_FORMAT",
+      "count": 9,
+      "name": "PDF 打开/解析失败",
+      "target": "ArxivAdapter.fetch → parse_convert 节点",
+      "cases": [
+        "ss_arxiv_002", "ss_arxiv_003", "ss_arxiv_004", "ss_arxiv_005",
+        "ss_paperswithcode_001", "ss_paperswithcode_003",
+        "ss_ieee_001", "ss_ieee_002", "ss_ieee_003"
+      ],
+      "detail": "检索命中真实论文（arxiv），但下载后 '无法打开 PDF: Failed to open stream'，文件数 0。ieee 系实际命中 arxiv fallback 后同样 PDF 失败（非 P7_ENV）。",
+      "suggestion": "核查 PDF 下载/打开实现（流式句柄与文件生命周期），或改用 requests 下载到本地后再解析"
+    },
+    {
+      "code": "FAIL_GENERIC",
+      "count": 3,
+      "name": "多需求部分失败（SIM_CONFIG 有产物 + ROBOT_URDF 类型错配）",
+      "target": "parse_goal（多需求解析）+ validate（类型错配）",
+      "cases": ["ss_mujoco_002", "ss_mujoco_003", "ss_mujoco_005"],
+      "detail": "LLM 额外解析出 ROBOT_URDF 需求，期望 CanonicalRobot 实际返回 markdown（类型错配），SIM_CONFIG 需求成功产出 15/69/15 文件。前端整体显示运行失败。",
+      "suggestion": "类型错配时按需求级判定而非整体 FAIL；或抑制非目标类型需求生成"
+    }
+  ],
+  "open_questions": [
+    {
+      "case": "ss_ieee_001/002/003",
+      "question": "预期 P7_ENV（无 key），实际命中 arxiv fallback 后 PDF 失败判 P4_FORMAT。是否以实际行为为准？",
+      "proposed": "以实际行为为准（已记录 P4_FORMAT），若评审认为应标记 blocked-by-user 需 A 裁定"
+    },
+    {
+      "case": "ms_004",
+      "question": "与 A 的 ms 首测（ms_001/ms_002）对比：本轮解析出 ROBOT_URDF/MESH/GRASP 三需求，URDF 成功、MESH/GRASP 缺失。命中源 robotiq/google_scanned/graspnet。",
+      "proposed": "LLM 随机性导致需求粒度差异，结果以本轮为准"
+    }
+  ]
+}

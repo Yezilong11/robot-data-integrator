@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_isaac_002",
+  "input": "获取 UR5 的 Isaac Sim 场景配置",
+  "executor": "C",
+  "executed_at": "2026-08-14T12:30:39",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "SIM_CONFIG"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF"
+      ],
+      "vs_expected": "mismatch"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "github",
+        "quality": "fallback",
+        "error": null,
+        "error_type": "other"
+      }
+    ],
+    "validate": {
+      "errors": 3,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260814-123023",
+      "status": "failed",
+      "file_count": 1,
+      "missing_items": 1
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "P1_PARSE",
+  "failure_category": "P1_PARSE",
+  "failure_reason": "解析 req=['ROBOT_URDF'] 与期望 ['SIM_CONFIG'] 不符（需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配））",
+  "notes": ""
+}

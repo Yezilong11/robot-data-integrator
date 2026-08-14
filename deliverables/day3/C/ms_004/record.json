@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_004",
+  "input": "UR5 with Robotiq 2F-85 grasps YCB apple",
+  "executor": "C",
+  "executed_at": "2026-08-14T12:33:39",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "ROBOT_URDF",
+    "MESH",
+    "GRASP"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF",
+        "MESH",
+        "GRASP"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "robotiq",
+        "quality": "unknown",
+        "error": null,
+        "error_type": "none"
+      },
+      {
+        "req_id": "req_001",
+        "source": "google_scanned",
+        "quality": "n/a",
+        "error": "Mesh 解析失败: file_type 'json' not supported",
+        "error_type": "other"
+      },
+      {
+        "req_id": "req_002",
+        "source": "graspnet",
+        "quality": "n/a",
+        "error": "GraspNet 返回元数据 JSON（未找到真实 npz）",
+        "error_type": "not_found"
+      }
+    ],
+    "validate": {
+      "errors": 4,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260814-123323",
+      "status": "failed",
+      "file_count": 1,
+      "missing_items": 2
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": ""
+}

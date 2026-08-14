@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mujoco_004",
+  "input": "检索 mujoco_menagerie 中 robotiq 夹爪场景",
+  "executor": "C",
+  "executed_at": "2026-08-14T12:16:46",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "SIM_CONFIG"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "SIM_CONFIG"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "isaac",
+        "quality": "fallback",
+        "error": null,
+        "error_type": "none"
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260814-121630",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": "PASS_WITH_FALLBACK",
+  "failure_reason": "无 manifest 缺失项",
+  "notes": ""
+}
