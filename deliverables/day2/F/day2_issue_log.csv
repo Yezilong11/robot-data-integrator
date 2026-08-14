@@ -1,0 +1,6 @@
+severity,case_id,category,issue,owner,next_action
+ERROR,ms_004,P2_RETRIEVE,mesh 检索超时且必需资源缺失,C/D,补测 ycb mesh 或提交最终 FAIL 证据
+WARNING,ss_github_001,PORTABILITY,package 路径为执行机绝对路径,C,补 manifest 相对路径
+WARNING,ss_mujoco_001,PORTABILITY,package 路径为执行机绝对路径,D,补 manifest 相对路径
+WARNING,ss_ycb_001,PORTABILITY,package 路径为执行机绝对路径,D,补 manifest 相对路径
+INFO,ALL,REVIEW,7 条记录均未完成 reviewer/reviewed_at,F/A,安排复核并刷新进度表

@@ -1,0 +1,5 @@
+scope,case_or_field,status,description,decision
+problem_set,total,OPEN,旧文档与正式问题集数量不一致,以 problem_set.json 为准
+acceptance,p0_total,OPEN,P0 总数为 11 而非 8,目标按 8/11 计算
+records,reviewer,OPEN,7 条记录均未填写复核字段,补复核后再计 reviewed
+records,package_path,WARNING,3 条记录含执行机绝对路径,补可移植证据
