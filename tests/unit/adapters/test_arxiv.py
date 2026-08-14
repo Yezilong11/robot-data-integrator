@@ -133,6 +133,41 @@ class TestArxivAdapter:
             assert raw.data == fake_pdf
 
     @pytest.mark.asyncio
+    async def test_arxiv_fetch_falls_back_when_pdf_invalid(self) -> None:
+        """下载内容非有效 PDF（%PDF 魔数缺失）时重试一次后返回 metadata JSON。"""
+        import json as _json
+
+        adapter = ArxivAdapter()
+        bad = b"<html>request blocked</html>"
+        with (
+            patch.object(
+                adapter,
+                "_head_content_length",
+                new_callable=AsyncMock,
+                return_value=100,  # 小于阈值，走下载路径
+            ),
+            patch.object(
+                adapter,
+                "_download_bytes",
+                new_callable=AsyncMock,
+                return_value=bad,
+            ),
+            patch.object(
+                adapter,
+                "_fetch_paper_metadata",
+                new_callable=AsyncMock,
+                return_value={},
+            ),
+        ):
+            raw = await adapter.fetch("2304.06524")
+        assert raw.format == "json"
+        assert raw.reference is not None
+        assert raw.reference.download_hint == "https://arxiv.org/pdf/2304.06524.pdf"
+        payload = _json.loads(raw.data)
+        assert payload["arxiv_id"] == "2304.06524"
+        assert "unavailable" in payload["note"]
+
+    @pytest.mark.asyncio
     async def test_arxiv_fetch_returns_metadata_when_over_threshold(self) -> None:
         """E1 修复：HEAD 预检体积超 max_fetch_bytes 时返回 metadata JSON。
 

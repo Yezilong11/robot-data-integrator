@@ -127,6 +127,20 @@ _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
         "yaml config",
     ),
     DataReqType.BENCHMARK_TASK: ("benchmark", "基准测试", "基准任务"),
+    # Day2 回归：检索类目标（"抓取的开源仓库"/"grasp dataset"）描述含"抓取/grasp"，
+    # 会被 GRASP 弱关键词误改成 grasp。加仓库/数据集专有强词，在弱词兜底前先命中，
+    # 使 code/dataset 保持原类型。避免泛词 "仓库" 误伤 HF 数据集语境，用精确词。
+    DataReqType.CODE: (
+        "开源仓库",
+        "代码仓库",
+        "源代码",
+        "开源代码",
+        "github",
+        "codebase",
+        "repository",
+        "repo",
+    ),
+    DataReqType.DATASET: ("dataset", "数据集"),
 }
 
 _WEAK_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
