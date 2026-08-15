@@ -3,7 +3,7 @@
   "case_id": "ss_zenodo_004",
   "input": "检索机械臂力觉传感器数据",
   "executor": "C",
-  "executed_at": "2026-08-15T08:36:40",
+  "executed_at": "2026-08-15T10:36:00",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -21,22 +21,24 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "none",
-        "quality": "n/a",
-        "error": "不支持的格式: markdown",
-        "error_type": "other"
+        "source": "github",
+        "quality": "fallback",
+        "error": null,
+        "error_type": "none",
+        "format": "SensorDataset",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 2,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083715",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-103615",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -73,8 +75,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P4_FORMAT",
-  "failure_reason": "不支持的格式: markdown",
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
 }

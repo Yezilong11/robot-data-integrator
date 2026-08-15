@@ -3,7 +3,7 @@
   "case_id": "ss_mujoco_001",
   "input": "检索 mujoco_menagerie 中 franka 的真实场景",
   "executor": "C",
-  "executed_at": "2026-08-15T08:38:01",
+  "executed_at": "2026-08-15T10:36:35",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -21,32 +21,25 @@
     },
     "retrieve": [
       {
-        "req_id": "req_001",
-        "source": "raw.githubusercontent.com",
+        "req_id": "req_000",
+        "source": "raw",
         "quality": "fallback",
         "error": null,
         "error_type": "none",
         "format": "mjcf",
         "is_fallback": true
-      },
-      {
-        "req_id": "req_000",
-        "source": "github",
-        "quality": "n/a",
-        "error": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
-        "error_type": "other"
       }
     ],
     "validate": {
-      "errors": 3,
+      "errors": 2,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-084019",
-      "status": "failed",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-103726",
+      "status": "complete",
       "file_count": 1,
-      "missing_items": 1
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -83,8 +76,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P4_FORMAT",
-  "failure_reason": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
 }

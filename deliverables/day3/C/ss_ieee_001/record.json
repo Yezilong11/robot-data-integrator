@@ -3,7 +3,7 @@
   "case_id": "ss_ieee_001",
   "input": "检索 robot grasping 的论文",
   "executor": "C",
-  "executed_at": "2026-08-15T09:30:40",
+  "executed_at": "2026-08-15T10:42:28",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -20,22 +20,24 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "none",
-        "quality": "n/a",
-        "error": "检索失败[error]: 所有候选源均失败: arxiv:timeout; ieee:unknown; paperswithcode:timeout",
-        "error_type": "not_found"
+        "source": "arxiv",
+        "quality": "unknown",
+        "error": null,
+        "error_type": "none",
+        "format": "json",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 3,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-093247",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-104238",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -72,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P2_RETRIEVE",
-  "failure_reason": "检索失败[error]: 所有候选源均失败: arxiv:timeout; ieee:unknown; paperswithcode:timeout",
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "IEEE 无 API Key，豁免 blocked-by-user（P7_ENV，不计入 PASS 目标）。实际重跑经 arxiv 兜底转 complete。"
 }

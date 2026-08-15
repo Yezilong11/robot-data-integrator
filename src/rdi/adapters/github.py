@@ -11,6 +11,7 @@ from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
+from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 

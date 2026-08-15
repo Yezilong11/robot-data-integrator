@@ -3,7 +3,7 @@
   "case_id": "ss_paperswithcode_002",
   "input": "检索 grasp detection 论文及其代码",
   "executor": "C",
-  "executed_at": "2026-08-15T08:27:41",
+  "executed_at": "2026-08-15T10:34:16",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -20,32 +20,34 @@
     },
     "retrieve": [
       {
+        "req_id": "req_000",
+        "source": "arxiv",
+        "quality": "unknown",
+        "error": null,
+        "error_type": "none",
+        "format": "json",
+        "is_fallback": true
+      },
+      {
         "req_id": "req_001",
-        "source": "github.com",
-        "quality": "real",
+        "source": "github",
+        "quality": "unknown",
         "error": null,
         "error_type": "none",
         "format": "CodeRepoSummary",
         "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "none",
-        "quality": "n/a",
-        "error": "检索失败[error]: 所有候选源均失败: arxiv:not_found; ieee:unknown; paperswithcode:timeout",
-        "error_type": "not_found"
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 3,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082900",
-      "status": "failed",
-      "file_count": 1,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-103429",
+      "status": "complete",
+      "file_count": 2,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -82,8 +84,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P2_RETRIEVE",
-  "failure_reason": "检索失败[error]: 所有候选源均失败: arxiv:not_found; ieee:unknown; paperswithcode:timeout",
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
 }
