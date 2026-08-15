@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_allegro_003",
+  "input": "灵巧手做抓取，帮我找 Allegro 手的模型文件",
+  "executor": "D",
+  "executed_at": "2026-08-15T12:50:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "ROBOT_URDF"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "allegro",
+        "quality": "unknown",
+        "error": "allegro 源级检索超时（>15s）后被通用 GitHub 检索替换，最终返回 markdown（类型错配）",
+        "note": "3 轮迭代均触发 allegro 源超时；通用 GitHub 检索返回 README/markdown 而非 URDF 模型文件"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260815-124444",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items": 1
+    }
+  },
+  "runtime_check_detail": {
+    "tool": "yourdfpy.URDF.load(load_meshes=True)",
+    "result": "N/A（无落盘文件）",
+    "note": "检索返回 markdown 内容，与 ROBOT_URDF 期望格式（urdf/xacro）错配，C4 类型错配检测拦截为 MissingItem"
+  },
+  "screenshots": [
+    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
+    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
+    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
+    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
+    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
+    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
+    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
+    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "allegro 专用源 3 轮迭代均超时（per_req_timeout/4=15s），通用 GitHub 检索返回 markdown 与 robot_urdf 期望格式错配，被 C4 拦截，落盘 0 文件",
+  "notes": "与 ss_allegro_001/002 结论一致：Allegro 手无有效专用适配器产物，通用检索只能拿到 markdown 文档页，属 P2_RETRIEVE（检索到内容但格式不可用）"
+}

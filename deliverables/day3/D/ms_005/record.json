@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_005",
+  "input": "Franka Panda stacks YCB blocks in PyBullet",
+  "executor": "D",
+  "executed_at": "2026-08-15T13:55:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "ROBOT_URDF",
+    "MESH"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF",
+        "MESH",
+        "ROBOT_URDF"
+      ],
+      "vs_expected": "partial mismatch: 期望 2 条（urdf+mesh），实际 3 条（多解析 1 条 robot_urdf，PyBullet 场景被误判为额外 URDF 需求）"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "robot_urdf",
+        "source": "franka",
+        "quality": "unknown",
+        "error": "franka 源 3 轮均超时（per_req_timeout/4=15s），通用 GitHub 检索返回 markdown 类型错配，C4 拦截"
+      },
+      {
+        "req_id": "req_001",
+        "type": "mesh",
+        "source": "google_scanned/fuel",
+        "quality": "unknown",
+        "format": "stl",
+        "note": "YCB 50_BLOCKS tip 的 obj 经 MeshSkill 转为 stl，is_fallback=true，trimesh 验证 5362 顶点/10728 面/水密"
+      },
+      {
+        "req_id": "req_002",
+        "type": "robot_urdf",
+        "source": "github",
+        "quality": "unknown",
+        "error": "检索返回 markdown（PyBullet 场景误判），C4 类型错配拦截"
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260815-134233",
+      "status": "failed",
+      "file_count": 1,
+      "missing_items": 2
+    }
+  },
+  "runtime_check_detail": {
+    "tool": "trimesh.load",
+    "result": "LOAD_OK verts=5362 faces=10728 is_watertight=True（objects/req_001.stl）",
+    "note": "mesh 产物有效；robot_urdf 无落盘文件，无法做 URDF 加载验证；PyBullet 堆叠场景（urdf+mesh 组合）不成立"
+  },
+  "screenshots": [
+    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
+    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
+    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
+    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
+    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
+    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
+    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
+    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "Franka Panda URDF 检索 3 轮均失败（franka 源超时 + 通用 GitHub 返回 markdown 类型错配被 C4 拦截），2 条 robot_urdf 需求全部缺失；仅 mesh 成功（fallback stl），落盘 1 文件未达 min_files=2，PyBullet 堆叠场景无法构建",
+  "notes": "多源端到端 case 的关键链路断裂点：robot_urdf 无有效适配器产物；同时 parse 阶段多解析 1 条 robot_urdf（PyBullet 场景误判），放大缺失面；mesh 侧 YCB 块经 fuel.gazebosim.org fallback 成功且质量验证通过"
+}

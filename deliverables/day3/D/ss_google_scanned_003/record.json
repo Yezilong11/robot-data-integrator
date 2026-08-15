@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_google_scanned_003",
+  "input": "获取 Google Scanned Objects 中大体积物体的 mesh（验证下载超时/失败降级路径）",
+  "executor": "D",
+  "executed_at": "2026-08-15T13:40:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "MESH"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "MESH"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "google_scanned",
+        "quality": "unknown",
+        "error": "Mesh 解析失败: file_type 'json' not supported",
+        "note": "3 轮迭代均失败；历史经验中 google_scanned 大体积 mesh 任务曾成功（12.6s）但本次无法产出；alternatives 给出 fuel.gazebosim.org 手动下载链接"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260815-131919",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items": 1
+    }
+  },
+  "runtime_check_detail": {
+    "tool": "trimesh.load",
+    "result": "N/A（无落盘 mesh 文件）",
+    "note": "missing_items 记录『Mesh 解析失败: file_type json not supported』；题目期望验证大体积物体下载超时/失败降级路径，实际表现为解析阶段 json 格式不支持，未触发显式下载超时降级标记"
+  },
+  "screenshots": [
+    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
+    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
+    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
+    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
+    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
+    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
+    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
+    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "google_scanned 检索产物为 json 元数据，MeshSkill 不支持 file_type json（期望 glb/obj/ply），3 轮迭代均解析失败，落盘 0 文件；未观察到题目预期的下载超时/失败显式降级路径（is_fallback 标记）",
+  "notes": "与 ss_google_scanned_002 同根因；该题特意的『大体积下载超时/降级』验证场景未被触发，实际由 json 格式不兼容阻断，P4_FORMAT 记录"
+}
