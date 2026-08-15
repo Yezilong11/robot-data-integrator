@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-15T18:51:41+08:00",
+  "generated_at": "2026-08-15T23:55:19+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -9,30 +9,30 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 25,
-    "judged": 25,
+    "executed": 45,
+    "judged": 45,
     "reviewed": 0,
-    "execution_rate": 0.3968,
+    "execution_rate": 0.7143,
     "review_rate": 0.0
   },
   "verdicts": {
-    "pass": 3,
-    "pass_with_fallback": 21,
+    "pass": 5,
+    "pass_with_fallback": 39,
     "fail": 1,
-    "pass_rate": 0.12,
-    "fallback_rate": 0.84,
-    "fail_rate": 0.04,
-    "usable_rate": 0.96
+    "pass_rate": 0.1111,
+    "fallback_rate": 0.8667,
+    "fail_rate": 0.0222,
+    "usable_rate": 0.9778
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 25,
+    "records_at_least_90_pct": 45,
     "records_at_least_90_rate": 1.0,
-    "screenshot_compliance_rate": 0.96,
+    "screenshot_compliance_rate": 0.9778,
     "validation_error_count": 1
   },
   "p0_acceptance": {
-    "usable": 5,
+    "usable": 7,
     "total": 11,
     "target": 8,
     "passed": false
@@ -41,17 +41,17 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 16,
+        "judged": 25,
         "pass": 1,
-        "fallback": 14,
+        "fallback": 23,
         "fail": 1,
-        "usable_rate": 0.9375
+        "usable_rate": 0.96
       },
       "ZH": {
         "cases": 34,
-        "judged": 9,
-        "pass": 2,
-        "fallback": 7,
+        "judged": 20,
+        "pass": 4,
+        "fallback": 16,
         "fail": 0,
         "usable_rate": 1.0
       }
@@ -91,11 +91,11 @@
       },
       "github": {
         "cases": 8,
-        "judged": 3,
+        "judged": 6,
         "pass": 1,
-        "fallback": 1,
+        "fallback": 4,
         "fail": 1,
-        "usable_rate": 0.6667
+        "usable_rate": 0.8333
       },
       "google_scanned": {
         "cases": 3,
@@ -107,49 +107,49 @@
       },
       "graspnet": {
         "cases": 3,
-        "judged": 1,
-        "pass": 0,
-        "fallback": 1,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "huggingface": {
-        "cases": 5,
         "judged": 3,
         "pass": 0,
         "fallback": 3,
         "fail": 0,
         "usable_rate": 1.0
       },
+      "huggingface": {
+        "cases": 5,
+        "judged": 5,
+        "pass": 0,
+        "fallback": 5,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
       "ieee": {
         "cases": 1,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "isaac": {
         "cases": 3,
-        "judged": 0,
+        "judged": 2,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 2,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "mujoco": {
         "cases": 9,
-        "judged": 1,
-        "pass": 1,
-        "fallback": 0,
+        "judged": 5,
+        "pass": 3,
+        "fallback": 2,
         "fail": 0,
         "usable_rate": 1.0
       },
       "paperswithcode": {
         "cases": 3,
-        "judged": 2,
+        "judged": 3,
         "pass": 0,
-        "fallback": 2,
+        "fallback": 3,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -163,17 +163,17 @@
       },
       "ycb": {
         "cases": 11,
-        "judged": 3,
+        "judged": 7,
         "pass": 1,
-        "fallback": 1,
+        "fallback": 5,
         "fail": 1,
-        "usable_rate": 0.6667
+        "usable_rate": 0.8571
       },
       "zenodo": {
         "cases": 5,
-        "judged": 4,
+        "judged": 5,
         "pass": 0,
-        "fallback": 4,
+        "fallback": 5,
         "fail": 0,
         "usable_rate": 1.0
       }
@@ -181,79 +181,79 @@
     "req_type": {
       "code": {
         "cases": 3,
-        "judged": 1,
+        "judged": 3,
         "pass": 1,
-        "fallback": 0,
+        "fallback": 2,
         "fail": 0,
         "usable_rate": 1.0
       },
       "dataset": {
         "cases": 7,
-        "judged": 6,
-        "pass": 0,
-        "fallback": 6,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "grasp": {
-        "cases": 13,
-        "judged": 7,
-        "pass": 0,
-        "fallback": 6,
-        "fail": 1,
-        "usable_rate": 0.8571
-      },
-      "mesh": {
-        "cases": 13,
-        "judged": 3,
-        "pass": 1,
-        "fallback": 1,
-        "fail": 1,
-        "usable_rate": 0.6667
-      },
-      "paper": {
-        "cases": 9,
         "judged": 7,
         "pass": 0,
         "fallback": 7,
         "fail": 0,
         "usable_rate": 1.0
       },
+      "grasp": {
+        "cases": 13,
+        "judged": 10,
+        "pass": 0,
+        "fallback": 9,
+        "fail": 1,
+        "usable_rate": 0.9
+      },
+      "mesh": {
+        "cases": 13,
+        "judged": 5,
+        "pass": 1,
+        "fallback": 3,
+        "fail": 1,
+        "usable_rate": 0.8
+      },
+      "paper": {
+        "cases": 9,
+        "judged": 9,
+        "pass": 0,
+        "fallback": 9,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
       "policy_model": {
         "cases": 3,
-        "judged": 1,
+        "judged": 3,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 3,
         "fail": 0,
         "usable_rate": 1.0
       },
       "robot_urdf": {
         "cases": 17,
-        "judged": 1,
+        "judged": 2,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 1,
-        "usable_rate": 0.0
+        "usable_rate": 0.5
       },
       "sensor_data": {
         "cases": 3,
-        "judged": 1,
+        "judged": 3,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 3,
         "fail": 0,
         "usable_rate": 1.0
       },
       "sim_config": {
         "cases": 11,
-        "judged": 1,
-        "pass": 1,
-        "fallback": 0,
+        "judged": 7,
+        "pass": 3,
+        "fallback": 4,
         "fail": 0,
         "usable_rate": 1.0
       }
     },
     "llm_model": {
-      "qwen-plus": 25
+      "qwen-plus": 45
     }
   },
   "failure_top3": [
@@ -285,6 +285,38 @@
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         }
       ],
+      "ss_huggingface_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[0]",
+          "message": "出现题设外补充需求: dataset"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[1]",
+          "message": "出现题设外补充需求: code"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[1]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[2]",
+          "message": "出现题设外补充需求: dataset"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[2]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        }
+      ],
       "ss_mujoco_001": [
         {
           "severity": "WARNING",
@@ -300,6 +332,37 @@
           "severity": "WARNING",
           "location": "ss_mujoco_001",
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_mujoco_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_mujoco_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_005",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_005",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_paperswithcode_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_paperswithcode_002.retrieve[1]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
         }
       ],
       "ss_ycb_001": [
