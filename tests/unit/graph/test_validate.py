@@ -392,6 +392,27 @@ def test_validate_other_type_no_loadability_check() -> None:
     assert len(out["validation_issues"]) == 0
 
 
+def test_validate_skips_loadability_for_is_fallback() -> None:
+    """is_fallback=True 的降级项：跳过深度 loadability 校验（避免 ERROR 误报）。"""
+    item = _item(
+        "r1",
+        DataReqType.GRASP,
+        {"metadata": {"reason": "fetch 显式降级"}},
+        fmt="CanonicalGrasp",
+        completeness=60.0,
+        confidence=0.6,
+        output_path="",
+    )
+    item.is_fallback = True
+    state: SystemState = {"parsed_data": {"r1": item}}
+    out = node_validate(state)
+    # 不应出现 Grasp 必要字段缺失 ERROR（降级项不校验可加载性）
+    assert not any(
+        i.req_id == "r1" and "Grasp 数据缺少必要字段" in i.message
+        for i in out["validation_issues"]
+    )
+
+
 def test_validate_loadability_never_crashes() -> None:
     class BadData:
         """模拟会在校验中触发异常的 data。"""

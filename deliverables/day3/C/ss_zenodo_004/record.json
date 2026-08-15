@@ -3,30 +3,27 @@
   "case_id": "ss_zenodo_004",
   "input": "检索机械臂力觉传感器数据",
   "executor": "C",
-  "executed_at": "2026-08-14T11:32:26",
+  "executed_at": "2026-08-15T08:36:40",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "SENSOR_DATA"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "GRASP"
+        "SENSOR_DATA",
+        "CODE"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "partial"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "graspnet",
+        "source": "none",
         "quality": "n/a",
-        "error": "检索超时（超过 per_req_timeout 秒）",
+        "error": "不支持的格式: markdown",
         "error_type": "other"
       }
     ],
@@ -36,7 +33,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-113210",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083715",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -76,8 +73,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P1_PARSE",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "解析 req=['GRASP'] 与期望 ['SENSOR_DATA'] 不符（检索失败[error]: 检索超时（超过 per_req_timeout 秒））",
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "不支持的格式: markdown",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

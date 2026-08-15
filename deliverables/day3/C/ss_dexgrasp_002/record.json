@@ -3,17 +3,13 @@
   "case_id": "ss_dexgrasp_002",
   "input": "获取 apple 的 DexGrasp 抓取文件",
   "executor": "C",
-  "executed_at": "2026-08-14T11:43:19",
+  "executed_at": "2026-08-15T09:19:18",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "GRASP"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
@@ -26,8 +22,8 @@
         "req_id": "req_000",
         "source": "graspnet",
         "quality": "n/a",
-        "error": "检索超时（超过 per_req_timeout 秒）",
-        "error_type": "timeout"
+        "error": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference",
+        "error_type": "not_found"
       }
     ],
     "validate": {
@@ -36,7 +32,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-114303",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092041",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -76,8 +72,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P2_RETRIEVE",
-  "failure_category": "P2_RETRIEVE",
-  "failure_reason": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

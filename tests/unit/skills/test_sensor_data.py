@@ -99,6 +99,26 @@ class TestSensorDegradation:
         result = SensorDataSkill().process(b"x", fmt="unknown")
         assert result.success is False
 
+    def test_json_missing_signals_degrades_to_fallback(self) -> None:
+        """fetch 返回数据集元数据 JSON（缺 signals 键，非时序数据）→ 降级成功 is_fallback。"""
+        import json
+
+        payload = {"dataset_id": "zenodo-1", "title": "robot joint dataset"}
+        result = SensorDataSkill().process(
+            json.dumps(payload).encode("utf-8"), fmt="json", name="joints"
+        )
+        assert result.success is True
+        assert result.is_fallback is True
+        assert result.data_source_quality == "fallback"
+        assert result.data is not None
+
+    def test_markdown_format_degrades_to_fallback(self) -> None:
+        """源返回 markdown 文档（非时序数据）→ 降级成功 is_fallback。"""
+        result = SensorDataSkill().process(b"# README", fmt="markdown", name="joints")
+        assert result.success is True
+        assert result.is_fallback is True
+        assert result.data_source_quality == "fallback"
+
 
 class TestSensorValidate:
     """校验路径测试。"""

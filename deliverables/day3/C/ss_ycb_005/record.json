@@ -3,17 +3,13 @@
   "case_id": "ss_ycb_005",
   "input": "获取 mug 的 mesh 模型",
   "executor": "C",
-  "executed_at": "2026-08-14T11:36:32",
+  "executed_at": "2026-08-15T09:28:43",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "MESH"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
@@ -24,10 +20,12 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "ycb",
-        "quality": "unknown",
+        "source": "hf-mirror.com",
+        "quality": "real",
         "error": null,
-        "error_type": "none"
+        "error_type": "none",
+        "format": "stl",
+        "is_fallback": false
       }
     ],
     "validate": {
@@ -36,7 +34,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-113616",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092907",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -79,5 +77,5 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": ""
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

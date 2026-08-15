@@ -3,43 +3,58 @@
   "case_id": "ss_huggingface_002",
   "input": "检索 ACT 机器人操作策略",
   "executor": "C",
-  "executed_at": "2026-08-14T11:16:12",
+  "executed_at": "2026-08-15T08:24:03",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "POLICY_MODEL"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "POLICY_MODEL"
+        "ROBOT_URDF",
+        "POLICY_MODEL",
+        "DATASET",
+        "CODE"
       ],
-      "vs_expected": "match"
+      "vs_expected": "partial"
     },
     "retrieve": [
       {
+        "req_id": "req_001",
+        "source": "zenodo.org",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "DatasetSummary",
+        "is_fallback": false
+      },
+      {
         "req_id": "req_000",
+        "source": "github",
+        "quality": "n/a",
+        "error": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
+        "error_type": "other"
+      },
+      {
+        "req_id": "req_002",
         "source": "huggingface",
-        "quality": "unknown",
-        "error": "检索超时（超过 per_req_timeout 秒）",
-        "error_type": "none"
+        "quality": "n/a",
+        "error": "model_info.json 解析失败: Expecting value: line 1 column 1 (char 0)",
+        "error_type": "other"
       }
     ],
     "validate": {
-      "errors": 3,
+      "errors": 2,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-111556",
-      "status": "partial",
-      "file_count": 2,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082602",
+      "status": "failed",
+      "file_count": 1,
+      "missing_items": 2
     }
   },
   "screenshots": [
@@ -76,8 +91,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "PASS",
-  "failure_category": null,
-  "failure_reason": null,
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "model_info.json 解析失败: Expecting value: line 1 column 1 (char 0)",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

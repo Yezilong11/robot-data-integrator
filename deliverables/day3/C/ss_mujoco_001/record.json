@@ -3,42 +3,49 @@
   "case_id": "ss_mujoco_001",
   "input": "检索 mujoco_menagerie 中 franka 的真实场景",
   "executor": "C",
-  "executed_at": "2026-08-14T12:03:56",
+  "executed_at": "2026-08-15T08:38:01",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "SIM_CONFIG"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "PAPER"
+        "ROBOT_URDF",
+        "SIM_CONFIG",
+        "CODE"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "partial"
     },
     "retrieve": [
       {
-        "req_id": "req_000",
-        "source": "arxiv",
-        "quality": "n/a",
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "fallback",
         "error": null,
+        "error_type": "none",
+        "format": "mjcf",
+        "is_fallback": true
+      },
+      {
+        "req_id": "req_000",
+        "source": "github",
+        "quality": "n/a",
+        "error": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
         "error_type": "other"
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 3,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-120347",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-084019",
       "status": "failed",
-      "file_count": 0,
+      "file_count": 1,
       "missing_items": 1
     }
   },
@@ -76,8 +83,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P1_PARSE",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "解析 req=['PAPER'] 与期望 ['SIM_CONFIG'] 不符（无法打开 PDF: Failed to open stream）",
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

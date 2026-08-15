@@ -270,26 +270,34 @@ class GraspSkill(BaseSkill):
             try:
                 obj = pickle.load(io.BytesIO(data))  # noqa: S301
             except Exception as exc:  # noqa: BLE001
-                return self._synthetic_result("DexGraspNet", f"pkl 反序列化失败: {exc}")
+                # 数据损坏 ≠ fetch 显式降级：不消费为 fallback，如实失败
+                return StandardResult(
+                    success=False,
+                    canonical_format="CanonicalGrasp",
+                    errors=[f"DexGraspNet pkl 反序列化失败: {exc}"],
+                )
             return self._finish_standardize(obj, dataset_name, output_path)
 
         # ycb / abdataset：尽力解析（json 或 pickle），失败降级
         return self._parse_generic(data, dataset_name, output_path)
 
     def _synthetic_result(self, source_name: str, reason: str) -> StandardResult:
-        """构造合成占位失败结果：不交付合成抓取，由 registry 装配为 MissingItem。
+        """数据集仅返回元数据（无真实 npz/pkl）时的降级成功结果。
 
-        数据集仅返回元数据（无真实 npz/pkl）或反序列化失败时返回失败语义；
-        合成抓取仅作诊断参考，真实数据位置在 RawData.reference（供手动获取）。
+        按 Day2 修复的 fmt=json 降级消费契约（PaperSkill 同款）：fetch 显式
+        降级为 metadata JSON 时，skill 将其装配为可用结果并标记 is_fallback，
+        由 registry 装配 ParsedItem → 判定 PASS_WITH_FALLBACK（不伪造真实抓取，
+        manifest 显式记录降级标记）。
         """
         return StandardResult(
-            success=False,
+            success=True,
             canonical_format="CanonicalGrasp",
-            errors=[
-                f"{source_name} {reason}；原始数据缺失，合成占位仅作参考，真实数据见 reference"
-            ],
+            data={"metadata": {"source": source_name, "reason": reason}},
+            completeness_pct=60.0,
+            confidence_score=0.6,
             data_source_quality="fallback",
             is_fallback=True,
+            warnings=[f"{source_name} {reason}（fetch 显式降级，返回元数据）"],
         )
 
     def _finish_standardize(

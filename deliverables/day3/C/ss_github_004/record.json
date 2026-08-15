@@ -3,43 +3,41 @@
   "case_id": "ss_github_004",
   "input": "检索抓取策略权重仓库",
   "executor": "C",
-  "executed_at": "2026-08-14T11:11:21",
+  "executed_at": "2026-08-15T08:31:10",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "POLICY_MODEL"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "POLICY_MODEL"
+        "CODE"
       ],
-      "vs_expected": "match"
+      "vs_expected": "partial"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "github",
-        "quality": "n/a",
+        "source": "github.com",
+        "quality": "real",
         "error": null,
-        "error_type": "other"
+        "error_type": "none",
+        "format": "CodeRepoSummary",
+        "is_fallback": false
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 0,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-111105",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083119",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -76,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P3_SOURCE",
-  "failure_category": "P3_SOURCE",
-  "failure_reason": "model_info.json 解析失败: Expecting value: line 1 column 1 (char 0)",
-  "notes": ""
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

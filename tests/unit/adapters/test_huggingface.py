@@ -72,3 +72,73 @@ class TestHuggingFaceAdapter:
             assert raw.item_id == "bert-base-uncased"
             assert raw.format == "json"
             assert raw.size_bytes > 0
+
+    @pytest.mark.asyncio
+    async def test_huggingface_fetch_policy_model_uses_model_info(self) -> None:
+        """POLICY_MODEL 类型：fetch 拉取 model_info.json 而非默认 config.json。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        fake_model_info = b'{"modelId": "lerobot/act_aloha", "tags": ["policy"]}'
+        called_urls: list[str] = []
+
+        async def _fake_download(url: str) -> bytes:
+            called_urls.append(url)
+            return fake_model_info
+
+        with patch.object(adapter, "_download_bytes", side_effect=_fake_download):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+            assert raw.format == "json"
+            assert any("model_info.json" in u for u in called_urls)
+            assert not any("config.json" in u for u in called_urls)
+
+    @pytest.mark.asyncio
+    async def test_huggingface_fetch_default_uses_config(self) -> None:
+        """默认类型（非 POLICY_MODEL）：仍拉取 config.json（不回归）。"""
+        adapter = HuggingFaceAdapter()
+        fake_config = b'{"model_type": "bert"}'
+        called_urls: list[str] = []
+
+        async def _fake_download(url: str) -> bytes:
+            called_urls.append(url)
+            return fake_config
+
+        with patch.object(adapter, "_download_bytes", side_effect=_fake_download):
+            raw = await adapter.fetch("bert-base-uncased")
+            assert raw.format == "json"
+            assert any("config.json" in u for u in called_urls)
+
+    @pytest.mark.asyncio
+    async def test_huggingface_fetch_policy_model_invalid_json_fallback(self) -> None:
+        """POLICY_MODEL：model_info.json 404 → 降级 config.json → metadata 引用（不抛错）。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        responses = {
+            "model_info.json": b"<html>404</html>",
+            "config.json": b'{"model_type": "act"}',
+        }
+
+        async def _fake_download(url: str) -> bytes:
+            for name, body in responses.items():
+                if name in url:
+                    return body
+            raise RuntimeError(f"unexpected url: {url}")
+
+        with patch.object(adapter, "_download_bytes", side_effect=_fake_download):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+            assert raw.format == "json"
+            assert b"model_type" in raw.data or b"model_id" in raw.data
+
+    @pytest.mark.asyncio
+    async def test_huggingface_fetch_policy_model_all_fail_returns_meta(self) -> None:
+        """POLICY_MODEL：model_info.json 与 config.json 均不可用 → 返回 metadata 引用（不抛错）。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=RuntimeError("boom")
+        ):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+            assert raw.format == "json"
+            assert b"model_id" in raw.data

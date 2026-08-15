@@ -2,6 +2,7 @@
 """GitHubAdapter 的单元测试。"""
 
 import base64
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -107,3 +108,56 @@ class TestGitHubAdapter:
             assert raw.format == "markdown"
             assert raw.data == b"# Test README"
             assert raw.size_bytes > 0
+
+    @pytest.mark.asyncio
+    async def test_github_fetch_robot_urdf_downloads_urdf(self) -> None:
+        """ROBOT_URDF 需求：从仓库文件树中定位并下载 .urdf，而非 README。"""
+        from rdi.models.common import DataReqType
+
+        adapter = GitHubAdapter()
+        tree_response = {
+            "tree": [
+                {"path": "robots/franka_panda.urdf", "type": "blob"},
+                {"path": "README.md", "type": "blob"},
+            ]
+        }
+        fake_urdf = b'<robot name="franka"><link name="base"/></robot>'
+        with (
+            patch.object(
+                adapter,
+                "_request",
+                new_callable=AsyncMock,
+                return_value=tree_response,
+            ),
+            patch.object(
+                adapter,
+                "fetch_file",
+                new_callable=AsyncMock,
+                return_value=fake_urdf,
+            ),
+        ):
+            raw = await adapter.fetch("franka/franka_ros", req_type=DataReqType.ROBOT_URDF)
+            assert raw.format == "urdf"
+            assert raw.data == fake_urdf
+            assert "robots/franka_panda.urdf" in raw.url
+
+    @pytest.mark.asyncio
+    async def test_github_fetch_robot_urdf_falls_back_to_readme(self) -> None:
+        """ROBOT_URDF 需求但仓库无 .urdf 文件 → 回退 README（不抛错）。"""
+        from rdi.models.common import DataReqType
+
+        adapter = GitHubAdapter()
+        tree_response = {"tree": [{"path": "README.md", "type": "blob"}]}
+        readme_response = {
+            "content": base64.b64encode(b"# README only").decode(),
+            "html_url": "https://github.com/test",
+        }
+
+        def _fake_request(method: str, path: str, **kwargs: Any) -> Any:
+            if "git/trees" in path:
+                return tree_response
+            return readme_response
+
+        with patch.object(adapter, "_request", side_effect=_fake_request):
+            raw = await adapter.fetch("test/repo", req_type=DataReqType.ROBOT_URDF)
+            assert raw.format == "markdown"

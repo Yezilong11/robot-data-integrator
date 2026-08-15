@@ -3,43 +3,41 @@
   "case_id": "ss_huggingface_003",
   "input": "检索机器人操作代码仓库",
   "executor": "C",
-  "executed_at": "2026-08-14T11:16:45",
+  "executed_at": "2026-08-15T08:31:47",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "CODE"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "ROBOT_URDF"
+        "CODE"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "github",
-        "quality": "n/a",
+        "source": "github.com",
+        "quality": "real",
         "error": null,
-        "error_type": "other"
+        "error_type": "none",
+        "format": "CodeRepoSummary",
+        "is_fallback": false
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 0,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-111629",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083155",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -76,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P1_PARSE",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "解析 req=['ROBOT_URDF'] 与期望 ['CODE'] 不符（需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配））",
-  "notes": ""
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

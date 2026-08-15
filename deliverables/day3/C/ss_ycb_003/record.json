@@ -3,17 +3,13 @@
   "case_id": "ss_ycb_003",
   "input": "检索 YCB 数据集",
   "executor": "C",
-  "executed_at": "2026-08-14T11:34:58",
+  "executed_at": "2026-08-15T09:22:52",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "DATASET"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
@@ -24,10 +20,12 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "zenodo",
-        "quality": "unknown",
+        "source": "zenodo.org",
+        "quality": "fallback",
         "error": null,
-        "error_type": "none"
+        "error_type": "none",
+        "format": "DatasetSummary",
+        "is_fallback": true
       }
     ],
     "validate": {
@@ -36,7 +34,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-113442",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092312",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -77,7 +75,7 @@
     }
   ],
   "verdict": "PASS_WITH_FALLBACK",
-  "failure_category": "PASS_WITH_FALLBACK",
-  "failure_reason": "无 manifest 缺失项",
-  "notes": ""
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

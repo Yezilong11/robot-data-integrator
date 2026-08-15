@@ -410,6 +410,11 @@ def _validate_grasp_loadability(item: Any, req_id: str) -> ValIssue | None:
 def _check_loadability(item: Any, req_id: str) -> tuple[list[ValIssue], dict[str, Any] | None]:
     """根据 req_type 分发到对应可加载性校验函数。
 
+    is_fallback 项（fetch 显式降级，数据为元数据而非真实产物）跳过深度
+    loadability 校验：元数据没有可加载的真实文件，深度校验只会误报
+    ERROR（如 Grasp 缺必要字段）。与 PaperSkill.validate 对 is_fallback
+    空字段不视为错误的语义一致。
+
     Returns:
         (issues, runtime_check)：runtime_check 为 SIM_CONFIG 的 MuJoCo 运行时
         验证结果（{status, detail}），其他类型返回 None。
@@ -417,6 +422,8 @@ def _check_loadability(item: Any, req_id: str) -> tuple[list[ValIssue], dict[str
     issues: list[ValIssue] = []
     runtime_check: dict[str, Any] | None = None
     req_type = item.req_type
+    if getattr(item, "is_fallback", False):
+        return issues, runtime_check
     try:
         if req_type == DataReqType.ROBOT_URDF:
             issue = _validate_urdf_loadability(item, req_id)

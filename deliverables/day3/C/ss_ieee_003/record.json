@@ -3,17 +3,13 @@
   "case_id": "ss_ieee_003",
   "input": "检索机械臂抓取论文",
   "executor": "C",
-  "executed_at": "2026-08-14T13:28:54",
+  "executed_at": "2026-08-15T09:35:12",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "PAPER"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
@@ -24,10 +20,10 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "arxiv",
+        "source": "none",
         "quality": "n/a",
-        "error": null,
-        "error_type": "other"
+        "error": "检索失败[error]: 所有候选源均失败: arxiv:timeout; ieee:unknown; paperswithcode:timeout",
+        "error_type": "not_found"
       }
     ],
     "validate": {
@@ -36,7 +32,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-132849",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-093719",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -76,8 +72,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P4_FORMAT",
-  "failure_category": "P4_FORMAT",
-  "failure_reason": "无法打开 PDF: Failed to open stream",
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "检索失败[error]: 所有候选源均失败: arxiv:timeout; ieee:unknown; paperswithcode:timeout",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

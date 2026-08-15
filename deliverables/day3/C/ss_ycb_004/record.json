@@ -3,17 +3,13 @@
   "case_id": "ss_ycb_004",
   "input": "获取 banana 的 mesh 模型",
   "executor": "C",
-  "executed_at": "2026-08-14T11:35:49",
+  "executed_at": "2026-08-15T09:23:21",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "MESH"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
@@ -24,9 +20,9 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "google_scanned",
+        "source": "none",
         "quality": "n/a",
-        "error": null,
+        "error": "Mesh 解析失败: file_type 'json' not supported",
         "error_type": "other"
       }
     ],
@@ -36,7 +32,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-113533",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092353",
       "status": "failed",
       "file_count": 0,
       "missing_items": 1
@@ -76,8 +72,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P3_SOURCE",
+  "verdict": "FAIL",
   "failure_category": "P3_SOURCE",
   "failure_reason": "Mesh 解析失败: file_type 'json' not supported",
-  "notes": ""
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

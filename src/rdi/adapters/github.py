@@ -73,18 +73,35 @@ class GitHubAdapter(BaseAdapter):
             for repo in data.get("items", [])
         ]
 
-    async def fetch(self, repo_name: str) -> RawData:
-        """获取仓库的 README 内容。
+    async def fetch(self, repo_name: str, req_type: str | None = None) -> RawData:
+        """获取仓库内容。
+
+        - ROBOT_URDF 需求：从仓库文件树定位 ``.urdf`` 文件并下载（避免拿到 README
+          markdown 导致类型错配）；无 URDF 时回退 README
+        - 其他/默认：获取仓库 README 内容
 
         Args:
             repo_name: 仓库全名（如 "NVlabs/6-DOF-GraspNet"）
+            req_type: 数据需求类型字符串（如 "ROBOT_URDF"），可空
 
         Returns:
-            RawData 包含 README markdown 二进制数据
+            RawData 包含 README markdown 或 URDF 文件二进制数据
 
         Raises:
             AdapterError: 获取失败
         """
+        if str(req_type).lower() == "robot_urdf":
+            urdf_path = await self._find_urdf_file(repo_name)
+            if urdf_path is not None:
+                data_bytes = await self.fetch_file(repo_name, urdf_path)
+                return RawData(
+                    source=DataSource.GITHUB,
+                    item_id=repo_name,
+                    format="urdf",
+                    data=data_bytes,
+                    url=f"https://github.com/{repo_name}/blob/main/{urdf_path}",
+                    size_bytes=len(data_bytes),
+                )
         data = await self._request(
             "GET",
             f"/repos/{repo_name}/readme",
@@ -99,6 +116,31 @@ class GitHubAdapter(BaseAdapter):
             url=data.get("html_url", ""),
             size_bytes=len(readme_bytes),
         )
+
+    async def _find_urdf_file(self, repo_name: str) -> str | None:
+        """递归列出仓库文件树，返回首个 ``.urdf``/``.xacro`` 文件路径；无则 None。
+
+        GitHub ``git/trees`` API（recursive=1）在仓库较大时可能被截断（truncated），
+        此时无法可靠定位 URDF 文件，返回 None 走 README 回退。
+        """
+        try:
+            tree_data = await self._request(
+                "GET",
+                f"/repos/{repo_name}/git/trees/main?recursive=1",
+                headers=self.headers,
+            )
+        except AdapterError:
+            return None
+        if tree_data.get("truncated"):
+            return None
+        for entry in tree_data.get("tree", []):
+            if not isinstance(entry, dict) or entry.get("type") != "blob":
+                continue
+            path = str(entry.get("path", ""))
+            lower = path.lower()
+            if lower.endswith(".urdf") or lower.endswith(".xacro"):
+                return path
+        return None
 
     async def fetch_releases(self, repo_name: str) -> list[dict[str, Any]]:
         """获取 Release 资产（模型权重、预训练文件）。

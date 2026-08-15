@@ -1,0 +1,72 @@
+{
+  "case_id": "ss_huggingface_002",
+  "input": "检索 ACT 机器人操作策略",
+  "executed_at": "2026-08-15T10:30:18",
+  "steps": {
+    "interrupt_reached": true,
+    "interrupt_status": "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
+    "final_status": "运行完成",
+    "manifest": {
+      "package_info": {
+        "goal": "检索 ACT 机器人操作策略",
+        "created_at": "2026-08-15T10:32:15.252089",
+        "iteration": 0,
+        "package_id": "package-20260815-103215",
+        "run_id": "20260815-103023-1fdf67ab",
+        "pipeline_version": "1.0.0",
+        "demo": "false",
+        "license": "",
+        "citation": "",
+        "status": "failed"
+      },
+      "files": [
+        {
+          "req_id": "req_002",
+          "path": "resources/req_002.json",
+          "format": "DatasetSummary",
+          "source_url": "https://zenodo.org/records/21941103",
+          "retrieved_at": "2026-08-15T10:31:45.405565",
+          "transformations": [
+            "written_to:resources/req_002.json"
+          ],
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 1288,
+          "downloaded": true,
+          "local_path": "resources/req_002.json",
+          "file_url": "https://zenodo.org/records/21941103",
+          "checksum_sha256": "8c7374c8ce0a91b06999707b984b5bc41dc457fd8f0ee6bd5c635da31e2d5a76"
+        }
+      ],
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
+          "alternatives": []
+        },
+        {
+          "req_id": "req_001",
+          "reason": "model_info.json 解析失败: Expecting value: line 1 column 1 (char 0)",
+          "alternatives": []
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 3,
+        "fulfilled": 1,
+        "missing": 2,
+        "validation_issues": 2,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "provenance_log": [
+        "[2026-08-15T10:32:15.252089] assemble_package: 生成数据包 package-20260815-103215，落盘 1 个文件，缺失 2 项"
+      ],
+      "runtime_check": {},
+      "revision_history": [],
+      "output_dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-103215"
+    }
+  },
+  "elapsed_s": 123
+}

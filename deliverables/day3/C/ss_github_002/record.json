@@ -3,43 +3,40 @@
   "case_id": "ss_github_002",
   "input": "检索 GitHub 上的 Franka Panda URDF 模型",
   "executor": "C",
-  "executed_at": "2026-08-14T11:08:34",
+  "executed_at": "2026-08-15T08:29:29",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "ROBOT_URDF"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "ROBOT_URDF"
+        "ROBOT_URDF",
+        "CODE"
       ],
-      "vs_expected": "match"
+      "vs_expected": "partial"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "franka",
-        "quality": "unknown",
-        "error": null,
-        "error_type": "none"
+        "source": "github",
+        "quality": "n/a",
+        "error": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
+        "error_type": "other"
       }
     ],
     "validate": {
-      "errors": 2,
+      "errors": 1,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-110818",
-      "status": "complete",
-      "file_count": 19,
-      "missing_items": 0
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083029",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items": 1
     }
   },
   "screenshots": [
@@ -76,8 +73,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "PASS",
-  "failure_category": null,
-  "failure_reason": null,
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

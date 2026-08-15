@@ -1,0 +1,61 @@
+{
+  "case_id": "ss_dexgrasp_004",
+  "input": "获取 bottle 的 DexGrasp 抓取文件",
+  "executed_at": "2026-08-15T10:40:46",
+  "steps": {
+    "interrupt_reached": true,
+    "interrupt_status": "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
+    "final_status": "运行完成",
+    "manifest": {
+      "package_info": {
+        "goal": "获取 bottle 的 DexGrasp 抓取文件",
+        "created_at": "2026-08-15T10:41:18.560546",
+        "iteration": 0,
+        "package_id": "package-20260815-104118",
+        "run_id": "20260815-104047-03891d1e",
+        "pipeline_version": "1.0.0",
+        "demo": "false",
+        "license": "",
+        "citation": "",
+        "status": "complete"
+      },
+      "files": [
+        {
+          "req_id": "req_000",
+          "path": "grasps/req_000.json",
+          "format": "CanonicalGrasp",
+          "source_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+          "retrieved_at": "2026-08-15T10:41:18.236699",
+          "transformations": [
+            "written_to:grasps/req_000.json"
+          ],
+          "confidence": 0.6,
+          "completeness": 60.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "file_size": 0,
+          "downloaded": false,
+          "local_path": "",
+          "file_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+          "checksum_sha256": "e0adf344e562fadaa70cdea908b9af206c0fc3f6a4482b665158058810578545"
+        }
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      },
+      "provenance_log": [
+        "[2026-08-15T10:41:18.560546] assemble_package: 生成数据包 package-20260815-104118，落盘 1 个文件，缺失 0 项"
+      ],
+      "runtime_check": {},
+      "revision_history": [],
+      "output_dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-104118"
+    }
+  },
+  "elapsed_s": 38
+}

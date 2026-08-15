@@ -1,8 +1,8 @@
-"""GraspSkill 元数据降级（失败语义）测试。
+"""GraspSkill 元数据降级（降级成功语义）测试。
 
-数据集仅返回元数据 JSON（无真实 npz/pkl）时不再以 success 交付合成抓取，
-而是返回失败语义（errors 含「原始数据缺失，合成占位仅作参考」），由
-registry 装配为 MissingItem，真实数据经 reference 供手动获取。
+数据集仅返回元数据 JSON（无真实 npz/pkl）时，按 Day2 修复的 fmt=json
+降级消费契约（PaperSkill 同款）返回 success + is_fallback=True：
+fetch 显式降级 → skill 消费为可用结果，装配 ParsedItem，判定 PASS_WITH_FALLBACK。
 """
 
 import json
@@ -16,9 +16,9 @@ SAMPLE_DIR = Path(__file__).parent / "sample_data" / "grasp"
 
 
 class TestMetadataFallback:
-    """数据集仅返回元数据 JSON → 失败语义（不再以 success 交付合成抓取）。"""
+    """数据集仅返回元数据 JSON → 降级成功语义（success + is_fallback=True）。"""
 
-    def test_graspnet_metadata_json_returns_failure(self) -> None:
+    def test_graspnet_metadata_json_returns_success_fallback(self) -> None:
         skill = GraspSkill()
         payload = {"dataset_id": "graspnet-1b", "reason": "no single npz available"}
         result = skill.process(
@@ -27,12 +27,13 @@ class TestMetadataFallback:
             name="banana_grasps",
             object_name="banana",
         )
-        assert not result.success
-        assert result.canonical_format == "CanonicalGrasp"
-        assert result.data is None
-        assert any("原始数据缺失，合成占位仅作参考" in e for e in result.errors)
+        assert result.success
+        assert result.is_fallback is True
+        assert result.data_source_quality == "fallback"
+        assert result.data is not None
+        assert any("元数据" in w for w in result.warnings)
 
-    def test_dexgraspnet_metadata_json_returns_failure(self) -> None:
+    def test_dexgraspnet_metadata_json_returns_success_fallback(self) -> None:
         skill = GraspSkill()
         payload = {"dataset_id": "dexgraspnet", "reason": "no single pkl available"}
         result = skill.process(
@@ -41,10 +42,10 @@ class TestMetadataFallback:
             name="mug_grasps",
             object_name="mug",
         )
-        assert not result.success
-        assert result.canonical_format == "CanonicalGrasp"
-        assert result.data is None
-        assert any("原始数据缺失，合成占位仅作参考" in e for e in result.errors)
+        assert result.success
+        assert result.is_fallback is True
+        assert result.data_source_quality == "fallback"
+        assert result.data is not None
 
     def test_graspnet_non_metadata_json_still_fails(self) -> None:
         skill = GraspSkill()
@@ -71,7 +72,7 @@ class TestDataSourceQuality:
         assert len(result.data["grasps"]) > 0
 
     def test_synthetic_fallback_marks_fallback(self) -> None:
-        """metadata JSON 无真实数据 → 失败，但 data_source_quality="fallback" 标记保留。"""
+        """metadata JSON 无真实数据 → 降级成功，data_source_quality="fallback"。"""
         skill = GraspSkill()
         payload = {"dataset_id": "graspnet-1b", "reason": "no single npz available"}
         result = skill.process(
@@ -79,11 +80,11 @@ class TestDataSourceQuality:
             dataset_name="graspnet",
             object_name="banana",
         )
-        assert not result.success
+        assert result.success
         assert result.data_source_quality == "fallback"
 
     def test_synthetic_fallback_marks_is_fallback(self) -> None:
-        """元数据占位结果 → is_fallback=True 且 data_source_quality="fallback"。"""
+        """元数据降级结果 → is_fallback=True 且 data_source_quality="fallback"。"""
         skill = GraspSkill()
         payload = {"dataset_id": "graspnet-1b", "reason": "no single npz available"}
         result = skill.process(
@@ -108,14 +109,12 @@ class TestDataSourceQuality:
             assert abs(g["width"] - 0.05) < 0.02  # DexGrasp 宽度量级（米）
 
     def test_invalid_dexgrasp_pkl_returns_failure(self) -> None:
-        """损坏 pkl（无法反序列化）→ 失败语义（不再交付合成抓取），fallback 标记保留。"""
+        """损坏 pkl（无法反序列化）→ 失败语义（非降级，数据损坏不消费）。"""
         skill = GraspSkill()
         result = skill.process(b"not a pkl", dataset_name="dexgraspnet")
         assert not result.success
         assert result.data is None
-        assert result.data_source_quality == "fallback"
-        assert result.is_fallback is True
-        assert any("原始数据缺失，合成占位仅作参考" in e for e in result.errors)
+        assert any("反序列化失败" in e for e in result.errors)
 
 
 class TestCanonicalGraspUnits:

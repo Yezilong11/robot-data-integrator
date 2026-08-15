@@ -3,17 +3,13 @@
   "case_id": "ss_arxiv_003",
   "input": "检索 robot grasping 仿真的论文",
   "executor": "C",
-  "executed_at": "2026-08-14T11:06:36",
+  "executed_at": "2026-08-15T08:26:30",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "PAPER"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
@@ -24,22 +20,24 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "arxiv",
-        "quality": "n/a",
+        "source": "arxiv.org",
+        "quality": "fallback",
         "error": null,
-        "error_type": "other"
+        "error_type": "none",
+        "format": "json",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 3,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-110620",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082640",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0
     }
   },
   "screenshots": [
@@ -76,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P4_FORMAT",
-  "failure_category": "P4_FORMAT",
-  "failure_reason": "无法打开 PDF: Failed to open stream",
-  "notes": ""
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

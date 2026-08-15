@@ -1,0 +1,61 @@
+{
+  "case_id": "ss_isaac_001",
+  "input": "获取 Franka 的 Isaac Sim 场景配置",
+  "executed_at": "2026-08-15T10:40:21",
+  "steps": {
+    "interrupt_reached": true,
+    "interrupt_status": "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
+    "final_status": "运行完成",
+    "manifest": {
+      "package_info": {
+        "goal": "获取 Franka 的 Isaac Sim 场景配置",
+        "created_at": "2026-08-15T10:40:39.032177",
+        "iteration": 0,
+        "package_id": "package-20260815-104039",
+        "run_id": "20260815-104022-9b2e537f",
+        "pipeline_version": "1.0.0",
+        "demo": "false",
+        "license": "",
+        "citation": "",
+        "status": "complete"
+      },
+      "files": [
+        {
+          "req_id": "req_000",
+          "path": "sim_config/req_000.xml",
+          "format": "mjcf",
+          "source_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+          "retrieved_at": "2026-08-15T10:40:38.756276",
+          "transformations": [
+            "written_to:sim_config/req_000.xml"
+          ],
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "file_size": 5243,
+          "downloaded": true,
+          "local_path": "sim_config/req_000.xml",
+          "file_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+          "checksum_sha256": "54b510f10513df619d5409f40ecae1728ad9655e1d7d282463f2c03b724aecc2"
+        }
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      },
+      "provenance_log": [
+        "[2026-08-15T10:40:39.032177] assemble_package: 生成数据包 package-20260815-104039，落盘 1 个文件，缺失 0 项"
+      ],
+      "runtime_check": {},
+      "revision_history": [],
+      "output_dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-104039"
+    }
+  },
+  "elapsed_s": 25
+}

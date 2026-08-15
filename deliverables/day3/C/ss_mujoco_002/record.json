@@ -3,30 +3,162 @@
   "case_id": "ss_mujoco_002",
   "input": "检索 mujoco_menagerie 中 aloha 的真实场景",
   "executor": "C",
-  "executed_at": "2026-08-14T13:25:58",
+  "executed_at": "2026-08-15T09:24:03",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "SIM_CONFIG"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
+        "ROBOT_URDF",
         "SIM_CONFIG",
-        "ROBOT_URDF"
+        "CODE"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "partial"
     },
     "retrieve": [
       {
-        "req_id": "错误",
-        "source": "mujoco",
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
         "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "xml",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "mesh",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "xml",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_001",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
+        "error": null,
+        "error_type": "none",
+        "format": "xml",
+        "is_fallback": false
+      },
+      {
+        "req_id": "req_000",
+        "source": "github",
+        "quality": "n/a",
         "error": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
         "error_type": "other"
       }
@@ -34,10 +166,10 @@
     "validate": {
       "errors": 1,
       "warnings": 0,
-      "runtime_check": "passed"
+      "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-132556",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092432",
       "status": "failed",
       "file_count": 15,
       "missing_items": 1
@@ -78,7 +210,7 @@
     }
   ],
   "verdict": "FAIL",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "解析 req=['SIM_CONFIG', 'ROBOT_URDF'] 与期望 ['SIM_CONFIG'] 不符（需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配））",
-  "notes": ""
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

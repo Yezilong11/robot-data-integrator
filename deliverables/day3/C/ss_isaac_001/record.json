@@ -3,42 +3,40 @@
   "case_id": "ss_isaac_001",
   "input": "获取 Franka 的 Isaac Sim 场景配置",
   "executor": "C",
-  "executed_at": "2026-08-14T12:29:53",
+  "executed_at": "2026-08-15T09:25:44",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "SIM_CONFIG"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "ROBOT_URDF"
+        "SIM_CONFIG"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "franka",
-        "quality": "unknown",
+        "source": "raw.githubusercontent.com",
+        "quality": "fallback",
         "error": null,
-        "error_type": "other"
+        "error_type": "none",
+        "format": "mjcf",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 4,
+      "errors": 2,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-122937",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092556",
       "status": "complete",
-      "file_count": 20,
+      "file_count": 1,
       "missing_items": 0
     }
   },
@@ -76,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P1_PARSE",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "解析 req=['ROBOT_URDF'] 与期望 ['SIM_CONFIG'] 不符（无 manifest 缺失项）",
-  "notes": ""
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

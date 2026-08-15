@@ -3,39 +3,35 @@
   "case_id": "ms_004",
   "input": "UR5 with Robotiq 2F-85 grasps YCB apple",
   "executor": "C",
-  "executed_at": "2026-08-14T12:33:39",
+  "executed_at": "2026-08-15T09:37:28",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied"
   },
-  "layer": "multi_source",
-  "expected_req_types": [
-    "ROBOT_URDF",
-    "MESH",
-    "GRASP"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "ROBOT_URDF",
         "MESH",
-        "GRASP"
+        "GRASP",
+        "ROBOT_URDF"
       ],
       "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "robotiq",
-        "quality": "unknown",
+        "source": "raw.githubusercontent.com",
+        "quality": "real",
         "error": null,
-        "error_type": "none"
+        "error_type": "none",
+        "format": "urdf",
+        "is_fallback": false
       },
       {
         "req_id": "req_001",
-        "source": "google_scanned",
+        "source": "none",
         "quality": "n/a",
         "error": "Mesh 解析失败: file_type 'json' not supported",
         "error_type": "other"
@@ -44,7 +40,7 @@
         "req_id": "req_002",
         "source": "graspnet",
         "quality": "n/a",
-        "error": "GraspNet 返回元数据 JSON（未找到真实 npz）",
+        "error": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference",
         "error_type": "not_found"
       }
     ],
@@ -54,7 +50,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-123323",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-093915",
       "status": "failed",
       "file_count": 1,
       "missing_items": 2
@@ -94,8 +90,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "PASS",
-  "failure_category": null,
-  "failure_reason": null,
-  "notes": ""
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference",
+  "notes": "Day3-C 重跑（项目优化后）。"
 }
