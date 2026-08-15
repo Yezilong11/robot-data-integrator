@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
   "case_id": "ss_mujoco_005",
-  "input": "检索 mujoco_menagerie 中 shadow hand 场景",
+  "input": "我要在 MuJoCo 里搭 Franka 的仿真环境，帮我找场景配置文件",
   "executor": "C",
-  "executed_at": "2026-08-15T19:27:52",
+  "executed_at": "2026-08-15T20:12:57",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,631 +13,18 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "SIM_CONFIG",
-        "UNKNOWN"
+        "sim_config"
       ],
-      "vs_expected": "partial"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "raw",
+        "source": "mujoco",
         "quality": "real",
         "error": null,
         "error_type": "none",
         "format": "xml",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "xml",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
-        "is_fallback": false
-      },
-      {
-        "req_id": "req_000",
-        "source": "raw",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "mesh",
         "is_fallback": false
       }
     ],
@@ -647,7 +34,7 @@
       "runtime_check": "filled"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-192830",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201322",
       "status": "complete",
       "file_count": 69,
       "missing_items": 0
@@ -656,39 +43,39 @@
   "screenshots": [
     {
       "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-进度展示"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入"
+      "desc": "最终态"
     },
     {
       "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-进度展示"
+      "desc": "最终态"
     },
     {
       "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
+      "desc": "最终态"
     },
     {
       "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
+      "desc": "最终态"
     }
   ],
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "F 审计修正重跑（官方题设 target）：pkg=complete、missing=0；证据 evidence_rerun.json。"
+  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 69（文件 69），validation_issues=0。verdict=PASS。"
 }

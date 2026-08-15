@@ -77,5 +77,5 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中（PolicyInterfaceDoc/SensorDataset），pkg=complete、missing=0。"
+  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中 POLICY_MODEL，经 github 检索命中策略权重相关仓库，fetch 显式降级为结构化接口文档 PolicyInterfaceDoc（is_fallback=true + fallback_reason 已记录），符合 fallback_explicit 定义（纪要 §2.4 口径，quality=fallback 放行）；pkg=complete、missing=0。"
 }

@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
   "case_id": "ss_isaac_001",
-  "input": "获取 Franka 的 Isaac Sim 场景配置",
+  "input": "获取 Isaac Sim 中 Franka Panda 的仿真场景配置（允许最小 MJCF fallback）",
   "executor": "C",
-  "executed_at": "2026-08-15T10:40:21",
+  "executed_at": "2026-08-15T20:13:29",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,14 +13,14 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "SIM_CONFIG"
+        "sim_config"
       ],
       "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "raw",
+        "source": "github",
         "quality": "fallback",
         "error": null,
         "error_type": "none",
@@ -31,10 +31,10 @@
     "validate": {
       "errors": 2,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "filled"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-104039",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201341",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -43,39 +43,39 @@
   "screenshots": [
     {
       "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-进度展示"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查"
+      "desc": "中间态"
     },
     {
       "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入"
+      "desc": "最终态"
     },
     {
       "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-进度展示"
+      "desc": "最终态"
     },
     {
       "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
+      "desc": "最终态"
     },
     {
       "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
+      "desc": "最终态"
     }
   ],
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
+  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 1（文件 1），validation_issues=2。verdict=PASS_WITH_FALLBACK。"
 }

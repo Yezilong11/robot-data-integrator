@@ -1,18 +1,18 @@
 {
-  "case_id": "ss_mujoco_002",
-  "input": "获取 mujoco_menagerie 中 Franka Panda 的抓取操作场景配置",
-  "executed_at": "2026-08-15T20:11:41",
+  "case_id": "ss_mujoco_001",
+  "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+  "executed_at": "2026-08-15T20:11:07",
   "steps": {
     "interrupt_reached": true,
     "interrupt_status": "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
     "final_status": "运行完成",
     "manifest": {
       "package_info": {
-        "goal": "获取 mujoco_menagerie 中 Franka Panda 的抓取操作场景配置",
-        "created_at": "2026-08-15T20:12:06.476437",
+        "goal": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+        "created_at": "2026-08-15T20:11:34.945454",
         "iteration": 0,
-        "package_id": "package-20260815-201206",
-        "run_id": "20260815-201142-ece58458",
+        "package_id": "package-20260815-201134",
+        "run_id": "20260815-201108-899ff5df",
         "pipeline_version": "1.0.0",
         "demo": "false",
         "license": "",
@@ -25,7 +25,7 @@
           "path": "sim_config/req_000.xml",
           "format": "xml",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/req_000.xml"
           ],
@@ -44,7 +44,7 @@
           "path": "sim_config/panda.xml",
           "format": "xml",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/panda.xml"
           ],
@@ -63,7 +63,7 @@
           "path": "sim_config/assets/link0.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0.stl"
           ],
@@ -82,7 +82,7 @@
           "path": "sim_config/assets/link1.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link1.stl"
           ],
@@ -101,7 +101,7 @@
           "path": "sim_config/assets/link2.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link2.stl"
           ],
@@ -120,7 +120,7 @@
           "path": "sim_config/assets/link3.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link3.stl"
           ],
@@ -139,7 +139,7 @@
           "path": "sim_config/assets/link4.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link4.stl"
           ],
@@ -158,7 +158,7 @@
           "path": "sim_config/assets/link5_collision_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link5_collision_0.obj"
           ],
@@ -177,7 +177,7 @@
           "path": "sim_config/assets/link5_collision_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link5_collision_1.obj"
           ],
@@ -196,7 +196,7 @@
           "path": "sim_config/assets/link5_collision_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link5_collision_2.obj"
           ],
@@ -215,7 +215,7 @@
           "path": "sim_config/assets/link6.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6.stl"
           ],
@@ -234,7 +234,7 @@
           "path": "sim_config/assets/link7.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7.stl"
           ],
@@ -253,7 +253,7 @@
           "path": "sim_config/assets/hand.stl",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/hand.stl"
           ],
@@ -272,7 +272,7 @@
           "path": "sim_config/assets/link0_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_0.obj"
           ],
@@ -291,7 +291,7 @@
           "path": "sim_config/assets/link0_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_1.obj"
           ],
@@ -310,7 +310,7 @@
           "path": "sim_config/assets/link0_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_2.obj"
           ],
@@ -329,7 +329,7 @@
           "path": "sim_config/assets/link0_3.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_3.obj"
           ],
@@ -348,7 +348,7 @@
           "path": "sim_config/assets/link0_4.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_4.obj"
           ],
@@ -367,7 +367,7 @@
           "path": "sim_config/assets/link0_5.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_5.obj"
           ],
@@ -386,7 +386,7 @@
           "path": "sim_config/assets/link0_7.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_7.obj"
           ],
@@ -405,7 +405,7 @@
           "path": "sim_config/assets/link0_8.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_8.obj"
           ],
@@ -424,7 +424,7 @@
           "path": "sim_config/assets/link0_9.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_9.obj"
           ],
@@ -443,7 +443,7 @@
           "path": "sim_config/assets/link0_10.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_10.obj"
           ],
@@ -462,7 +462,7 @@
           "path": "sim_config/assets/link0_11.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link0_11.obj"
           ],
@@ -481,7 +481,7 @@
           "path": "sim_config/assets/link1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link1.obj"
           ],
@@ -500,7 +500,7 @@
           "path": "sim_config/assets/link2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link2.obj"
           ],
@@ -519,7 +519,7 @@
           "path": "sim_config/assets/link3_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link3_0.obj"
           ],
@@ -538,7 +538,7 @@
           "path": "sim_config/assets/link3_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link3_1.obj"
           ],
@@ -557,7 +557,7 @@
           "path": "sim_config/assets/link3_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link3_2.obj"
           ],
@@ -576,7 +576,7 @@
           "path": "sim_config/assets/link3_3.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link3_3.obj"
           ],
@@ -595,7 +595,7 @@
           "path": "sim_config/assets/link4_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link4_0.obj"
           ],
@@ -614,7 +614,7 @@
           "path": "sim_config/assets/link4_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link4_1.obj"
           ],
@@ -633,7 +633,7 @@
           "path": "sim_config/assets/link4_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link4_2.obj"
           ],
@@ -652,7 +652,7 @@
           "path": "sim_config/assets/link4_3.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link4_3.obj"
           ],
@@ -671,7 +671,7 @@
           "path": "sim_config/assets/link5_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link5_0.obj"
           ],
@@ -690,7 +690,7 @@
           "path": "sim_config/assets/link5_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link5_1.obj"
           ],
@@ -709,7 +709,7 @@
           "path": "sim_config/assets/link5_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link5_2.obj"
           ],
@@ -728,7 +728,7 @@
           "path": "sim_config/assets/link6_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_0.obj"
           ],
@@ -747,7 +747,7 @@
           "path": "sim_config/assets/link6_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_1.obj"
           ],
@@ -766,7 +766,7 @@
           "path": "sim_config/assets/link6_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_2.obj"
           ],
@@ -785,7 +785,7 @@
           "path": "sim_config/assets/link6_3.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_3.obj"
           ],
@@ -804,7 +804,7 @@
           "path": "sim_config/assets/link6_4.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_4.obj"
           ],
@@ -823,7 +823,7 @@
           "path": "sim_config/assets/link6_5.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_5.obj"
           ],
@@ -842,7 +842,7 @@
           "path": "sim_config/assets/link6_6.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_6.obj"
           ],
@@ -861,7 +861,7 @@
           "path": "sim_config/assets/link6_7.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_7.obj"
           ],
@@ -880,7 +880,7 @@
           "path": "sim_config/assets/link6_8.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_8.obj"
           ],
@@ -899,7 +899,7 @@
           "path": "sim_config/assets/link6_9.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_9.obj"
           ],
@@ -918,7 +918,7 @@
           "path": "sim_config/assets/link6_10.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_10.obj"
           ],
@@ -937,7 +937,7 @@
           "path": "sim_config/assets/link6_11.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_11.obj"
           ],
@@ -956,7 +956,7 @@
           "path": "sim_config/assets/link6_12.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_12.obj"
           ],
@@ -975,7 +975,7 @@
           "path": "sim_config/assets/link6_13.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_13.obj"
           ],
@@ -994,7 +994,7 @@
           "path": "sim_config/assets/link6_14.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_14.obj"
           ],
@@ -1013,7 +1013,7 @@
           "path": "sim_config/assets/link6_15.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_15.obj"
           ],
@@ -1032,7 +1032,7 @@
           "path": "sim_config/assets/link6_16.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link6_16.obj"
           ],
@@ -1051,7 +1051,7 @@
           "path": "sim_config/assets/link7_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_0.obj"
           ],
@@ -1070,7 +1070,7 @@
           "path": "sim_config/assets/link7_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_1.obj"
           ],
@@ -1089,7 +1089,7 @@
           "path": "sim_config/assets/link7_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_2.obj"
           ],
@@ -1108,7 +1108,7 @@
           "path": "sim_config/assets/link7_3.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_3.obj"
           ],
@@ -1127,7 +1127,7 @@
           "path": "sim_config/assets/link7_4.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_4.obj"
           ],
@@ -1146,7 +1146,7 @@
           "path": "sim_config/assets/link7_5.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_5.obj"
           ],
@@ -1165,7 +1165,7 @@
           "path": "sim_config/assets/link7_6.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_6.obj"
           ],
@@ -1184,7 +1184,7 @@
           "path": "sim_config/assets/link7_7.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/link7_7.obj"
           ],
@@ -1203,7 +1203,7 @@
           "path": "sim_config/assets/hand_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/hand_0.obj"
           ],
@@ -1222,7 +1222,7 @@
           "path": "sim_config/assets/hand_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/hand_1.obj"
           ],
@@ -1241,7 +1241,7 @@
           "path": "sim_config/assets/hand_2.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/hand_2.obj"
           ],
@@ -1260,7 +1260,7 @@
           "path": "sim_config/assets/hand_3.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/hand_3.obj"
           ],
@@ -1279,7 +1279,7 @@
           "path": "sim_config/assets/hand_4.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/hand_4.obj"
           ],
@@ -1298,7 +1298,7 @@
           "path": "sim_config/assets/finger_0.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/finger_0.obj"
           ],
@@ -1317,7 +1317,7 @@
           "path": "sim_config/assets/finger_1.obj",
           "format": "mesh",
           "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
-          "retrieved_at": "2026-08-15T20:12:05.641893",
+          "retrieved_at": "2026-08-15T20:11:34.033342",
           "transformations": [
             "written_to:sim_config/assets/finger_1.obj"
           ],
@@ -1342,7 +1342,7 @@
         "avg_completeness": 100.0
       },
       "provenance_log": [
-        "[2026-08-15T20:12:06.476437] assemble_package: 生成数据包 package-20260815-201206，落盘 69 个文件，缺失 0 项"
+        "[2026-08-15T20:11:34.945454] assemble_package: 生成数据包 package-20260815-201134，落盘 69 个文件，缺失 0 项"
       ],
       "runtime_check": {
         "req_000": {
@@ -1351,8 +1351,8 @@
         }
       },
       "revision_history": [],
-      "output_dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201206"
+      "output_dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201134"
     }
   },
-  "elapsed_s": 31
+  "elapsed_s": 34
 }
