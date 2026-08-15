@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-14T22:39:27+08:00",
+  "generated_at": "2026-08-15T18:51:41+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -9,26 +9,26 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 7,
-    "judged": 7,
+    "executed": 25,
+    "judged": 25,
     "reviewed": 0,
-    "execution_rate": 0.1111,
+    "execution_rate": 0.3968,
     "review_rate": 0.0
   },
   "verdicts": {
     "pass": 3,
-    "pass_with_fallback": 3,
+    "pass_with_fallback": 21,
     "fail": 1,
-    "pass_rate": 0.4286,
-    "fallback_rate": 0.4286,
-    "fail_rate": 0.1429,
-    "usable_rate": 0.8571
+    "pass_rate": 0.12,
+    "fallback_rate": 0.84,
+    "fail_rate": 0.04,
+    "usable_rate": 0.96
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 7,
+    "records_at_least_90_pct": 25,
     "records_at_least_90_rate": 1.0,
-    "screenshot_compliance_rate": 0.8571,
+    "screenshot_compliance_rate": 0.96,
     "validation_error_count": 1
   },
   "p0_acceptance": {
@@ -41,17 +41,17 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 4,
+        "judged": 16,
         "pass": 1,
-        "fallback": 2,
+        "fallback": 14,
         "fail": 1,
-        "usable_rate": 0.75
+        "usable_rate": 0.9375
       },
       "ZH": {
         "cases": 34,
-        "judged": 3,
+        "judged": 9,
         "pass": 2,
-        "fallback": 1,
+        "fallback": 7,
         "fail": 0,
         "usable_rate": 1.0
       }
@@ -67,17 +67,17 @@
       },
       "arxiv": {
         "cases": 5,
-        "judged": 1,
+        "judged": 5,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 5,
         "fail": 0,
         "usable_rate": 1.0
       },
       "dexgrasp": {
         "cases": 6,
-        "judged": 1,
+        "judged": 6,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 6,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -91,11 +91,11 @@
       },
       "github": {
         "cases": 8,
-        "judged": 2,
+        "judged": 3,
         "pass": 1,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 1,
-        "usable_rate": 0.5
+        "usable_rate": 0.6667
       },
       "google_scanned": {
         "cases": 3,
@@ -115,9 +115,9 @@
       },
       "huggingface": {
         "cases": 5,
-        "judged": 1,
+        "judged": 3,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 3,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -147,11 +147,11 @@
       },
       "paperswithcode": {
         "cases": 3,
-        "judged": 0,
+        "judged": 2,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 2,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "robotiq": {
         "cases": 4,
@@ -171,11 +171,11 @@
       },
       "zenodo": {
         "cases": 5,
-        "judged": 0,
+        "judged": 4,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 4,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       }
     },
     "req_type": {
@@ -189,19 +189,19 @@
       },
       "dataset": {
         "cases": 7,
-        "judged": 1,
+        "judged": 6,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 6,
         "fail": 0,
         "usable_rate": 1.0
       },
       "grasp": {
         "cases": 13,
-        "judged": 2,
+        "judged": 7,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 6,
         "fail": 1,
-        "usable_rate": 0.5
+        "usable_rate": 0.8571
       },
       "mesh": {
         "cases": 13,
@@ -213,19 +213,19 @@
       },
       "paper": {
         "cases": 9,
-        "judged": 1,
+        "judged": 7,
         "pass": 0,
-        "fallback": 1,
+        "fallback": 7,
         "fail": 0,
         "usable_rate": 1.0
       },
       "policy_model": {
         "cases": 3,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "robot_urdf": {
         "cases": 17,
@@ -237,11 +237,11 @@
       },
       "sensor_data": {
         "cases": 3,
-        "judged": 0,
+        "judged": 1,
         "pass": 0,
-        "fallback": 0,
+        "fallback": 1,
         "fail": 0,
-        "usable_rate": null
+        "usable_rate": 1.0
       },
       "sim_config": {
         "cases": 11,
@@ -253,7 +253,7 @@
       }
     },
     "llm_model": {
-      "qwen-plus": 7
+      "qwen-plus": 25
     }
   },
   "failure_top3": [

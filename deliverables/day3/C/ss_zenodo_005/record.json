@@ -8,36 +8,44 @@
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
   },
   "observations": {
     "parse_goal": {
       "req_list": [
-        "DATASET"
+        "dataset"
       ],
       "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "zenodo.org",
+        "source": "zenodo",
         "quality": "fallback",
         "error": null,
         "error_type": "none",
         "format": "DatasetSummary",
-        "is_fallback": true
+        "is_fallback": true,
+        "status": "success",
+        "req_type": "DATASET",
+        "fallback_reason": "源未产出真实数据文件，显式降级（元数据/summary）"
       }
     ],
     "validate": {
       "errors": 0,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "not_applicable"
     },
     "package": {
       "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083606",
       "status": "complete",
       "file_count": 1,
-      "missing_items": 0
+      "missing_items": 0,
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083606/manifest.json",
+      "missing_items_count": 0,
+      "fallback_explicit": true
     }
   },
   "screenshots": [

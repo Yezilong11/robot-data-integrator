@@ -8,12 +8,14 @@
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
   },
   "observations": {
     "parse_goal": {
       "req_list": [
-        "PAPER"
+        "paper"
       ],
       "vs_expected": "match"
     },
@@ -25,19 +27,25 @@
         "error": null,
         "error_type": "none",
         "format": "json",
-        "is_fallback": true
+        "is_fallback": true,
+        "status": "success",
+        "req_type": "PAPER",
+        "fallback_reason": "源未产出真实数据文件，显式降级（元数据/summary）"
       }
     ],
     "validate": {
       "errors": 3,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "not_applicable"
     },
     "package": {
       "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082714",
       "status": "complete",
       "file_count": 1,
-      "missing_items": 0
+      "missing_items": 0,
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082714/manifest.json",
+      "missing_items_count": 0,
+      "fallback_explicit": true
     }
   },
   "screenshots": [
