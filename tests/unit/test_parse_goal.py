@@ -44,12 +44,19 @@ def _reset_llm_singleton() -> None:
     parse_goal._llm_client = None
 
 
-def _make_result(req_ids: list[str]) -> _GoalParsingResult:
-    """构造测试用 _GoalParsingResult，req_id 由调用方指定。"""
+def _make_result(
+    req_ids: list[str], req_types: list[DataReqType] | None = None
+) -> _GoalParsingResult:
+    """构造测试用 _GoalParsingResult，req_id 由调用方指定。
+
+    req_types 缺省时全部为 ROBOT_URDF；传入不同类型可避免被
+    ``_dedupe_requirements`` 按 (req_type, object_name) 合并（占位描述无关键词）。
+    """
+    types = req_types or [DataReqType.ROBOT_URDF] * len(req_ids)
     reqs = [
         DataReq(
             req_id=rid,
-            req_type=DataReqType.ROBOT_URDF,
+            req_type=types[i],
             description=f"需求 {i}",
             priority=Priority.REQUIRED,
         )
@@ -148,8 +155,18 @@ def test_parse_goal_llm_parse_error_degradation(
 
 
 def test_parse_goal_normalizes_req_id(monkeypatch: pytest.MonkeyPatch) -> None:
-    """LLM 返回的不规范 req_id 被统一重编号为 req_XXX。"""
-    _install_fake(monkeypatch, result=_make_result(["abc", "1", "req-001"]))
+    """LLM 返回的不规范 req_id 被统一重编号为 req_XXX（不同类型需求不被去重合并）。"""
+    _install_fake(
+        monkeypatch,
+        result=_make_result(
+            ["abc", "1", "req-001"],
+            req_types=[
+                DataReqType.ROBOT_URDF,
+                DataReqType.MESH,
+                DataReqType.SIM_CONFIG,
+            ],
+        ),
+    )
 
     out = node_parse_goal({"user_goal": "抓取"})
 

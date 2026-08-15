@@ -14,7 +14,11 @@ import logging
 
 import pytest
 
-from rdi.graph.nodes.parse_goal import _extract_object_name_from_text, _normalize_datareq
+from rdi.graph.nodes.parse_goal import (
+    _dedupe_requirements,
+    _extract_object_name_from_text,
+    _normalize_datareq,
+)
 from rdi.models import DataReq, DataReqType, Priority
 
 
@@ -276,3 +280,68 @@ def test_normalize_new_types_do_not_misclassify_existing() -> None:
     # GRASP 描述含"轨迹"（抓取姿态）不应被 TEACHING_TRAJECTORY 转走
     g = _req("grasp pose 轨迹数据", None, DataReqType.GRASP)
     assert _normalize_datareq(g).req_type == DataReqType.GRASP
+
+
+# ─── D4: _dedupe_requirements 重复需求去重 ───
+
+
+def _req_full(
+    req_type: DataReqType,
+    description: str,
+    object_name: str = "",
+) -> DataReq:
+    """构造带 req_id/object_name 的 DataReq（用于去重测试）。"""
+    return DataReq(
+        req_id="req_000",
+        req_type=req_type,
+        description=description,
+        priority=Priority.REQUIRED,
+        object_name=object_name,
+    )
+
+
+def test_dedupe_merges_same_type_same_object() -> None:
+    """同一目标内相同 (req_type, object_name) 的重复需求合并为 1 条，保留第一条。"""
+    reqs = [
+        _req_full(DataReqType.ROBOT_URDF, "Franka Panda 机器人 URDF 描述文件"),
+        _req_full(DataReqType.MESH, "YCB blocks 的 3D 网格模型", object_name="blocks"),
+        _req_full(DataReqType.ROBOT_URDF, "Franka Panda 的 URDF（重复生成）"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 2
+    assert [r.req_type for r in out] == [DataReqType.ROBOT_URDF, DataReqType.MESH]
+    assert out[0].description == "Franka Panda 机器人 URDF 描述文件"  # 保留第一条
+    # 去重后 req_id 重编号为连续
+    assert [r.req_id for r in out] == ["req_000", "req_001"]
+
+
+def test_dedupe_keeps_different_objects() -> None:
+    """不同物体的同类型需求（banana/apple GRASP）不应被合并。"""
+    reqs = [
+        _req_full(DataReqType.GRASP, "YCB banana 的抓取姿态数据", object_name="banana"),
+        _req_full(DataReqType.GRASP, "YCB apple 的抓取姿态数据", object_name="apple"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 2
+
+
+def test_dedupe_keeps_different_types() -> None:
+    """不同类型需求（ROBOT_URDF + MESH + SIM_CONFIG）全部保留。"""
+    reqs = [
+        _req_full(DataReqType.ROBOT_URDF, "UR5 机器人 URDF 模型"),
+        _req_full(DataReqType.MESH, "YCB mug 的 3D 网格模型", object_name="mug"),
+        _req_full(DataReqType.SIM_CONFIG, "PyBullet 仿真场景配置"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 3
+    assert [r.req_id for r in out] == ["req_000", "req_001", "req_002"]
+
+
+def test_dedupe_object_name_case_insensitive() -> None:
+    """object_name 大小写不敏感：'Banana' 与 'banana' 视为同一物体。"""
+    reqs = [
+        _req_full(DataReqType.MESH, "Banana 的 mesh", object_name="Banana"),
+        _req_full(DataReqType.MESH, "banana 的 mesh", object_name="banana"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 1

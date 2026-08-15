@@ -249,6 +249,29 @@ def _extract_object_name_from_text(text: str) -> str:
     return ""
 
 
+def _dedupe_requirements(requirements: list[DataReq]) -> list[DataReq]:
+    """同一目标内相同 (req_type, object_name) 的重复需求合并，仅保留第一条。
+
+    LLM 偶发对同一目标重复生成同类型需求（如 ms_005 对 Franka 生成两个
+    ROBOT_URDF），重复需求会在检索/装配阶段产生多余的缺失项（类型错配），
+    导致整包 status=failed。去重仅合并"完全等价"需求（同类型 + 同物体名），
+    不同物体的同类型需求（如 banana 与 apple 的 GRASP）仍各自保留，不丢失信息。
+    去重后重编号 req_id，保证 req_000..req_N 连续。
+    """
+    seen: set[tuple[DataReqType, str]] = set()
+    unique: list[DataReq] = []
+    for req in requirements:
+        key = (req.req_type, (req.object_name or "").strip().lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(req)
+    return [
+        req.model_copy(update={"req_id": f"req_{i:03d}"})
+        for i, req in enumerate(unique)
+    ]
+
+
 def node_parse_goal(state: SystemState) -> dict[str, Any]:
     """目标解析节点：调用 LLM 把 user_goal + paper_pdf 转换为结构化数据需求。
 
@@ -312,6 +335,10 @@ def node_parse_goal(state: SystemState) -> dict[str, Any]:
         else req
         for req in requirements
     ]
+
+    # D4: 同一目标内相同 (req_type, object_name) 的重复需求合并（LLM 偶发重复生成，
+    # 如 ms_005 对 Franka 生成两个 ROBOT_URDF），避免重复需求导致整包 failed
+    requirements = _dedupe_requirements(requirements)
 
     return {
         "parsed_goal": result.goal,
