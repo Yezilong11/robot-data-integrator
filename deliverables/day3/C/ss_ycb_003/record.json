@@ -3,7 +3,7 @@
   "case_id": "ss_ycb_003",
   "input": "检索 YCB 数据集",
   "executor": "C",
-  "executed_at": "2026-08-15T09:22:52",
+  "executed_at": "2026-08-15T19:24:23",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,18 +13,18 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "DATASET"
+        "MESH"
       ],
       "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "zenodo.org",
-        "quality": "fallback",
+        "source": "fuel",
+        "quality": "unknown",
         "error": null,
         "error_type": "none",
-        "format": "DatasetSummary",
+        "format": "stl",
         "is_fallback": true
       }
     ],
@@ -34,7 +34,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092312",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-192504",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -77,5 +77,5 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "notes": "F 审计修正重跑（官方题设 target）：pkg=complete、missing=0；证据 evidence_rerun.json。"
 }

@@ -3,7 +3,7 @@
   "case_id": "ss_isaac_002",
   "input": "获取 UR5 的 Isaac Sim 场景配置",
   "executor": "C",
-  "executed_at": "2026-08-15T10:41:59",
+  "executed_at": "2026-08-15T19:28:37",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,11 +13,9 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "ROBOT_URDF",
-        "SIM_CONFIG",
-        "CODE"
+        "SIM_CONFIG"
       ],
-      "vs_expected": "partial"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
@@ -33,10 +31,10 @@
     "validate": {
       "errors": 2,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "filled"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-104220",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-192855",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -79,5 +77,5 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
+  "notes": "F 审计修正重跑（官方题设 target）：pkg=complete、missing=0；证据 evidence_rerun.json。"
 }

@@ -3,7 +3,7 @@
   "case_id": "ss_ycb_005",
   "input": "获取 mug 的 mesh 模型",
   "executor": "C",
-  "executed_at": "2026-08-15T09:28:43",
+  "executed_at": "2026-08-15T19:25:33",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,28 +13,28 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "MESH"
+        "GRASP"
       ],
       "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "hf-mirror.com",
-        "quality": "real",
+        "source": "huggingface",
+        "quality": "fallback",
         "error": null,
         "error_type": "none",
-        "format": "stl",
-        "is_fallback": false
+        "format": "CanonicalGrasp",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 0,
+      "errors": 3,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092907",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-192546",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -74,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "PASS",
+  "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "notes": "F 审计修正重跑（官方题设 target）：pkg=complete、missing=0；证据 evidence_rerun.json。"
 }

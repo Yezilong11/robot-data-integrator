@@ -3,7 +3,7 @@
   "case_id": "ss_github_005",
   "input": "检索机械臂关节数据集",
   "executor": "C",
-  "executed_at": "2026-08-15T08:31:28",
+  "executed_at": "2026-08-15T19:39:10",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,28 +13,28 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "DATASET"
+        "SENSOR_DATA"
       ],
-      "vs_expected": "partial"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "zenodo.org",
-        "quality": "real",
+        "source": "zenodo",
+        "quality": "fallback",
         "error": null,
         "error_type": "none",
-        "format": "DatasetSummary",
-        "is_fallback": false
+        "format": "SensorDataset",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 0,
+      "errors": 2,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083137",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-193920",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -74,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "PASS",
+  "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中（PolicyInterfaceDoc/SensorDataset），pkg=complete、missing=0。"
 }

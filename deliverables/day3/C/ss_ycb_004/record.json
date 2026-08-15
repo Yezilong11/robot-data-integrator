@@ -3,7 +3,7 @@
   "case_id": "ss_ycb_004",
   "input": "获取 banana 的 mesh 模型",
   "executor": "C",
-  "executed_at": "2026-08-15T10:39:38",
+  "executed_at": "2026-08-15T19:25:11",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,18 +13,18 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "MESH"
+        "GRASP"
       ],
       "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "fuel",
+        "source": "huggingface",
         "quality": "fallback",
         "error": null,
         "error_type": "none",
-        "format": "trimesh.Trimesh",
+        "format": "CanonicalGrasp",
         "is_fallback": true
       }
     ],
@@ -34,7 +34,7 @@
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-103952",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-192526",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -77,5 +77,5 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
+  "notes": "F 审计修正重跑（官方题设 target）：pkg=complete、missing=0；证据 evidence_rerun.json。"
 }

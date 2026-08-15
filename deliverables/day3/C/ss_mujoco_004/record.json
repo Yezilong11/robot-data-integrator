@@ -3,7 +3,7 @@
   "case_id": "ss_mujoco_004",
   "input": "检索 mujoco_menagerie 中 robotiq 夹爪场景",
   "executor": "C",
-  "executed_at": "2026-08-15T09:25:21",
+  "executed_at": "2026-08-15T19:27:19",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -20,7 +20,7 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "raw.githubusercontent.com",
+        "source": "raw",
         "quality": "fallback",
         "error": null,
         "error_type": "none",
@@ -31,10 +31,10 @@
     "validate": {
       "errors": 2,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "filled"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-092534",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-192746",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -77,5 +77,5 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "notes": "F 审计修正重跑（官方题设 target）：pkg=complete、missing=0；证据 evidence_rerun.json。"
 }

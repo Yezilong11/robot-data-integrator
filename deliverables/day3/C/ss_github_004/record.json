@@ -3,7 +3,7 @@
   "case_id": "ss_github_004",
   "input": "检索抓取策略权重仓库",
   "executor": "C",
-  "executed_at": "2026-08-15T08:31:10",
+  "executed_at": "2026-08-15T19:38:51",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -13,28 +13,28 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "CODE"
+        "POLICY_MODEL"
       ],
-      "vs_expected": "partial"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "github.com",
-        "quality": "real",
+        "source": "github",
+        "quality": "fallback",
         "error": null,
         "error_type": "none",
-        "format": "CodeRepoSummary",
-        "is_fallback": false
+        "format": "PolicyInterfaceDoc",
+        "is_fallback": true
       }
     ],
     "validate": {
-      "errors": 0,
+      "errors": 3,
       "warnings": 0,
       "runtime_check": "empty"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083119",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-193903",
       "status": "complete",
       "file_count": 1,
       "missing_items": 0
@@ -74,8 +74,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "PASS",
+  "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 重跑（项目优化后）。"
+  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中（PolicyInterfaceDoc/SensorDataset），pkg=complete、missing=0。"
 }
