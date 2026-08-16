@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_003",
+  "input": "Kinova Gen3 picks up EGAD mug in Isaac Sim",
+  "executor": "D",
+  "executed_at": "2026-08-16T13:22:37",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "ROBOT_URDF",
+    "MESH",
+    "SIM_CONFIG"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF",
+        "MESH",
+        "GRASP",
+        "SIM_CONFIG"
+      ],
+      "vs_expected": "partial",
+      "note": "期望 [ROBOT_URDF, MESH, SIM_CONFIG]，LLM 额外解析出 GRASP（共 4 个需求），语义合理但超出预期集合"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "github/isaac",
+        "quality": null,
+        "error": "P2_RETRIEVE",
+        "note": "robot_urdf 检索失败：registry 无 kinova 专用 adapter；通用 GitHubAdapter 返回 markdown 网页产物被 C4 格式预检拦截；franka/robotiq 均报『有源但未收录 Kinova Gen3』"
+      },
+      {
+        "req_id": "req_001",
+        "source": "fuel(gazebo)",
+        "quality": "real",
+        "error": null,
+        "note": "mesh 命中 fuel.gazebosim.org GoogleResearch/ACE_Coffee_Mug_Kristen_16_oz_cup（EGAD mug），落盘 objects/req_001.stl，confidence=1.0"
+      },
+      {
+        "req_id": "req_002",
+        "source": "huggingface",
+        "quality": "fallback",
+        "error": null,
+        "note": "grasp 降级：GraspNet-1Billion 数据集 URL 未实际下载，file_size=0、downloaded=false，grasps/req_002.json 为空壳"
+      },
+      {
+        "req_id": "req_003",
+        "source": "github",
+        "quality": "fallback",
+        "error": null,
+        "note": "sim_config 降级命中 IsaacLab robots/franka.py（Python 资产定义文件），被标记 format=mjcf 落盘为 sim_config/req_003.xml，格式错配"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 7,
+      "runtime_check": "MJCF_PARSE_FAIL",
+      "warnings_detail": [
+        "sim_config 格式错配：期望 mjcf 实际为 python 脚本",
+        "grasp 空壳：0 字节未下载",
+        "资源引用不匹配：req_003 引用 objects/ACE_Coffee_Mug_Kristen_16_oz_cup.stl，实际落盘 objects/req_001.stl",
+        "robot_urdf 缺失（有源但未收录）"
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260816-132237",
+      "status": "failed",
+      "file_count": 3,
+      "missing_items": 1,
+      "file_summary": "objects/req_001.stl + grasps/req_002.json(0B) + sim_config/req_003.xml(实为 python)，缺失 req_000 robot_urdf",
+      "manifest": {
+        "is_fallback": true,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0,
+        "validation_issues": 7,
+        "runtime_check": {
+          "req_003": {
+            "status": "skipped",
+            "detail": "资源引用未解析: Error: Error opening file 'objects/ACE_Coffee_Mug_Kristen_16_oz_cup.stl'"
+          }
+        }
+      }
+    }
+  },
+  "runtime_check_detail": {
+    "tool": "mujoco.MjModel.from_xml_path + 资源引用核对",
+    "result": "MJCF FAIL: XML_ERROR_PARSING_TEXT（Line 1）——sim_config/req_003.xml 实为 IsaacLab franka.py 的 Python 源码，非 MJCF XML；manifest runtime_check status=skipped（req_003 引用的 objects/ACE_Coffee_Mug_Kristen_16_oz_cup.stl 与落盘 objects/req_001.stl 名字不匹配，资源引用未解析）",
+    "note": "sim_config 类资源按 mjcf 期望验证全部失败：1) 内容为 python 非 XML；2) 资源名引用与实际落盘文件名不一致；3) 目标机器人 Kinova Gen3 的 URDF 缺失，整体场景不可构建"
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（含 req_000 缺失报错）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（package failed）"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "req_000 robot_urdf（Kinova Gen3）检索失败：registry 无 kinova 专用 adapter，通用 GitHubAdapter 返回 markdown 被 C4 格式预检拦截，franka/robotiq 明确『有源但未收录 Kinova Gen3』→ 核心机器人资产缺失，整个 Isaac Sim 抓取场景无法构建；另叠加 sim_config 格式错配（python 当 mjcf）、grasp 空壳（0B 未下载）、资源引用名不匹配等 7 项 issue",
+  "notes": "非代码 bug：问题集要求（Kinova Gen3 + Isaac Sim）超出系统当前 adapter 覆盖范围（registry 无 kinova/isaac 专用源）。FAIL 截图已含缺失项 tab 与 package failed 状态"
+}
