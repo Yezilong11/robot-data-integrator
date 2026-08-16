@@ -138,6 +138,10 @@
     {
       "file": "screenshots/04_validation.png",
       "desc": "校验与缺失项页，包含 validation_issues 和 missing_items"
+    },
+    {
+      "file": "screenshots/05_error.png",
+      "desc": "报错截图：ycb mesh 检索超时"
     }
   ],
   "verdict": "FAIL",

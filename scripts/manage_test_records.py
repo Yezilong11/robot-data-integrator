@@ -566,7 +566,20 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
         if quality not in ALLOWED_QUALITIES:
             issues.append(Issue("ERROR", location, "quality 非法"))
         elif status == "success" and quality not in expected_qualities:
-            issues.append(Issue("ERROR", location, f"quality {quality} 不在允许范围"))
+            # 口径纪要 §2.4：题设 quality 不得高于探活实测可达水平。
+            # 数据源探活只能产出 fallback（如 GraspNet 单 grasp、IEEE 无
+            # Key 等），执行时显式降级（is_fallback=true）并记录
+            # fallback_reason，属可接受的 quality 冲突，放行为 WARNING。
+            if is_fallback is True and not is_placeholder(item.get("fallback_reason")):
+                issues.append(
+                    Issue(
+                        "WARNING",
+                        location,
+                        f"quality {quality} 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）",
+                    )
+                )
+            else:
+                issues.append(Issue("ERROR", location, f"quality {quality} 不在允许范围"))
         if status not in ALLOWED_RETRIEVE_STATUSES:
             issues.append(Issue("ERROR", location, "status 必须为 success/missing/error"))
         if not isinstance(is_fallback, bool):
@@ -576,7 +589,19 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
             and req_type in expected_req_types
             and item_format not in expected_formats
         ):
-            issues.append(Issue("ERROR", location, f"format {item_format} 不在预期格式中"))
+            # 口径纪要 §2.4：显式降级（is_fallback=true + fallback_reason）
+            # 时产出格式可偏离题设（如 mesh 降级为元数据 JSON、grasp 降级
+            # 为 CanonicalGrasp 结构化表示），放行为 WARNING。
+            if is_fallback is True and not is_placeholder(item.get("fallback_reason")):
+                issues.append(
+                    Issue(
+                        "WARNING",
+                        location,
+                        f"format {item_format} 不在预期格式中，但已显式降级（纪要 §2.4 放行）",
+                    )
+                )
+            else:
+                issues.append(Issue("ERROR", location, f"format {item_format} 不在预期格式中"))
         if status != "success" and is_placeholder(item.get("error")):
             issues.append(Issue("ERROR", location, "检索未成功时必须填写 error"))
 

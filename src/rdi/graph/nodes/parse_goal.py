@@ -79,6 +79,27 @@ def _extract_paper_text(paper_pdf: bytes | None) -> str | None:
 # 弱关键词（通用词）仅在 req_type 为非具体类型（code / dataset / unknown）时兜底，
 # 避免误伤已正确分类的具体需求（如 grasp 需求的描述里出现 "robot"）。
 _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
+    # F 审计：策略权重/关节数据类词必须优先于 CODE 的"仓库"与 DATASET 的"数据集"，
+    # 否则 "检索抓取策略权重仓库" 被 "仓库" 吸到 CODE、"检索机械臂关节数据集" 被
+    # "数据集" 吸到 DATASET（ss_github_004/005 核心需求解析偏移根因）。
+    DataReqType.POLICY_MODEL: (
+        "策略权重",
+        "权重仓库",
+        "模型权重",
+        "权重文件",
+        "policy weight",
+        "checkpoint",
+    ),
+    DataReqType.SENSOR_DATA: (
+        "关节数据",
+        "关节角度",
+        "关节位置",
+        "关节力矩",
+        "力觉",
+        "传感器数据",
+        "joint data",
+        "torque",
+    ),
     # 检索容器类目标最优先：描述含仓库/数据集专词时先判 CODE/DATASET。
     # Day2 回归：LLM 把 "retrieve robot grasp dataset" 判为 GRASP 且配 expected_format=npz 时，
     # GRASP 强词 npz 会抢先命中；把 CODE/DATASET 提到最前，容器专词优先于数据格式词。
@@ -249,6 +270,29 @@ def _extract_object_name_from_text(text: str) -> str:
     return ""
 
 
+def _dedupe_requirements(requirements: list[DataReq]) -> list[DataReq]:
+    """同一目标内相同 (req_type, object_name) 的重复需求合并，仅保留第一条。
+
+    LLM 偶发对同一目标重复生成同类型需求（如 ms_005 对 Franka 生成两个
+    ROBOT_URDF），重复需求会在检索/装配阶段产生多余的缺失项（类型错配），
+    导致整包 status=failed。去重仅合并"完全等价"需求（同类型 + 同物体名），
+    不同物体的同类型需求（如 banana 与 apple 的 GRASP）仍各自保留，不丢失信息。
+    去重后重编号 req_id，保证 req_000..req_N 连续。
+    """
+    seen: set[tuple[DataReqType, str]] = set()
+    unique: list[DataReq] = []
+    for req in requirements:
+        key = (req.req_type, (req.object_name or "").strip().lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(req)
+    return [
+        req.model_copy(update={"req_id": f"req_{i:03d}"})
+        for i, req in enumerate(unique)
+    ]
+
+
 def node_parse_goal(state: SystemState) -> dict[str, Any]:
     """目标解析节点：调用 LLM 把 user_goal + paper_pdf 转换为结构化数据需求。
 
@@ -312,6 +356,10 @@ def node_parse_goal(state: SystemState) -> dict[str, Any]:
         else req
         for req in requirements
     ]
+
+    # D4: 同一目标内相同 (req_type, object_name) 的重复需求合并（LLM 偶发重复生成，
+    # 如 ms_005 对 Franka 生成两个 ROBOT_URDF），避免重复需求导致整包 failed
+    requirements = _dedupe_requirements(requirements)
 
     return {
         "parsed_goal": result.goal,

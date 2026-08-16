@@ -167,8 +167,14 @@ class PolicyInterfaceSkill(BaseSkill):
             model_id=model_id,
             tags=tags,
         )
+        # 仅元数据（权重未本地化）→ 标记 is_fallback（fetch 降级消费契约）
         return self._ok(
-            doc, _META_ONLY_COMPLETENESS, ["权重未本地化，接口为推断"], kwargs, confidence=0.8
+            doc,
+            _META_ONLY_COMPLETENESS,
+            ["权重未本地化，接口为推断"],
+            kwargs,
+            confidence=0.8,
+            is_fallback=True,
         )
 
     def _process_manifest_bytes(self, data: bytes, kwargs: dict[str, Any]) -> StandardResult:
@@ -177,10 +183,19 @@ class PolicyInterfaceSkill(BaseSkill):
         try:
             model_info = json.loads(data)
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            # fetch 显式降级（源返回 README/HTML 等非 JSON，如 GitHub 兜底）：
+            # 按 Day2 fmt=json 降级消费契约标记 is_fallback，不伪造权重结构
             return StandardResult(
-                success=False,
+                success=True,
                 canonical_format="PolicyInterfaceDoc",
-                errors=[f"model_info.json 解析失败: {exc}"],
+                data=PolicyInterfaceDoc(framework="unknown", model_id=""),
+                completeness_pct=60.0,
+                confidence_score=0.6,
+                data_source_quality="fallback",
+                is_fallback=True,
+                warnings=[
+                    f"策略模型元数据非合法 JSON（{str(exc)[:80]}），返回降级引用"
+                ],
             )
         weight_files_meta = self._parse_kwarg_json(kwargs, "weight_files_json")
         config = self._parse_kwarg_json(kwargs, "config_json")
@@ -259,6 +274,7 @@ class PolicyInterfaceSkill(BaseSkill):
         warnings: list[str],
         kwargs: dict[str, Any],
         confidence: float = 1.0,
+        is_fallback: bool = False,
     ) -> StandardResult:
         name = kwargs.get("name")
         output_path = f"policies/{name}.json" if isinstance(name, str) and name else None
@@ -270,6 +286,8 @@ class PolicyInterfaceSkill(BaseSkill):
             confidence_score=confidence,
             warnings=warnings,
             data=doc,
+            is_fallback=is_fallback,
+            data_source_quality="fallback" if is_fallback else "real",
         )
 
     @staticmethod

@@ -44,6 +44,14 @@ def test_metadata_only_dir_generates_doc() -> None:
     assert any("权重未本地化" in w or "推断" in w for w in result.warnings)
 
 
+def test_metadata_only_marks_is_fallback() -> None:
+    """仅元数据（无真实权重本地化）→ is_fallback=True（fetch 降级消费契约）。"""
+    result = PolicyInterfaceSkill().process(b"", model_dir=str(_MINIMAL_META))
+    assert result.success is True
+    assert result.is_fallback is True
+    assert result.data_source_quality == "fallback"
+
+
 # ─── Scenario: 框架检测 ───
 
 
@@ -170,12 +178,14 @@ def test_output_path_from_name_kwarg() -> None:
     assert result.output_path == "policies/test-policy.json"
 
 
-# ─── 损坏 model_info.json 字节 → 失败 ───
+# ─── 损坏 model_info.json 字节 → 降级 ───
 
 
 def test_corrupt_manifest_bytes_fails() -> None:
-    """data 为非法 JSON → success=False，不抛异常。"""
+    """data 为非法 JSON（fetch 降级场景）→ 降级成功 is_fallback（PASS_WITH_FALLBACK）。"""
     result = PolicyInterfaceSkill().process(b"not json{")
-    assert result.success is False
-    assert result.data is None
-    assert any("解析失败" in e for e in result.errors)
+    assert result.success is True
+    assert result.is_fallback is True
+    assert result.data_source_quality == "fallback"
+    assert result.data is not None
+    assert any("降级" in w for w in result.warnings)

@@ -3,43 +3,49 @@
   "case_id": "ss_zenodo_003",
   "input": "检索机器人操作仿真数据集",
   "executor": "C",
-  "executed_at": "2026-08-14T11:29:04",
+  "executed_at": "2026-08-15T08:35:09",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
   },
-  "layer": "single_source",
-  "expected_req_types": [
-    "DATASET"
-  ],
   "observations": {
     "parse_goal": {
       "req_list": [
-        "ROBOT_URDF"
+        "dataset"
       ],
-      "vs_expected": "mismatch"
+      "vs_expected": "match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "github",
-        "quality": "n/a",
+        "source": "zenodo",
+        "quality": "fallback",
         "error": null,
-        "error_type": "other"
+        "error_type": "none",
+        "format": "DatasetSummary",
+        "is_fallback": true,
+        "status": "success",
+        "req_type": "DATASET",
+        "fallback_reason": "源未产出真实数据文件，显式降级（元数据/summary）"
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 0,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "not_applicable"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-112848",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083528",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0,
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083528/manifest.json",
+      "missing_items_count": 0,
+      "fallback_explicit": true
     }
   },
   "screenshots": [
@@ -76,8 +82,8 @@
       "desc": "最终态-数据包审查"
     }
   ],
-  "verdict": "P1_PARSE",
-  "failure_category": "P1_PARSE",
-  "failure_reason": "解析 req=['ROBOT_URDF'] 与期望 ['DATASET'] 不符（需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配））",
-  "notes": ""
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
 }

@@ -1,0 +1,443 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_006",
+  "input": "用 Franka 在 MuJoCo 里抓取香蕉（无 YCB 关键词）",
+  "executor": "E",
+  "executed_at": "2026-08-16T09:55:19+08:00",
+  "completed_at": "2026-08-16T09:56:33+08:00",
+  "run_id": "20260816-095519-a62c264b",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "3ed8ad8"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析成功，生成 4 条数据需求，覆盖 Franka robot_urdf、banana mesh、banana grasp、MuJoCo sim_config。"
+    },
+    "data_requirements": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人 URDF 描述文件",
+        "priority": "required",
+        "keywords": [
+          "Franka Panda",
+          "机器人",
+          "URDF"
+        ],
+        "fallback_sources": [
+          "franka",
+          "github"
+        ],
+        "expected_format": "URDF",
+        "object_name": ""
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "description": "香蕉的 3D 网格模型",
+        "priority": "required",
+        "keywords": [
+          "banana",
+          "香蕉",
+          "mesh",
+          "3D model"
+        ],
+        "fallback_sources": [
+          "google_scanned",
+          "ycb"
+        ],
+        "expected_format": "STL",
+        "object_name": ""
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "description": "香蕉的抓取姿态数据",
+        "priority": "required",
+        "keywords": [
+          "grasp",
+          "grasp pose",
+          "抓取姿态",
+          "NPZ"
+        ],
+        "fallback_sources": [
+          "graspnet",
+          "dexgrasp"
+        ],
+        "expected_format": "NPZ",
+        "object_name": "香蕉"
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "description": "MuJoCo 仿真场景配置",
+        "priority": "required",
+        "keywords": [
+          "MuJoCo",
+          "仿真场景",
+          "XML"
+        ],
+        "fallback_sources": [
+          "mujoco",
+          "isaac"
+        ],
+        "expected_format": "XML",
+        "object_name": ""
+      }
+    ],
+    "retrieval_errors": [
+      {
+        "req_id": "req_000",
+        "source": "franka",
+        "error_type": "timeout",
+        "error_message": "源级检索超时（超过 15.00s = per_req_timeout/4）",
+        "timestamp": "2026-08-16T09:55:45.529064+08:00"
+      },
+      {
+        "req_id": "req_003",
+        "source": "mujoco",
+        "error_type": "timeout",
+        "error_message": "源级检索超时（超过 30.00s = per_req_timeout/2）",
+        "timestamp": "2026-08-16T09:56:01.154617+08:00"
+      }
+    ],
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "attempted_sources": [
+          "franka",
+          "github"
+        ],
+        "quality": "unknown",
+        "status": "success",
+        "format": "urdf",
+        "is_fallback": true,
+        "error": null,
+        "fallback_reason": "franka 源级检索超时后转 GitHub 获取 Franka Panda URDF。",
+        "source_url": "https://github.com/UT-Austin-RPL/deoxys_control/blob/main/deoxys/deoxys/franka_interface/robot_models/panda/panda.urdf",
+        "downloaded": true,
+        "file_size": 11263
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "attempted_sources": [
+          "google_scanned"
+        ],
+        "quality": "fallback",
+        "status": "success",
+        "format": "trimesh.Trimesh",
+        "is_fallback": true,
+        "error": null,
+        "fallback_reason": "返回 Banana for Scale 入口与结构化 JSON，未下载真实 mesh 文件。",
+        "source_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Banana for Scale.zip",
+        "downloaded": false,
+        "file_size": 0
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "attempted_sources": [
+          "graspnet"
+        ],
+        "quality": "fallback",
+        "status": "success",
+        "format": "CanonicalGrasp",
+        "is_fallback": true,
+        "error": null,
+        "fallback_reason": "GraspNet 真实 NPZ 不可得，显式降级为可追溯的 JSON 记录。",
+        "source_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "downloaded": false,
+        "file_size": 0
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "attempted_sources": [
+          "mujoco",
+          "isaac"
+        ],
+        "quality": "fallback",
+        "status": "success",
+        "format": "mjcf",
+        "is_fallback": true,
+        "error": null,
+        "fallback_reason": "mujoco 源级检索超时后转 isaac fallback，最终生成 XML 配置。",
+        "source_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+        "downloaded": true,
+        "file_size": 1772
+      }
+    ],
+    "parse_convert": {
+      "status": "success",
+      "converted": [
+        {
+          "req_id": "req_000",
+          "type": "urdf",
+          "status": "success"
+        },
+        {
+          "req_id": "req_001",
+          "type": "mesh",
+          "status": "success"
+        },
+        {
+          "req_id": "req_002",
+          "type": "grasp",
+          "status": "success"
+        },
+        {
+          "req_id": "req_003",
+          "type": "sim_config",
+          "status": "success"
+        }
+      ]
+    },
+    "validate": {
+      "errors": 0,
+      "warnings": 10,
+      "runtime_check": {
+        "req_003": {
+          "status": "skipped",
+          "detail": "mujoco 未安装，仅做 XML 语法校验"
+        }
+      },
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "完整度不足 80.0%",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "completeness_pct": 80
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "置信度不足 0.80",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "confidence_score": 0.8
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_001",
+          "message": "完整度不足 60.0%",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "completeness_pct": 60
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_001",
+          "message": "置信度不足 0.60",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "confidence_score": 0.6
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_001",
+          "message": "输出路径为空",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {}
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "完整度不足 60.0%",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "completeness_pct": 60
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "置信度不足 0.60",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "confidence_score": 0.6
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "输出路径为空",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {}
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_003",
+          "message": "完整度不足 80.0%",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "completeness_pct": 80
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_003",
+          "message": "置信度不足 0.80",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "confidence_score": 0.8
+          }
+        }
+      ]
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260816-095609",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260816-095609\\manifest.json",
+      "package_id": "package-20260816-095609",
+      "status": "complete",
+      "file_count": 4,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "urdf",
+          "source_url": "https://github.com/UT-Austin-RPL/deoxys_control/blob/main/deoxys/deoxys/franka_interface/robot_models/panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": true,
+          "downloaded": true,
+          "file_size": 11263
+        },
+        {
+          "req_id": "req_001",
+          "path": "objects/req_001.json",
+          "format": "trimesh.Trimesh",
+          "source_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Banana for Scale.zip",
+          "confidence": 0.6,
+          "completeness": 60.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "downloaded": false,
+          "file_size": 0
+        },
+        {
+          "req_id": "req_002",
+          "path": "grasps/req_002.json",
+          "format": "CanonicalGrasp",
+          "source_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+          "confidence": 0.6,
+          "completeness": 60.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "downloaded": false,
+          "file_size": 0
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/req_003.xml",
+          "format": "mjcf",
+          "source_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "downloaded": true,
+          "file_size": 1772
+        }
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 4,
+        "fulfilled": 4,
+        "missing": 0,
+        "validation_issues": 10,
+        "avg_confidence": 0.7,
+        "avg_completeness": 70.0
+      }
+    },
+    "stage_progress": {
+      "目标解析": "完成",
+      "数据检索": "完成",
+      "解析转换": "完成",
+      "质量校验": "完成",
+      "整合打包": "完成"
+    },
+    "human_review": {
+      "status": "completed",
+      "decision": "satisfied",
+      "timestamp": "2026-08-16T09:56:33.009877+08:00"
+    }
+  },
+  "provenance": [
+    "2026-08-16T09:55:19.891729+08:00 parse_goal: LLM 解析成功，生成 4 条数据需求 (model=qwen-plus)",
+    "2026-08-16T09:55:30.524936+08:00 retrieve_data: 查找 req_000 (type=robot_urdf)",
+    "2026-08-16T09:55:45.529064+08:00 retrieve_data: franka 源级检索超时（超过 15.00s = per_req_timeout/4），已跳过继续下一源",
+    "2026-08-16T09:55:30.716064+08:00 retrieve_data: 查找 req_001 (type=mesh)",
+    "2026-08-16T09:55:30.998896+08:00 retrieve_data: 查找 req_002 (type=grasp)",
+    "2026-08-16T09:55:31.160164+08:00 retrieve_data: 查找 req_003 (type=sim_config)",
+    "2026-08-16T09:56:01.154617+08:00 retrieve_data: mujoco 源级检索超时（超过 30.00s = per_req_timeout/2），已跳过继续下一源",
+    "2026-08-16T09:56:09.499214+08:00 parse_convert: urdf 处理 req_000 → 成功",
+    "2026-08-16T09:56:09.499214+08:00 parse_convert: mesh 处理 req_001 → 成功",
+    "2026-08-16T09:56:09.499214+08:00 parse_convert: grasp 处理 req_002 → 成功",
+    "2026-08-16T09:56:09.499214+08:00 parse_convert: sim_config 处理 req_003 → 成功",
+    "2026-08-16T09:56:09.520524+08:00 validate: 检查 4 项解析数据、0 项缺失，发现 10 个问题 (0 error, 10 warning)",
+    "2026-08-16T09:56:09.526638+08:00 assemble_package: 生成数据包 package-20260816-095609，落盘 4 个文件",
+    "2026-08-16T09:56:33.009877+08:00 human_review: 审查决定为 satisfied"
+  ],
+  "screenshots": [
+    {
+      "file": "screenshots/01_input.png",
+      "desc": "目标输入页，包含 ms_006 输入目标和真实流程模式"
+    },
+    {
+      "file": "screenshots/02_progress.png",
+      "desc": "进度展示页，包含阶段进度、数据需求状态和 provenance"
+    },
+    {
+      "file": "screenshots/03_package.png",
+      "desc": "数据包审查页，包含 package-20260816-095609、目录树和 manifest"
+    },
+    {
+      "file": "screenshots/04_validation.png",
+      "desc": "校验与缺失项页，包含 0 error、10 warning、runtime_check skipped"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "ms_006 为 Day3 新执行交叉多源题。目标解析匹配 expected，最终生成 complete 数据包并落盘 4 个文件，无 missing_items，校验为 0 error / 10 warning。franka 与 mujoco 主源出现源级超时，但系统显式转 fallback 后完成产包；mesh 与 grasp 也为可追溯 fallback JSON，因此按显式降级口径判 PASS_WITH_FALLBACK。runtime_check 因本地 mujoco 未安装而跳过，仅做 XML 语法校验，属于环境能力限制而非前端失败。前端四个页面均有截图，未观察到 P6_FRONTEND。",
+  "reviewer": null,
+  "reviewed_at": null
+}

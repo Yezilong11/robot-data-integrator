@@ -55,7 +55,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
 
 用户目标若同时涉及以下要素，必须拆成独立的数据需求项，禁止合并：
 
-1. **机器人模型**：只要提到具体机器人（Franka Panda、UR5、Kinova、Allegro Hand 等），必须生成一项 `robot_urdf`。
+1. **机器人模型**：只有目标是"获取/下载/检索机器人本体模型（URDF/描述文件）"时，才生成一项 `robot_urdf`。**禁止**仅因目标提到机器人型号（如"mujoco_menagerie 中 franka 的真实场景"、"Franka 的 Isaac Sim 场景配置"、"UR5 的仿真场景"）就补生成 `robot_urdf`——这类目标的数据需求是 `sim_config`（仿真场景已隐含机器人），补 `robot_urdf` 会导致类型错配失败。
 2. **操作物体**：只要提到具体物体（YCB banana、mug、bottle 等），必须生成一项 `mesh`。
 3. **仿真器/仿真场景**：只要提到仿真器（MuJoCo、Isaac Sim、Gazebo、PyBullet）或"在 xx 里仿真"，必须生成一项 `sim_config`。
 4. **抓取任务/抓取姿态**：只要提到"抓取"、"grasp"、"抓取姿态"、"grasp pose"、"夹取"，必须生成一项 `grasp`。

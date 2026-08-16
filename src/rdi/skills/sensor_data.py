@@ -254,6 +254,29 @@ class SensorDataSkill(BaseSkill):
             transformations=transformations,
         )
 
+    def _fallback_result(
+        self, reason: str, name: str | None, fmt: str
+    ) -> StandardResult:
+        """fetch 显式降级的 metadata/文档：装配为可用结果并标记 is_fallback。
+
+        按 Day2 fmt=json 降级消费契约：源返回数据集元数据（缺 signals 键的 JSON）
+        或 README markdown（非时序数据）时，如实标记降级（PASS_WITH_FALLBACK），
+        不伪造真实时序数据。
+        """
+        ext = "json" if fmt == "json" else "txt"
+        output_path = f"scripts/{name}.{ext}" if isinstance(name, str) and name else None
+        return StandardResult(
+            success=True,
+            canonical_format=_CANONICAL_FORMAT,
+            data={"metadata": {"reason": reason}},
+            output_path=output_path,
+            completeness_pct=60.0,
+            confidence_score=0.6,
+            data_source_quality="fallback",
+            is_fallback=True,
+            warnings=[f"传感器数据不可用，返回元数据（fetch 显式降级）: {reason}"],
+        )
+
     def process(self, data: bytes, **kwargs: Any) -> StandardResult:
         """按 fmt 解析传感器数据；bag 路径降级；未知格式失败。"""
         fmt = str(kwargs.get("fmt", "csv")).lower()
@@ -266,11 +289,9 @@ class SensorDataSkill(BaseSkill):
             try:
                 dataset = parse(data)
             except Exception as exc:  # noqa: BLE001 — 任意解析失败均降级
-                return StandardResult(
-                    success=False,
-                    canonical_format=_CANONICAL_FORMAT,
-                    errors=[f"{fmt} 解析失败: {exc}"],
-                )
+                # 数据集元数据 JSON（缺 signals 键）或 CSV 无有效数据列：
+                # 属 fetch 显式降级（源返回的是数据集描述而非时序数据）→ 降级成功
+                return self._fallback_result(str(exc), name, fmt)
             warnings_list: list[str] = []
             completeness = 100.0
             confidence = 1.0
@@ -306,6 +327,10 @@ class SensorDataSkill(BaseSkill):
                 canonical_format=_CANONICAL_FORMAT,
                 errors=["ROS bag 内存解析未实现，请提供文件路径"],
             )
+
+        if fmt in ("markdown", "md", "txt", "readme"):
+            # GitHub 等源返回 README markdown（非时序数据）→ fetch 降级消费
+            return self._fallback_result(f"源返回 {fmt} 文档而非时序数据", name, fmt)
 
         return StandardResult(
             success=False,
