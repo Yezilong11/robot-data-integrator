@@ -147,10 +147,13 @@ class Settings(BaseSettings):
         description="Google Scanned Objects (Gazebo Fuel) API URL",
     )
     robotiq_base_url: str = Field(
-        default="https://raw.githubusercontent.com/ros-industrial-attic/robotiq/45196f6558fe8ba9d89bc8a105396c68c3e7e892",
+        default="https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892",
         description=(
             "Robotiq URDF 模型仓库基础 URL（ros-industrial 已迁至 attic）。"
-            "钉 commit 45196f6558fe8ba9d89bc8a105396c68c3e7e892（2026-08-10 pin）"
+            "钉 commit 45196f6558fe8ba9d89bc8a105396c68c3e7e892（2026-08-10 pin）。"
+            "D3 修复：默认走 jsdelivr 镜像——xacro include 链 + mesh 资产逐个下载时，"
+            "raw.githubusercontent 主链在本环境偶发挂起，会拖到 70s+ 超 15s 源级预算；"
+            "jsdelivr 直达无需 raw 快速超时兜底，海外不可达时可改回 raw"
         ),
     )
     allegro_base_url: str = Field(

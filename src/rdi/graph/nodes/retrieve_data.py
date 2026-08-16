@@ -24,6 +24,7 @@ from rdi.graph.state import SystemState
 from rdi.hermes.engine import HermesEngine
 from rdi.logging import get_logger
 from rdi.models import DataReqType, DataSource, RetrievalError, RetrievalResult, SearchResult
+from rdi.skills.registry import is_format_allowed
 
 # 模块级懒加载 HermesEngine 单例，便于测试 monkeypatch
 _hermes_engine: HermesEngine | None = None
@@ -245,7 +246,12 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     query = " ".join(str(k) for k in keywords) if keywords else description
 
     hermes = _get_hermes_engine()
-    experience_hint = hermes.inject_experience(description, req_type)
+    # D3 修复：embedding 服务偶发超时不应拖垮整个检索（此前 LLMUnavailableError
+    # 直接冒泡使 retrieve_data 崩溃）。经验提示是优化项，降级为无提示继续。
+    try:
+        experience_hint = hermes.inject_experience(description, req_type)
+    except Exception:  # noqa: BLE001
+        experience_hint = ""
 
     provenance = [f"[{datetime.now().isoformat()}] retrieve_data: 查找 {req_id} (type={req_type})"]
     if experience_hint:
@@ -390,6 +396,37 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                     except TypeError:
                         # 兼容旧 Adapter 的 fetch(item_id) 签名
                         raw = await adapter.fetch(search_results[0].item_id)
+                # C4-pre: 检索期即校验格式白名单（与装配期 C4 同源，is_format_allowed）。
+                # GitHub 等通用源对 robot_urdf 需求常返回 markdown README，检索循环此前
+                # 视为"成功"即停止，专用源（robotiq/franka）再无机会，装配期 C4 才拦截
+                # （ss_robotiq_001/002、ms_005 在 fallback_sources 顺序波动时的失败根因）。
+                # 格式不在白名单内视为本源失败，记 retrieval_errors 并继续下一候选源。
+                if not is_format_allowed(DataReqType(req_type), raw.format):
+                    elapsed = time.monotonic() - start
+                    message = (
+                        f"返回格式 {raw.format} 不属于 {req_type} 期望格式白名单，"
+                        "视为本源失败，继续下一候选源"
+                    )
+                    retrieval_errors.append(
+                        RetrievalError(
+                            req_id=req_id,
+                            source=adapter_cls.source,
+                            error_type="format_mismatch",
+                            error_message=message,
+                        )
+                    )
+                    provenance.append(
+                        f"[{datetime.now().isoformat()}] retrieve_data: "
+                        f"{adapter_cls.source.value} {message}"
+                    )
+                    logger.warning(
+                        "retrieve.format_mismatch",
+                        req_id=req_id,
+                        source=adapter_cls.source.value,
+                        fmt=raw.format,
+                        elapsed_seconds=round(elapsed, 3),
+                    )
+                    continue
                 elapsed = time.monotonic() - start
                 logger.info(
                     "retrieve.success",

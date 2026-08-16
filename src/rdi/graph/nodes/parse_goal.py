@@ -102,7 +102,8 @@ _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
     ),
     # 检索容器类目标最优先：描述含仓库/数据集专词时先判 CODE/DATASET。
     # Day2 回归：LLM 把 "retrieve robot grasp dataset" 判为 GRASP 且配 expected_format=npz 时，
-    # GRASP 强词 npz 会抢先命中；把 CODE/DATASET 提到最前，容器专词优先于数据格式词。
+    # GRASP 强词 npz 会抢先命中；把 CODE 提到最前，容器专词优先于数据格式词。
+    # D3 修复：MESH 强词提前至 DATASET 之前（见 MESH 条目注释）。
     DataReqType.CODE: (
         "开源仓库",
         "代码仓库",
@@ -113,9 +114,31 @@ _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
         "repository",
         "repo",
     ),
-    DataReqType.DATASET: ("dataset", "数据集"),
+    # D3 修复：SIM_CONFIG 提前至 ROBOT_URDF 之前——"PyBullet 仿真场景配置"这类描述
+    # 同时含"仿真场景"（SIM_CONFIG 强词）与 expected_format=urdf（ROBOT_URDF 强词），
+    # 此前 ROBOT_URDF 先命中把场景误判为第二条 robot_urdf 需求（ms_005 多解析 + 放大
+    # 缺失面）。仿真引擎/场景词（mujoco/pybullet/仿真场景等）比 urdf 格式后缀更能
+    # 表达"要什么"；纯 URDF 需求描述不含仿真场景词，不受影响。
+    DataReqType.SIM_CONFIG: (
+        "mujoco",
+        "pybullet",
+        "gazebo",
+        "isaac",
+        "mjcf",
+        "xml",
+        "simulation scene",
+        "sim config",
+        "仿真场景",
+        "仿真配置",
+    ),
     DataReqType.ROBOT_URDF: ("urdf", "xacro"),
+    # D3 修复：MESH 强词（mesh/3d model/obj/stl 等格式后缀）优先于 DATASET 的
+    # "数据集/dataset"。目标如 "获取 GSO 数据集中的任意一个物体 mesh 模型" 含
+    # "数据集" 但明确要 mesh，此前被 DATASET 抢先误判（P1_PARSE）。mesh 词同时
+    # 是格式后缀（obj/stl/ply/dae/glb），精确性高于 "数据集" 容器词；而
+    # "retrieve robot grasp dataset" 类目标不含 mesh 词，仍会落到 DATASET。
     DataReqType.MESH: ("mesh", "3d model", "obj", "stl", "ply", "dae", "glb"),
+    DataReqType.DATASET: ("dataset", "数据集"),
     DataReqType.GRASP: (
         "grasp pose",
         "grasping pose",
@@ -124,16 +147,6 @@ _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
         "npz",
         "pkl",
         "抓取姿态",
-    ),
-    DataReqType.SIM_CONFIG: (
-        "mujoco",
-        "isaac",
-        "mjcf",
-        "xml",
-        "simulation scene",
-        "sim config",
-        "仿真场景",
-        "仿真配置",
     ),
     # D2: 新增四类强关键词。中文用具体词避开泛词误伤：
     # "配置" 会命中 SIM_CONFIG 的"仿真场景配置"，故 ROBOT_CONFIG 只收英文具体词。

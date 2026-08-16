@@ -7,6 +7,7 @@
 """
 
 import asyncio
+import re
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -16,7 +17,9 @@ from rdi.models.retrieval import RawData, SearchResult
 
 # 国外主路径（franka.de）访问国内常挂起，主尝试用短超时快速放弃，
 # 转走 fallback（命中集合不变，只缩短耗时），超时时间足以容纳正常网络下的响应。
-_PRIMARY_FAST_TIMEOUT_S = 10.0
+# D3 修复：10s → 3s。per_req_timeout/4=15s 预算下，search+fetch 两个主路径
+# 各挂起会耗尽预算导致 fallback 纯 URDF 来不及下载（P2_RETRIEVE 根因）。
+_PRIMARY_FAST_TIMEOUT_S = 3.0
 
 # 降级回退：GitHub raw 仓库 URL（owner 已从 frankaemika 迁移至 frankarobotics）
 # 钉 commit ddd2fffd9de44b02ad15b4bbb2bfa2cec4d60d98（2026-08-10 pin）
@@ -24,8 +27,11 @@ _FALLBACK_BASE_URL = "https://raw.githubusercontent.com/frankarobotics/franka_ro
 
 # C2 修复：已展开纯 URDF 源（pybullet_robots 内置 Panda）
 # 钉 commit cea68420a249544210c0f02eaafc144a4487b47f（2026-08-10 pin）
+# D3 修复：raw.githubusercontent 主链在本环境偶发 8s+ 挂起（_download_bytes 的
+# 快速超时），改用 jsdelivr 直达——URDF 及其 18 个 mesh 资产均解析到 jsdelivr，
+# 避免 raw 挂起把 fetch 拖到 42s 超过 15s 源级预算（ms_005 P2_RETRIEVE 根因）。
 _PANDA_PLAIN_URDF_URL = (
-    "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/cea68420a249544210c0f02eaafc144a4487b47f"
+    "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f"
     "/data/franka_panda/panda.urdf"
 )
 
@@ -92,14 +98,21 @@ class FrankaAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。
+
+        D3 修复：整串 query（"franka panda urdf"）无法命中 id/title 子串，
+        此前被判定"未收录"直接跳过源（ms_005 P2_RETRIEVE）。改为 token 级
+        匹配：query 与已知模型任一字段的词元有交集即视为命中。
+        """
         query_lower = query.lower()
+        query_tokens = {t for t in re.findall(r"[a-z0-9]+", query_lower) if len(t) >= 3}
         matched = [
             m
             for m in _FALLBACK_MODELS
             if query_lower in m["id"]
             or query_lower in m["title"].lower()
             or query_lower in m["description"].lower()
+            or query_tokens & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']} {m['description']}".lower()))
         ]
         if not matched:
             raise AdapterCatalogError(
@@ -154,6 +167,11 @@ class FrankaAdapter(BaseAdapter):
             data_bytes = cached
         # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产
         assets = await self._download_xml_with_assets(url, data_bytes)
+        # D3 修复：panda URDF 引用 package://meshes/...（无包名），资产已按
+        # _resolve_asset_rel 以剥离 package:// 后的相对路径落盘；URDF 文本同步
+        # 剥离前缀使引用与资产键一致（离线可加载——ms_005 franka urdf 完整性
+        # 80% 的根因是 validate 无法解析 package:// 绝对引用）。
+        data_bytes = re.sub(rb"package://", b"", data_bytes)
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,
@@ -187,6 +205,9 @@ class FrankaAdapter(BaseAdapter):
             data_bytes = cached
         # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产
         assets = await self._download_xml_with_assets(url, data_bytes)
+        # D3 修复：与 _fetch_primary 同源——URDF 文本剥离 package:// 前缀，
+        # 使 mesh/texture 引用与资产键（_resolve_asset_rel 剥离后的相对路径）一致。
+        data_bytes = re.sub(rb"package://", b"", data_bytes)
         return RawData(
             source=DataSource.FRANKA,
             item_id=item_id,

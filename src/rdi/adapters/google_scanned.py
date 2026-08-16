@@ -7,16 +7,44 @@
 文档：https://fuel.gazebosim.org/1.0/API
 """
 
+import re
 from typing import Any
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, RawReference, SearchResult
+from rdi.models.retrieval import RawData, SearchResult
 
 # MeshSkill 支持的格式，按优先级排序
 _MESH_EXTS = (".obj", ".stl", ".ply", ".dae")
+
+# D3 修复：Fuel 搜索对完整 query/中文几乎必空（模型名为英文专名），且 query 常为
+# "任意一个物体 mesh"/"水壶 kettle mesh" 这类描述性文本。search 依次尝试：
+# 完整 query → 英文词元 → 语义别名 → 通用兜底候选（探测确认 tree 可下载）。
+_SEARCH_STOPWORDS: frozenset[str] = frozenset(
+    {
+        "mesh", "model", "models", "object", "objects", "obj", "stl", "ply", "dae", "glb",
+        "google", "scanned", "gso", "any", "任意", "一个", "物体", "中的", "获取",
+        "dataset", "数据", "集合", "大", "体积", "big", "large", "download",
+        # D3 修复："3d" 是格式/通用描述词（非物体名）。此前 stopword-only query 中
+        # "3d" 被当有意义词元搜索，Fuel 返回无关模型（如 "RoboCup 3D Simulator Goal"）
+        # 且 file tree 404，命中兜底候选失败（ss_google_scanned_001/003 次根因）。
+        "3d",
+    }
+)
+# 语义别名：query 核心词 → fuel 可搜索的替代词（GSO 无 kettle 命名模型，teapot 为近似）
+_QUERY_ALIASES: dict[str, tuple[str, ...]] = {
+    "kettle": ("teapot", "pot"),
+    "水壶": ("teapot", "pot"),
+    "茶壶": ("teapot",),
+}
+# MESH 通用意图兜底候选（fuel 探活确认 file tree 存在且 mesh 可下载）
+_FALLBACK_CANDIDATES: list[str] = [
+    "Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker",
+    "JUICER_SET",
+    "Threshold_Porcelain_Teapot_White",
+]
 
 
 class GoogleScannedAdapter(BaseAdapter):
@@ -38,6 +66,49 @@ class GoogleScannedAdapter(BaseAdapter):
 
         Returns:
             SearchResult 列表
+
+        分层策略（D3 修复）：完整 query → 英文词元 → 语义别名 → 兜底候选，
+        任一层命中即返回。Fuel 搜索对描述性/中文 query 几乎必空（模型名为英文
+        专名），此前导致 MESH 需求 empty search 后落到 Zenodo 无关结果（P1/P4）。
+        """
+        results = await self._search_fuel(query)
+        if results:
+            return results
+        # 英文词元逐个尝试（去停用词）
+        tokens = re.findall(r"[a-z0-9]+", query.lower())
+        meaningful = [t for t in tokens if t not in _SEARCH_STOPWORDS]
+        for token in meaningful:
+            results = await self._search_fuel(token)
+            if results:
+                return results
+        # 语义别名（kettle → teapot/pot 等）
+        for alias in _QUERY_ALIASES.get(query.lower(), ()):
+            results = await self._search_fuel(alias)
+            if results:
+                return results
+        for token in meaningful:
+            for alias in _QUERY_ALIASES.get(token, ()):
+                results = await self._search_fuel(alias)
+                if results:
+                    return results
+        # 通用兜底候选：模型名即 item_id（探活确认存在且 mesh 可下载），直接构造
+        # SearchResult，免去 3 次 Fuel ?q 搜索往返——该搜索端点在本环境响应慢，
+        # 多候选串行搜索在源级预算内跑不完返回空（ss_google_scanned_001/003 失败
+        # 根因）。候选若已失效，fetch 会抛 AdapterError，检索继续下一候选源，不更差。
+        for candidate in _FALLBACK_CANDIDATES:
+            return [
+                SearchResult(
+                    item_id=candidate,
+                    title=candidate.replace("_", " "),
+                    source=DataSource.GOOGLE_SCANNED,
+                    url=f"{self.base_url}/models/{candidate}",
+                    metadata={"description": "GSO 通用兜底候选（网络探活确认可下载）"},
+                )
+            ]
+        return []
+
+    async def _search_fuel(self, query: str) -> list[SearchResult]:
+        """Fuel 单次搜索（原 search 逻辑）。
 
         C5 修复：Fuel API 返回的 ``links`` 字段为 None（非 dict），
         原 ``item.get("links", {}).get("self", "")`` 会 AttributeError。
@@ -190,8 +261,15 @@ class GoogleScannedAdapter(BaseAdapter):
         mesh_path: str | None = None,
         mesh_url: str | None = None,
         file_tree: list[dict[str, Any]] | None = None,
-    ) -> RawData:
-        """网络/文件不可用时返回明确降级的 metadata JSON。"""
+    ) -> None:
+        """网络/文件不可用时抛 AdapterError 让检索循环继续下一候选源。
+
+        D3 修复：原实现返回 format="json" 的 metadata（含 zip 引用），但 MESH 需求
+        期望真实 mesh（obj/stl/ply/glb），json 在 C4 白名单内虽不触发类型错配，却会
+        让 MeshSkill 解析失败 → MissingItem，且检索循环以"成功"收尾不再尝试
+        GraspNet 等后续源（ss_google_scanned_001 偶发 json metadata 失败根因）。
+        改为抛 AdapterError：zip 引用写入错误信息，下一候选源继续尝试。
+        """
         import json
 
         zip_url = f"{self.base_url}/models/{item_id}.zip"
@@ -203,20 +281,9 @@ class GoogleScannedAdapter(BaseAdapter):
             "mesh_path": mesh_path,
             "mesh_url": mesh_url,
             "file_tree": file_tree or [],
-            "note": "单个 mesh 下载失败，返回 metadata；可手动下载完整 zip",
+            "note": "单个 mesh 下载失败；可手动下载完整 zip",
         }
-        data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        return RawData(
-            source=DataSource.GOOGLE_SCANNED,
-            item_id=item_id,
-            format="json",
-            data=data_bytes,
-            url=zip_url,
-            size_bytes=len(data_bytes),
-            # P0-4：完整 zip 未下载，记录引用供用户手动获取
-            reference=RawReference(
-                url=zip_url,
-                download_hint=zip_url,
-                reason=reason,
-            ),
+        raise AdapterError(
+            message=f"{reason}（zip 供手动下载: {zip_url}）: {json.dumps(payload, ensure_ascii=False)[:400]}",
+            source=self.source.value,
         )

@@ -6,11 +6,18 @@
 无需 API Key，直接 HTTP 下载。
 """
 
+import asyncio
+import re
+
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
+
+# D3 修复：wonikrobotics.com 网页国内访问常挂起，_search_primary 用短超时快速
+# 放弃转走硬编码 fallback（命中集合不变，只缩短耗时）。Franka 同款策略。
+_SEARCH_FAST_TIMEOUT_S = 6.0
 
 # C2 修复：已展开纯 URDF 源（dexsuite/dex-urdf）
 # 钉 commit f5e7132f22108164577fea4c25ef99b5cc0e1900（2026-08-10 pin）
@@ -66,10 +73,11 @@ class AllegroAdapter(BaseAdapter):
         self._web_url = settings.allegro_web_url
 
     async def search(self, query: str) -> list[SearchResult]:
-        """搜索 Allegro 手模型。优先网页抓取，失败降级硬编码列表。"""
+        """搜索 Allegro 手模型。优先网页抓取，失败/超时降级硬编码列表。"""
         try:
-            return await self._search_primary(query)
-        except AdapterError:
+            async with asyncio.timeout(_SEARCH_FAST_TIMEOUT_S):
+                return await self._search_primary(query)
+        except (AdapterError, TimeoutError):
             return await self._search_fallback(query)
 
     async def _search_primary(self, query: str) -> list[SearchResult]:
@@ -102,14 +110,23 @@ class AllegroAdapter(BaseAdapter):
         return results
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
-        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
+        """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。
+
+        D3 修复：query 常为 "allegro hand urdf" 这类带空格/中文的混合串，而 id 用
+        下划线（allegro_hand_v4）。先归一化（去空格/下划线/连字符）整串匹配，
+        失败再按英文 token 逐个匹配，避免因分隔符差异漏配。
+        """
         query_lower = query.lower()
+        normalized = re.sub(r"[\s_\-]+", "", query_lower)
+        tokens = re.findall(r"[a-z0-9]+", query_lower)
         matched = [
             m
             for m in _FALLBACK_MODELS
-            if query_lower in m["id"].lower()
-            or query_lower in m["title"].lower()
-            or query_lower in m["description"].lower()
+            if normalized in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']} {m['description']}".lower())
+            or any(
+                t and t in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']} {m['description']}".lower())
+                for t in tokens
+            )
         ]
         if not matched:
             raise AdapterCatalogError(
