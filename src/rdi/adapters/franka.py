@@ -103,16 +103,24 @@ class FrankaAdapter(BaseAdapter):
         D3 修复：整串 query（"franka panda urdf"）无法命中 id/title 子串，
         此前被判定"未收录"直接跳过源（ms_005 P2_RETRIEVE）。改为 token 级
         匹配：query 与已知模型任一字段的词元有交集即视为命中。
+
+        D4 修复（泛词误命中）：`query_lower in description` 子串 + 描述词元
+        交集让泛词 "机器人"（emika_panda 描述"协作机器人"含之）命中 Franka，
+        导致 ms_003 类 Kinova 查询若带独立 "机器人" query 会静默返回 Franka
+        Panda 而非目标机器人。与 Allegro 收紧同规则：子串/词元交集只认
+        id/title（标识性 token），描述词元交集需 ≥2 个（多词元强信号）。
         """
         query_lower = query.lower()
+        normalized = re.sub(r"[\s_\-]+", "", query_lower)
         query_tokens = {t for t in re.findall(r"[a-z0-9]+", query_lower) if len(t) >= 3}
         matched = [
             m
             for m in _FALLBACK_MODELS
-            if query_lower in m["id"]
+            if normalized in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']}".lower())
+            or query_lower in m["id"]
             or query_lower in m["title"].lower()
-            or query_lower in m["description"].lower()
-            or query_tokens & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']} {m['description']}".lower()))
+            or query_tokens & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']}".lower()))
+            or len(query_tokens & set(re.findall(r"[a-z0-9]+", m["description"].lower()))) >= 2
         ]
         if not matched:
             raise AdapterCatalogError(

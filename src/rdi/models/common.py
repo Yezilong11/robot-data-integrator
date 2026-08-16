@@ -30,6 +30,7 @@ class DataSource(StrEnum):
     FRANKA = "franka"
     ALLEGRO = "allegro"
     ROBOTIQ = "robotiq"
+    KINOVA = "kinova"
     MUJOCO = "mujoco"
     ISAAC = "isaac"
     LOCAL = "local"  # 本地文件注入（前端上传路径，跳过外部检索）

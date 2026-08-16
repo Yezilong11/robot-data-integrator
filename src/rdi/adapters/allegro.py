@@ -114,19 +114,37 @@ class AllegroAdapter(BaseAdapter):
 
         D3 修复：query 常为 "allegro hand urdf" 这类带空格/中文的混合串，而 id 用
         下划线（allegro_hand_v4）。先归一化（去空格/下划线/连字符）整串匹配，
-        失败再按英文 token 逐个匹配，避免因分隔符差异漏配。
+        失败再按英文 token 匹配，避免因分隔符差异漏配。
+
+        D4 修复（误命中）：原实现只要 query 与模型任一字段词元有交集即命中，
+        而 right/left 型号描述含英文 "urdf"，导致任意带 "urdf" 的查询（如
+        "kinova gen3 urdf"）误命中 Allegro 手爪（ms_003 重测 req_000 拿到
+        Allegro 手而非 Kinova Gen3）。收紧为：仅当 query 与模型 **id/title**
+        词元有交集（标识性 token），或与描述词元交集 ≥2 个（多词元强信号）
+        才算命中，通用单 token（"urdf"）不再触发。
+
+        D4 二次修复（子串旁路）：归一化子串检查的匹配文本仍含 description——
+        "URDF" 作为独立 query 时是描述 "Allegro 右手 URDF 模型" 的子串，绕过
+        token 收紧规则再次误命中（ms_003 复测 req_000 又拿到 Allegro 手）。
+        子串匹配文本收紧为 id/title 拼接（"urdf" 不在标识中、不再命中）；
+        "allegro hand" 类查询仍可经子串/标识 token 命中。
         """
         query_lower = query.lower()
         normalized = re.sub(r"[\s_\-]+", "", query_lower)
-        tokens = re.findall(r"[a-z0-9]+", query_lower)
+        tokens = {t for t in re.findall(r"[a-z0-9]+", query_lower) if len(t) >= 3}
         matched = [
             m
             for m in _FALLBACK_MODELS
-            if normalized in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']} {m['description']}".lower())
-            or any(
-                t and t in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']} {m['description']}".lower())
-                for t in tokens
+            if normalized in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']}".lower())
+            or bool(
+                tokens
+                & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']}".lower()))
             )
+            or len(
+                tokens
+                & set(re.findall(r"[a-z0-9]+", f"{m['description']}".lower()))
+            )
+            >= 2
         ]
         if not matched:
             raise AdapterCatalogError(

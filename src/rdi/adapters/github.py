@@ -7,6 +7,7 @@
 """
 
 import base64
+import re
 from typing import Any
 
 from rdi.adapters.base import BaseAdapter
@@ -92,16 +93,27 @@ class GitHubAdapter(BaseAdapter):
             AdapterError: 获取失败
         """
         if str(req_type).lower() == "robot_urdf":
-            urdf_path = await self._find_urdf_file(repo_name)
-            if urdf_path is not None:
-                data_bytes = await self.fetch_file(repo_name, urdf_path)
+            found = await self._find_urdf_file(repo_name)
+            if found is not None:
+                urdf_path, ref = found
+                data_bytes = await self.fetch_file(repo_name, urdf_path, ref=ref)
+                # D4 修复：URDF 随包抓取引用的外部网格/texture 资产（数据包自包含，
+                # P0-3）。此前只下载 URDF 字节，包内无 mesh，yourdfpy 加载报 11 处
+                # 'Unable to resolve filename: package://meshes/...'（ss_franka_002/003
+                # 网格缺失根因，与 FrankaAdapter 的 _fetch_* 同模式）。
+                raw_url = f"https://raw.githubusercontent.com/{repo_name}/{ref}/{urdf_path}"
+                assets = await self._download_xml_with_assets(raw_url, data_bytes)
+                # 与 franka 等源一致：剥离 package:// 前缀，使网格引用与资产键
+                # （_resolve_asset_rel 剥离后的相对路径）一致，离线可加载。
+                data_bytes = re.sub(rb"package://", b"", data_bytes)
                 return RawData(
                     source=DataSource.GITHUB,
                     item_id=repo_name,
                     format="urdf",
                     data=data_bytes,
-                    url=f"https://github.com/{repo_name}/blob/main/{urdf_path}",
+                    url=raw_url,
                     size_bytes=len(data_bytes),
+                    assets=assets,
                 )
         data = await self._request(
             "GET",
@@ -118,16 +130,43 @@ class GitHubAdapter(BaseAdapter):
             size_bytes=len(readme_bytes),
         )
 
-    async def _find_urdf_file(self, repo_name: str) -> str | None:
-        """递归列出仓库文件树，返回首个 ``.urdf``/``.xacro`` 文件路径；无则 None。
+    async def _find_urdf_file(self, repo_name: str) -> tuple[str, str] | None:
+        """递归列出仓库文件树，返回首个 ``.urdf``/``.xacro`` 文件的 (路径, 分支)；无则 None。
 
-        GitHub ``git/trees`` API（recursive=1）在仓库较大时可能被截断（truncated），
-        此时无法可靠定位 URDF 文件，返回 None 走 README 回退。
+        D4 修复：GitHub ``git/trees`` API 固定查 ``main`` 分支对默认分支非 main 的
+        仓库（如 ``Kinovarobotics/ros_kortex`` default_branch=noetic-devel）抛 404
+        AdapterError，导致 Kinova 等仓库永远回退 README（ms_003 req_000 P2_RETRIEVE
+        根因）。改为分支回退：main → master → 仓库 default_branch（``/repos/{repo}``
+        API 探测），任一分支找到 URDF 即返回。tree 过大被截断（truncated）时视为
+        该分支无结果，继续下一分支。
         """
+        for ref in ("main", "master"):
+            found = await self._urdf_in_branch(repo_name, ref)
+            if found is not None:
+                return found, ref
+        # 默认分支探测（避免额外 API 调用：main/master 均无结果时才请求）
+        default_ref = ""
+        try:
+            repo_info = await self._request(
+                "GET",
+                f"/repos/{repo_name}",
+                headers=self.headers,
+            )
+            default_ref = str(repo_info.get("default_branch") or "")
+        except AdapterError:
+            return None
+        if default_ref and default_ref not in ("main", "master"):
+            found = await self._urdf_in_branch(repo_name, default_ref)
+            if found is not None:
+                return found, default_ref
+        return None
+
+    async def _urdf_in_branch(self, repo_name: str, ref: str) -> str | None:
+        """列出指定分支文件树，返回首个 .urdf/.xacro 路径；无/失败/截断返回 None。"""
         try:
             tree_data = await self._request(
                 "GET",
-                f"/repos/{repo_name}/git/trees/main?recursive=1",
+                f"/repos/{repo_name}/git/trees/{ref}?recursive=1",
                 headers=self.headers,
             )
         except AdapterError:

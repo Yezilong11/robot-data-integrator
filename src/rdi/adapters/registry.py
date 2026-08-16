@@ -32,6 +32,7 @@ ADAPTER_REGISTRY: dict[DataReqType, list[str]] = {
         "FrankaAdapter",
         "AllegroAdapter",
         "RobotiqAdapter",
+        "KinovaAdapter",
         "GitHubAdapter",
     ],
     DataReqType.MESH: ["YCBAdapter", "GoogleScannedAdapter", "GraspNetAdapter"],
@@ -64,6 +65,7 @@ def get_sources_for_type(req_type: DataReqType) -> list[str]:
         "FrankaAdapter": DataSource.FRANKA,
         "AllegroAdapter": DataSource.ALLEGRO,
         "RobotiqAdapter": DataSource.ROBOTIQ,
+        "KinovaAdapter": DataSource.KINOVA,
         "MuJoCoAdapter": DataSource.MUJOCO,
         "IsaacSimAdapter": DataSource.ISAAC,
     }
@@ -90,6 +92,7 @@ def select_adapter(req_type: DataReqType) -> list[type[BaseAdapter]]:
     from rdi.adapters.huggingface import HuggingFaceAdapter
     from rdi.adapters.ieee import IEEEXploreAdapter
     from rdi.adapters.isaac import IsaacSimAdapter
+    from rdi.adapters.kinova import KinovaAdapter
     from rdi.adapters.mujoco import MuJoCoAdapter
     from rdi.adapters.paperswithcode import PapersWithCodeAdapter
     from rdi.adapters.robotiq import RobotiqAdapter
@@ -108,6 +111,7 @@ def select_adapter(req_type: DataReqType) -> list[type[BaseAdapter]]:
         "GoogleScannedAdapter": GoogleScannedAdapter,
         "RobotiqAdapter": RobotiqAdapter,
         "AllegroAdapter": AllegroAdapter,
+        "KinovaAdapter": KinovaAdapter,
         "MuJoCoAdapter": MuJoCoAdapter,
         "IsaacSimAdapter": IsaacSimAdapter,
         "IEEEXploreAdapter": IEEEXploreAdapter,

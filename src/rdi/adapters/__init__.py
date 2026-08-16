@@ -13,6 +13,7 @@ from rdi.adapters.graspnet import GraspNetAdapter
 from rdi.adapters.huggingface import HuggingFaceAdapter
 from rdi.adapters.ieee import IEEEXploreAdapter
 from rdi.adapters.isaac import IsaacSimAdapter
+from rdi.adapters.kinova import KinovaAdapter
 from rdi.adapters.mujoco import MuJoCoAdapter
 from rdi.adapters.paperswithcode import PapersWithCodeAdapter
 from rdi.adapters.registry import ADAPTER_REGISTRY, get_sources_for_type, select_adapter
@@ -38,6 +39,7 @@ _ADAPTER_CLASSES: dict[DataSource, Callable[[], BaseAdapter]] = {
     DataSource.FRANKA: FrankaAdapter,
     DataSource.ALLEGRO: AllegroAdapter,
     DataSource.ROBOTIQ: RobotiqAdapter,
+    DataSource.KINOVA: KinovaAdapter,
     DataSource.MUJOCO: MuJoCoAdapter,
     DataSource.ISAAC: IsaacSimAdapter,
 }

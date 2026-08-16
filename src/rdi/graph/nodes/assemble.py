@@ -74,12 +74,21 @@ def _ext_for_format(canonical_format: str) -> str:
 
 
 def _ext_for_raw_format(original_format: str, canonical_format: str) -> str:
-    """按原始格式决定原始 XML 落盘扩展名；未知格式回退 canonical_format 映射。"""
+    """按原始格式决定原始 XML 落盘扩展名；未知格式回退 canonical_format 映射。
+
+    D4 修复：IsaacLab 资产为 Python 配置（原始格式 python/py），此前回退到
+    canonical_format（mjcf→.xml）把 python 脚本落盘为 .xml，MuJoCo 解析报
+    XML_ERROR_PARSING_TEXT（ms_003 req_003 格式错配根因）。python 原始字节
+    必须以 .py 落盘（SimConfigSkill 对 python 的降级产物在 item.data，原始
+    文件本身是 python 源码）。
+    """
     fmt = (original_format or "").lower()
     if fmt in ("urdf", "xacro"):
         return ".urdf"
     if fmt in ("xml", "mjcf"):
         return ".xml"
+    if fmt in ("python", "py"):
+        return ".py"
     return _ext_for_format(canonical_format)
 
 
