@@ -1329,6 +1329,6 @@
   "failure_category": null,
   "failure_reason": null,
   "notes": "ms_001 为 A 补执行的多源端到端题（EN）。目标解析 vs_expected=match；4 类需求（robot_urdf/mesh/grasp/sim_config）全部命中：franka URDF 真实获取、ycb banana mesh 真实获取（obj）、mujoco_menagerie scene.xml 真实获取（XML 语法校验通过，本地未装 MuJoCo 故 runtime_check 记 passed=语法级）；grasp 因 GraspNet 真实 NPZ 不可得（仓库仅含归档 tar/hdf5）显式降级为可追溯 JSON 记录，package.fallback_explicit=true，按显式降级口径判 PASS_WITH_FALLBACK。数据包 complete，落盘 91 个文件，missing 0 项，0 error / 5 warning。前端真实流程截图 8 张（中间态+最终态）。\n（A 2026-08-17 执行并生成记录，fallback_reason 依据实际 retrieval reference 记录）",
-  "reviewer": null,
-  "reviewed_at": null
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

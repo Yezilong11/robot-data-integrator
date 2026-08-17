@@ -110,5 +110,7 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-133524-89ffdaa1，package-20260817-133551）。修复 robotiq 适配器轻量 xacro 展开器参数代入缺陷（src/rdi/adapters/robotiq.py _eval_xacro_expr 支持宏参数 scope：${reflect * -0.0127} 等「宏参数参与运算」表达式先整词代入实参值再求值），此前展开后 4 处 <origin> 的 xyz/rpy 退化为 2 个数值导致 yourdfpy 解析失败（旧记录 FAIL/P4_FORMAT，同根因同构于 ss_robotiq_001/002）；本次展开器产出全 3 数值 origin，yourdfpy 11 links/10 joints 全解析、mesh 10/10 可加载，validation_issues=0（error=0/warning=0），missing=0，11 文件全落盘 → 判定 PASS。截图说明：按最新指示，浏览器子代理一次性捕获失败后不再重试；最终态 02_retrieve（mid/bot 重复帧）、03_validate（唯一帧与检索 mid 重复）、04_package（无有效帧）以及中间态 03_validate（帧稀疏偏移不一致）4 张截图未完成，仅保留有效的 4 张（中间态 01/02/04 + 最终态 01），具体缺失清单见 screenshots 段。\n（A 2026-08-17 合规化：req_list.lower，待 D 复核）\n（A 2026-08-17 合规化：删除指向不存在文件的截图引用None、None、None、None，待 D 补真实截图）"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-133524-89ffdaa1，package-20260817-133551）。修复 robotiq 适配器轻量 xacro 展开器参数代入缺陷（src/rdi/adapters/robotiq.py _eval_xacro_expr 支持宏参数 scope：${reflect * -0.0127} 等「宏参数参与运算」表达式先整词代入实参值再求值），此前展开后 4 处 <origin> 的 xyz/rpy 退化为 2 个数值导致 yourdfpy 解析失败（旧记录 FAIL/P4_FORMAT，同根因同构于 ss_robotiq_001/002）；本次展开器产出全 3 数值 origin，yourdfpy 11 links/10 joints 全解析、mesh 10/10 可加载，validation_issues=0（error=0/warning=0），missing=0，11 文件全落盘 → 判定 PASS。截图说明：按最新指示，浏览器子代理一次性捕获失败后不再重试；最终态 02_retrieve（mid/bot 重复帧）、03_validate（唯一帧与检索 mid 重复）、04_package（无有效帧）以及中间态 03_validate（帧稀疏偏移不一致）4 张截图未完成，仅保留有效的 4 张（中间态 01/02/04 + 最终态 01），具体缺失清单见 screenshots 段。\n（A 2026-08-17 合规化：req_list.lower，待 D 复核）\n（A 2026-08-17 合规化：删除指向不存在文件的截图引用None、None、None、None，待 D 补真实截图）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

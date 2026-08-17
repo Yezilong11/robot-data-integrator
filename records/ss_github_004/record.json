@@ -84,5 +84,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中 POLICY_MODEL，经 github 检索命中策略权重相关仓库，fetch 显式降级为结构化接口文档 PolicyInterfaceDoc（is_fallback=true + fallback_reason 已记录），符合 fallback_explicit 定义（纪要 §2.4 口径，quality=fallback 放行）；pkg=complete、missing=0。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）"
+  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中 POLICY_MODEL，经 github 检索命中策略权重相关仓库，fetch 显式降级为结构化接口文档 PolicyInterfaceDoc（is_fallback=true + fallback_reason 已记录），符合 fallback_explicit 定义（纪要 §2.4 口径，quality=fallback 放行）；pkg=complete、missing=0。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

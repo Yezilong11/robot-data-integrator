@@ -119,5 +119,7 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P2_RETRIEVE（通用 GitHubAdapter 返回 markdown 类型错配、落盘 0 文件）；本次修复后检索命中 allegro 专用数据源（dexsuite/dex-urdf 仓库 allegro_hand_right.urdf，is_fallback=false、confidence=1.0/completeness=100%），validate 0 error/0 warning，yourdfpy 23 links/22 joints 解析成功，11/11 mesh 可加载，validation_issues=0 → 按判定标准记为 PASS。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P2_RETRIEVE（通用 GitHubAdapter 返回 markdown 类型错配、落盘 0 文件）；本次修复后检索命中 allegro 专用数据源（dexsuite/dex-urdf 仓库 allegro_hand_right.urdf，is_fallback=false、confidence=1.0/completeness=100%），validate 0 error/0 warning，yourdfpy 23 links/22 joints 解析成功，11/11 mesh 可加载，validation_issues=0 → 按判定标准记为 PASS。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

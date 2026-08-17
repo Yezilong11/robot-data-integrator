@@ -115,5 +115,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P1_PARSE（LLM 将 mesh 需求误判为 dataset 类型，Zenodo 返回无关论文摘要、落盘 DatasetSummary JSON）；本次修复后 parse_goal 正确解析为 mesh 类型（vs_expected=match），检索命中 Google Scanned Objects 真实数据（gazebosim fuel GoogleResearch 模型，source=google_scanned，is_fallback=false、confidence=1.0/completeness=100%），产出 objects/req_000.stl（1501784B，trimesh 可加载且 watertight），validate 0 error/0 warning，validation_issues=0 → 按判定标准记为 PASS。注：parse 期望格式 OBJ，实际落盘 STL，两者同属 mesh 大类且网格可加载，功能等价，系统判定无格式 ERROR。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）\n（A 2026-08-17 合规化：is_fallback=true、fallback_reason、verdict PWF，待 D 复核）"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P1_PARSE（LLM 将 mesh 需求误判为 dataset 类型，Zenodo 返回无关论文摘要、落盘 DatasetSummary JSON）；本次修复后 parse_goal 正确解析为 mesh 类型（vs_expected=match），检索命中 Google Scanned Objects 真实数据（gazebosim fuel GoogleResearch 模型，source=google_scanned，is_fallback=false、confidence=1.0/completeness=100%），产出 objects/req_000.stl（1501784B，trimesh 可加载且 watertight），validate 0 error/0 warning，validation_issues=0 → 按判定标准记为 PASS。注：parse 期望格式 OBJ，实际落盘 STL，两者同属 mesh 大类且网格可加载，功能等价，系统判定无格式 ERROR。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）\n（A 2026-08-17 合规化：is_fallback=true、fallback_reason、verdict PWF，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

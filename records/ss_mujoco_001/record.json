@@ -147,5 +147,7 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "真实流程 run_graph+resume 执行，共 2 次运行：① 首次默认 PER_REQ_TIMEOUT=60s，MuJoCo fetch 需串行下载 68 个 mesh 资产（~42s）与 franka 并行检索双需求超 60s 预算，检索阶段 per_req_timeout 超时 FAIL（P2_RETRIEVE，网络/超时预算类，非格式问题）；② 重跑设置 PER_REQ_TIMEOUT=180s：req_000 URDF 由 franka 源命中 pybullet_robots panda.urdf（81.58s，confidence 0.8/completeness 80%），req_001 MJCF 由 mujoco 源命中 mujoco_menagerie scene.xml（91.44s，quality=real），打包 88 文件 complete。可加载性三类全部通过：URDF yourdfpy(load_meshes=True) 12 joints/13 links、Mesh trimesh faces>0、MJCF mujoco.mj_step nq=9/nu=8 一步仿真成功。目录结构与 manifest 一致。判定 PASS（以重跑成功为准，首次超时如实记录）。截图（中间态+最终态）已归档。"
+  "notes": "真实流程 run_graph+resume 执行，共 2 次运行：① 首次默认 PER_REQ_TIMEOUT=60s，MuJoCo fetch 需串行下载 68 个 mesh 资产（~42s）与 franka 并行检索双需求超 60s 预算，检索阶段 per_req_timeout 超时 FAIL（P2_RETRIEVE，网络/超时预算类，非格式问题）；② 重跑设置 PER_REQ_TIMEOUT=180s：req_000 URDF 由 franka 源命中 pybullet_robots panda.urdf（81.58s，confidence 0.8/completeness 80%），req_001 MJCF 由 mujoco 源命中 mujoco_menagerie scene.xml（91.44s，quality=real），打包 88 文件 complete。可加载性三类全部通过：URDF yourdfpy(load_meshes=True) 12 joints/13 links、Mesh trimesh faces>0、MJCF mujoco.mj_step nq=9/nu=8 一步仿真成功。目录结构与 manifest 一致。判定 PASS（以重跑成功为准，首次超时如实记录）。截图（中间态+最终态）已归档。",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

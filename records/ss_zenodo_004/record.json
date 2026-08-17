@@ -86,5 +86,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。"
+  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

@@ -105,5 +105,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day2-C 重跑（项目优化后第五轮）：由前轮 FAIL/P2_RETRIEVE（github 首源检索超时）转为 PASS_WITH_FALLBACK——源级子预算（per_req_timeout/候选源数）生效，github/hf 子预算内未命中后 zenodo 兜底命中，包完整落盘 1 文件（DatasetSummary），缺失 0，无 ERROR。两处待 A 关注：(1) 命中源偏移：题设 huggingface，实际命中 zenodo；(2) 检索相关性：zenodo 返回数据集主题为 deepfakes/巴西选举（非 robot grasp），相关性存疑，建议 A 评估检索相关性质量。feat/arch-langgraph"
+  "notes": "Day2-C 重跑（项目优化后第五轮）：由前轮 FAIL/P2_RETRIEVE（github 首源检索超时）转为 PASS_WITH_FALLBACK——源级子预算（per_req_timeout/候选源数）生效，github/hf 子预算内未命中后 zenodo 兜底命中，包完整落盘 1 文件（DatasetSummary），缺失 0，无 ERROR。两处待 A 关注：(1) 命中源偏移：题设 huggingface，实际命中 zenodo；(2) 检索相关性：zenodo 返回数据集主题为 deepfakes/巴西选举（非 robot grasp），相关性存疑，建议 A 评估检索相关性质量。feat/arch-langgraph",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

@@ -112,5 +112,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "mesh 从 YCB 官方源真实获取（stl 1 文件）；grasp 因 GraspNet 真实 npz 不可得（已知风险 R1）显式降级为元数据 JSON（missing_items 含 reason + alternatives，可追溯）。按判定口径纪要 §6 显式降级口径判 PASS_WITH_FALLBACK。前端流程全阶段可展示，未发现 P6_FRONTEND；该 case 未指定仿真器，系统未强制生成 sim_config，符合预期。"
+  "notes": "mesh 从 YCB 官方源真实获取（stl 1 文件）；grasp 因 GraspNet 真实 npz 不可得（已知风险 R1）显式降级为元数据 JSON（missing_items 含 reason + alternatives，可追溯）。按判定口径纪要 §6 显式降级口径判 PASS_WITH_FALLBACK。前端流程全阶段可展示，未发现 P6_FRONTEND；该 case 未指定仿真器，系统未强制生成 sim_config，符合预期。",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

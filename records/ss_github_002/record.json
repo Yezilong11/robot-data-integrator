@@ -85,5 +85,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）"
+  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

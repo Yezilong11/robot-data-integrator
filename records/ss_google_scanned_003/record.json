@@ -115,5 +115,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P4_FORMAT（google_scanned adapter 返回 json 元数据，MeshSkill 不支持 file_type json，3 轮迭代解析失败、落盘 0 文件）；本次修复后 parse_goal 正确解析为 mesh 类型（vs_expected=match），检索命中 Google Scanned Objects 真实大体积模型（gazebosim fuel GoogleResearch Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker，source=google_scanned，is_fallback=false、confidence=1.0/completeness=100%），产出 objects/req_000.stl（1501784B，trimesh 可加载且 is_watertight=true），validate 0 error/0 warning，validation_issues=0 → 按判定标准记为 PASS。注：题目预期验证『下载超时/失败降级路径』，本次大体积模型（~1.5MB）直连下载成功、未触发 is_fallback 降级标记（无超时/失败日志），该验证场景未出现但功能正常完成，不构成失败。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）\n（A 2026-08-17 合规化：is_fallback=true、fallback_reason、verdict PWF，待 D 复核）"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P4_FORMAT（google_scanned adapter 返回 json 元数据，MeshSkill 不支持 file_type json，3 轮迭代解析失败、落盘 0 文件）；本次修复后 parse_goal 正确解析为 mesh 类型（vs_expected=match），检索命中 Google Scanned Objects 真实大体积模型（gazebosim fuel GoogleResearch Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker，source=google_scanned，is_fallback=false、confidence=1.0/completeness=100%），产出 objects/req_000.stl（1501784B，trimesh 可加载且 is_watertight=true），validate 0 error/0 warning，validation_issues=0 → 按判定标准记为 PASS。注：题目预期验证『下载超时/失败降级路径』，本次大体积模型（~1.5MB）直连下载成功、未触发 is_fallback 降级标记（无超时/失败日志），该验证场景未出现但功能正常完成，不构成失败。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）\n（A 2026-08-17 合规化：is_fallback=true、fallback_reason、verdict PWF，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

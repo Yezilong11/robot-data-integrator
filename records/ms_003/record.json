@@ -203,5 +203,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-122727-1d9310e4）。旧记录为 FAIL/P2_RETRIEVE（Kinova 无适配器、主源检索失败）：本次 kinova 适配器命中 ros_kortex，4 条需求（URDF+MESH+GRASP+SIM_CONFIG）全 fulfilled、12 文件全落盘、missing=0 → 判定 PASS_WITH_FALLBACK（req_000/002/003 显式 fallback，fallback_explicit=true）。仅 validation_issues=7（置信度/完整度未达 1.0 阈值 + grasp 近似姿态）为 warn 级。\n（A 2026-08-17 合规化：req_type 大写转小写；ms_003 vs_expected→partial、source isaac_lab→isaac、补 fallback_reason，待 D 复核）"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-122727-1d9310e4）。旧记录为 FAIL/P2_RETRIEVE（Kinova 无适配器、主源检索失败）：本次 kinova 适配器命中 ros_kortex，4 条需求（URDF+MESH+GRASP+SIM_CONFIG）全 fulfilled、12 文件全落盘、missing=0 → 判定 PASS_WITH_FALLBACK（req_000/002/003 显式 fallback，fallback_explicit=true）。仅 validation_issues=7（置信度/完整度未达 1.0 阈值 + grasp 近似姿态）为 warn 级。\n（A 2026-08-17 合规化：req_type 大写转小写；ms_003 vs_expected→partial、source isaac_lab→isaac、补 fallback_reason，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

@@ -124,5 +124,7 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-120856-65c55ff4）。旧记录为 PASS_WITH_FALLBACK（deoxys_control fallback 仅 URDF 无网格）：本次 franka 源 primary 路径直连 pybullet_robots（jsdelivr CDN），1 URDF + 18 OBJ（视觉+碰撞）全量落盘、missing=0 → PASS。仅 validation_issues=2（置信度 0.8 / 完整度 80%）为 warn 级。\n（A 2026-08-17 合规化：req_type 大写转小写；ms_003 vs_expected→partial、source isaac_lab→isaac、补 fallback_reason，待 D 复核）"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-120856-65c55ff4）。旧记录为 PASS_WITH_FALLBACK（deoxys_control fallback 仅 URDF 无网格）：本次 franka 源 primary 路径直连 pybullet_robots（jsdelivr CDN），1 URDF + 18 OBJ（视觉+碰撞）全量落盘、missing=0 → PASS。仅 validation_issues=2（置信度 0.8 / 完整度 80%）为 warn 级。\n（A 2026-08-17 合规化：req_type 大写转小写；ms_003 vs_expected→partial、source isaac_lab→isaac、补 fallback_reason，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

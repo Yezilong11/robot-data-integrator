@@ -433,6 +433,6 @@
   "failure_category": null,
   "failure_reason": null,
   "notes": "ms_006 为 Day3 新执行交叉多源题。目标解析匹配 expected，最终生成 complete 数据包并落盘 4 个文件，无 missing_items，校验为 0 error / 10 warning。franka 与 mujoco 主源出现源级超时，但系统显式转 fallback 后完成产包；mesh 与 grasp 也为可追溯 fallback JSON，因此按显式降级口径判 PASS_WITH_FALLBACK。runtime_check 因本地 mujoco 未安装而跳过，仅做 XML 语法校验，属于环境能力限制而非前端失败。前端四个页面均有截图，未观察到 P6_FRONTEND。\n（A 2026-08-17 合规化：validate.runtime_check 嵌套 dict 转枚举 passed）",
-  "reviewer": null,
-  "reviewed_at": null
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

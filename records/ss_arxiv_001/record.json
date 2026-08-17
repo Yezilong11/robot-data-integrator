@@ -105,5 +105,7 @@
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day2-C 重跑（项目优化后第五轮，ad2581f fmt=json 消费适配生效）：arxiv PDF 超阈值显式降级 metadata JSON，PaperSkill 正确消费（is_fallback=true），包完整落盘 1 文件，缺失 0，无 ERROR。由前 4 轮 FAIL/P4_FORMAT 转为 PASS_WITH_FALLBACK。feat/arch-langgraph"
+  "notes": "Day2-C 重跑（项目优化后第五轮，ad2581f fmt=json 消费适配生效）：arxiv PDF 超阈值显式降级 metadata JSON，PaperSkill 正确消费（is_fallback=true），包完整落盘 1 文件，缺失 0，无 ERROR。由前 4 轮 FAIL/P4_FORMAT 转为 PASS_WITH_FALLBACK。feat/arch-langgraph",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }

@@ -113,5 +113,7 @@
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "真实流程 run_graph+resume（与前端一致）执行。LLM 解析正确（req=[mesh]）；ycb 源命中 011_banana/google_16k/textured.obj（OBJ 1.43MB，38.43s），转换 STL 落包 objects/req_000.stl。可加载性：trimesh 加载 faces=16384>0，通过。目录结构核验与 manifest 一致。注意：manifest 中 data_source_quality 标记为 'unknown'（YCB adapter 未标注真实度），实际数据为 YCB 真实 mesh；expected.quality 允许 real/fallback。截图（中间态+最终态）已归档。"
+  "notes": "真实流程 run_graph+resume（与前端一致）执行。LLM 解析正确（req=[mesh]）；ycb 源命中 011_banana/google_16k/textured.obj（OBJ 1.43MB，38.43s），转换 STL 落包 objects/req_000.stl。可加载性：trimesh 加载 faces=16384>0，通过。目录结构核验与 manifest 一致。注意：manifest 中 data_source_quality 标记为 'unknown'（YCB adapter 未标注真实度），实际数据为 YCB 真实 mesh；expected.quality 允许 real/fallback。截图（中间态+最终态）已归档。",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
 }
