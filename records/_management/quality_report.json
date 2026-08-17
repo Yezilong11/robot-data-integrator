@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-17T16:48:38+08:00",
+  "generated_at": "2026-08-17T17:11:18+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -17,12 +17,12 @@
   },
   "verdicts": {
     "pass": 11,
-    "pass_with_fallback": 44,
-    "fail": 1,
+    "pass_with_fallback": 45,
+    "fail": 0,
     "pass_rate": 0.1964,
-    "fallback_rate": 0.7857,
-    "fail_rate": 0.0179,
-    "usable_rate": 0.9821
+    "fallback_rate": 0.8036,
+    "fail_rate": 0.0,
+    "usable_rate": 1.0
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
@@ -43,9 +43,9 @@
         "cases": 29,
         "judged": 26,
         "pass": 1,
-        "fallback": 24,
-        "fail": 1,
-        "usable_rate": 0.9615
+        "fallback": 25,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "ZH": {
         "cases": 34,
@@ -93,9 +93,9 @@
         "cases": 8,
         "judged": 6,
         "pass": 1,
-        "fallback": 4,
-        "fail": 1,
-        "usable_rate": 0.8333
+        "fallback": 5,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "google_scanned": {
         "cases": 3,
@@ -157,17 +157,17 @@
         "cases": 4,
         "judged": 4,
         "pass": 3,
-        "fallback": 0,
-        "fail": 1,
-        "usable_rate": 0.75
+        "fallback": 1,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "ycb": {
         "cases": 11,
         "judged": 9,
         "pass": 1,
-        "fallback": 7,
-        "fail": 1,
-        "usable_rate": 0.8889
+        "fallback": 8,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "zenodo": {
         "cases": 5,
@@ -199,17 +199,17 @@
         "cases": 13,
         "judged": 11,
         "pass": 0,
-        "fallback": 10,
-        "fail": 1,
-        "usable_rate": 0.9091
+        "fallback": 11,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "mesh": {
         "cases": 13,
         "judged": 10,
         "pass": 1,
-        "fallback": 8,
-        "fail": 1,
-        "usable_rate": 0.9
+        "fallback": 9,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "paper": {
         "cases": 9,
@@ -231,9 +231,9 @@
         "cases": 17,
         "judged": 10,
         "pass": 6,
-        "fallback": 3,
-        "fail": 1,
-        "usable_rate": 0.9
+        "fallback": 4,
+        "fail": 0,
+        "usable_rate": 1.0
       },
       "sensor_data": {
         "cases": 3,
@@ -256,12 +256,7 @@
       "qwen-plus": 56
     }
   },
-  "failure_top3": [
-    {
-      "category": "P2_RETRIEVE",
-      "count": 1
-    }
-  ],
+  "failure_top3": [],
   "issues": {
     "problem_set": [
       {
@@ -272,6 +267,23 @@
     ],
     "assignments": [],
     "records": {
+      "ms_004": [
+        {
+          "severity": "WARNING",
+          "location": "ms_004.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_004.retrieve[1]",
+          "message": "format trimesh.Trimesh 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_004.retrieve[2]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
       "ms_005": [
         {
           "severity": "WARNING",
