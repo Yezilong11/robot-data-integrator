@@ -9,7 +9,7 @@
 ### A（组长/架构师）
 
 1. 召集问题集评审会，逐题过 `problem_set.json`，确认每题的 `target`、`expected`（req_types/quality/format/min_files）无歧义。
-2. 定验收线：P0 题至少 6/8 生成可用数据包；记录完整率 ≥ 90%；Day 8 交付两个文件夹。
+2. 定验收线：P0 题至少 6/8 生成可用数据包；记录完整率 ≥ 90%；Day 6 交付两个文件夹（Day6-8 已压缩合并为一日，见 `Day6_汇总统计.md`）。
 3. 定判定口径：PASS / PASS_WITH_FALLBACK / FAIL 边界 + 失败分类码（P1_PARSE~P8_OTHER）用法。
 4. 裁定争议题目（是否保留、期望输出是否调整），签收问题集 v1.0。
 5. 确认各角色环境就绪情况，宣布 Day 2 开测。
