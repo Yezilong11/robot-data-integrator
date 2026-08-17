@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-17T17:11:18+08:00",
+  "generated_at": "2026-08-17T17:21:41+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -9,30 +9,30 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 56,
-    "judged": 56,
+    "executed": 60,
+    "judged": 60,
     "reviewed": 0,
-    "execution_rate": 0.8889,
+    "execution_rate": 0.9524,
     "review_rate": 0.0
   },
   "verdicts": {
-    "pass": 11,
-    "pass_with_fallback": 45,
+    "pass": 14,
+    "pass_with_fallback": 46,
     "fail": 0,
-    "pass_rate": 0.1964,
-    "fallback_rate": 0.8036,
+    "pass_rate": 0.2333,
+    "fallback_rate": 0.7667,
     "fail_rate": 0.0,
     "usable_rate": 1.0
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 56,
+    "records_at_least_90_pct": 60,
     "records_at_least_90_rate": 1.0,
     "screenshot_compliance_rate": 1.0,
     "validation_error_count": 0
   },
   "p0_acceptance": {
-    "usable": 8,
+    "usable": 9,
     "total": 11,
     "target": 8,
     "passed": true
@@ -41,16 +41,16 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 26,
+        "judged": 27,
         "pass": 1,
-        "fallback": 25,
+        "fallback": 26,
         "fail": 0,
         "usable_rate": 1.0
       },
       "ZH": {
         "cases": 34,
-        "judged": 30,
-        "pass": 10,
+        "judged": 33,
+        "pass": 13,
         "fallback": 20,
         "fail": 0,
         "usable_rate": 1.0
@@ -83,17 +83,17 @@
       },
       "franka": {
         "cases": 8,
-        "judged": 2,
-        "pass": 0,
+        "judged": 5,
+        "pass": 3,
         "fallback": 2,
         "fail": 0,
         "usable_rate": 1.0
       },
       "github": {
         "cases": 8,
-        "judged": 6,
+        "judged": 7,
         "pass": 1,
-        "fallback": 5,
+        "fallback": 6,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -131,9 +131,9 @@
       },
       "isaac": {
         "cases": 3,
-        "judged": 2,
+        "judged": 3,
         "pass": 0,
-        "fallback": 2,
+        "fallback": 3,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -205,9 +205,9 @@
       },
       "mesh": {
         "cases": 13,
-        "judged": 10,
+        "judged": 11,
         "pass": 1,
-        "fallback": 9,
+        "fallback": 10,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -229,9 +229,9 @@
       },
       "robot_urdf": {
         "cases": 17,
-        "judged": 10,
-        "pass": 6,
-        "fallback": 4,
+        "judged": 14,
+        "pass": 9,
+        "fallback": 5,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -245,15 +245,15 @@
       },
       "sim_config": {
         "cases": 11,
-        "judged": 8,
+        "judged": 9,
         "pass": 3,
-        "fallback": 5,
+        "fallback": 6,
         "fail": 0,
         "usable_rate": 1.0
       }
     },
     "llm_model": {
-      "qwen-plus": 56
+      "qwen-plus": 60
     }
   },
   "failure_top3": [],
@@ -267,6 +267,18 @@
     ],
     "assignments": [],
     "records": {
+      "ms_003": [
+        {
+          "severity": "WARNING",
+          "location": "ms_003.retrieve[1]",
+          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_003.retrieve[2]",
+          "message": "出现题设外补充需求: grasp"
+        }
+      ],
       "ms_004": [
         {
           "severity": "WARNING",
@@ -346,6 +358,42 @@
         {
           "severity": "WARNING",
           "location": "ss_allegro_003",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_franka_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_franka_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_franka_003": [
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_003",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_003",
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         }
       ],
