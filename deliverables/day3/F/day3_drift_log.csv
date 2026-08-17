@@ -1,5 +1,6 @@
 scope,case_or_field,status,description,decision
-problem_set,total,OPEN,旧文档与正式问题集数量不一致,以 problem_set.json 为准
-acceptance,p0_total,OPEN,P0 总数为 11 而非 8,目标按 8/11 计算
-records,reviewer,OPEN,7 条记录均未填写复核字段,补复核后再计 reviewed
-records,package_path,WARNING,3 条记录含执行机绝对路径,补可移植证据
+problem_set,total,CLOSED,旧文档与正式问题集数量不一致,以 problem_set.json 为准（63 题）
+acceptance,p0_total,CLOSED,P0 总数为 11 而非 8,目标按 8/11 计算；当前 11/11 达标
+records,reviewer,CLOSED,记录未填写复核字段,2026-08-17 A 统一复核补齐（62/62）
+records,package_path,WARNING,部分记录含执行机绝对路径,按工具规则降为 WARNING，待人工复核补可移植证据
+records,ms_008,OPEN,ms_008 未执行（franka/github 检索超时）,等待网络恢复后补跑并入库
