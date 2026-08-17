@@ -1,0 +1,1334 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_002",
+  "input": "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉",
+  "executor": "A",
+  "executed_at": "2026-08-17T17:34:45+08:00",
+  "completed_at": "2026-08-17T17:35:47+08:00",
+  "run_id": "20260817-173445-0c66c650",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "9c6b91e"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析成功，生成 4 条数据需求（ZH）。"
+    },
+    "data_requirements": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人 URDF 描述文件",
+        "priority": "required",
+        "keywords": [
+          "Franka Panda",
+          "机器人",
+          "URDF"
+        ],
+        "fallback_sources": [
+          "franka",
+          "github"
+        ],
+        "expected_format": "URDF",
+        "object_name": ""
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "description": "YCB banana 的 3D 网格模型",
+        "priority": "required",
+        "keywords": [
+          "YCB",
+          "banana",
+          "香蕉",
+          "mesh"
+        ],
+        "fallback_sources": [
+          "ycb",
+          "google_scanned"
+        ],
+        "expected_format": "STL",
+        "object_name": "banana"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "description": "YCB banana 的抓取姿态数据",
+        "priority": "required",
+        "keywords": [
+          "grasp",
+          "grasp pose",
+          "抓取姿态",
+          "NPZ"
+        ],
+        "fallback_sources": [
+          "graspnet",
+          "dexgrasp"
+        ],
+        "expected_format": "NPZ",
+        "object_name": "banana"
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "description": "MuJoCo 仿真场景配置",
+        "priority": "required",
+        "keywords": [
+          "MuJoCo",
+          "仿真场景",
+          "XML"
+        ],
+        "fallback_sources": [
+          "mujoco",
+          "isaac"
+        ],
+        "expected_format": "XML",
+        "object_name": ""
+      }
+    ],
+    "retrieval_errors": [],
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "franka",
+        "status": "success",
+        "format": "urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": null,
+        "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "file_size": 11043,
+        "retrieved_at": "2026-08-17T17:35:17.902656"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "source": "ycb",
+        "status": "success",
+        "format": "obj",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": null,
+        "source_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj",
+        "file_size": 1431169,
+        "retrieved_at": "2026-08-17T17:35:33.782688",
+        "fallback_reason": "ycb 源返回元数据而非真实数据，显式降级"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "status": "success",
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": null,
+        "source_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "file_size": 567,
+        "retrieved_at": "2026-08-17T17:35:13.688295",
+        "fallback_reason": "GraspNet 真实 NPZ 不可得（仓库中无单个 grasp 文件 (.npz/.pkl)；grasp 标注仅存在于大体积 tar/hdf5 归档中），显式降级为可追溯的 JSON 记录"
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "source": "mujoco",
+        "status": "success",
+        "format": "xml",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": null,
+        "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+        "file_size": 819,
+        "retrieved_at": "2026-08-17T17:35:46.836643"
+      }
+    ],
+    "parse_convert": {
+      "status": "success",
+      "converted": [
+        {
+          "req_id": "req_000",
+          "type": "robot_urdf",
+          "status": "success"
+        },
+        {
+          "req_id": "req_001",
+          "type": "mesh",
+          "status": "success"
+        },
+        {
+          "req_id": "req_002",
+          "type": "grasp",
+          "status": "success"
+        },
+        {
+          "req_id": "req_003",
+          "type": "sim_config",
+          "status": "success"
+        }
+      ]
+    },
+    "validate": {
+      "errors": 0,
+      "warnings": 5,
+      "runtime_check": "passed",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "完整度不足 80.0%",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "completeness_pct": 80.0
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "置信度不足 0.80",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "confidence_score": 0.8
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "完整度不足 60.0%",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "completeness_pct": 60.0
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "置信度不足 0.60",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {
+            "confidence_score": 0.6
+          }
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "输出路径为空",
+          "suggestion": "",
+          "auto_fixable": false,
+          "context": {}
+        }
+      ]
+    },
+    "package": {
+      "dir": "D:/GitProjects/robot-data-integrator/data/output_packages/package-20260817-173547",
+      "manifest_path": "D:/GitProjects/robot-data-integrator/data/output_packages/package-20260817-173547/manifest.json",
+      "package_id": "package-20260817-173547",
+      "status": "complete",
+      "file_count": 91,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "urdf",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 11043
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link0.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 14925
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link1.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 1070650
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link1.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 22976
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link2.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 1084458
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link2.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 22688
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link3.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 1237175
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link3.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 22870
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link4.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 1272305
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link4.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 68016
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link5.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 1582192
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link5.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 67745
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link6.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 2236857
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link6.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 140218
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link7.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 45132
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/hand.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 713204
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/hand.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 15247
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/finger.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 65359
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/finger.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 7603
+        },
+        {
+          "req_id": "req_001",
+          "path": "objects/req_001.stl",
+          "format": "stl",
+          "source_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "file_size": 819284
+        },
+        {
+          "req_id": "req_002",
+          "path": "grasps/req_002.json",
+          "format": "CanonicalGrasp",
+          "source_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+          "confidence": 0.6,
+          "completeness": 60.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "file_size": 0
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/req_003.xml",
+          "format": "xml",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 819
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/panda.xml",
+          "format": "xml",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 14438
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 10084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link1.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 15084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link2.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 15084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link3.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 15084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link4.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 15084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link5_collision_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3861
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link5_collision_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 2412
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link5_collision_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3786
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 10084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 10084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/hand.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 10084
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 296497
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 103978
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 590892
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_3.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 47588
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_4.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 211200
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_5.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 17023
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_7.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 30699
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_8.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3263194
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_9.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 105629
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_10.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 343308
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link0_11.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 22295
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3274995
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3295608
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link3_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3046804
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link3_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 65260
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link3_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 83591
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link3_3.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 457684
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link4_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 83486
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link4_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3148001
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link4_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 455522
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link4_3.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 67497
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link5_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 824158
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link5_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 63174
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link5_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3856621
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 157563
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 27106
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 9916
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_3.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 11943
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_4.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 13846
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_5.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 11841
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_6.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 12597
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_7.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 4382
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_8.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 9131
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_9.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 17616
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_10.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 368502
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_11.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 32653
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_12.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3894
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_13.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3798
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_14.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 444469
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_15.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 668552
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link6_16.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 3675358
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 1362355
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 121358
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 208907
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_3.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 123684
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_4.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 85732
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_5.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 226402
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_6.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 99900
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/link7_7.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 792162
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/hand_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 9091
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/hand_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 121863
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/hand_2.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 596001
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/hand_3.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 902145
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/hand_4.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 151988
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/finger_0.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 87872
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/assets/finger_1.obj",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 64651
+        },
+        {
+          "req_id": "req_003",
+          "path": "sim_config/objects/req_001.stl",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+          "confidence": 1.0,
+          "completeness": 100.0,
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "file_size": 819284
+        }
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 4,
+        "fulfilled": 91,
+        "missing": 0,
+        "validation_issues": 5,
+        "avg_confidence": 0.9538461538461538,
+        "avg_completeness": 95.38461538461539
+      }
+    },
+    "stage_progress": {
+      "目标解析": "完成",
+      "数据检索": "完成",
+      "解析转换": "完成",
+      "质量校验": "完成",
+      "整合打包": "完成"
+    },
+    "human_review": {
+      "status": "completed",
+      "decision": "satisfied",
+      "timestamp": "2026-08-17T17:35:47+08:00"
+    }
+  },
+  "provenance": [
+    "[2026-08-17T17:34:45.932054] parse_goal: LLM 解析成功，生成 4 条数据需求 (model=qwen3.7-plus)",
+    "[2026-08-17T17:35:11.683331] retrieve_data: 查找 req_000 (type=robot_urdf)",
+    "\n[历史经验参考]\n- 类似任务「Franka Panda 机器人的 URDF 描述文件...」: 状态=success, 源=franka, 耗时=58.2s\n- 类似任务「Franka Panda 机器人的 URDF 描述文件...」: 状态=success, 源=franka, 耗时=58.2s\n- 类似任务「Franka Panda 机器人的 URDF 描述文件...」: 状态=success, 源=franka, 耗时=18.8s\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.6s\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.5s",
+    "[2026-08-17T17:35:11.854670] retrieve_data: 查找 req_001 (type=mesh)",
+    "\n[历史经验参考]\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.6s\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.7s\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.5s\n- 类似任务「Franka Panda 机器人的 URDF 描述文件...」: 状态=success, 源=franka, 耗时=58.2s\n- 类似任务「Franka Panda 机器人的 URDF 描述文件...」: 状态=success, 源=franka, 耗时=58.2s",
+    "[2026-08-17T17:35:12.009445] retrieve_data: 查找 req_002 (type=grasp)",
+    "\n[历史经验参考]\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.6s\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.7s\n- 类似任务「Franka Panda 抓取 YCB 苹果的抓取姿态数据...」: 状态=success, 源=graspnet, 耗时=1.5s\n- 类似任务「MuJoCo 仿真场景配置（含 Franka Panda 和被抓取物体 apple）...」: 状态=success, 源=mujoco, 耗时=21.8s\n- 类似任务「robot grasping 仿真相关的论文...」: 状态=success, 源=arxiv, 耗时=1.8s",
+    "[2026-08-17T17:35:12.159867] retrieve_data: 查找 req_003 (type=sim_config)",
+    "\n[历史经验参考]\n- 类似任务「MuJoCo 仿真场景配置（含 Franka Panda 和被抓取物体 apple）...」: 状态=success, 源=mujoco, 耗时=21.8s\n- 类似任务「robot grasping 仿真相关的论文...」: 状态=success, 源=arxiv, 耗时=3.0s\n- 类似任务「robot grasping 仿真相关的论文...」: 状态=success, 源=arxiv, 耗时=1.8s\n- 类似任务「robot grasping 仿真相关的论文...」: 状态=success, 源=arxiv, 耗时=1.6s\n- 类似任务「Franka Panda 机器人的 URDF 描述文件...」: 状态=success, 源=franka, 耗时=58.2s",
+    "[2026-08-17T17:35:47.063170] parse_convert: urdf 处理 req_000 → 成功",
+    "[2026-08-17T17:35:47.063170] parse_convert: mesh 处理 req_001 → 成功",
+    "[2026-08-17T17:35:47.063170] parse_convert: grasp 处理 req_002 → 成功",
+    "[2026-08-17T17:35:47.063170] parse_convert: sim_config 处理 req_003 → 成功",
+    "[2026-08-17T17:35:47.232546] validate: 检查 4 项解析数据、0 项缺失，发现 5 个问题 (0 error, 5 warning)",
+    "[2026-08-17T17:35:47.718057] assemble_package: 生成数据包 package-20260817-173547，落盘 91 个文件",
+    "[2026-08-17T17:35:47.878354] human_review: 审查决定为 satisfied"
+  ],
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入页（真实流程模式 + 实验目标）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示（数据需求状态 / provenance）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入页（运行完成）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（manifest / 目录树）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "ms_002 为 A 补执行的多源端到端题（ZH）。目标解析 vs_expected=match；4 类需求（robot_urdf/mesh/grasp/sim_config）全部命中：franka URDF 真实获取、ycb banana mesh 真实获取（obj）、mujoco_menagerie scene.xml 真实获取（XML 语法校验通过，本地未装 MuJoCo 故 runtime_check 记 passed=语法级）；grasp 因 GraspNet 真实 NPZ 不可得（仓库仅含归档 tar/hdf5）显式降级为可追溯 JSON 记录，package.fallback_explicit=true，按显式降级口径判 PASS_WITH_FALLBACK。数据包 complete，落盘 91 个文件，missing 0 项，0 error / 5 warning。前端真实流程截图 8 张（中间态+最终态）。\n（A 2026-08-17 执行并生成记录，fallback_reason 依据实际 retrieval reference 记录）",
+  "reviewer": null,
+  "reviewed_at": null
+}

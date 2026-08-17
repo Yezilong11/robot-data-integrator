@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-17T17:21:41+08:00",
+  "generated_at": "2026-08-17T17:46:07+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -9,30 +9,30 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 60,
-    "judged": 60,
+    "executed": 62,
+    "judged": 62,
     "reviewed": 0,
-    "execution_rate": 0.9524,
+    "execution_rate": 0.9841,
     "review_rate": 0.0
   },
   "verdicts": {
     "pass": 14,
-    "pass_with_fallback": 46,
+    "pass_with_fallback": 48,
     "fail": 0,
-    "pass_rate": 0.2333,
-    "fallback_rate": 0.7667,
+    "pass_rate": 0.2258,
+    "fallback_rate": 0.7742,
     "fail_rate": 0.0,
     "usable_rate": 1.0
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 60,
+    "records_at_least_90_pct": 62,
     "records_at_least_90_rate": 1.0,
     "screenshot_compliance_rate": 1.0,
     "validation_error_count": 0
   },
   "p0_acceptance": {
-    "usable": 9,
+    "usable": 11,
     "total": 11,
     "target": 8,
     "passed": true
@@ -41,17 +41,17 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 27,
+        "judged": 28,
         "pass": 1,
-        "fallback": 26,
+        "fallback": 27,
         "fail": 0,
         "usable_rate": 1.0
       },
       "ZH": {
         "cases": 34,
-        "judged": 33,
+        "judged": 34,
         "pass": 13,
-        "fallback": 20,
+        "fallback": 21,
         "fail": 0,
         "usable_rate": 1.0
       }
@@ -83,9 +83,9 @@
       },
       "franka": {
         "cases": 8,
-        "judged": 5,
+        "judged": 7,
         "pass": 3,
-        "fallback": 2,
+        "fallback": 4,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -139,9 +139,9 @@
       },
       "mujoco": {
         "cases": 9,
-        "judged": 6,
+        "judged": 8,
         "pass": 3,
-        "fallback": 3,
+        "fallback": 5,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -163,9 +163,9 @@
       },
       "ycb": {
         "cases": 11,
-        "judged": 9,
+        "judged": 11,
         "pass": 1,
-        "fallback": 8,
+        "fallback": 10,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -197,17 +197,17 @@
       },
       "grasp": {
         "cases": 13,
-        "judged": 11,
+        "judged": 13,
         "pass": 0,
-        "fallback": 11,
+        "fallback": 13,
         "fail": 0,
         "usable_rate": 1.0
       },
       "mesh": {
         "cases": 13,
-        "judged": 11,
+        "judged": 13,
         "pass": 1,
-        "fallback": 10,
+        "fallback": 12,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -229,9 +229,9 @@
       },
       "robot_urdf": {
         "cases": 17,
-        "judged": 14,
+        "judged": 16,
         "pass": 9,
-        "fallback": 5,
+        "fallback": 7,
         "fail": 0,
         "usable_rate": 1.0
       },
@@ -245,15 +245,16 @@
       },
       "sim_config": {
         "cases": 11,
-        "judged": 9,
+        "judged": 11,
         "pass": 3,
-        "fallback": 6,
+        "fallback": 8,
         "fail": 0,
         "usable_rate": 1.0
       }
     },
     "llm_model": {
-      "qwen-plus": 60
+      "qwen-plus": 60,
+      "qwen3.7-plus": 2
     }
   },
   "failure_top3": [],
@@ -267,6 +268,20 @@
     ],
     "assignments": [],
     "records": {
+      "ms_001": [
+        {
+          "severity": "WARNING",
+          "location": "ms_001.retrieve[1]",
+          "message": "format obj 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ms_002": [
+        {
+          "severity": "WARNING",
+          "location": "ms_002.retrieve[1]",
+          "message": "format obj 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
       "ms_003": [
         {
           "severity": "WARNING",
