@@ -1,0 +1,194 @@
+{
+  "case_id": "ss_allegro_001",
+  "input": "获取 Allegro Hand 灵巧手的 URDF 模型",
+  "executed_at": "2026-08-17T07:56:35",
+  "thread_id": "20260817-075619-55b35a7d",
+  "run_id": "20260817-075619-55b35a7d",
+  "package_id": "package-20260817-075635",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "ROBOT_URDF",
+          "description": "Allegro Hand 灵巧手的 URDF 模型",
+          "expected_format": "urdf",
+          "object_name": "allegro hand"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "allegro",
+        "elapsed_seconds": 11.0,
+        "data_format": "urdf",
+        "data_size": 16826,
+        "data_url": "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900/robots/hands/allegro_hand/allegro_hand_right.urdf"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-075635",
+      "package_id": "package-20260817-075635",
+      "status": "complete",
+      "file_count": 12,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 12,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "files": [
+        {
+          "path": "robots/req_000.urdf",
+          "format": "CanonicalRobot",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/collision/link_tip.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/base_link.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_0.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_1.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_12.0_right.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_13.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_14.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_15.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_2.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_3.0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "robots/meshes/visual/link_tip.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        }
+      ],
+      "runtime_check": {}
+    },
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260817-075635\n- checksums.txt\n- manifest.json\n- provenance.log\n- robots\n  - req_000.urdf\n  - meshes\n    - collision (1 file)\n    - visual (10 files)\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-075635",
+    "checks": {
+      "urdf": {
+        "file": "robots\\req_000.urdf",
+        "status": "passed",
+        "detail": "yourdfpy: 23 links / 22 joints 解析成功"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "11/11 trimesh 可加载"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "provenance.log",
+      "robots/meshes/...",
+      "robots/req_000.urdf",
+      "units.json"
+    ]
+  }
+}
