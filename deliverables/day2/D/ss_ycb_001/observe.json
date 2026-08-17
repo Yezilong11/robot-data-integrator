@@ -1,8 +1,10 @@
 {
   "case_id": "ss_ycb_001",
   "input": "获取 YCB 数据集中的香蕉（banana）mesh 模型",
-  "executed_at": "2026-08-14T15:23:02",
-  "thread_id": "751192f4-3644-4c26-97e4-afd9d1662a69",
+  "executed_at": "2026-08-16T23:34:47",
+  "thread_id": "20260816-233419-17b6d6e9",
+  "run_id": "20260816-233419-17b6d6e9",
+  "package_id": "package-20260816-233447",
   "intermediate": {
     "parse_goal": {
       "req_list": [
@@ -23,9 +25,9 @@
         "req_id": "req_000",
         "status": "success",
         "source": "ycb",
-        "elapsed_seconds": 38.43,
+        "elapsed_seconds": 27.0,
         "data_format": "obj",
-        "data_size": 1431169,
+        "data_size": 819284,
         "data_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj"
       }
     ],
@@ -37,8 +39,8 @@
   "final": {
     "frontend_status": "运行完成",
     "package": {
-      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152302",
-      "package_id": "package-20260814-152302",
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260816-233447",
+      "package_id": "package-20260816-233447",
       "status": "complete",
       "file_count": 1,
       "missing_items": [],
@@ -66,16 +68,17 @@
     "validation_issues": [],
     "runtime_check": {},
     "missing_items": [],
-    "tree": "package-20260814-152302\n- checksums.txt\n- manifest.json\n- objects\n  - req_000.stl\n- provenance.log\n- units.json"
+    "tree": "package-20260816-233447\n- checksums.txt\n- manifest.json\n- objects\n  - req_000.stl\n- provenance.log\n- units.json"
   },
   "loadability": {
-    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152302",
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260816-233447",
     "checks": {
       "mesh": {
         "file": "objects\\req_000.stl",
         "status": "passed",
         "faces": 16384,
-        "vertices": 8194
+        "vertices": 8194,
+        "watertight": true
       }
     },
     "files": [

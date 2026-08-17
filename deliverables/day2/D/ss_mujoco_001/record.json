@@ -3,15 +3,15 @@
   "case_id": "ss_mujoco_001",
   "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
   "executor": "D",
-  "executed_at": "2026-08-14T15:41:15",
+  "executed_at": "2026-08-16T23:24:08",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
     "git_branch": "feat/arch-langgraph",
-    "git_commit": "D 执行环境（commit 未提供）",
-    "per_req_timeout_note": "首次默认 60s 预算超时 FAIL；重跑将 PER_REQ_TIMEOUT=180 后 PASS（见 notes）"
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题",
+    "per_req_timeout_note": "本次重测未超时；检索阶段曾因 raw.githubusercontent CDN 不稳出现 3 次源级超时降级（见 notes），最终成功 run 为真实包"
   },
   "layer": "single_source",
   "expected_req_types": [
@@ -20,19 +20,13 @@
   "observations": {
     "parse_goal": {
       "req_list": [
-        "robot_urdf",
         "sim_config"
       ],
-      "vs_expected": "partial",
-      "note": "LLM 额外解析出 robot_urdf 需求（scene.xml 转换所需机器人 URDF），核心 sim_config 需求命中题设源；按纪要 §7 多需求补充源口径，补充需求成功获取不判降级，partial 达标",
+      "vs_expected": "full",
+      "note": "LLM 解析出 1 条 sim_config 需求（MuJoCo 场景配置），与题设目标一致",
       "requirements": [
         {
           "req_id": "req_000",
-          "req_type": "robot_urdf",
-          "expected_format": "URDF"
-        },
-        {
-          "req_id": "req_001",
           "req_type": "sim_config",
           "expected_format": "XML"
         }
@@ -41,24 +35,10 @@
     "retrieve": [
       {
         "req_id": "req_000",
-        "req_type": "robot_urdf",
-        "source": "franka",
-        "status": "success",
-        "elapsed_seconds": 81.58,
-        "format": "urdf",
-        "data_size_bytes": 11263,
-        "data_url": "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
-        "quality": "real",
-        "is_fallback": false,
-        "error": null,
-        "error_type": null
-      },
-      {
-        "req_id": "req_001",
         "req_type": "sim_config",
         "source": "mujoco",
         "status": "success",
-        "elapsed_seconds": 91.44,
+        "elapsed_seconds": 37.2,
         "format": "xml",
         "data_size_bytes": 819,
         "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
@@ -70,82 +50,80 @@
     ],
     "validate": {
       "errors": 0,
-      "warnings": 2,
-      "warning_detail": "req_000 完整度 80% / 置信度 0.8 未达标（warning 级），未阻断打包",
+      "warnings": 0,
+      "warning_detail": null,
       "runtime_check": "passed"
     },
     "package": {
-      "dir": "data/output_packages/package-20260814-154110",
-      "manifest_path": "data/output_packages/package-20260814-154110/manifest.json",
+      "dir": "data/output_packages/package-20260816-232408",
+      "manifest_path": "data/output_packages/package-20260816-232408/manifest.json",
+      "package_id": "package-20260816-232408",
+      "run_id": "20260816-232317-9c0c1ecf",
       "status": "complete",
-      "file_count": 88,
+      "file_count": 69,
       "missing_items": 0,
       "missing_items_count": 0,
       "fallback_explicit": false,
-      "avg_confidence": 0.9568,
-      "avg_completeness": 95.68
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0,
+      "validation_issues": 0
     },
     "loadability": {
-      "urdf": {
-        "file": "robots/req_000.urdf",
-        "status": "passed",
-        "joints": 12,
-        "links": 13
-      },
       "mesh": {
         "file": "sim_config/assets/finger_0.obj",
         "status": "passed",
         "faces": 362,
-        "vertices": 1022
+        "total_assets": "67/67 ok"
       },
       "mjcf": {
         "file": "sim_config/panda.xml",
         "status": "passed",
         "nq": 9,
-        "nu": 8
+        "nu": 8,
+        "note": "panda.xml 与 req_000.xml 均可加载并一步仿真成功"
       }
     },
     "structure_consistency": {
       "verified": true,
-      "note": "manifest.files(88) 与磁盘数据文件一致；robots/(19) + sim_config/(69) 顶层分类齐全，仅差 4 个包级元数据文件"
+      "note": "manifest.files(69) 与磁盘数据文件一致；sim_config(69) 全部为 real/1.0/100%"
     }
   },
   "screenshots": [
     {
       "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入与解析"
+      "desc": "中间态-目标输入与解析（完整页面 1956x2452）"
     },
     {
       "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-检索进度"
+      "desc": "中间态-检索进度（完整页面 1956x2636）"
     },
     {
       "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
+      "desc": "中间态-校验与缺失项（完整页面 1956x1496，单屏完整）"
     },
     {
       "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查（human_review 中断）"
+      "desc": "中间态-数据包审查（human_review 中断，完整页面 1956x1940）"
     },
     {
       "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入与解析"
+      "desc": "最终态-目标输入与解析（完整页面 1956x2452）"
     },
     {
       "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-检索进度"
+      "desc": "最终态-检索进度（完整页面 1956x2636）"
     },
     {
       "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
+      "desc": "最终态-校验与缺失项（完整页面 1956x1496，单屏完整）"
     },
     {
       "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
+      "desc": "最终态-数据包审查（完整页面 1956x1940）"
     }
   ],
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "真实流程 run_graph+resume 执行，共 2 次运行：① 首次默认 PER_REQ_TIMEOUT=60s，MuJoCo fetch 需串行下载 68 个 mesh 资产（~42s）与 franka 并行检索双需求超 60s 预算，检索阶段 per_req_timeout 超时 FAIL（P2_RETRIEVE，网络/超时预算类，非格式问题）；② 重跑设置 PER_REQ_TIMEOUT=180s：req_000 URDF 由 franka 源命中 pybullet_robots panda.urdf（81.58s，confidence 0.8/completeness 80%），req_001 MJCF 由 mujoco 源命中 mujoco_menagerie scene.xml（91.44s，quality=real），打包 88 文件 complete。可加载性三类全部通过：URDF yourdfpy(load_meshes=True) 12 joints/13 links、Mesh trimesh faces>0、MJCF mujoco.mj_step nq=9/nu=8 一步仿真成功。目录结构与 manifest 一致。判定 PASS（以重跑成功为准，首次超时如实记录）。截图（中间态+最终态）已归档。"
+  "notes": "Day5 清尾重测（前端真实流程 run_graph+resume，完整页面截图标准）。本次会话共 4 次前端运行：① 23:02 run（package-20260816-230229，69 文件 real）为前次会话已判定 PASS 的基准；② 23:12 run（package-20260816-231428）与 ③ 23:19 run（package-20260816-232139）均因 mujoco 源级检索超时（raw.githubusercontent CDN 不稳，90s = per_req_timeout/2）降级到 IsaacLab franka.py fallback 包（1 文件，0.8/80%，P3 环境类非代码问题）；④ 23:23 run（package-20260816-232408）成功：mujoco 源命中 mujoco_menagerie franka_emika_panda/scene.xml（37.2s），打包 69 文件（2 XML + 67 mesh 资产）全部 real/confidence 1.0/completeness 100%，validate 0 error 0 warning，runtime_check req_000 passed（MuJoCo 加载与一步仿真成功）。可加载性复核：67/67 mesh 资产 trimesh faces>0、panda.xml/req_000.xml mujoco mj_step nq=9/nu=8 通过。目录结构与 manifest 一致。判定 PASS（以成功 run 为准，期间 CDN 超时降级如实记录，不影响最终结论）。8 张截图均为滚动分块拼接的完整页面长图（顶部/中部/底部全部可见），已覆盖旧交付物。"
 }

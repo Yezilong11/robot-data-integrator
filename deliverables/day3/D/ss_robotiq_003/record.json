@@ -3,12 +3,14 @@
   "case_id": "ss_robotiq_003",
   "input": "抓取实验要装 Robotiq 夹爪，我需要它的模型",
   "executor": "D",
-  "executed_at": "2026-08-15T11:25:00",
+  "executed_at": "2026-08-17T13:35:24",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题（robotiq xacro 展开器参数代入修复未提交）"
   },
   "layer": "single_source",
   "expected_req_types": [
@@ -19,45 +21,110 @@
       "req_list": [
         "ROBOT_URDF"
       ],
-      "vs_expected": "match"
+      "vs_expected": "match",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Robotiq 夹爪（Robotiq 2F-85）的 URDF 模型",
+          "priority": "required",
+          "expected_format": "URDF"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
+        "req_type": "robot_urdf",
         "source": "robotiq",
-        "quality": "unknown",
-        "error": "需求类型 robot_urdf 期望 CanonicalRobot（URDF/xacro），实际返回 markdown（类型错配）"
+        "status": "success",
+        "elapsed_seconds": 24,
+        "format": "urdf",
+        "data_size_bytes": 14123,
+        "data_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "robotiq 适配器下载包装 xacro（jsdelivr CDN），在 adapter 层完成 include 内联 + 宏展开 + ${expr} 求值后以纯 URDF 落盘 robots/req_000.urdf；随包抓齐 10 个 mesh 资产（visual 5 DAE + collision 4 DAE + 1 STL）"
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 0,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [],
+      "note": "UI runtime_check 为空 {}（仅 MuJoCo 类需求适用）；runtime_check=passed 来自独立可加载性验证（yourdfpy 全解析）",
+      "runtime_check_detail": "yourdfpy.URDF.load LOAD_OK：11 links/10 joints，10 处 mesh 引用全部随相对路径 meshes/... 解析；trimesh 10/10（9 DAE + 1 STL）全部可加载"
     },
     "package": {
-      "dir": "data/output_packages/package-20260815-112114",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "data/output_packages/package-20260817-133551",
+      "manifest_path": "data/output_packages/package-20260817-133551/manifest.json",
+      "status": "complete",
+      "file_count": 11,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    },
+    "loadability": {
+      "urdf": {
+        "file": "robots/req_000.urdf",
+        "tool": "yourdfpy.URDF.load",
+        "status": "passed",
+        "detail": "11 links/10 joints，全部 <origin> xyz/rpy 为完整 3 数值，10 处 mesh 引用随相对路径解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "10/10 mesh（visual 5 DAE + collision 4 DAE + 1 STL）trimesh 全部可加载"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(11) 与磁盘一致（1 URDF + 10 mesh）；robots/ 顶层分类齐全"
     }
   },
-  "runtime_check_detail": {
-    "tool": "yourdfpy.URDF.load(load_meshes=True)",
-    "result": "N/A（无落盘文件）",
-    "note": "检索返回 markdown 内容，与 ROBOT_URDF 期望格式（urdf/xacro）错配，C4 类型错配检测拦截为 MissingItem"
-  },
   "screenshots": [
-    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
-    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
-    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
-    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
-    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
-    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
-    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
-    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" }
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x2636，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1496，页面内容不滚动单视口）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": null,
+      "desc": "中间态-校验与缺失项（03_validate）：浏览器分块捕获帧稀疏/偏移不一致，无法可靠拼接，截图未完成"
+    },
+    {
+      "file": null,
+      "desc": "最终态-检索进度（02_retrieve）：分块捕获中 mid/bot 为重复帧（md5 相同），截图未完成"
+    },
+    {
+      "file": null,
+      "desc": "最终态-校验与缺失项（03_validate）：仅 1 帧且与最终态检索 mid 重复，截图未完成"
+    },
+    {
+      "file": null,
+      "desc": "最终态-数据包审查（04_package）：未捕获到有效帧，截图未完成"
+    }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P2_RETRIEVE",
-  "failure_reason": "中文口语化目标下 RobotiqAdapter 检索返回 markdown 内容（网页抓取路径产物），与 robot_urdf 期望格式 urdf/xacro 类型错配，被 C4 检测拦截，落盘 0 文件",
-  "notes": "P2/P4 边界 case：检索拿到了内容但格式不可用，按 P2_RETRIEVE 记录（结果无产物）"
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-133524-89ffdaa1，package-20260817-133551）。修复 robotiq 适配器轻量 xacro 展开器参数代入缺陷（src/rdi/adapters/robotiq.py _eval_xacro_expr 支持宏参数 scope：${reflect * -0.0127} 等「宏参数参与运算」表达式先整词代入实参值再求值），此前展开后 4 处 <origin> 的 xyz/rpy 退化为 2 个数值导致 yourdfpy 解析失败（旧记录 FAIL/P4_FORMAT，同根因同构于 ss_robotiq_001/002）；本次展开器产出全 3 数值 origin，yourdfpy 11 links/10 joints 全解析、mesh 10/10 可加载，validation_issues=0（error=0/warning=0），missing=0，11 文件全落盘 → 判定 PASS。截图说明：按最新指示，浏览器子代理一次性捕获失败后不再重试；最终态 02_retrieve（mid/bot 重复帧）、03_validate（唯一帧与检索 mid 重复）、04_package（无有效帧）以及中间态 03_validate（帧稀疏偏移不一致）4 张截图未完成，仅保留有效的 4 张（中间态 01/02/04 + 最终态 01），具体缺失清单见 screenshots 段。"
 }

@@ -48,5 +48,16 @@ deliverables/day2/D/
 4. **目录结构核验**：`verify_packages.py` 确认两包 manifest.files 与磁盘数据文件完全一致（仅差 checksums/manifest/provenance/units 4 个包级元数据文件，属系统设计）。
 5. **修复前端真实 bug**：`src/rdi/frontend/app.py` 的 `to_plain` 对二进制 bytes（URDF/STL 资产）在 pydantic `mode="json"` 下抛 `UnicodeDecodeError`，导致 resume 路径崩溃；已加 `mode="python"` + bytes 占位 fallback。
 
+## 最终结果：2026-08-16 前端真实流程重测（2/2 全部通过）
+
+> 本节为**最终权威结果**。2026-08-16 对 day2/D 全部 2 题走真实前端（`src/rdi/frontend/app.py`，端口 7860）：radio「真实流程」→「运行」→ human_review 中断 →「数据包审查」选 satisfied →「继续运行」→「运行完成」；各 case 的 `record.json / observe.json / screenshots/` 均已按最新结果**覆盖写回**。截图由浏览器真实界面滚动分块拼接为完整页面（8/8，中间态 + 最终态各 4 张），替换了最初 `make_screenshots.py` 生成的文本合成截图。
+
+| case_id | verdict | package_id | 落盘文件 | 可加载性 | 截图 |
+|---|---|---|---|---|---|
+| ss_mujoco_001 | **PASS** | package-20260816-232408 | 69 | URDF/Mesh/MJCF 全 passed（mj_step 一步仿真成功） | 8/8 |
+| ss_ycb_001 | **PASS** | package-20260816-233447 | 1 | Mesh passed（16384 faces） | 8/8 |
+
+两题首轮即 PASS，无失败需修复；本次重测目的为统一为真实前端流程 + 完整页面真实截图留档。
+
 <br />
 

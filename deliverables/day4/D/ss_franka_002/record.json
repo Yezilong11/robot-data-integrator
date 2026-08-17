@@ -3,12 +3,14 @@
   "case_id": "ss_franka_002",
   "input": "我需要 Franka Panda 的完整 URDF 模型，包含碰撞网格与视觉网格",
   "executor": "D",
-  "executed_at": "2026-08-16T13:43:07",
+  "executed_at": "2026-08-17T11:58:03",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题"
   },
   "layer": "single_source",
   "expected_req_types": [
@@ -20,81 +22,107 @@
         "ROBOT_URDF"
       ],
       "vs_expected": "match",
-      "note": "目标含「完整/碰撞+视觉网格」组合需求，期望产出 URDF 及其引用的全部网格资源"
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 完整 URDF（含碰撞网格与视觉网格）"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
+        "req_type": "robot_urdf",
         "source": "franka",
-        "quality": "fallback",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "urdf",
+        "data_size_bytes": 11043,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 0.8,
+        "completeness": 80.0,
         "error": null,
-        "note": "franka 适配器降级命中 deoxys_control 仓库 panda.urdf，is_fallback=true，仅落盘 1 个 URDF 文件，未随包抓取网格"
+        "error_type": null,
+        "note": "franka 适配器直连 pybullet_robots panda.urdf（jsdelivr CDN），随包抓齐视觉 9 + 碰撞 9 共 18 个 OBJ 网格（link0-link7、hand、finger）"
       }
     ],
     "validate": {
       "errors": 0,
       "warnings": 2,
-      "runtime_check": "LOAD_OK_PARTIAL",
+      "runtime_check": "passed",
+      "errors_detail": [],
       "warnings_detail": [
-        "完整度不足 80.0%",
-        "置信度不足 0.80"
-      ]
+        "req_000: 完整度不足 80.0%（completeness_pct=80）",
+        "req_000: 置信度不足 0.80（confidence_score=0.8）"
+      ],
+      "runtime_check_detail": "yourdfpy.URDF.load(load_meshes=True) LOAD_OK：13 links/12 joints，mesh 引用全部随相对路径 meshes/... 解析；trimesh OBJ 18/18 全部可加载"
     },
     "package": {
-      "dir": "data/output_packages/package-20260816-134307",
+      "dir": "data/output_packages/package-20260817-115803",
+      "manifest_path": "data/output_packages/package-20260817-115803/manifest.json",
       "status": "complete",
-      "file_count": 1,
+      "file_count": 19,
       "missing_items": 0,
-      "file_summary": "robots/req_000.urdf（仅 URDF 文本，无网格文件）",
-      "manifest": {
-        "is_fallback": true,
-        "avg_confidence": 0.8,
-        "avg_completeness": 80.0,
-        "validation_issues": 2
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
+    },
+    "loadability": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，13 links/12 joints，mesh 引用全部随相对路径解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "18/18 mesh 可加载（robots/meshes/visual|collision，link0-link7 + hand + finger）"
       }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(19) 与磁盘一致（robots/req_000.urdf + robots/meshes/ 18 obj）；碰撞与视觉网格分类目录均存在"
     }
-  },
-  "runtime_check_detail": {
-    "tool": "yourdfpy.URDF.load(load_meshes=True)",
-    "result": "URDF LOAD_OK links=13 joints=12（结构可解析）；但报 11 处 'Unable to resolve filename: package://meshes/...'",
-    "note": "URDF 内以 package://meshes/... 引用碰撞/视觉网格，而包内未落盘任何网格文件，网格引用全部无法解析——目标明确要求「碰撞网格与视觉网格」，网格资产未交付，仅 URDF 文本可用"
   },
   "screenshots": [
     {
       "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入"
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
     },
     {
       "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-进度展示"
+      "desc": "中间态-检索进度（完整长图 2064x2606，3 段拼接）"
     },
     {
       "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
+      "desc": "中间态-校验与缺失项（完整长图 2064x1940，3 段拼接）"
     },
     {
       "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查"
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1792，3 段拼接）"
     },
     {
       "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入"
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
     },
     {
       "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-进度展示"
+      "desc": "最终态-检索进度（完整长图 2064x2606，3 段拼接）"
     },
     {
       "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
+      "desc": "最终态-校验与缺失项（0 error/2 warning，完整长图 2064x2176，3 段拼接）"
     },
     {
       "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
+      "desc": "最终态-数据包审查（完整长图 2064x1792，3 段拼接）"
     }
   ],
-  "verdict": "PASS_WITH_FALLBACK",
+  "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "manifest is_fallback=true，降级显式可追溯（满足 expected.quality 含 fallback）；但目标明确要求的碰撞/视觉网格未随包交付，package://meshes/... 引用无法解析，仅 URDF 结构可用，属实质性降级而非完整满足"
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-115751-7e0c53e1）。旧记录为 PASS_WITH_FALLBACK（deoxys_control fallback 仅 URDF 无网格）：本次 franka 源 primary 路径直连 pybullet_robots（jsdelivr CDN），1 URDF + 18 OBJ（视觉+碰撞）全量落盘、missing=0，碰撞网格与视觉网格均随包交付，不再降级 → PASS。仅 validation_issues=2（置信度 0.8 / 完整度 80%）为 warn 级。截图跨两次真实运行（中间态与最终态均真实前端渲染，页面结构一致）。"
 }

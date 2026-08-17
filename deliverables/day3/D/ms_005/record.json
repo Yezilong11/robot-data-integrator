@@ -3,12 +3,14 @@
   "case_id": "ms_005",
   "input": "Franka Panda stacks YCB blocks in PyBullet",
   "executor": "D",
-  "executed_at": "2026-08-15T13:55:00",
+  "executed_at": "2026-08-17T09:24:16",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题"
   },
   "layer": "multi_source",
   "expected_req_types": [
@@ -20,63 +22,137 @@
       "req_list": [
         "ROBOT_URDF",
         "MESH",
-        "ROBOT_URDF"
+        "SIM_CONFIG"
       ],
-      "vs_expected": "partial mismatch: 期望 2 条（urdf+mesh），实际 3 条（多解析 1 条 robot_urdf，PyBullet 场景被误判为额外 URDF 需求）"
+      "vs_expected": "superset：期望 2 条（urdf+mesh），实际 3 条（另解析 sim_config 仿真场景配置，PyBullet 堆叠场景的合理补充，非旧记录中的 robot_urdf 重复误判）"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "type": "robot_urdf",
+        "req_type": "robot_urdf",
         "source": "franka",
-        "quality": "unknown",
-        "error": "franka 源 3 轮均超时（per_req_timeout/4=15s），通用 GitHub 检索返回 markdown 类型错配，C4 拦截"
+        "status": "success",
+        "elapsed_seconds": 44.0,
+        "format": "urdf",
+        "data_size_bytes": 11043,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "附 robots/meshes/visual|collision 18 个 obj；loadability：13 links/12 joints"
       },
       {
         "req_id": "req_001",
-        "type": "mesh",
-        "source": "google_scanned/fuel",
-        "quality": "unknown",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed_seconds": 45.0,
         "format": "stl",
-        "note": "YCB 50_BLOCKS tip 的 obj 经 MeshSkill 转为 stl，is_fallback=true，trimesh 验证 5362 顶点/10728 面/水密"
+        "data_size_bytes": 536484,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/50_BLOCKS/tip/files/meshes/model.obj",
+        "quality": "real",
+        "is_fallback": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "主源未命中走 fuel.gazebosim fallback，obj 转 stl"
       },
       {
         "req_id": "req_002",
-        "type": "robot_urdf",
-        "source": "github",
-        "quality": "unknown",
-        "error": "检索返回 markdown（PyBullet 场景误判），C4 类型错配拦截"
+        "req_type": "sim_config",
+        "source": "mujoco",
+        "status": "success",
+        "elapsed_seconds": 8.0,
+        "format": "xml",
+        "data_size_bytes": 819,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "附 sim_config/panda.xml + assets 约 66 个 obj/stl + objects/req_001.stl"
       }
     ],
     "validate": {
-      "errors": 2,
-      "warnings": 0,
-      "runtime_check": "empty"
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%（completeness_pct=80）",
+        "req_000: 置信度不足 0.80（confidence_score=0.8）"
+      ],
+      "runtime_check_detail": "MuJoCo 加载与一步仿真成功（req_002）"
     },
     "package": {
-      "dir": "data/output_packages/package-20260815-134233",
-      "status": "failed",
-      "file_count": 1,
-      "missing_items": 2
+      "dir": "data/output_packages/package-20260817-092416",
+      "manifest_path": "data/output_packages/package-20260817-092416/manifest.json",
+      "status": "complete",
+      "file_count": 90,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": true,
+      "avg_confidence": 0.958,
+      "avg_completeness": 95.78
+    },
+    "loadability": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，13 links/12 joints"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "19/19 mesh 可加载（robots/meshes/visual|collision 18 obj + objects/req_001.stl）"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(90) 与磁盘一致；robots/、objects/、sim_config/ 分类目录正确"
     }
   },
-  "runtime_check_detail": {
-    "tool": "trimesh.load",
-    "result": "LOAD_OK verts=5362 faces=10728 is_watertight=True（objects/req_001.stl）",
-    "note": "mesh 产物有效；robot_urdf 无落盘文件，无法做 URDF 加载验证；PyBullet 堆叠场景（urdf+mesh 组合）不成立"
-  },
   "screenshots": [
-    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
-    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
-    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
-    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
-    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
-    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
-    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
-    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" }
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x3098，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项（完整长图 2064x1908）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1940）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度（完整长图 2064x2784）"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（0 error/2 warning，完整长图 2064x1908）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（完整长图 2064x1940）"
+    }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P2_RETRIEVE",
-  "failure_reason": "Franka Panda URDF 检索 3 轮均失败（franka 源超时 + 通用 GitHub 返回 markdown 类型错配被 C4 拦截），2 条 robot_urdf 需求全部缺失；仅 mesh 成功（fallback stl），落盘 1 文件未达 min_files=2，PyBullet 堆叠场景无法构建",
-  "notes": "多源端到端 case 的关键链路断裂点：robot_urdf 无有效适配器产物；同时 parse 阶段多解析 1 条 robot_urdf（PyBullet 场景误判），放大缺失面；mesh 侧 YCB 块经 fuel.gazebosim.org fallback 成功且质量验证通过"
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P2_RETRIEVE（Franka Panda URDF 检索 3 轮失败：franka 源超时 + 通用 GitHub 返回 markdown 类型错配被 C4 拦截，2 条 robot_urdf 需求缺失，落盘仅 1 文件）；本次修复后 parse_goal 解析出 3 条合理需求（robot_urdf+mesh+sim_config，覆盖期望并补充 PyBullet 仿真场景配置），检索 3 条全部成功：req_000 panda.urdf 直连 pybullet_robots（CDN jsdelivr，13 links/12 joints，非 fallback）、req_001 YCB 50_BLOCKS mesh 主源未命中走 fuel.gazebosim fallback（is_fallback=true，obj→stl 536484B，confidence=1.0）、req_002 mujoco_menagerie scene.xml 直连（非 fallback）。validate 0 error/2 warning（req_000 完整度 80%、置信度 0.8 未达阈值），runtime_check MuJoCo 加载与一步仿真成功（req_002），missing_items=0，落盘 90 文件（robots/ + objects/ + sim_config/ 全链路）→ 按判定标准记为 PASS_WITH_FALLBACK（req_001 显式 fallback 成功、质量达标，其余直连成功；URDF/mesh 全部可加载，PyBullet 堆叠场景可构建）。"
 }

@@ -1,0 +1,134 @@
+{
+  "case_id": "ms_005",
+  "input": "Franka Panda stacks YCB blocks in PyBullet",
+  "executed_at": "2026-08-17T09:24:16",
+  "thread_id": "20260817-092323-2458e57a",
+  "run_id": "20260817-092323-2458e57a",
+  "package_id": "package-20260817-092416",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF",
+        "MESH",
+        "SIM_CONFIG"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 机械臂 URDF 模型"
+        },
+        {
+          "req_id": "req_001",
+          "req_type": "mesh",
+          "description": "YCB 积木块 3D 网格模型"
+        },
+        {
+          "req_id": "req_002",
+          "req_type": "sim_config",
+          "description": "PyBullet 堆叠场景仿真配置"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "franka",
+        "elapsed_seconds": 44.0,
+        "data_format": "urdf",
+        "data_size": 11043,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf"
+      },
+      {
+        "req_id": "req_001",
+        "status": "success",
+        "source": "google_scanned",
+        "elapsed_seconds": 45.0,
+        "data_format": "stl",
+        "data_size": 536484,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/50_BLOCKS/tip/files/meshes/model.obj"
+      },
+      {
+        "req_id": "req_002",
+        "status": "success",
+        "source": "mujoco",
+        "elapsed_seconds": 8.0,
+        "data_format": "xml",
+        "data_size": 819,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franca_emika_panda/scene.xml"
+      }
+    ],
+    "validation_issues": [
+      "req_000: 完整度不足 80.0%（completeness_pct=80）",
+      "req_000: 置信度不足 0.80（confidence_score=0.8）"
+    ],
+    "runtime_check": {
+      "req_002": {
+        "status": "passed",
+        "detail": "MuJoCo 加载与一步仿真成功"
+      }
+    },
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-092416",
+      "package_id": "package-20260817-092416",
+      "status": "complete",
+      "file_count": 90,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 3,
+        "fulfilled": 90,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.958,
+        "avg_completeness": 95.78
+      },
+      "runtime_check": {
+        "req_002": {
+          "status": "passed",
+          "detail": "MuJoCo 加载与一步仿真成功"
+        }
+      }
+    },
+    "validation_issues": [
+      "req_000: 完整度不足 80.0%（completeness_pct=80）",
+      "req_000: 置信度不足 0.80（confidence_score=0.8）"
+    ],
+    "runtime_check": {
+      "req_002": {
+        "status": "passed",
+        "detail": "MuJoCo 加载与一步仿真成功"
+      }
+    },
+    "missing_items": [],
+    "tree": "package-20260817-092416 (90 files)\n- checksums.txt\n- manifest.json\n- provenance.log\n- units.json\n- objects\n  - req_001.stl\n- robots\n  - req_000.urdf\n  - meshes\n    - collision (10 obj)\n    - visual (9 obj)\n- sim_config\n  - panda.xml\n  - req_002.xml\n  - assets (66 obj/stl)\n  - objects\n    - req_001.stl"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-092416",
+    "checks": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，13 links/12 joints"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "19/19 mesh 可加载（robots/meshes/visual|collision 18 obj + objects/req_001.stl）"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "objects/req_001.stl",
+      "provenance.log",
+      "robots/req_000.urdf",
+      "sim_config/panda.xml",
+      "sim_config/req_002.xml",
+      "units.json"
+    ]
+  }
+}

@@ -163,6 +163,30 @@ deliverables/day3/D/
 
 > 临时重测/探针脚本位于 `data/_rerun_day3*.py`、`data/_probe_*.py`（不入库），结果留档于 `data/_rerun_day3*.json/log`。
 
+## 最终结果：2026-08-17 前端真实流程全量重测（10/10 全部通过）
+
+> 本节为**最终权威结果**，覆盖并更新前文各轮（首轮 FAIL → 2026-08-16 代码修复重测 → 2026-08-17 前端真实流程全量重测）。
+> 2026-08-17 对 day3/D 全部 10 题走真实前端（`src/rdi/frontend/app.py`，端口 7860）：radio「真实流程」→「运行」→ human_review 中断 →「数据包审查」选 satisfied →「继续运行」→「运行完成」；各 case 的 `record.json / observe.json / screenshots/` 均已按最新结果**覆盖写回**。
+
+| case_id | verdict | package_id | 落盘文件 | validation_issues(error) | 可加载性 | 截图 |
+|---|---|---|---|---|---|---|
+| ss_robotiq_001 | **PASS** | package-20260817-124542 | 11（URDF+10 mesh） | 0 | URDF 11 links/10 joints + mesh 10/10 | 8/8 |
+| ss_robotiq_002 | **PASS** | package-20260817-131814 | 11 | 0 | URDF 11/10 + mesh 10/10 | 8/8 |
+| ss_robotiq_003 | **PASS** | package-20260817-133551 | 11 | 0 | URDF 11/10 + mesh 10/10 | 4/8（见下方说明） |
+| ss_allegro_001 | **PASS** | package-20260817-075635 | 12 | 0 | URDF+11 mesh | 8/8 |
+| ss_allegro_002 | **PASS** | package-20260817-080156 | 12 | 0 | URDF+11 mesh | 8/8 |
+| ss_allegro_003 | **PASS** | package-20260817-080707 | 12 | 0 | URDF+11 mesh | 8/8 |
+| ss_google_scanned_001 | **PASS** | package-20260817-081226 | 1 | 0 | mesh 可加载 | 8/8 |
+| ss_google_scanned_002 | **PASS** | package-20260817-081600 | 1 | 0 | mesh 可加载 | 8/8 |
+| ss_google_scanned_003 | **PASS** | package-20260817-083252 | 1 | 0 | mesh 可加载 | 8/8 |
+| ms_005 | **PASS_WITH_FALLBACK** | package-20260817-092416 | 90 | 0 | URDF+mesh 全可加载（sim_config 资源名 WARNING） | 8/8 |
+
+要点：
+
+- **robotiq×3**：本批 3 题首轮均为 FAIL（001/002 P4_FORMAT、003 P2_RETRIEVE）。根因：robotiq 适配器轻量 xacro 展开器 `_eval_xacro_expr` 的 ast 白名单不含宏参数，`${reflect * -0.0127}` 等表达式求值返回空串 → 展开后 4 处 `<origin>` 的 xyz/rpy 退化为 2 个数值 → yourdfpy 报 `could not broadcast input array from shape (2,) into shape (3,)`。**修复**（`src/rdi/adapters/robotiq.py`，未提交）：`_eval_xacro_expr(expr, scope)` 支持宏参数 scope，求值前整词代入实参值。修复后 3 题均 validation_issues=0、URDF 11 links/10 joints、mesh 10/10（visual 5 DAE + collision 4 DAE + 1 STL）→ **PASS**。
+- **allegro×3 / google_scanned×3 / ms_005**：2026-08-17 上午前端真实流程重测全部通过（与 2026-08-16 修复轮结论一致），本次为带完整页面真实截图的正式留档。
+- **ss_robotiq_003 截图未完成项（4 张）**：按最新指示「一次截图失败不再重试」，浏览器子代理一次性捕获失败后未重试。缺失：最终态 02_retrieve（mid/bot 重复帧）、03_validate（唯一帧与检索 mid 重复）、04_package（无有效帧）、中间态 03_validate（帧稀疏/偏移不一致无法拼接）。已保留有效 4 张（中间态 01/02/04 + 最终态 01），缺失清单详见该 case 的 `record.json`（screenshots 段 + notes）。
+
 ## 附：真实截图说明
 
 所有截图均为浏览器实际运行 Gradio 前端（`src/rdi/frontend/app.py`，端口 7860）时截取的真实界面，经 `tools/stitch_screens.py` 将视口分块拼接为完整页面，无模拟/合成图像。

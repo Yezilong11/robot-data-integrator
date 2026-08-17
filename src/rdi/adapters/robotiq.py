@@ -93,12 +93,20 @@ def _resolve_xacro_include(filename: str) -> str:
     return filename.lstrip("/")
 
 
-def _eval_xacro_expr(expr: str) -> str:
-    """安全求值 xacro 表达式（数字四则/括号/pi 等常量，ast 白名单）。"""
+def _eval_xacro_expr(expr: str, scope: dict[str, str] | None = None) -> str:
+    """安全求值 xacro 表达式（数字四则/括号/pi 等常量，ast 白名单）。
+
+    scope 提供宏参数名→实参值：求值前先把参数名按整词替换为实参值，
+    使 ``${reflect * -0.0127}`` 这类「宏参数参与运算」的表达式可正确展开
+    （此前 ast 白名单不含宏参数，参数代入返回空串 → <origin> xyz/rpy
+    退化为 2 个数值 → yourdfpy 解析失败 P4_FORMAT）。
+    """
     import ast
     import math
 
     allowed = {"pi": math.pi, "radians": math.radians, "sin": math.sin, "cos": math.cos}
+    for name, val in (scope or {}).items():
+        expr = re.sub(rf"\b{re.escape(name)}\b", str(val), expr)
 
     def _ev(node: Any) -> float:
         if isinstance(node, ast.Expression):
@@ -173,7 +181,7 @@ def _expand_xacro(text: str, load_include: Any) -> str:
                 if nxt == out:
                     break
                 out = nxt
-            out = _XACRO_VAR_RE.sub(lambda mm: _eval_xacro_expr(mm.group(1).strip()), out)
+            out = _XACRO_VAR_RE.sub(lambda mm: _eval_xacro_expr(mm.group(1).strip(), scope), out)
             changed = True
             return out
 

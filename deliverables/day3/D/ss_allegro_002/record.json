@@ -3,12 +3,14 @@
   "case_id": "ss_allegro_002",
   "input": "获取 Allegro Hand 的 URDF，需要包含 4 指 16 关节定义",
   "executor": "D",
-  "executed_at": "2026-08-15T12:45:00",
+  "executed_at": "2026-08-17T08:01:56",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
-    "review_decision": "satisfied"
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题"
   },
   "layer": "single_source",
   "expected_req_types": [
@@ -19,46 +21,103 @@
       "req_list": [
         "ROBOT_URDF"
       ],
-      "vs_expected": "match"
+      "vs_expected": "match",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "ROBOT_URDF",
+          "expected_format": "urdf",
+          "object_name": "allegro hand"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
+        "req_type": "ROBOT_URDF",
         "source": "allegro",
-        "quality": "unknown",
-        "error": "allegro 源级检索超时（>15s）后被通用 GitHub 检索替换，最终返回 markdown（类型错配）",
-        "note": "3 轮迭代均触发 allegro 源超时；历史经验建议走 github 源，但返回 README/markdown 而非 URDF"
+        "status": "success",
+        "elapsed_seconds": 11.0,
+        "format": "urdf",
+        "data_size_bytes": 16826,
+        "data_url": "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900/robots/hands/allegro_hand/allegro_hand_right.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": null
       }
     ],
     "validate": {
-      "errors": 1,
+      "errors": 0,
       "warnings": 0,
-      "runtime_check": "empty"
+      "runtime_check": "passed",
+      "errors_detail": []
     },
     "package": {
-      "dir": "data/output_packages/package-20260815-114906",
-      "status": "failed",
-      "file_count": 0,
-      "missing_items": 1
+      "dir": "data/output_packages/package-20260817-080156",
+      "manifest_path": "data/output_packages/package-20260817-080156/manifest.json",
+      "status": "complete",
+      "file_count": 12,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    },
+    "loadability": {
+      "urdf": {
+        "file": "robots/req_000.urdf",
+        "tool": "yourdfpy.URDF.load",
+        "status": "passed",
+        "detail": "23 links / 22 joints 解析成功（yourdfpy.URDF.load 通过）"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "11/11 mesh（11 OBJ）trimesh 全部可加载"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(12) 与磁盘一致（1 URDF + 11 mesh）；robots/meshes/visual 顶层分类齐全"
     }
   },
-  "runtime_check_detail": {
-    "tool": "yourdfpy.URDF.load(load_meshes=True)",
-    "result": "N/A（无落盘文件）",
-    "note": "检索返回 markdown 内容，与 ROBOT_URDF 期望格式（urdf/xacro）错配，C4 类型错配检测拦截为 MissingItem；4 指 16 关节定义要求无法满足"
-  },
   "screenshots": [
-    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
-    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
-    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
-    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
-    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
-    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
-    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
-    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" }
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x2606）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项（完整长图 2064x1496）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1940）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度（完整长图 2064x2606）"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（0 error/0 warning，完整长图 2064x1496）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（完整长图 2064x1940）"
+    }
   ],
-  "verdict": "FAIL",
-  "failure_category": "P2_RETRIEVE",
-  "failure_reason": "allegro 专用源 3 轮迭代均超时（per_req_timeout/4=15s），通用 GitHub 检索返回 markdown 与 robot_urdf 期望格式错配，被 C4 拦截，落盘 0 文件",
-  "notes": "与 ss_allegro_001 同类：Allegro 无有效专用适配器结果，且该题 4 指 16 关节细节需求加重了格式校验失败；P2 边界 case（检索到内容但不可用）"
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P2_RETRIEVE（allegro 专用源 3 轮迭代均超时，通用 GitHub 返回 markdown 与 ROBOT_URDF 期望格式错配、落盘 0 文件）；本次修复后检索命中 allegro 专用数据源（dexsuite/dex-urdf 仓库 allegro_hand_right.urdf，is_fallback=false、confidence=1.0/completeness=100%），validate 0 error/0 warning，yourdfpy 23 links/22 joints 解析成功（Allegro 标准 4 指 16 关节定义齐全），11/11 mesh 可加载，validation_issues=0 → 按判定标准记为 PASS。"
 }

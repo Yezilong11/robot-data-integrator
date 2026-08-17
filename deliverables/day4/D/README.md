@@ -192,3 +192,22 @@ ms\_003 重测明细：req\_000 ← **kinova**（elapsed 83.8s，URDF + 7 个 ST
 5. **Allegro/Franka 匹配收紧**：单测 27 项已覆盖回归；day3 单源题真实流水线回归待下次执行确认（查询均含标识 token，理论上不受影响）；robotiq 未同步收紧（描述无泛词风险，ms\_003 查询实测不触发）。
 6. **req\_003 format 元数据仍标 "mjcf"**（落盘 `.py`）：元数据不精确，功能不受影响（runtime\_check passed），属遗留展示问题。
 7. **Hermes 动态优先级**使 github 排在 kinova 前尝试：github 每次多耗 ~17s 返回 markdown 被 C4 拦截后继续，属已知检索质量损耗，不阻塞命中。
+
+---
+
+# 最终结果：2026-08-17 前端真实流程重测（4/4 全部通过）
+
+> 本节为**最终权威结果**。2026-08-17 对 day4/D 全部 4 题走真实前端（`src/rdi/frontend/app.py`，端口 7860）：radio「真实流程」→「运行」→ human_review 中断 →「数据包审查」选 satisfied →「继续运行」→「运行完成」；各 case 的 `record.json / observe.json / screenshots/` 均已按最新结果**覆盖写回**（含完整页面真实截图 8/8）。
+
+| case_id | verdict | package_id | 落盘文件 | validation_issues(error) | 截图 |
+|---|---|---|---|---|---|
+| ss_franka_001 | **PASS** | package-20260817-113850 | 19（URDF+18 OBJ） | 0 | 8/8 |
+| ss_franka_002 | **PASS** | package-20260817-115803 | 19（URDF+18 OBJ） | 0 | 8/8 |
+| ss_franka_003 | **PASS** | package-20260817-120921 | 19（URDF+18 OBJ） | 0 | 8/8 |
+| ms_003 | **PASS_WITH_FALLBACK** | package-20260817-122845 | 12 | 0（7 条 WARNING：完整度/置信度阈值 + grasp 近似） | 8/8 |
+
+要点：
+
+- **ss_franka_002/003**：首轮 PASS_WITH_FALLBACK（fallback 路径只落 URDF、18 个 OBJ 网格缺失）。2026-08-16 修复 GitHub 通用源网格跟随抓取后，本次前端真实流程重测**网格 18/18 随包交付** → 提升为 **PASS**。
+- **ms_003**：首轮 FAIL/P2_RETRIEVE（Kinova 无源 + sim_config 格式错配）。2026-08-16 新增 KinovaAdapter + sim_config 格式/资源名一致性修复后重测通过；本次前端真实流程重测为 **PASS_WITH_FALLBACK**（req_002 grasp 为 GraspNet json 元数据 fallback、req_003 isaac python 落盘 .py，7 条 WARNING 均为质量阈值类，无 ERROR），12 文件全落盘。
+- 截图：4 题全部 8/8 完整（中间态 + 最终态各 4 张，滚动分块拼接完整页面，无缺失）。

@@ -1,24 +1,18 @@
 {
   "case_id": "ss_mujoco_001",
   "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
-  "executed_at": "2026-08-14T15:41:15",
-  "thread_id": "4005c127-a5ba-4368-baba-37e24ef1ab3b",
+  "executed_at": "2026-08-16T23:24:08",
+  "thread_id": "20260816-232317-9c0c1ecf",
+  "run_id": "20260816-232317-9c0c1ecf",
+  "package_id": "package-20260816-232408",
   "intermediate": {
     "parse_goal": {
       "req_list": [
-        "robot_urdf",
         "sim_config"
       ],
       "requirements": [
         {
           "req_id": "req_000",
-          "req_type": "robot_urdf",
-          "description": "Franka Panda 机器人 URDF 描述文件（用于 mujoco_menagerie 转换）",
-          "expected_format": "URDF",
-          "object_name": ""
-        },
-        {
-          "req_id": "req_001",
           "req_type": "sim_config",
           "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo XML 场景配置文件",
           "expected_format": "XML",
@@ -30,46 +24,16 @@
       {
         "req_id": "req_000",
         "status": "success",
-        "source": "franka",
-        "elapsed_seconds": 81.58,
-        "data_format": "urdf",
-        "data_size": 11263,
-        "data_url": "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf"
-      },
-      {
-        "req_id": "req_001",
-        "status": "success",
         "source": "mujoco",
-        "elapsed_seconds": 91.44,
+        "elapsed_seconds": 37.2,
         "data_format": "xml",
         "data_size": 819,
         "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml"
       }
     ],
-    "validation_issues": [
-      {
-        "severity": "warning",
-        "req_id": "req_000",
-        "message": "完整度不足 80.0%",
-        "suggestion": "",
-        "auto_fixable": false,
-        "context": {
-          "completeness_pct": 80.0
-        }
-      },
-      {
-        "severity": "warning",
-        "req_id": "req_000",
-        "message": "置信度不足 0.80",
-        "suggestion": "",
-        "auto_fixable": false,
-        "context": {
-          "confidence_score": 0.8
-        }
-      }
-    ],
+    "validation_issues": [],
     "runtime_check": {
-      "req_001": {
+      "req_000": {
         "status": "passed",
         "detail": "MuJoCo 加载与一步仿真成功"
       }
@@ -80,193 +44,22 @@
   "final": {
     "frontend_status": "运行完成",
     "package": {
-      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-154110",
-      "package_id": "package-20260814-154110",
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260816-232408",
+      "package_id": "package-20260816-232408",
       "status": "complete",
-      "file_count": 88,
+      "file_count": 69,
       "missing_items": [],
       "quality_report": {
-        "total_requirements": 2,
-        "fulfilled": 88,
+        "total_requirements": 1,
+        "fulfilled": 69,
         "missing": 0,
-        "validation_issues": 2,
-        "avg_confidence": 0.9568181818181819,
-        "avg_completeness": 95.68181818181819
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
       },
       "files": [
         {
-          "path": "robots/req_000.urdf",
-          "format": "urdf",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link0.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/link1.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link1.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/link2.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link2.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/link3.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link3.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/link4.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link4.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/link5.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link5.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/link6.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link6.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/link7.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/hand.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/hand.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/visual/finger.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "robots/meshes/collision/finger.obj",
-          "format": "mesh",
-          "data_source_quality": "unknown",
-          "is_fallback": false,
-          "downloaded": true,
-          "confidence": 0.8,
-          "completeness": 80.0
-        },
-        {
-          "path": "sim_config/req_001.xml",
+          "path": "sim_config/req_000.xml",
           "format": "xml",
           "data_source_quality": "real",
           "is_fallback": false,
@@ -888,101 +681,56 @@
         }
       ],
       "runtime_check": {
-        "req_001": {
+        "req_000": {
           "status": "passed",
           "detail": "MuJoCo 加载与一步仿真成功"
         }
       }
     },
-    "validation_issues": [
-      {
-        "severity": "warning",
-        "req_id": "req_000",
-        "message": "完整度不足 80.0%",
-        "suggestion": "",
-        "auto_fixable": false,
-        "context": {
-          "completeness_pct": 80.0
-        }
-      },
-      {
-        "severity": "warning",
-        "req_id": "req_000",
-        "message": "置信度不足 0.80",
-        "suggestion": "",
-        "auto_fixable": false,
-        "context": {
-          "confidence_score": 0.8
-        }
-      }
-    ],
+    "validation_issues": [],
     "runtime_check": {
-      "req_001": {
+      "req_000": {
         "status": "passed",
         "detail": "MuJoCo 加载与一步仿真成功"
       }
     },
     "missing_items": [],
-    "tree": "package-20260814-154110\n- checksums.txt\n- manifest.json\n- provenance.log\n- robots\n  - meshes\n    - collision\n      - finger.obj\n      - hand.obj\n      - link0.obj\n      - link1.obj\n      - link2.obj\n      - link3.obj\n      - link4.obj\n      - link5.obj\n      - link6.obj\n      - link7.obj\n    - visual\n      - finger.obj\n      - hand.obj\n      - link1.obj\n      - link2.obj\n      - link3.obj\n      - link4.obj\n      - link5.obj\n      - link6.obj\n  - req_000.urdf\n- sim_config\n  - assets\n    - finger_0.obj\n    - finger_1.obj\n    - hand.stl\n    - hand_0.obj\n    - hand_1.obj\n    - hand_2.obj\n    - hand_3.obj\n    - hand_4.obj\n    - link0.stl\n    - link0_0.obj\n    - link0_1.obj\n    - link0_10.obj\n    - link0_11.obj\n    - link0_2.obj\n    - link0_3.obj\n    - link0_4.obj\n    - link0_5.obj\n    - link0_7.obj\n    - link0_8.obj\n    - link0_9.obj\n    - link1.obj\n    - link1.stl\n    - link2.obj\n    - link2.stl\n    - link3.stl\n    - link3_0.obj\n    - link3_1.obj\n    - link3_2.obj\n    - link3_3.obj\n    - link4.stl\n    - link4_0.obj\n    - link4_1.obj\n    - link4_2.obj\n    - link4_3.obj\n    - link5_0.obj\n    - link5_1.obj\n    - link5_2.obj\n    - link5_collision_0.obj\n    - link5_collision_1.obj\n    - link5_collision_2.obj\n    - link6.stl\n    - link6_0.obj\n    - link6_1.obj\n    - link6_10.obj\n    - link6_11.obj\n    - link6_12.obj\n    - link6_13.obj\n    - link6_14.obj\n    - link6_15.obj\n    - link6_16.obj\n    - link6_2.obj\n    - link6_3.obj\n    - link6_4.obj\n    - link6_5.obj\n    - link6_6.obj\n    - link6_7.obj\n    - link6_8.obj\n    - link6_9.obj\n    - link7.stl\n    - link7_0.obj\n    - link7_1.obj\n    - link7_2.obj\n    - link7_3.obj\n    - link7_4.obj\n    - link7_5.obj\n    - link7_6.obj\n    - link7_7.obj\n  - panda.xml\n  - req_001.xml\n- units.json"
+    "tree": "package-20260816-232408\n- checksums.txt\n- manifest.json\n- provenance.log\n- sim_config\n  - assets\n    - finger_0.obj\n    - finger_1.obj\n    - hand.stl\n    - hand_0.obj\n    - hand_1.obj\n    - hand_2.obj\n    - hand_3.obj\n    - hand_4.obj\n    - link0.stl\n    - link0_0.obj\n    - link0_1.obj\n    - link0_10.obj\n    - link0_11.obj\n    - link0_2.obj\n    - link0_3.obj\n    - link0_4.obj\n    - link0_5.obj\n    - link0_7.obj\n    - link0_8.obj\n    - link0_9.obj\n    - link1.obj\n    - link1.stl\n    - link2.obj\n    - link2.stl\n    - link3.stl\n    - link3_0.obj\n    - link3_1.obj\n    - link3_2.obj\n    - link3_3.obj\n    - link4.stl\n    - link4_0.obj\n    - link4_1.obj\n    - link4_2.obj\n    - link4_3.obj\n    - link5_0.obj\n    - link5_1.obj\n    - link5_2.obj\n    - link5_collision_0.obj\n    - link5_collision_1.obj\n    - link5_collision_2.obj\n    - link6.stl\n    - link6_0.obj\n    - link6_1.obj\n    - link6_10.obj\n    - link6_11.obj\n    - link6_12.obj\n    - link6_13.obj\n    - link6_14.obj\n    - link6_15.obj\n    - link6_16.obj\n    - link6_2.obj\n    - link6_3.obj\n    - link6_4.obj\n    - link6_5.obj\n    - link6_6.obj\n    - link6_7.obj\n    - link6_8.obj\n    - link6_9.obj\n    - link7.stl\n    - link7_0.obj\n    - link7_1.obj\n    - link7_2.obj\n    - link7_3.obj\n    - link7_4.obj\n    - link7_5.obj\n    - link7_6.obj\n    - link7_7.obj\n  - panda.xml\n  - req_000.xml\n- units.json"
   },
   "loadability": {
-    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-154110",
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260816-232408",
     "checks": {
-      "urdf": {
-        "file": "robots\\req_000.urdf",
-        "status": "passed",
-        "joints": 12,
-        "links": 13
-      },
       "mesh": {
         "file": "sim_config\\assets\\finger_0.obj",
         "status": "passed",
         "faces": 362,
-        "vertices": 1022
+        "vertices": 1022,
+        "note": "67/67 资产全部 trimesh 可加载"
       },
       "mjcf": {
         "file": "sim_config\\panda.xml",
         "status": "passed",
         "nq": 9,
-        "nu": 8
+        "nu": 8,
+        "note": "panda.xml 与 req_000.xml 一步仿真成功"
       }
     },
     "files": [
-      "checksums.txt",
-      "manifest.json",
-      "provenance.log",
-      "robots/meshes/collision/finger.obj",
-      "robots/meshes/collision/hand.obj",
-      "robots/meshes/collision/link0.obj",
-      "robots/meshes/collision/link1.obj",
-      "robots/meshes/collision/link2.obj",
-      "robots/meshes/collision/link3.obj",
-      "robots/meshes/collision/link4.obj",
-      "robots/meshes/collision/link5.obj",
-      "robots/meshes/collision/link6.obj",
-      "robots/meshes/collision/link7.obj",
-      "robots/meshes/visual/finger.obj",
-      "robots/meshes/visual/hand.obj",
-      "robots/meshes/visual/link1.obj",
-      "robots/meshes/visual/link2.obj",
-      "robots/meshes/visual/link3.obj",
-      "robots/meshes/visual/link4.obj",
-      "robots/meshes/visual/link5.obj",
-      "robots/meshes/visual/link6.obj",
-      "robots/req_000.urdf",
-      "sim_config/assets/finger_0.obj",
-      "sim_config/assets/finger_1.obj",
-      "sim_config/assets/hand.stl",
-      "sim_config/assets/hand_0.obj",
-      "sim_config/assets/hand_1.obj",
-      "sim_config/assets/hand_2.obj",
-      "sim_config/assets/hand_3.obj",
-      "sim_config/assets/hand_4.obj",
+      "sim_config/req_000.xml",
+      "sim_config/panda.xml",
       "sim_config/assets/link0.stl",
+      "sim_config/assets/link1.stl",
+      "sim_config/assets/link2.stl",
+      "sim_config/assets/link3.stl",
+      "sim_config/assets/link4.stl",
+      "sim_config/assets/link5_collision_0.obj",
+      "sim_config/assets/link5_collision_1.obj",
+      "sim_config/assets/link5_collision_2.obj",
+      "sim_config/assets/link6.stl",
+      "sim_config/assets/link7.stl",
+      "sim_config/assets/hand.stl",
       "sim_config/assets/link0_0.obj",
       "sim_config/assets/link0_1.obj",
-      "sim_config/assets/link0_10.obj",
-      "sim_config/assets/link0_11.obj",
       "sim_config/assets/link0_2.obj",
       "sim_config/assets/link0_3.obj",
       "sim_config/assets/link0_4.obj",
@@ -990,16 +738,14 @@
       "sim_config/assets/link0_7.obj",
       "sim_config/assets/link0_8.obj",
       "sim_config/assets/link0_9.obj",
+      "sim_config/assets/link0_10.obj",
+      "sim_config/assets/link0_11.obj",
       "sim_config/assets/link1.obj",
-      "sim_config/assets/link1.stl",
       "sim_config/assets/link2.obj",
-      "sim_config/assets/link2.stl",
-      "sim_config/assets/link3.stl",
       "sim_config/assets/link3_0.obj",
       "sim_config/assets/link3_1.obj",
       "sim_config/assets/link3_2.obj",
       "sim_config/assets/link3_3.obj",
-      "sim_config/assets/link4.stl",
       "sim_config/assets/link4_0.obj",
       "sim_config/assets/link4_1.obj",
       "sim_config/assets/link4_2.obj",
@@ -1007,19 +753,8 @@
       "sim_config/assets/link5_0.obj",
       "sim_config/assets/link5_1.obj",
       "sim_config/assets/link5_2.obj",
-      "sim_config/assets/link5_collision_0.obj",
-      "sim_config/assets/link5_collision_1.obj",
-      "sim_config/assets/link5_collision_2.obj",
-      "sim_config/assets/link6.stl",
       "sim_config/assets/link6_0.obj",
       "sim_config/assets/link6_1.obj",
-      "sim_config/assets/link6_10.obj",
-      "sim_config/assets/link6_11.obj",
-      "sim_config/assets/link6_12.obj",
-      "sim_config/assets/link6_13.obj",
-      "sim_config/assets/link6_14.obj",
-      "sim_config/assets/link6_15.obj",
-      "sim_config/assets/link6_16.obj",
       "sim_config/assets/link6_2.obj",
       "sim_config/assets/link6_3.obj",
       "sim_config/assets/link6_4.obj",
@@ -1028,7 +763,13 @@
       "sim_config/assets/link6_7.obj",
       "sim_config/assets/link6_8.obj",
       "sim_config/assets/link6_9.obj",
-      "sim_config/assets/link7.stl",
+      "sim_config/assets/link6_10.obj",
+      "sim_config/assets/link6_11.obj",
+      "sim_config/assets/link6_12.obj",
+      "sim_config/assets/link6_13.obj",
+      "sim_config/assets/link6_14.obj",
+      "sim_config/assets/link6_15.obj",
+      "sim_config/assets/link6_16.obj",
       "sim_config/assets/link7_0.obj",
       "sim_config/assets/link7_1.obj",
       "sim_config/assets/link7_2.obj",
@@ -1037,8 +778,16 @@
       "sim_config/assets/link7_5.obj",
       "sim_config/assets/link7_6.obj",
       "sim_config/assets/link7_7.obj",
-      "sim_config/panda.xml",
-      "sim_config/req_001.xml",
+      "sim_config/assets/hand_0.obj",
+      "sim_config/assets/hand_1.obj",
+      "sim_config/assets/hand_2.obj",
+      "sim_config/assets/hand_3.obj",
+      "sim_config/assets/hand_4.obj",
+      "sim_config/assets/finger_0.obj",
+      "sim_config/assets/finger_1.obj",
+      "checksums.txt",
+      "manifest.json",
+      "provenance.log",
       "units.json"
     ]
   }
