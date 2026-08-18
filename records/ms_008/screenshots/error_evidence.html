@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>ms_008 错误证据</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 70px; color: #1f2937; }
+    h1 { color: #b91c1c; font-size: 42px; }
+    pre { border: 2px solid #fecaca; background: #fef2f2; color: #991b1b; font-size: 25px; padding: 32px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>ms_008 真实流程 FAIL / P7_ENV</h1>
+  <p>前端实际调用真实流程后返回：</p>
+  <pre>Missing credentials. Please pass an api_key, workload_identity, admin_api_key,
+or set the OPENAI_API_KEY or OPENAI_ADMIN_KEY environment variable.</pre>
+  <p>结果：未进入 parse_goal 或 human_review；没有生成数据包；未使用演示流程降级。</p>
+</body>
+</html>

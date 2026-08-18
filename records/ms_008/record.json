@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_008",
+  "input": "只要 Franka Panda 的 URDF",
+  "executor": "F",
+  "executed_at": "2026-08-18T14:48:00+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "fac6b32",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [],
+      "vs_expected": "mismatch",
+      "notes": "真实流程在图初始化/模型凭据检查阶段失败，未进入 parse_goal 节点。"
+    },
+    "retrieve": [],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_run",
+      "notes": "未进入数据检索、解析转换、质量校验或整合打包阶段。"
+    },
+    "package": {
+      "dir": "not_generated_due_to_p7_env",
+      "manifest_path": "not_generated_due_to_p7_env",
+      "status": "missing",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "notes": "真实流程没有生成数据包；不得用演示包替代。"
+    },
+    "stage_progress": {
+      "目标解析": "未开始",
+      "数据检索": "未开始",
+      "解析转换": "未开始",
+      "质量校验": "未开始",
+      "整合打包": "未开始"
+    },
+    "human_review": {
+      "status": "not_reached",
+      "decision": null,
+      "notes": "未到达 human_review interrupt，因此没有可执行的 resume。"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_input.png",
+      "desc": "7860 前端真实流程输入界面，目标为只要 Franka Panda 的 URDF。"
+    },
+    {
+      "file": "screenshots/02_progress.png",
+      "desc": "真实流程返回的阶段进度：五个阶段均未开始，记录为初始化阶段失败。"
+    },
+    {
+      "file": "screenshots/03_package.png",
+      "desc": "真实流程结果的数据包区域为空，确认没有生成演示或伪造数据包。"
+    },
+    {
+      "file": "screenshots/04_validation.png",
+      "desc": "真实流程结果的校验区域，显示初始化错误且 missing_items 为 backend-runtime。"
+    },
+    {
+      "file": "screenshots/05_error.png",
+      "desc": "FAIL 报错证据：Missing credentials，需设置 OPENAI_API_KEY 或等效凭据。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P7_ENV",
+  "failure_reason": "真实流程在图初始化阶段报 Missing credentials：未提供 api_key/workload_identity/admin_api_key，且环境未设置 OPENAI_API_KEY 或 OPENAI_ADMIN_KEY；因此未进入 human_review，也没有 resume 结果。",
+  "notes": "已按真实流程执行并保留错误证据。下一步需补齐可用模型凭据后重新运行完整的 run → interrupt → resume 链路；本次不静默降级为演示流程。",
+  "reviewer": null,
+  "reviewed_at": null
+}
