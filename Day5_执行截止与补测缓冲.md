@@ -15,12 +15,13 @@
 ### C（数据工程师）
 
 1. 清尾：补测数据源类遗漏 case，补充缺失截图。
-2. 完成数据源可用性汇总材料（15 源 × 构造/检索/下载 × 通过/失败/跳过）。
+2. 完成数据源可用性汇总材料（**11 源 × 构造/检索/下载 × 通过/失败/跳过**）——按 Day3 口径（C 数据源类 = paper/code/dataset/grasp/sim_config/policy/sensor 7 类需求类型对应源）：arxiv / github / huggingface / zenodo / paperswithcode / graspnet / dexgrasp / ieee / ycb / mujoco / isaac。day4 初稿的 15 源探活表为技术全量口径，其中 franka / robotiq / allegro / google_scanned 仅命中 robot_urdf/mesh，归 D 的格式/仿真类覆盖，不在本材料范围。
 
 ### D（机器人工程师）
 
 1. 清尾：补测格式/仿真类遗漏 case，补充可加载性验证结论。
 2. 整理 P4_FORMAT/P5_RUNTIME 失败清单（每条含 case_id、现象、初步定位）。
+3. 提供格式/仿真类 4 源（franka / robotiq / allegro / google_scanned）的可用性证据：可加载性验证结论即该 4 源可用性结论（与 C 的 11 源汇总互补，合并构成全部 15 源可用性矩阵）。
 
 ### E（产品工程师）
 
