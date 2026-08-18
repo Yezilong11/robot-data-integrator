@@ -19,7 +19,7 @@
 | 阶段四-2 | progress.csv 更新 13 行（executor=D、已判定、verdict） | ✅ 已完成（2026-08-17T17:46:07） |
 | 阶段四-3 | 交付 README + 结论 + 清单 | ✅ **全部完成** |
 
-**最终判定：13/13 全部通过（10 PASS + 3 PASS_WITH_FALLBACK），无 FAIL。P0 可用 11/11（目标 ≥8）已达成。**
+**最终判定：13/13 全部通过，无 FAIL。records/ 冻结口径为 9 PASS + 4 PASS_WITH_FALLBACK（google_scanned×3、ms_003 经 A 合规化转 PWF；deliverables 口径为 10 PASS + 3 PWF，差异见 §2.2，以 records/ 为准）。P0 可用 11/11（目标 ≥8）已达成。**
 
 ## 1. 任务目标（Day5 D 两项 + 策略 §6.3 D 职责）
 
@@ -79,11 +79,11 @@
 
 | 指标 | 原方案预期 | 当前实际（2026-08-17T17:46:07） |
 | ---- | ---- | ---- |
-| 已执行 / 已判定 | 45 / 45 → 补测后 ↑ | **62 / 62**（63 题，ms_008 未执行，属 A 范围） |
+| 已执行 / 已判定 | 45 / 45 → 补测后 ↑ | **62 / 62**（63 题，ms_008 未执行，正式分配 executor=F） |
 | 0 判定 | 7/11 → 预期 9/11 | **P0 可用 11/11（≥8 达成）** ✅ |
 | FAIL 数 | — | **0** |
-| reviewed | 0 | 0（**待 F 复核**，非 D 职责） |
-| all_cases_executed | 18→5 | false（ms_008 未执行，属 A/F） |
+| reviewed | 0 | 13/13（**2026-08-17 23:17 由 A 全库复核补齐，reviewer=A**；非 D 职责） |
+| all_cases_executed | 18→5 | false（ms_008 未执行，正式分配 executor=F；A 曾代跑未成功） |
 
 ## 3. 执行记录
 
@@ -138,7 +138,7 @@ deliverables/day5/D/
 2. **records/ 与 deliverables/ 判定口径差异**（google_scanned 系列 PASS vs PASS_WITH_FALLBACK）：以 records/（A 合规化后）为冻结口径，待 D 复核确认。
 3. **ms_003 残余**：GRASP req_002 空壳（json 元数据），不阻断 PASS_WITH_FALLBACK 判定，如实记录。
 4. **LLM 非确定性**：parse_goal 关键词每次可能不同，判定以最终产物为准（records/ 已按实际 input 记录）。
-5. **reviewed=0**：F 全量校验与复核未开始，属 F 环节。
+5. **reviewed**：本 README 交付时点 reviewed 为 0；2026-08-17 23:17 A 已全库复核补齐（reviewer=A），属时间先后，非 D 职责。
 
 ## 6. 与 A/F 的对接点
 
@@ -147,4 +147,4 @@ deliverables/day5/D/
 | F | 13 个 case 补测记录已入 `records/`（record+observe+screenshots）+ progress.csv 已更新（判定一致） | F 全量校验（JSON 合法/判定一致/截图齐备）并填充 reviewed |
 | F | **P4/P5 失败清单已交付**（`P4_P5失败清单.md`：历史 9 例 + 1 例残余，均已修复或显式 fallback） | F 并入失败原因统计 |
 | A | P0 缺口已关闭：**11/11（≥8）达成** | A 终验执行完整性；合规化修订最终口径确认（两处保持原样，见 §2.3） |
-| F | ms_008 仍未执行（属 A 范围，progress 显示 executor 空） | F/A 确认未执行题归属 |
+| F | ms_008 仍未执行（正式分配 executor=F，progress 显示未执行；A 曾代跑未成功） | F 执行 ms_008 后由 A 复核 |
