@@ -2,69 +2,107 @@
   "schema_version": "1.0",
   "case_id": "ms_008",
   "input": "只要 Franka Panda 的 URDF",
-  "executor": "F",
-  "executed_at": "2026-08-18T14:48:00+08:00",
+  "executor": "F+A",
+  "executed_at": "2026-08-18T20:00:31+08:00",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "git_branch": "feat/arch-langgraph",
-    "git_commit": "fac6b32",
+    "git_commit": "cc33769",
     "review_decision": "satisfied"
   },
   "observations": {
     "parse_goal": {
-      "req_list": [],
-      "vs_expected": "mismatch",
-      "notes": "真实流程在图初始化/模型凭据检查阶段失败，未进入 parse_goal 节点。"
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "partial",
+      "notes": "核心需求（Franka Panda URDF）解析正确，但 LLM 将 fallback 源解析为 allegro/robotiq/kinova（题设源为 franka/mujoco/github），三源均未收录该目标，直接导致后续 3 轮检索全部未命中。"
     },
-    "retrieve": [],
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "allegro",
+        "quality": "unknown",
+        "status": "missing",
+        "is_fallback": false,
+        "error": "allegro 源仅收录 4 个已知目标，未收录 Franka Panda 机器人 URDF（有源但未收录）"
+      },
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "robotiq",
+        "quality": "unknown",
+        "status": "missing",
+        "is_fallback": false,
+        "error": "robotiq 源仅收录 4 个已知目标，未收录 Franka Panda 机器人 URDF（有源但未收录）"
+      },
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "kinova",
+        "quality": "unknown",
+        "status": "missing",
+        "is_fallback": false,
+        "error": "kinova 源仅收录 2 个已知目标，未收录 Franka Panda 机器人 URDF（有源但未收录）"
+      }
+    ],
     "validate": {
       "errors": 1,
       "warnings": 0,
       "runtime_check": "not_run",
-      "notes": "未进入数据检索、解析转换、质量校验或整合打包阶段。"
+      "notes": "quality_report.validation_issues=1：唯一需求未满足，validate 报 1 个错误；无任何文件产出，可加载性验证不适用。"
     },
     "package": {
-      "dir": "not_generated_due_to_p7_env",
-      "manifest_path": "not_generated_due_to_p7_env",
-      "status": "missing",
+      "dir": "data/output_packages/package-20260818-200512",
+      "manifest_path": "data/output_packages/package-20260818-200512/manifest.json",
+      "status": "error",
       "file_count": 0,
       "missing_items_count": 1,
       "fallback_explicit": false,
-      "notes": "真实流程没有生成数据包；不得用演示包替代。"
+      "notes": "manifest.package_info.status=failed，0 文件，1 项缺失；run_id=20260818-200031-4a35c1ee。"
     },
     "stage_progress": {
-      "目标解析": "未开始",
-      "数据检索": "未开始",
-      "解析转换": "未开始",
-      "质量校验": "未开始",
-      "整合打包": "未开始"
+      "目标解析": "完成",
+      "数据检索": "完成（3 轮迭代全部未命中）",
+      "解析转换": "完成（无检索结果可转换）",
+      "质量校验": "完成（1 缺失项，报错）",
+      "整合打包": "完成（failed 包，0 文件）"
     },
     "human_review": {
-      "status": "not_reached",
-      "decision": null,
-      "notes": "未到达 human_review interrupt，因此没有可执行的 resume。"
+      "status": "reached",
+      "decision": "satisfied",
+      "notes": "3 轮检索-校验迭代后进入 human_review interrupt，A 在 7860 前端选择 satisfied 并点击继续运行，最终生成 failed 数据包。"
     }
   },
   "screenshots": [
     {
       "file": "screenshots/01_input.png",
-      "desc": "7860 前端真实流程输入界面，目标为只要 Franka Panda 的 URDF。"
+      "desc": "7860 前端真实流程输入界面：目标为只要 Franka Panda 的 URDF，选择真实流程模式。"
     },
     {
       "file": "screenshots/02_progress.png",
-      "desc": "真实流程返回的阶段进度：五个阶段均未开始，记录为初始化阶段失败。"
+      "desc": "真实流程运行中：3 轮检索-校验迭代后进入 human_review 中断，等待审查决定。"
+    },
+    {
+      "file": "screenshots/03_package.png",
+      "desc": "数据包审查界面：本次生成 package-20260818-200512，状态 failed、0 文件。"
+    },
+    {
+      "file": "screenshots/04_validation.png",
+      "desc": "校验与缺失项界面：缺失 1 项，allegro/robotiq/kinova 有源但未收录 Franka Panda URDF。"
     },
     {
       "file": "screenshots/05_error.png",
-      "desc": "FAIL 报错证据：Missing credentials，需设置 OPENAI_API_KEY 或等效凭据。"
+      "desc": "FAIL 报错证据：质量校验报 1 个错误，数据包状态 failed，无法通过验收。"
     }
   ],
   "verdict": "FAIL",
-  "failure_category": "P7_ENV",
-  "failure_reason": "真实流程在图初始化阶段报 Missing credentials：未提供 api_key/workload_identity/admin_api_key，且环境未设置 OPENAI_API_KEY 或 OPENAI_ADMIN_KEY；因此未进入 human_review，也没有 resume 结果。",
-  "notes": "已按真实流程执行并保留错误证据。下一步需补齐可用模型凭据后重新运行完整的 run → interrupt → resume 链路；本次不静默降级为演示流程。（A 2026-08-18 复核：03_package/04_validation 截图捕获未成功且文件未落盘，移除悬空引用；FAIL 证据由 02_progress + 05_error 覆盖）",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "真实流程 3 轮检索-校验迭代全部未命中：LLM 将 fallback 源解析为 allegro/robotiq/kinova（题设源为 franka/mujoco/github），三源均有源但未收录 Franka Panda URDF，validate errors=1，数据包 failed（0 文件），无法通过验收。",
+  "notes": "本次为前端真实流程运行结果（run_id=20260818-200031-4a35c1ee，包 package-20260818-200512），替换原 F 的 P7_ENV 记录；executor=F+A（F 曾于 14:48 首次执行卡在凭据检查，A 于 20:00 补跑前端真实流程）。旁证：同输入脚本直跑（探针）命中 github 兜底产出 PWF 包 package-20260818-192816（UT-Austin-RPL/deoxys_control panda.urdf + 18 mesh，19 文件），与前端结果差异集中在 parse_goal 对 fallback 源的解析不稳定（LLM 随机性），已建议纳入 Day6 复盘改进清单。本次如实 FAIL 且不静默降级，符合合规要求。（A 2026-08-18 复核）",
   "reviewer": "A",
-  "reviewed_at": "2026-08-18T18:50:26+08:00"
+  "reviewed_at": "2026-08-18T21:36:00+08:00"
 }

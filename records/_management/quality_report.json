@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-18T18:51:54+08:00",
+  "generated_at": "2026-08-18T21:36:00+08:00",
   "strict_mode": false,
   "problem_set": {
     "total": 63,
@@ -25,10 +25,10 @@
     "usable_rate": 0.9841
   },
   "quality": {
-    "record_completeness_avg_pct": 99.9,
+    "record_completeness_avg_pct": 100.0,
     "records_at_least_90_pct": 63,
     "records_at_least_90_rate": 1.0,
-    "screenshot_compliance_rate": 0.9841,
+    "screenshot_compliance_rate": 1.0,
     "validation_error_count": 0
   },
   "p0_acceptance": {
@@ -259,7 +259,7 @@
   },
   "failure_top3": [
     {
-      "category": "P7_ENV",
+      "category": "P2_RETRIEVE",
       "count": 1
     }
   ],

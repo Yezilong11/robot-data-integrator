@@ -495,8 +495,12 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
 
     if is_placeholder(record.get("input")):
         issues.append(Issue("ERROR", case_id, "input 必须填写实际输入原文"))
-    if record.get("executor") not in ALLOWED_EXECUTORS:
-        issues.append(Issue("ERROR", case_id, "executor 必须为 A/C/D/E/F"))
+    # 支持 "F+A" 双执行人格式：按 "+" 拆解后每位均须为 A/C/D/E/F
+    executors = {
+        part.strip() for part in str(record.get("executor", "")).split("+") if part.strip()
+    }
+    if not executors or not executors.issubset(ALLOWED_EXECUTORS):
+        issues.append(Issue("ERROR", case_id, "executor 必须为 A/C/D/E/F（多人用 + 组合）"))
 
     env = record.get("env")
     if not isinstance(env, dict):
