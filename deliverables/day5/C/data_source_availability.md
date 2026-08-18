@@ -28,18 +28,18 @@
 | 源 | 命中条数 | fallback | real | 命中需求类型 | 产出格式 |
 |---|---|---|---|---|---|
 | arxiv | 10 | 10 | 0 | paper / dataset | json（metadata 降级）|
-| github | 14 | 13 | 2 | code / robot_urdf / policy_model / sensor_data / sim_config | urdf / markdown / json / mjcf |
-| huggingface | 12 | 12 | 1 | grasp / dataset / policy_model | CanonicalGrasp / json / markdown |
+| github | 14 | 13 | 1 | code / robot_urdf / policy_model / sensor_data / sim_config | urdf / markdown / json / mjcf |
+| huggingface | 12 | 12 | 0 | grasp / dataset / policy_model | CanonicalGrasp / json / markdown |
 | zenodo | 8 | 8 | 0 | dataset / sensor_data | json（metadata 降级）|
 | paperswithcode | 0 | — | — | — | records 中无直接命中（经 arxiv 兜底）|
-| graspnet | 5 | 5 | 1 | grasp | CanonicalGrasp / json |
+| graspnet | 5 | 5 | 0 | grasp | CanonicalGrasp / json |
 | dexgrasp | 0 | — | — | — | records 中无直接命中（经 huggingface 兜底）|
 | ieee | 0 | — | — | — | records 中无直接命中（经 arxiv 兜底，blocked）|
 | ycb | 6 | 4 | 2 | mesh | obj / stl |
 | mujoco | 6 | 0 | 6 | sim_config | xml（真实场景，全部 real）|
-| isaac | 2 | 2 | 1 | sim_config | mjcf（最小 MJCF 降级）|
+| isaac | 2 | 2 | 0 | sim_config | mjcf（最小 MJCF 降级）|
 
-> 说明：paperswithcode / dexgrasp / ieee 三源在 records/ 的 retrieve 中**未作为命中源记录**——实际执行时由兜底源命中（paperswithcode→arxiv、dexgrasp→huggingface、ieee→arxiv）。探活显示三源构造/检索可用（ieee 检索因无 Key 跳过），执行观察按命中源归因。mujoco 命中 6 条全部 real（menagerie 场景 XML），是数据类源中 real 命中率最高的源。
+> 说明：paperswithcode / dexgrasp / ieee 三源在 records/ 的 retrieve 中**未作为命中源记录**——实际执行时由兜底源命中（paperswithcode→arxiv、dexgrasp→huggingface、ieee→arxiv）。探活显示三源构造/检索可用（ieee 检索因无 Key 跳过），执行观察按命中源归因。**real 列口径：按 `is_fallback=False`（非降级命中）统计**，与 quality=real 不同——如 ms_003 的 isaac、ss_graspnet_001 的 huggingface 虽 quality=real 但 is_fallback=True，归入 fallback。mujoco 命中 6 条全部非降级（menagerie 场景 XML），是数据类源中 real 命中率最高的源。kinova（ms_003 命中 1 条 fallback）属 D 格式/仿真类源（robot_urdf 类），不在本表范围。
 
 ## 三、GRASP 专项（探活）
 
@@ -56,8 +56,8 @@
 | 源 | 可用性等级 | 可命中需求类型 | 质量档 | 降级/兜底路径 | 遗留问题 |
 |---|---|---|---|---|---|
 | arxiv | ✅ 可用 | PAPER / DATASET | fallback | PDF 超阈值 → metadata JSON | 大 PDF 下载慢 |
-| github | ✅ 可用 | CODE / ROBOT_URDF / POLICY_MODEL / SENSOR_DATA / SIM_CONFIG | real / fallback | 非 .urdf → git/trees 定位；README 兜底 | 无 token 限流风险 |
-| huggingface | ✅ 可用 | GRASP / DATASET / POLICY_MODEL | real / fallback | model_info 404 → config → metadata | 单仓库大文件下载 |
+| github | ✅ 可用 | CODE / ROBOT_URDF / POLICY_MODEL / SENSOR_DATA / SIM_CONFIG | fallback 为主（real 仅 ss_github_001） | 非 .urdf → git/trees 定位；README 兜底 | 无 token 限流风险 |
+| huggingface | ✅ 可用 | GRASP / DATASET / POLICY_MODEL | fallback（无 real 命中） | model_info 404 → config → metadata | 单仓库大文件下载 |
 | zenodo | ✅ 可用 | DATASET / SENSOR_DATA | fallback | 非时序数据 → 元数据降级 | 记录粒度差异 |
 | paperswithcode | ✅ 可用（探活） | PAPER / CODE | fallback | OpenAlex 接口 | search 慢（12s）；执行多经 arxiv 兜底 |
 | graspnet | ⚠️ 降级可用 | GRASP / DATASET | fallback | tar 死路径 → 元数据 | 需真实数据目录 |
@@ -72,5 +72,5 @@
 1. **ieee**：无 API Key，blocked-by-user（P7_ENV）；实际经 arxiv 兜底转 PASS_WITH_FALLBACK，如实记录。
 2. **graspnet / ycb（GRASP）**：无真实 grasp 文件（graspnet json 元数据 / ycb obj 非 grasp 格式），仅 dexgrasp 可出真实 npy；建议补本地数据集目录或接受降级口径。
 3. **paperswithcode / dexgrasp**：records/ 中无直接命中记录（分别经 arxiv / huggingface 兜底），建议核对 retriever 候选源优先级与注入逻辑，确认是否为执行期随机性。
-4. **huggingface**：records 观察中 1 条 real（graspnet_001 dataset）但 is_fallback=true，需确认 dataset 源质量标记口径。
-5. **isaac**：无真实 Isaac Sim 资产，仅最小 MJCF fallback（2 条观察中 1 条 real 为 ms_003 兜底命中，需复核标记）。
+4. **huggingface**：12 条命中全部 `is_fallback=True`，无 real 命中。其中 ss_graspnet_001 的 dataset 条目 quality=real 但 is_fallback=True（status=error），quality 与降级标记口径需统一。
+5. **isaac**：无真实 Isaac Sim 资产，仅最小 MJCF fallback；2 条命中全部 `is_fallback=True`（ms_003、ms_006），其中 ms_003 的 quality=real 但实际为降级命中，已复核标记为 fallback。
