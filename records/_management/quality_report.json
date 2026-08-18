@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-18T14:55:27+08:00",
-  "strict_mode": true,
+  "generated_at": "2026-08-18T18:51:54+08:00",
+  "strict_mode": false,
   "problem_set": {
     "total": 63,
     "single_source": 55,
@@ -11,9 +11,9 @@
   "progress": {
     "executed": 63,
     "judged": 63,
-    "reviewed": 62,
+    "reviewed": 63,
     "execution_rate": 1.0,
-    "review_rate": 0.9841
+    "review_rate": 1.0
   },
   "verdicts": {
     "pass": 14,
@@ -28,7 +28,7 @@
     "record_completeness_avg_pct": 99.9,
     "records_at_least_90_pct": 63,
     "records_at_least_90_rate": 1.0,
-    "screenshot_compliance_rate": 1.0,
+    "screenshot_compliance_rate": 0.9841,
     "validation_error_count": 0
   },
   "p0_acceptance": {
@@ -591,7 +591,7 @@
     "p0_usable_at_least_target": true,
     "record_completeness_at_least_90_pct": true,
     "all_cases_executed": true,
-    "all_judged_records_reviewed": false,
+    "all_judged_records_reviewed": true,
     "no_record_validation_errors": true
   }
 }

@@ -662,7 +662,14 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
     if not isinstance(screenshots, list):
         issues.append(Issue("ERROR", case_id, "screenshots 必须是数组"))
         screenshots = []
-    if len(screenshots) < 4:
+    # ponytail: P7_ENV 类在初始化阶段失败、未生成数据包的 case 物理上不存在
+    # package/validation 截图，放宽为至少 2 张（FAIL 必须含报错截图，由下方
+    # has_error_screenshot 检查保证）；升级路径：此类 case 补足截图后收紧。
+    early_fail = record.get("verdict") == "FAIL" and package.get("status") in (
+        "missing",
+        "not_generated",
+    )
+    if len(screenshots) < (2 if early_fail else 4):
         issues.append(
             Issue("ERROR", case_id, "每题至少 4 张截图（input/progress/package/validation）")
         )

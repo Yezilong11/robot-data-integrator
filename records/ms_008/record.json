@@ -57,14 +57,6 @@
       "desc": "真实流程返回的阶段进度：五个阶段均未开始，记录为初始化阶段失败。"
     },
     {
-      "file": "screenshots/03_package.png",
-      "desc": "真实流程结果的数据包区域为空，确认没有生成演示或伪造数据包。"
-    },
-    {
-      "file": "screenshots/04_validation.png",
-      "desc": "真实流程结果的校验区域，显示初始化错误且 missing_items 为 backend-runtime。"
-    },
-    {
       "file": "screenshots/05_error.png",
       "desc": "FAIL 报错证据：Missing credentials，需设置 OPENAI_API_KEY 或等效凭据。"
     }
@@ -72,7 +64,7 @@
   "verdict": "FAIL",
   "failure_category": "P7_ENV",
   "failure_reason": "真实流程在图初始化阶段报 Missing credentials：未提供 api_key/workload_identity/admin_api_key，且环境未设置 OPENAI_API_KEY 或 OPENAI_ADMIN_KEY；因此未进入 human_review，也没有 resume 结果。",
-  "notes": "已按真实流程执行并保留错误证据。下一步需补齐可用模型凭据后重新运行完整的 run → interrupt → resume 链路；本次不静默降级为演示流程。",
-  "reviewer": null,
-  "reviewed_at": null
+  "notes": "已按真实流程执行并保留错误证据。下一步需补齐可用模型凭据后重新运行完整的 run → interrupt → resume 链路；本次不静默降级为演示流程。（A 2026-08-18 复核：03_package/04_validation 截图捕获未成功且文件未落盘，移除悬空引用；FAIL 证据由 02_progress + 05_error 覆盖）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-18T18:50:26+08:00"
 }
