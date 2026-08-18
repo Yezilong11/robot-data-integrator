@@ -1,16 +1,46 @@
-# Day 5｜F 记录冻结准备
+# Day 5｜F 记录冻结报告
 
-本快照只作为冻结前基线，不代表已经冻结。冻结前必须完成剩余 56 题执行、7 条既有记录复核、P0 缺口补测和路径可移植性处理。
+> 冻结执行：F（A 代整理，2026-08-18）｜批准：A（2026-08-18T18:55+08:00）
+> 冻结基线：63/63 条 `records/*/record.json` 已全部执行、判定、复核
+> 关联问题集定稿：`problem_set` @ `49241c3`（63 题：55 单源 + 8 多源，降级判定口径已合入）
 
-## 冻结门槛
+## 一、冻结门槛逐项核验
 
-- [ ] `manage_test_records.py validate-records` 无 ERROR。
-- [ ] `reviewed` 覆盖所有已判定记录。
-- [ ] 每个 case 的截图、record.json、package 证据齐全。
-- [ ] P0 可用数据包达到 8/11。
-- [ ] 统计快照与问题集提交号一致。
-- [ ] A 明确批准冻结时间点；冻结后修改走变更记录。
+| # | 门槛 | 状态 | 证据 |
+| ---- | ---- | ---- | ---- |
+| 1 | `manage_test_records.py all` 无 ERROR | ✅ | 0 ERROR（52 条 WARNING 均为已知放行项：显式降级 §2.4、绝对路径不可移植、未覆盖源提示） |
+| 2 | reviewed 覆盖所有已判定记录 | ✅ | 63/63（reviewer=A，ms_008 复核于 08-18） |
+| 3 | 截图 / record.json / package 证据齐全 | ✅ | record.json 63/63；截图引用 0 缺失；FAIL 均有报错截图（ms_008 含 05_error）；P7_ENV 初始化失败 case 已豁免 4 张下限（见遗留 #2） |
+| 4 | P0 可用数据包 ≥ 8/11 | ✅ | **11/11**（PASS 5 + PWF 6） |
+| 5 | 统计快照与问题集提交号一致 | ✅ | 统计生成 08-18T18:51，基于 problem_set @ `49241c3`，之后问题集无修改 |
+| 6 | A 明确批准冻结时间点 | ✅ | 批准 2026-08-18T18:55+08:00；冻结后修改走变更记录 |
 
-## 当前遗留
+## 二、冻结基线
 
-`ms_004` 的 P2_RETRIEVE FAIL、3 条绝对 package 路径 WARNING，以及 reviewer 缺失仍需处理。
+| 指标 | 值 |
+| ---- | ---- |
+| 题目总数 | 63（P0 11 / P1 52） |
+| 已执行 / 已判定 / 已复核 | 63 / 63 / 63 |
+| PASS / PASS_WITH_FALLBACK / FAIL | 14 / 48 / 1 |
+| 可用率 | 98.4%（62/63 可用） |
+| P0 可用 | 11/11（≥8 达标） |
+| 记录平均完整率 | 99.9% |
+| 截图合规率 | 98.4% |
+| 截图分布 | 8 张×59 / 4 张×3（robotiq_003、ms_006、ms_007）/ 3 张×1（ms_008，P7_ENV 豁免） |
+
+判定口径：PASS 14 全核心命中；PWF 48 均满足 §2.3/§2.4 显式降级契约（`is_fallback` + `fallback_reason`，检索层 `package.fallback_explicit=true`）；FAIL 1（ms_008 P7_ENV）。
+
+## 三、已知遗留（冻结时点，非冻结失败项）
+
+1. **ms_008 FAIL/P7_ENV**：真实流程凭据缺失（Missing credentials），未进入处理阶段。待 F 配置模型凭据后重跑 run→interrupt→resume 链路，可转 PWF；不阻断验收（P1）。
+2. **P7_ENV 截图下限豁免**：`manage_test_records.py` 对「FAIL + 未生成数据包」case 放宽"至少 4 张"为"至少 2 张 + 必须含报错截图"（物理上无 package/validation 截图可截）。
+3. **绝对路径 WARNING**：records 内 `package.dir` 为各执行机本地路径（如 `D:\tiaozhanbei\...`），不可移植；统计与验收不依赖路径本身。
+4. **C 数据源汇总范围**：11 源（Day3 口径）而非 15 源，被排除的 franka/robotiq/allegro/google_scanned 由 D 可加载性验证覆盖（已确认无重叠，见 Day5 计划修订 `29f36ee`）。
+
+## 四、变更记录约定
+
+冻结后对 `records/` 的任何修改（补跑、修正、新增 case）须在 progress.csv 的 `updated_at` 落时间戳，并在本报告「变更记录」追加一行；已复核记录修改须重新复核（reviewer + reviewed_at 更新）。
+
+| 时间 | 变更 | 影响 |
+| ---- | ---- | ---- |
+| 2026-08-18T18:55+08:00 | 冻结基线建立 | — |
