@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "meta": {
-    "name": "v3 问题集 v1.0（C+D 合并定稿）",
+    "name": "v3 问题集 v1.1（含二轮扩展 59 题，共 122 题）",
     "created_at": "2026-08-12",
     "architecture": {
       "single_source": {
@@ -13,7 +13,8 @@
         "note": "多源混合测试（实际 8/63）"
       }
     },
-    "merge_note": "由 problem_set_c_draft.json(43) 与 draft_D_robot_urdf_mesh_sim_config.json(31) 合并去重：ycb 5 题 mesh×3 归 D + grasp×2 归 C；mujoco/isaac 归 D；dexgrasp/graspnet 归 C；D 的 multi_source_notes 转正式 ms_001~008。"
+    "merge_note": "由 problem_set_c_draft.json(43) 与 draft_D_robot_urdf_mesh_sim_config.json(31) 合并去重：ycb 5 题 mesh×3 归 D + grasp×2 归 C；mujoco/isaac 归 D；dexgrasp/graspnet 归 C；D 的 multi_source_notes 转正式 ms_001~008。",
+    "r2_note": "二轮扩展：在 v1.0 的 63 题基础上新增 59 题（重平衡版，2026-08-20 人工审核通过）。扩展方向：补 kinova 源、补 mujoco sim_config、补 sensor_data/code/policy_model、多源 8→15。"
   },
   "problems": [
     {
@@ -1621,6 +1622,1567 @@
           "urdf"
         ],
         "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_kinova_001",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "kinova"
+      ],
+      "target": "获取 Kinova Gen3 机械臂的 URDF 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "直接"
+    },
+    {
+      "case_id": "ss_kinova_002",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "kinova"
+      ],
+      "target": "获取 Kinova Gen3 Lite 机械臂 URDF，并确认其自由度",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（模型+自由度）"
+    },
+    {
+      "case_id": "ss_kinova_003",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "kinova"
+      ],
+      "target": "帮我找 Kinova 协作机械臂的 URDF 文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_kinova_004",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "kinova"
+      ],
+      "target": "获取 Kinova Gen3 的 URDF 并与 Franka Panda 对比关节数",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "组合需求（关节校验）"
+    },
+    {
+      "case_id": "ss_allegro_004",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "allegro"
+      ],
+      "target": "获取 Allegro 灵巧手的 URDF，并确认其 16 个关节是否齐全",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（关节数校验）"
+    },
+    {
+      "case_id": "ss_allegro_005",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "allegro"
+      ],
+      "target": "我要在仿真里用 Allegro 手抓物体，帮我找它的 URDF 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_allegro_006",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "allegro"
+      ],
+      "target": "Allegro hand URDF with 4-finger tactile layout",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文描述"
+    },
+    {
+      "case_id": "ss_isaac_003",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "isaac"
+      ],
+      "target": "获取 Isaac Sim 中 UR5 的仿真场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "python",
+          "mjcf",
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "指定机械臂"
+    },
+    {
+      "case_id": "ss_isaac_004",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "isaac"
+      ],
+      "target": "我要在 Isaac Sim 里搭抓取环境，帮我找场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "python",
+          "mjcf",
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_isaac_005",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "isaac"
+      ],
+      "target": "Isaac Sim kitchen environment config for robot manipulation",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "python",
+          "mjcf",
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文特定环境"
+    },
+    {
+      "case_id": "ss_graspnet_003",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "graspnet"
+      ],
+      "target": "获取 GraspNet-1Billion 中物体 camera_0 的抓取数据",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "grasp"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npz",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "指定相机视角"
+    },
+    {
+      "case_id": "ss_graspnet_004",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "graspnet"
+      ],
+      "target": "我要做抓取规划，帮我找 GraspNet 数据集的抓取标签",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "grasp"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npz",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_mujoco_006",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "我要在 MuJoCo 里搭建 Franka 抓取场景，帮我找场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml",
+          "mjcf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文口语化（Franka）"
+    },
+    {
+      "case_id": "ss_mujoco_007",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "获取 MuJoCo 中 UR5 机械臂搭配物体抓取的任务场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml",
+          "mjcf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（机械臂+物体）"
+    },
+    {
+      "case_id": "ss_mujoco_008",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "MuJoCo tabletop manipulation scene with a single object",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml",
+          "mjcf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文特定场景"
+    },
+    {
+      "case_id": "ss_mujoco_009",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "获取一个不含机械臂、只有物体的 MuJoCo 仿真场景",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml",
+          "mjcf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "边界（纯物体场景）"
+    },
+    {
+      "case_id": "ss_graspnet_005",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "graspnet"
+      ],
+      "target": "获取 GraspNet-1Billion 数据集的说明和目录结构",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "dataset"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "数据集元信息"
+    },
+    {
+      "case_id": "ss_ieee_002",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "ieee"
+      ],
+      "target": "检索机械臂抓取相关的 IEEE 论文",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "paper"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文描述"
+    },
+    {
+      "case_id": "ss_ieee_003",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "ieee"
+      ],
+      "target": "检索机器人灵巧操作的 IEEE 综述论文",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "paper"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文综述"
+    },
+    {
+      "case_id": "ss_ieee_004",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "ieee"
+      ],
+      "target": "IEEE papers on 6-DOF grasp pose estimation",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "paper"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文细分主题"
+    },
+    {
+      "case_id": "ss_google_scanned_004",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "google_scanned"
+      ],
+      "target": "获取 Google Scanned Objects 中的椅子（chair）mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "glb",
+          "obj",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "指定物体"
+    },
+    {
+      "case_id": "ss_google_scanned_005",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "google_scanned"
+      ],
+      "target": "获取 Google Scanned Objects 中一个杯子的 mesh 模型用于仿真",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "glb",
+          "obj",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化"
+    },
+    {
+      "case_id": "ss_google_scanned_006",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "google_scanned"
+      ],
+      "target": "Retrieve any object mesh from Google Scanned Objects for MuJoCo tabletop",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "glb",
+          "obj",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文场景化"
+    },
+    {
+      "case_id": "ss_franka_004",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "franka"
+      ],
+      "target": "帮我找 Franka Panda 的 URDF，并确认末端抓爪型号",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（模型+末端）"
+    },
+    {
+      "case_id": "ss_franka_005",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "franka"
+      ],
+      "target": "Franka Panda URDF with 7-DOF joint limits",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文组合"
+    },
+    {
+      "case_id": "ss_robotiq_004",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "robotiq"
+      ],
+      "target": "获取 Robotiq 2F-85 夹爪 URDF 用于 MoveIt 规划",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "英文场景化"
+    },
+    {
+      "case_id": "ss_robotiq_005",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "robotiq"
+      ],
+      "target": "帮我获取 Robotiq 2F-85 夹爪模型文件并转换为 URDF",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化"
+    },
+    {
+      "case_id": "ss_arxiv_006",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索机器人抓取的 arXiv 论文（中文描述）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "paper"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文描述"
+    },
+    {
+      "case_id": "ss_arxiv_007",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索 robot learning manipulation 领域的 arXiv 最新论文 2 篇",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "paper"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 2
+      },
+      "priority": "P2",
+      "variant": "多篇检索"
+    },
+    {
+      "case_id": "ss_huggingface_006",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "huggingface"
+      ],
+      "target": "帮我找 Hugging Face 上的机器人操作数据集（中文描述）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "dataset"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文描述"
+    },
+    {
+      "case_id": "ss_github_006",
+      "layer": "single_source",
+      "category": "code",
+      "source": [
+        "github"
+      ],
+      "target": "帮我找一个机械臂控制的 GitHub 开源项目（中文描述）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "code"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文描述"
+    },
+    {
+      "case_id": "ss_zenodo_006",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "zenodo"
+      ],
+      "target": "帮我找 Zenodo 上机器人抓取数据集（中文描述）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "dataset"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "csv"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文描述"
+    },
+    {
+      "case_id": "ss_dexgrasp_006",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "帮我找 DexGraspNet 数据集的抓取标注（中文描述）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "grasp"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "pkl",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文描述"
+    },
+    {
+      "case_id": "ss_ycb_006",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 YCB 数据集中的瓶子（bottle）mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "obj",
+          "stl",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "物体 E（bottle）"
+    },
+    {
+      "case_id": "ss_ycb_007",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 YCB 数据集中的香蕉 mesh 模型并确认是闭合流形",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "obj",
+          "stl",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（mesh+可加载性）"
+    },
+    {
+      "case_id": "ss_zenodo_007",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "zenodo"
+      ],
+      "target": "Find a robotic arm joint sensor dataset on Zenodo",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "dataset"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "csv"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文传感器数据集"
+    },
+    {
+      "case_id": "ss_sensor_github_001",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "github"
+      ],
+      "target": "帮我找 GitHub 上的机械臂关节力矩传感器数据",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sensor_data"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "csv",
+          "json",
+          "mat"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文（力/力矩）"
+    },
+    {
+      "case_id": "ss_sensor_github_002",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "github"
+      ],
+      "target": "Find joint position/velocity sensor log data on GitHub",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "sensor_data"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "csv",
+          "json",
+          "mat"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文（位姿/速度）"
+    },
+    {
+      "case_id": "ss_sensor_zenodo_001",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "zenodo"
+      ],
+      "target": "帮我找 Zenodo 上的 IMU 传感器数据",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sensor_data"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "csv",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文（IMU）"
+    },
+    {
+      "case_id": "ss_sensor_zenodo_002",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "zenodo"
+      ],
+      "target": "Find a force-torque sensor dataset for a robotic gripper on Zenodo",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "sensor_data"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "csv",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文（力/力矩）"
+    },
+    {
+      "case_id": "ss_code_github_001",
+      "layer": "single_source",
+      "category": "code",
+      "source": [
+        "github"
+      ],
+      "target": "获取一个 GitHub 上用于机械臂运动学求解的 Python 仓库代码",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "code"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文（运动学）"
+    },
+    {
+      "case_id": "ss_code_hf_001",
+      "layer": "single_source",
+      "category": "code",
+      "source": [
+        "huggingface"
+      ],
+      "target": "Find a Hugging Face Space/Repo with robot grasping inference code",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "code"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文（抓取推理代码）"
+    },
+    {
+      "case_id": "ss_policy_hf_001",
+      "layer": "single_source",
+      "category": "policy",
+      "source": [
+        "huggingface"
+      ],
+      "target": "获取一个 Hugging Face 上的机械臂抓取策略模型权重",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "policy_model"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "safetensors",
+          "json",
+          "onnx"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文"
+    },
+    {
+      "case_id": "ss_policy_github_001",
+      "layer": "single_source",
+      "category": "policy",
+      "source": [
+        "github"
+      ],
+      "target": "Find a GitHub repo releasing a learned manipulation policy checkpoint",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "policy_model"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "safetensors",
+          "json",
+          "onnx",
+          "pth"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文"
+    },
+    {
+      "case_id": "ss_grasp_ycb_001",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 YCB 数据集中马克杯的抓取标注",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "grasp"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "mat",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "中文（马克杯）"
+    },
+    {
+      "case_id": "ss_grasp_dexgrasp_002",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "获取 DexGraspNet 中 bowl 的抓取文件（中文）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "grasp"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "pkl",
+          "npy",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文（bowl）"
+    },
+    {
+      "case_id": "ss_mesh_gso_001",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "google_scanned"
+      ],
+      "target": "获取 Google Scanned Objects 中一个香蕉 mesh 模型（中文）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "glb",
+          "obj",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文（香蕉）"
+    },
+    {
+      "case_id": "ss_mesh_ycb_008",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 YCB 数据集中钳子（pliers）的 mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "obj",
+          "stl",
+          "ply"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文（钳子）"
+    },
+    {
+      "case_id": "ss_dataset_hf_002",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "huggingface"
+      ],
+      "target": "Find a robot manipulation dataset with action labels on Hugging Face",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "dataset"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文（带动作标注）"
+    },
+    {
+      "case_id": "ss_dataset_graspnet_001",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "graspnet"
+      ],
+      "target": "获取 GraspNet 数据集中某个物体的点云与标注（中文）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "dataset"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npz",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文（点云）"
+    },
+    {
+      "case_id": "ss_urdf_github_001",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "github"
+      ],
+      "target": "检索 GitHub 上的 UR5 机械臂 URDF 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "指定 UR5"
+    },
+    {
+      "case_id": "ss_urdf_kinova_005",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "kinova"
+      ],
+      "target": "Find a Kinova Gen3 URDF with gripper for ROS",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "英文（带夹爪）"
+    },
+    {
+      "case_id": "ms_009",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "kinova",
+        "ycb",
+        "mujoco"
+      ],
+      "target": "Kinova Gen3 grasps YCB bottle in MuJoCo",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf",
+          "mesh",
+          "grasp",
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf",
+          "obj",
+          "stl",
+          "xml"
+        ],
+        "min_files": 4
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ms_010",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "franka",
+        "ycb"
+      ],
+      "target": "用 Franka Panda 抓取 YCB 马克杯（无仿真器指定）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf",
+          "mesh",
+          "grasp"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf",
+          "obj",
+          "stl",
+          "mat"
+        ],
+        "min_files": 3
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ms_011",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "allegro",
+        "ycb",
+        "isaac"
+      ],
+      "target": "Allegro dexterous hand manipulates YCB cup in Isaac Sim",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf",
+          "mesh",
+          "sim_config"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf",
+          "obj",
+          "stl",
+          "python",
+          "mjcf",
+          "xml"
+        ],
+        "min_files": 3
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ms_012",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "robotiq",
+        "google_scanned"
+      ],
+      "target": "UR5 with Robotiq 2F-85 grasps a Google Scanned object",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "robot_urdf",
+          "mesh"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf",
+          "glb",
+          "obj",
+          "stl"
+        ],
+        "min_files": 2
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ms_013",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "franka",
+        "mujoco",
+        "huggingface"
+      ],
+      "target": "用 Franka Panda 在 MuJoCo 里执行抓取，并加载一个策略模型权重",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "robot_urdf",
+          "sim_config",
+          "policy_model"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "urdf",
+          "xml",
+          "json",
+          "safetensors"
+        ],
+        "min_files": 3
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ms_014",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "github",
+        "huggingface"
+      ],
+      "target": "找一个机械臂抓取策略的开源代码并加载其 Hugging Face 权重",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "code",
+          "policy_model"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown",
+          "safetensors",
+          "json"
+        ],
+        "min_files": 2
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ms_015",
+      "layer": "multi_source",
+      "category": "end_to_end",
+      "source": [
+        "zenodo",
+        "github"
+      ],
+      "target": "结合 Zenodo 传感器数据与 GitHub 代码做机械臂力控",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "sensor_data",
+          "code"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "csv",
+          "json",
+          "markdown"
+        ],
+        "min_files": 2
       },
       "priority": "P1"
     }
