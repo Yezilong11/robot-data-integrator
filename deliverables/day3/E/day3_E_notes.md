@@ -2,11 +2,11 @@
 
 ## 1. 基本信息
 
-修订日期：2026-08-16  
-角色：E 产品工程师  
-任务类型：多源交叉测试复核、前端流程稳定性观察、操作手册第二版修订  
-运行模式：真实流程  
-审查决定：satisfied  
+修订日期：2026-08-16
+角色：E 产品工程师
+任务类型：多源交叉测试复核、前端流程稳定性观察、操作手册第二版修订
+运行模式：真实流程
+审查决定：satisfied
 
 ## 2. 修订说明
 
@@ -107,7 +107,7 @@ PASS_WITH_FALLBACK
 
 口径依据：
 
-A 已按《判定口径纪要_C数据源类.md》§6 确认：GraspNet 仅返回元数据 JSON 属显式降级，若 `missing_items` 中有 reason 与 alternatives，且降级可追溯，则判 `PASS_WITH_FALLBACK`。
+A 已按《docs/problem_set/判定口径纪要_C数据源类.md》§6 确认：GraspNet 仅返回元数据 JSON 属显式降级，若 `missing_items` 中有 reason 与 alternatives，且降级可追溯，则判 `PASS_WITH_FALLBACK`。
 
 主要原因：
 

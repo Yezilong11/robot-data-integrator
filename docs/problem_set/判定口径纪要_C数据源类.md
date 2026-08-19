@@ -5,7 +5,7 @@
 > 日期：2026-08-12
 > 对齐双方：C ↔ A（组长）
 > 状态：**已确认（A 2026-08-12）**；为执行期判定唯一依据
-> 依据：《问题集构建策略.md》§4.2/§5.5、《问题集规模与源配额.md》、`src/rdi/skills/registry.py`、`src/rdi/models/manifest.py`
+> 依据：《docs/problem_set/问题集构建策略.md》§4.2/§5.5、《docs/problem_set/问题集规模与源配额.md》、`src/rdi/skills/registry.py`、`src/rdi/models/manifest.py`
 
 ---
 

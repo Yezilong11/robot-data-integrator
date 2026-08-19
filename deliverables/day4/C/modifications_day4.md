@@ -1,11 +1,11 @@
 # Day4 C 修改文档（modifications_day4）
 
 > 角色：C（数据工程师）｜日期：2026-08-15｜范围：仅 Day4 期间对项目与交付物的修改
-> 对照依据：`Day4_执行收尾.md` C 章节两条任务
+> 对照依据：`docs/problem_set/Day4_执行收尾.md` C 章节两条任务
 
-## 一、Day4 C 任务总览（对照 Day4_执行收尾.md）
+## 一、Day4 C 任务总览（对照 docs/problem_set/Day4_执行收尾.md）
 
-| Day4_执行收尾.md C 任务 | 本日执行内容 | 状态 |
+| docs/problem_set/Day4_执行收尾.md C 任务 | 本日执行内容 | 状态 |
 |---|---|---|
 | 1. 完成数据源类全部单源题，补测遗漏源（如 IEEE 未配 Key 的降级记录） | 核对 C 33 题全覆盖（30 在 day3/C + 3 在 records 库）；IEEE 3 题豁免记录确认；探活补测 15 源（含 GRASP 专项） | ✅ 完成 |
 | 2. 交叉多源题全部完成，汇总数据源可用性初稿（基于探活 + 执行观察） | ms_005 执行两轮（failed→complete）；产出数据源可用性初稿（15 源，探活 + 执行观察双证据） | ✅ 完成 |
@@ -68,7 +68,7 @@ deliverables/day4/C/
 
 ## 五、任务与产出对照表
 
-| Day4_执行收尾.md C 任务 | 产出/证据 | 验收点 | 状态 |
+| docs/problem_set/Day4_执行收尾.md C 任务 | 产出/证据 | 验收点 | 状态 |
 |---|---|---|---|
 | 1. 单源题完成 + IEEE 补测 | 33 题核对结果（三、3.2）、IEEE 豁免 notes、探活补测（三、3.3） | 全部有 record+截图；IEEE 降级显式可追溯 | ✅ |
 | 2. 多源完成 + 可用性初稿 | ms_005（record+evidence_v2+diff_notes+截图）、data_source_availability.md | ms_005 pkg=complete；初稿覆盖 15 源双证据 | ✅ |

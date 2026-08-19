@@ -13,7 +13,7 @@ ms_006_run_guide.md
 ## 本次修订内容
 
 1. 修正 `ms_004` / `ms_007` 的表述：二者是 Day2 已完成 case，不再写成 Day3 今日新执行。
-2. 更新 `ms_007` 判定：按《判定口径纪要_C数据源类.md》§6，GraspNet 元数据 JSON 属显式降级，判 `PASS_WITH_FALLBACK`。
+2. 更新 `ms_007` 判定：按《docs/problem_set/判定口径纪要_C数据源类.md》§6，GraspNet 元数据 JSON 属显式降级，判 `PASS_WITH_FALLBACK`。
 3. 补齐 `ms_004` 失败截图要求：`records/ms_004/screenshots/05_error.png`，并在 `record.json` 的 `screenshots` 中追加条目。
 4. 补交 `frontend_manual_v2.md`，记录已核对项与踩坑记录。
 5. 新增并完成 `ms_006` 真实补测记录，用于满足 Day3 新交叉多源题要求。

@@ -1,7 +1,7 @@
 # Day 5｜D（机器人工程师）清尾补测方案与执行记录
 
 > 分支：`feat/arch-langgraph`
-> 方案制定：2026-08-16（依据 `Day5_执行截止与补测缓冲.md` + `问题集构建策略.md`）
+> 方案制定：2026-08-16（依据 `docs/problem_set/Day5_执行截止与补测缓冲.md` + `docs/problem_set/问题集构建策略.md`）
 > **执行完成：2026-08-17（13 个 case 全部通过真实前端流程补测并同步 records/；可加载性结论与 P4/P5 清单已交付）**
 > 问题集：`problem_set/problem_set.json`　进度表：`records/_management/progress.csv`（已更新）
 > 交付目录：`deliverables/day5/D/`（README、可加载性验证结论.md、P4_P5失败清单.md 三份均就绪）

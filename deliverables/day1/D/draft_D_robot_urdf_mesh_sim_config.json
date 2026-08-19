@@ -5,7 +5,7 @@
     "created_at": "2026-08-12",
     "draft_by": "D（机器人工程师）",
     "status": "待 A 评审",
-    "quota_ref": "问题集规模与源配额.md",
+    "quota_ref": "docs/problem_set/问题集规模与源配额.md",
     "quota_note": "本草案覆盖 D 领域 9 源配额共 31 题（franka 3 + robotiq 3 + allegro 3 + ycb 5 + google_scanned 3 + mujoco 5 + isaac 2 + dexgrasp 5 + graspnet 2）。其中 dexgrasp/graspnet/ycb 的 GRASP、DATASET 题主设计归 C，D 提供格式侧验收；若 C 草案已含同 case 则以 C 为准，避免重复。其余 6 源（arxiv/github/huggingface/zenodo/paperswithcode/ieee）由 C/E 草案出题。"
   },
   "problems": [
