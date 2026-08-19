@@ -11,7 +11,7 @@ uv run python scripts/manage_test_records.py init-record ms_008 --executor F
 # 校验题库与所有已有记录，并更新进度/统计
 uv run python scripts/manage_test_records.py all
 
-# Day 8 严格验收：未执行、未复核或验收线不达标都会返回失败
+# Day6-8 合并收尾的严格验收：未执行、未复核或验收线不达标都会返回失败
 uv run python scripts/manage_test_records.py all --strict
 ```
 

@@ -31,3 +31,10 @@
 | D | 待归档 | 单源题执行记录 → records/<case_id>/ |
 | E | 待归档 | 多源题执行记录 → records/<case_id>/ |
 | F | 待归档 | 每日校验/进度 → records/_management/ |
+
+## day6（Day6-8 合并收尾）
+
+| 角色 | 文件 | 去向 |
+|---|---|---|
+| C | 数据源可用性、P2/P3 归因与改进建议 | `deliverables/day6/C/` |
+| F | `day6_statistics.md`、`case_statistics.csv`、`改进建议清单.md`、`交付核对清单.md`、`阐述.md` | 本目录；正式统计依据 `records/_management/`，主交付仍为 `problem_set/` + `records/` |

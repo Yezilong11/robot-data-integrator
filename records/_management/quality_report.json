@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-18T21:36:00+08:00",
-  "strict_mode": false,
+  "generated_at": "2026-08-19T15:11:12+08:00",
+  "strict_mode": true,
   "problem_set": {
     "total": 63,
     "single_source": 55,

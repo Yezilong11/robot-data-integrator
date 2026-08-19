@@ -11,7 +11,7 @@ F 的 Day1 产出为**执行记录管理工具**（代码交付，随 `59f2cde` 
 
 | 文件 | 说明 |
 |---|---|
-| `scripts/manage_test_records.py` | 自动管理工具：记录初始化 / 完整性校验 / 静默降级检查 / 进度刷新（progress.csv）/ 质量报告（quality_report.json）/ 统计摘要（statistics_summary.md）/ Day8 严格验收模式 |
+| `scripts/manage_test_records.py` | 自动管理工具：记录初始化 / 完整性校验 / 静默降级检查 / 进度刷新（progress.csv）/ 质量报告（quality_report.json）/ 统计摘要（statistics_summary.md）/ Day6-8 合并收尾严格验收模式 |
 
 ## 职责范围（任务分配）
 

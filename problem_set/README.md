@@ -10,4 +10,4 @@
 4. A 完成评审后，在 `review_checklist.md` 填写签收信息。
 5. 题目变更后运行 `uv run python scripts/manage_test_records.py all`，同步进度表和统计文件。
 
-当前代码实际包含 15 个 `DataSource`，问题集已全部覆盖。README 中“16 种数据源”的表述是过时计数。
+当前代码有 16 个外部 `DataSource` Adapter（另有 `local` 文件注入枚举）。正式题库声明覆盖其中 15 个 source；`kinova` 没有单独题设 source，因此 `validate-problems` 会给出 1 条非阻断 WARNING。不要把该 WARNING 误写成“全部注册源已覆盖”；下一轮应补 Kinova 题，或在评审清单中明确豁免范围。

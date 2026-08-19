@@ -1085,7 +1085,7 @@ def write_summary(report: dict[str, Any]) -> None:
         f"| P0 可用数据包 | {p0['usable']}/{p0['total']}（目标至少 {p0['target']}） |",
         f"| 失败原因 TOP 3 | {top3_text} |",
         "",
-        "## Day 8 验收检查",
+        "## Day6-8 合并收尾验收检查",
         "",
     ]
     labels = {
@@ -1166,7 +1166,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("sync-progress", help="刷新 progress.csv")
     subparsers.add_parser("summarize", help="刷新质量报告和统计摘要")
     all_parser = subparsers.add_parser("all", help="执行全部校验、进度与统计任务")
-    all_parser.add_argument("--strict", action="store_true", help="按 Day 8 验收线严格检查")
+    all_parser.add_argument("--strict", action="store_true", help="按 Day6-8 合并收尾验收线严格检查")
     return parser
 
 
