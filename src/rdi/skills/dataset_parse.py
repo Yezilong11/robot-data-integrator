@@ -147,7 +147,9 @@ class DatasetSkill(BaseSkill):
                                 lower.endswith("metadata.json")
                                 or lower.endswith("dataset_info.json")
                             ):
-                                metadata_bytes = tf.extractfile(member).read()
+                                metadata_file = tf.extractfile(member)
+                                if metadata_file is not None:
+                                    metadata_bytes = metadata_file.read()
         except (zipfile.BadZipFile, tarfile.TarError, OSError) as exc:
             return StandardResult(
                 success=False,

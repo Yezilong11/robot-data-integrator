@@ -1,0 +1,794 @@
+{
+  "case_id": "ss_mujoco_001",
+  "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+  "executed_at": "2026-08-16T23:24:08",
+  "thread_id": "20260816-232317-9c0c1ecf",
+  "run_id": "20260816-232317-9c0c1ecf",
+  "package_id": "package-20260816-232408",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "sim_config"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo XML 场景配置文件",
+          "expected_format": "XML",
+          "object_name": ""
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "mujoco",
+        "elapsed_seconds": 37.2,
+        "data_format": "xml",
+        "data_size": 819,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {
+      "req_000": {
+        "status": "passed",
+        "detail": "MuJoCo 加载与一步仿真成功"
+      }
+    },
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260816-232408",
+      "package_id": "package-20260816-232408",
+      "status": "complete",
+      "file_count": 69,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 69,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "files": [
+        {
+          "path": "sim_config/req_000.xml",
+          "format": "xml",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/panda.xml",
+          "format": "xml",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link1.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link2.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link3.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link4.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link5_collision_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link5_collision_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link5_collision_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/hand.stl",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_3.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_4.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_5.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_7.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_8.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_9.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_10.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link0_11.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link3_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link3_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link3_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link3_3.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link4_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link4_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link4_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link4_3.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link5_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link5_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link5_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_3.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_4.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_5.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_6.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_7.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_8.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_9.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_10.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_11.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_12.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_13.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_14.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_15.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link6_16.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_3.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_4.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_5.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_6.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/link7_7.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/hand_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/hand_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/hand_2.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/hand_3.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/hand_4.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/finger_0.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        },
+        {
+          "path": "sim_config/assets/finger_1.obj",
+          "format": "mesh",
+          "data_source_quality": "real",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        }
+      ],
+      "runtime_check": {
+        "req_000": {
+          "status": "passed",
+          "detail": "MuJoCo 加载与一步仿真成功"
+        }
+      }
+    },
+    "validation_issues": [],
+    "runtime_check": {
+      "req_000": {
+        "status": "passed",
+        "detail": "MuJoCo 加载与一步仿真成功"
+      }
+    },
+    "missing_items": [],
+    "tree": "package-20260816-232408\n- checksums.txt\n- manifest.json\n- provenance.log\n- sim_config\n  - assets\n    - finger_0.obj\n    - finger_1.obj\n    - hand.stl\n    - hand_0.obj\n    - hand_1.obj\n    - hand_2.obj\n    - hand_3.obj\n    - hand_4.obj\n    - link0.stl\n    - link0_0.obj\n    - link0_1.obj\n    - link0_10.obj\n    - link0_11.obj\n    - link0_2.obj\n    - link0_3.obj\n    - link0_4.obj\n    - link0_5.obj\n    - link0_7.obj\n    - link0_8.obj\n    - link0_9.obj\n    - link1.obj\n    - link1.stl\n    - link2.obj\n    - link2.stl\n    - link3.stl\n    - link3_0.obj\n    - link3_1.obj\n    - link3_2.obj\n    - link3_3.obj\n    - link4.stl\n    - link4_0.obj\n    - link4_1.obj\n    - link4_2.obj\n    - link4_3.obj\n    - link5_0.obj\n    - link5_1.obj\n    - link5_2.obj\n    - link5_collision_0.obj\n    - link5_collision_1.obj\n    - link5_collision_2.obj\n    - link6.stl\n    - link6_0.obj\n    - link6_1.obj\n    - link6_10.obj\n    - link6_11.obj\n    - link6_12.obj\n    - link6_13.obj\n    - link6_14.obj\n    - link6_15.obj\n    - link6_16.obj\n    - link6_2.obj\n    - link6_3.obj\n    - link6_4.obj\n    - link6_5.obj\n    - link6_6.obj\n    - link6_7.obj\n    - link6_8.obj\n    - link6_9.obj\n    - link7.stl\n    - link7_0.obj\n    - link7_1.obj\n    - link7_2.obj\n    - link7_3.obj\n    - link7_4.obj\n    - link7_5.obj\n    - link7_6.obj\n    - link7_7.obj\n  - panda.xml\n  - req_000.xml\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260816-232408",
+    "checks": {
+      "mesh": {
+        "file": "sim_config\\assets\\finger_0.obj",
+        "status": "passed",
+        "faces": 362,
+        "vertices": 1022,
+        "note": "67/67 资产全部 trimesh 可加载"
+      },
+      "mjcf": {
+        "file": "sim_config\\panda.xml",
+        "status": "passed",
+        "nq": 9,
+        "nu": 8,
+        "note": "panda.xml 与 req_000.xml 一步仿真成功"
+      }
+    },
+    "files": [
+      "sim_config/req_000.xml",
+      "sim_config/panda.xml",
+      "sim_config/assets/link0.stl",
+      "sim_config/assets/link1.stl",
+      "sim_config/assets/link2.stl",
+      "sim_config/assets/link3.stl",
+      "sim_config/assets/link4.stl",
+      "sim_config/assets/link5_collision_0.obj",
+      "sim_config/assets/link5_collision_1.obj",
+      "sim_config/assets/link5_collision_2.obj",
+      "sim_config/assets/link6.stl",
+      "sim_config/assets/link7.stl",
+      "sim_config/assets/hand.stl",
+      "sim_config/assets/link0_0.obj",
+      "sim_config/assets/link0_1.obj",
+      "sim_config/assets/link0_2.obj",
+      "sim_config/assets/link0_3.obj",
+      "sim_config/assets/link0_4.obj",
+      "sim_config/assets/link0_5.obj",
+      "sim_config/assets/link0_7.obj",
+      "sim_config/assets/link0_8.obj",
+      "sim_config/assets/link0_9.obj",
+      "sim_config/assets/link0_10.obj",
+      "sim_config/assets/link0_11.obj",
+      "sim_config/assets/link1.obj",
+      "sim_config/assets/link2.obj",
+      "sim_config/assets/link3_0.obj",
+      "sim_config/assets/link3_1.obj",
+      "sim_config/assets/link3_2.obj",
+      "sim_config/assets/link3_3.obj",
+      "sim_config/assets/link4_0.obj",
+      "sim_config/assets/link4_1.obj",
+      "sim_config/assets/link4_2.obj",
+      "sim_config/assets/link4_3.obj",
+      "sim_config/assets/link5_0.obj",
+      "sim_config/assets/link5_1.obj",
+      "sim_config/assets/link5_2.obj",
+      "sim_config/assets/link6_0.obj",
+      "sim_config/assets/link6_1.obj",
+      "sim_config/assets/link6_2.obj",
+      "sim_config/assets/link6_3.obj",
+      "sim_config/assets/link6_4.obj",
+      "sim_config/assets/link6_5.obj",
+      "sim_config/assets/link6_6.obj",
+      "sim_config/assets/link6_7.obj",
+      "sim_config/assets/link6_8.obj",
+      "sim_config/assets/link6_9.obj",
+      "sim_config/assets/link6_10.obj",
+      "sim_config/assets/link6_11.obj",
+      "sim_config/assets/link6_12.obj",
+      "sim_config/assets/link6_13.obj",
+      "sim_config/assets/link6_14.obj",
+      "sim_config/assets/link6_15.obj",
+      "sim_config/assets/link6_16.obj",
+      "sim_config/assets/link7_0.obj",
+      "sim_config/assets/link7_1.obj",
+      "sim_config/assets/link7_2.obj",
+      "sim_config/assets/link7_3.obj",
+      "sim_config/assets/link7_4.obj",
+      "sim_config/assets/link7_5.obj",
+      "sim_config/assets/link7_6.obj",
+      "sim_config/assets/link7_7.obj",
+      "sim_config/assets/hand_0.obj",
+      "sim_config/assets/hand_1.obj",
+      "sim_config/assets/hand_2.obj",
+      "sim_config/assets/hand_3.obj",
+      "sim_config/assets/hand_4.obj",
+      "sim_config/assets/finger_0.obj",
+      "sim_config/assets/finger_1.obj",
+      "checksums.txt",
+      "manifest.json",
+      "provenance.log",
+      "units.json"
+    ]
+  }
+}

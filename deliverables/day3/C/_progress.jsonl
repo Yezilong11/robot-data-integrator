@@ -1,0 +1,43 @@
+{"case_id": "ss_huggingface_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["ROBOT_URDF", "POLICY_MODEL", "DATASET", "CODE"], "files": 4, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 33}
+{"case_id": "ss_arxiv_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_arxiv_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_arxiv_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_arxiv_005", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_paperswithcode_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_paperswithcode_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER", "CODE"], "files": 2, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 19}
+{"case_id": "ss_paperswithcode_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_github_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["ROBOT_URDF", "CODE"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 31}
+{"case_id": "ss_github_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_github_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["CODE"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正（强词修复）重跑", "elapsed_s": 19}
+{"case_id": "ss_github_005", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正（强词修复）重跑", "elapsed_s": 16}
+{"case_id": "ss_huggingface_003", "ok": true, "verdict": "PASS", "vs": "match", "req": ["CODE"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_huggingface_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_huggingface_005", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["POLICY_MODEL"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 45}
+{"case_id": "ss_zenodo_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_zenodo_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_zenodo_005", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_zenodo_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["SENSOR_DATA"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 16}
+{"case_id": "ss_zenodo_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["SENSOR_DATA", "CODE"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 22}
+{"case_id": "ss_graspnet_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 13}
+{"case_id": "ss_mujoco_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["ROBOT_URDF", "SIM_CONFIG", "CODE"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 57}
+{"case_id": "ss_graspnet_001", "ok": true, "verdict": "PASS", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_dexgrasp_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 32}
+{"case_id": "ss_dexgrasp_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 32}
+{"case_id": "ss_dexgrasp_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 32}
+{"case_id": "ss_ycb_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 61}
+{"case_id": "ss_ycb_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 57}
+{"case_id": "ss_ycb_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["DATASET"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 47}
+{"case_id": "ss_ycb_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["MESH"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 22}
+{"case_id": "ss_mujoco_002", "ok": true, "verdict": "PASS", "vs": "partial", "req": ["ROBOT_URDF", "SIM_CONFIG", "CODE"], "files": 69, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 42}
+{"case_id": "ss_mujoco_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["SIM_CONFIG"], "files": 70, "missing": 0, "error_type": "none", "notes": "", "elapsed_s": null}
+{"case_id": "ss_mujoco_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["SIM_CONFIG"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 32}
+{"case_id": "ss_isaac_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["SIM_CONFIG"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 25}
+{"case_id": "ss_dexgrasp_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 38}
+{"case_id": "ss_dexgrasp_005", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["GRASP"], "files": 1, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 34}
+{"case_id": "ss_ycb_005", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["MESH"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 19}
+{"case_id": "ss_mujoco_005", "ok": true, "verdict": "PASS", "vs": "match", "req": ["SIM_CONFIG"], "files": 69, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 45}
+{"case_id": "ss_isaac_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "partial", "req": ["ROBOT_URDF", "SIM_CONFIG", "CODE"], "files": 1, "missing": 0, "error_type": "none", "notes": "F 审计修正重跑", "elapsed_s": 25}
+{"case_id": "ss_ieee_001", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "IEEE 豁免(P7_ENV)", "elapsed_s": 16}
+{"case_id": "ss_ieee_002", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "IEEE 豁免(P7_ENV)", "elapsed_s": 16}
+{"case_id": "ss_ieee_003", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["PAPER"], "files": 1, "missing": 0, "error_type": "none", "notes": "IEEE 豁免(P7_ENV)", "elapsed_s": 16}
+{"case_id": "ms_004", "ok": true, "verdict": "PASS_WITH_FALLBACK", "vs": "match", "req": ["MESH", "GRASP", "ROBOT_URDF"], "files": 3, "missing": 0, "error_type": "none", "notes": "修复后重跑转 complete", "elapsed_s": 46}

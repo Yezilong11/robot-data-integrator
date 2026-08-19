@@ -66,9 +66,15 @@ class Settings(BaseSettings):
         description="Adapter 最大重试次数",
     )
     per_req_timeout: float = Field(
-        default=60.0,
-        description="单个数据需求检索的总超时预算（秒）。node_retrieve_data 并行执行时，"
-        "每个需求的检索任务单独用 asyncio.timeout 包裹，超时记录为 timeout 型失败，不阻塞其他需求",
+        default=180.0,
+        description=(
+            "单个数据需求检索的总超时预算（秒）。node_retrieve_data 并行执行时，"
+            "每个需求的检索任务单独用 asyncio.timeout 包裹，超时记录为 timeout 型失败，不阻塞其他需求。"
+            "单源预算 = per_req_timeout / 候选源数：D4 修复将 60 调至 180——Kinova Gen3 "
+            "（ros_kortex noetic-devel）经 raw.githubusercontent 下载 URDF + 7 个 STL 资产实测 "
+            "约 28s（单请求约 8s，jsdelivr 镜像缺 half_arm_1/2_link.STL 不可用），60/5=12s 的"
+            "单源预算会在下载中途超时导致 req_000 整体 missing；180/5=36s 可完整下载"
+        ),
     )
     adapter_rate_limit: int = Field(
         default=10,
@@ -147,10 +153,21 @@ class Settings(BaseSettings):
         description="Google Scanned Objects (Gazebo Fuel) API URL",
     )
     robotiq_base_url: str = Field(
-        default="https://raw.githubusercontent.com/ros-industrial-attic/robotiq/45196f6558fe8ba9d89bc8a105396c68c3e7e892",
+        default="https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892",
         description=(
             "Robotiq URDF 模型仓库基础 URL（ros-industrial 已迁至 attic）。"
-            "钉 commit 45196f6558fe8ba9d89bc8a105396c68c3e7e892（2026-08-10 pin）"
+            "钉 commit 45196f6558fe8ba9d89bc8a105396c68c3e7e892（2026-08-10 pin）。"
+            "D3 修复：默认走 jsdelivr 镜像——xacro include 链 + mesh 资产逐个下载时，"
+            "raw.githubusercontent 主链在本环境偶发挂起，会拖到 70s+ 超 15s 源级预算；"
+            "jsdelivr 直达无需 raw 快速超时兜底，海外不可达时可改回 raw"
+        ),
+    )
+    kinova_base_url: str = Field(
+        default="https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel",
+        description=(
+            "Kinova 机械臂 URDF 模型仓库基础 URL（降级回退下载地址，D4 新增）。"
+            "noetic-devel 为该仓库 default_branch（非 main/master），raw 主链挂起时"
+            "_download_bytes 自动转 jsdelivr 镜像兜底"
         ),
     )
     allegro_base_url: str = Field(

@@ -1,0 +1,85 @@
+{
+  "case_id": "ss_franka_001",
+  "input": "获取 Franka Panda 机器人的 URDF 模型",
+  "executed_at": "2026-08-17T11:38:50",
+  "thread_id": "20260817-113838-165ab946",
+  "run_id": "20260817-113838-165ab946",
+  "package_id": "package-20260817-113850",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 机器人 URDF 模型"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "franka",
+        "data_format": "urdf",
+        "data_size": 11043,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf"
+      }
+    ],
+    "validation_issues": [
+      "req_000: 完整度不足 80.0%（completeness_pct=80）",
+      "req_000: 置信度不足 0.80（confidence_score=0.8）"
+    ],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-113850",
+      "package_id": "package-20260817-113850",
+      "status": "complete",
+      "file_count": 19,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 19,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      },
+      "runtime_check": {}
+    },
+    "validation_issues": [
+      "req_000: 完整度不足 80.0%（completeness_pct=80）",
+      "req_000: 置信度不足 0.80（confidence_score=0.8）"
+    ],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260817-113850 (19 files)\n- checksums.txt\n- manifest.json\n- provenance.log\n- units.json\n- robots\n  - req_000.urdf\n  - meshes\n    - collision (9 obj)\n    - visual (9 obj)"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-113850",
+    "checks": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，13 links/12 joints，11 处 mesh 引用全部随相对路径解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "18/18 mesh 可加载（robots/meshes/visual|collision）"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "provenance.log",
+      "robots/req_000.urdf",
+      "units.json"
+    ]
+  }
+}

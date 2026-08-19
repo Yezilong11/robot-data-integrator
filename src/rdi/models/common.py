@@ -30,6 +30,7 @@ class DataSource(StrEnum):
     FRANKA = "franka"
     ALLEGRO = "allegro"
     ROBOTIQ = "robotiq"
+    KINOVA = "kinova"
     MUJOCO = "mujoco"
     ISAAC = "isaac"
     LOCAL = "local"  # 本地文件注入（前端上传路径，跳过外部检索）
@@ -43,7 +44,9 @@ class DataReqType(StrEnum):
     内置数据源（检索链路返回 missing + 「该类型暂无内置数据源」）。
     """
 
-    def __new__(cls, value: str, zh: str) -> "DataReqType":
+    zh: str  # 成员的中文描述，在 __new__ 中赋值
+
+    def __new__(cls, value: str, zh: str = "") -> "DataReqType":
         obj = str.__new__(cls, value)
         obj._value_ = value
         obj.zh = zh

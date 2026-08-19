@@ -7,6 +7,7 @@
 编译生成可执行的应用实例。
 """
 
+import asyncio
 from typing import Any
 
 from langgraph.graph import END, StateGraph
@@ -23,6 +24,16 @@ from rdi.graph.nodes import (
 )
 from rdi.graph.state import SystemState
 from rdi.logging import configure_logging
+
+
+def _run_retrieve_sync(state: SystemState) -> dict[str, Any]:
+    """retrieve_data 的同步入口。
+
+    ``node_retrieve_data`` 是 async 节点（内部用 ``asyncio.gather`` 并发检索），
+    而前端 ``run_graph`` 走同步 ``graph.stream``，langgraph 同步运行时遇到
+    coroutine 节点直接抛 TypeError。在此包装为同步函数，供 builder 注册。
+    """
+    return asyncio.run(node_retrieve_data(state))
 
 
 def build_graph(
@@ -66,7 +77,7 @@ def build_graph(
 
     # ─── 注册所有节点 ───
     graph.add_node("parse_goal", node_parse_goal)
-    graph.add_node("retrieve_data", node_retrieve_data)
+    graph.add_node("retrieve_data", _run_retrieve_sync)
     graph.add_node("parse_and_convert", node_parse_convert)
     graph.add_node("validate", node_validate)
     graph.add_node("assemble_package", node_assemble)

@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_allegro_003",
+  "input": "灵巧手做抓取，帮我找 Allegro 手的模型文件",
+  "executor": "D",
+  "executed_at": "2026-08-17T08:07:07",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "ROBOT_URDF"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "ROBOT_URDF",
+          "expected_format": "urdf",
+          "object_name": "allegro hand"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "allegro",
+        "status": "success",
+        "elapsed_seconds": 11.0,
+        "format": "urdf",
+        "data_size_bytes": 16826,
+        "data_url": "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900/robots/hands/allegro_hand/allegro_hand_right.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "passed",
+      "errors_detail": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260817-080707",
+      "manifest_path": "data/output_packages/package-20260817-080707/manifest.json",
+      "status": "complete",
+      "file_count": 12,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    },
+    "loadability": {
+      "urdf": {
+        "file": "robots/req_000.urdf",
+        "tool": "yourdfpy.URDF.load",
+        "status": "passed",
+        "detail": "23 links / 22 joints 解析成功（yourdfpy.URDF.load 通过）"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "11/11 mesh（11 OBJ）trimesh 全部可加载"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(12) 与磁盘一致（1 URDF + 11 mesh）；robots/meshes/visual 顶层分类齐全"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x2606）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项（完整长图 2064x1496）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1940）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度（完整长图 2064x2606）"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（0 error/0 warning，完整长图 2064x1496）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（完整长图 2064x1940）"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied）。旧记录为 FAIL/P2_RETRIEVE（allegro 专用源 3 轮迭代均超时，通用 GitHub 返回 markdown 与 ROBOT_URDF 期望格式错配、落盘 0 文件）；本次修复后检索命中 allegro 专用数据源（dexsuite/dex-urdf 仓库 allegro_hand_right.urdf，is_fallback=false、confidence=1.0/completeness=100%），validate 0 error/0 warning，yourdfpy 23 links/22 joints 解析成功，11/11 mesh 可加载，validation_issues=0 → 按判定标准记为 PASS。与 ss_allegro_001/002 同源同结果。\n（A 2026-08-17 合规化：req_list.lower、r[0].req_type，待 D 复核）"
+}

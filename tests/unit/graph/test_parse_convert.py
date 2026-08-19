@@ -382,8 +382,10 @@ def test_node_passes_urdf_mesh_paths_to_sim_config() -> None:
     assert sim_item.output_path == "sim_config/scene.xml"
     assert b"<mujoco" in sim_item.data
     assert b"robots/panda.urdf" in sim_item.data
-    assert b"objects/hand.stl" in sim_item.data
-    assert b'<mesh file="objects/hand.stl" name="hand"/>' in sim_item.data
+    # D4 修复：mesh 引用必须与 assemble 落盘名一致（objects/{req_id}.stl），
+    # 而非 MeshSkill 原始 output_path（原始 item_id 文件名）。
+    assert b"objects/r_mesh.stl" in sim_item.data
+    assert b'<mesh file="objects/r_mesh.stl" name="r_mesh"/>' in sim_item.data
 
 
 def test_mesh_item_is_checkpoint_msgpack_serializable() -> None:
@@ -455,5 +457,5 @@ def test_strip_numpy_handles_containers(nested: object) -> None:
     JsonPlusSerializer().dumps_typed(cleaned)
     assert not any(
         isinstance(v, np.generic)
-        for v in (cleaned if isinstance(cleaned, (list, tuple)) else cleaned.values())
+        for v in (cleaned if isinstance(cleaned, list | tuple) else cleaned.values())
     )

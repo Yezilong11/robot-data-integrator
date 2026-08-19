@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_github_004",
+  "input": "检索抓取策略权重仓库",
+  "executor": "C",
+  "executed_at": "2026-08-15T19:38:51",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "policy_model"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "github",
+        "quality": "fallback",
+        "error": "fetch 显式降级为结构化接口文档 PolicyInterfaceDoc（核心需求 policy_model 命中）",
+        "error_type": "none",
+        "format": "json",
+        "is_fallback": true,
+        "req_type": "policy_model",
+        "status": "error",
+        "fallback_reason": "fetch 显式降级为结构化接口文档 PolicyInterfaceDoc（核心需求 policy_model 命中）"
+      }
+    ],
+    "validate": {
+      "errors": 3,
+      "warnings": 0,
+      "runtime_check": "not_applicable"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-193903",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "manifest_path": "manifest.json"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "F 审计修正（parse_goal 强词修复）+ 重跑：核心需求命中 POLICY_MODEL，经 github 检索命中策略权重相关仓库，fetch 显式降级为结构化接口文档 PolicyInterfaceDoc（is_fallback=true + fallback_reason 已记录），符合 fallback_explicit 定义（纪要 §2.4 口径，quality=fallback 放行）；pkg=complete、missing=0。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
+}

@@ -55,7 +55,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
 
 用户目标若同时涉及以下要素，必须拆成独立的数据需求项，禁止合并：
 
-1. **机器人模型**：只要提到具体机器人（Franka Panda、UR5、Kinova、Allegro Hand 等），必须生成一项 `robot_urdf`。
+1. **机器人模型**：只有目标是"获取/下载/检索机器人本体模型（URDF/描述文件）"时，才生成一项 `robot_urdf`。**禁止**仅因目标提到机器人型号（如"mujoco_menagerie 中 franka 的真实场景"、"Franka 的 Isaac Sim 场景配置"、"UR5 的仿真场景"）就补生成 `robot_urdf`——这类目标的数据需求是 `sim_config`（仿真场景已隐含机器人），补 `robot_urdf` 会导致类型错配失败。
 2. **操作物体**：只要提到具体物体（YCB banana、mug、bottle 等），必须生成一项 `mesh`。
 3. **仿真器/仿真场景**：只要提到仿真器（MuJoCo、Isaac Sim、Gazebo、PyBullet）或"在 xx 里仿真"，必须生成一项 `sim_config`。
 4. **抓取任务/抓取姿态**：只要提到"抓取"、"grasp"、"抓取姿态"、"grasp pose"、"夹取"，必须生成一项 `grasp`。
@@ -65,6 +65,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
 8. **示教轨迹**：只要提到"示教"、"示教轨迹"、"示教学习"、"teaching trajectory"、"demonstration"、"轨迹数据（机器人运动）"，必须生成一项 `teaching_trajectory`。
 9. **机器人配置**：只要提到"机器人配置"、"机械臂配置"、"控制器参数"、"robot config"、"配置文件（URDF/MJCF 之外的机器人参数）"，必须生成一项 `robot_config`。
 10. **基准测试任务**：只要提到"benchmark"、"基准测试"、"基准任务"、"评测任务"、"任务集"、"机器人操作基准"，必须生成一项 `benchmark_task`。
+11. **传感器数据**：只要提到"传感器"、"力/力矩"、"力/力矩传感器"、"力觉"、"末端力"、"接触力"、"sensor"、"sensor data"、"force/torque"、"force torque sensor"、"时序数据"、"time series 数据"，必须生成一项 `sensor_data`，且 `fallback_sources` 填 `["zenodo", "github"]`（sensor_data 有内置数据源，不要留空；Zenodo 收录真实传感器时序数据集且可下载 CSV，应优先；GitHub 检索仅返回仓库 README 文档，不适合传感器数据；下段"暂无内置数据源"提示仅针对 camera_calib 等四类新类型）。
 
 > 注意：`camera_calib` / `teaching_trajectory` / `robot_config` / `benchmark_task` 目前暂无内置数据源，
 > 生成这些类型时 `fallback_sources` 留空（`[]`），不要为它们硬凑 fallback_sources 枚举值。
@@ -210,6 +211,14 @@ schema），这里的示例只展示 requirements 数组部分。机器人 / 物
   {"req_id": "req_001", "req_type": "teaching_trajectory", "description": "机械臂示教轨迹数据", "priority": "required", "keywords": ["teaching trajectory", "demonstration", "示教轨迹"], "fallback_sources": [], "expected_format": "NPZ"},
   {"req_id": "req_002", "req_type": "robot_config", "description": "机器人配置文件", "priority": "required", "keywords": ["robot config", "机器人配置"], "fallback_sources": [], "expected_format": "YAML"},
   {"req_id": "req_003", "req_type": "benchmark_task", "description": "benchmark 评测任务定义", "priority": "recommended", "keywords": ["benchmark", "基准测试"], "fallback_sources": [], "expected_format": "JSON"}
+]
+
+### 示例 14：传感器时序数据（中文）
+
+输入："获取 Franka Panda 机器人夹爪力/力矩传感器的时序数据（fx/fy/fz/tx/ty/tz），用于接触力分析"
+输出：
+[
+  {"req_id": "req_000", "req_type": "sensor_data", "description": "Franka Panda 夹爪力/力矩传感器时序数据", "priority": "required", "keywords": ["Franka Panda", "force torque sensor", "sensor", "力/力矩传感器", "时序数据"], "fallback_sources": ["zenodo", "github"], "expected_format": "CSV"}
 ]
 """
 

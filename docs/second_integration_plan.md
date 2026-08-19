@@ -1,7 +1,7 @@
 # Robot Data Integrator — 第二次联调计划
 
-> 编制日期：2026-08-07  
-> 依据：[第一次联调报告](first_integration_report.md)  
+> 编制日期：2026-08-07
+> 依据：[第一次联调报告](first_integration_report.md)
 > 目标：让系统产出**非空的机器人实验数据包**（含 URDF / mesh / grasp / sim_config 等真实文件），而不仅是论文文本。
 
 ## 1. 联调目标

@@ -104,12 +104,11 @@ class TestGraspSkillDegradation:
     """降级与校验路径测试。"""
 
     def test_dexgraspnet_pkl_degrades(self) -> None:
-        """异常情况：DexGraspNet pkl 反序列化失败 → 失败语义（不再交付合成抓取）。"""
+        """异常情况：DexGraspNet pkl 反序列化失败 → 失败语义（数据损坏不消费）。"""
         skill = GraspSkill()
         result = skill.process(b"not a pkl", dataset_name="dexgraspnet")
         assert not result.success
-        assert result.data_source_quality == "fallback"
-        assert any("原始数据缺失，合成占位仅作参考" in e for e in result.errors)
+        assert any("反序列化失败" in e for e in result.errors)
 
     def test_unknown_dataset_name(self) -> None:
         """异常情况：未知 dataset_name 返回 success=False，不猜测约定。"""

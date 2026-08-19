@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from rdi.adapters.dexgrasp import DexGraspAdapter
+from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataReqType, DataSource
 
@@ -26,9 +27,9 @@ class TestDexGraspAdapter:
         assert adapter.source == DataSource.DEXGRASP
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """正常情况：base_url 与配置一致（国内环境走 hf-mirror 镜像）。"""
         adapter = DexGraspAdapter()
-        assert adapter.base_url == "https://huggingface.co/api"
+        assert adapter.base_url == settings.huggingface_api_url
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 10。"""

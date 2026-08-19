@@ -42,9 +42,7 @@ class _NoOpHermesEngine:
     def record_experience(self, *args: object, **kwargs: object) -> None:
         return None
 
-    def get_source_priority(
-        self, req_type: str, candidates: list[str] | None = None
-    ) -> list[str]:
+    def get_source_priority(self, req_type: str, candidates: list[str] | None = None) -> list[str]:
         return []
 
 

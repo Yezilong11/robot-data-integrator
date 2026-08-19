@@ -1,8 +1,8 @@
 # Robot Data Integrator — 第二次联调技术指导文档
 
-> 版本：1.0  
-> 编制日期：2026-08-07  
-> 目标读者：A/B/C/D/E/F 六位角色  
+> 版本：1.0
+> 编制日期：2026-08-07
+> 目标读者：A/B/C/D/E/F 六位角色
 > 依据：
 > - [第一次联调报告](../../docs/first_integration_report.md)
 > - [第二次联调计划](../../docs/second_integration_plan.md)

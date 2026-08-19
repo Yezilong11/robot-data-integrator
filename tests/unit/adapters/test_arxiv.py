@@ -3,11 +3,22 @@
 
 from unittest.mock import AsyncMock, patch
 
+import fitz
 import pytest
 
 from rdi.adapters.arxiv import ArxivAdapter
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
+
+
+def _make_min_pdf() -> bytes:
+    """生成 1 页最小合法 PDF（PyMuPDF 生成，供 fetch 成功路径使用）。"""
+    doc = fitz.open()
+    doc.new_page()
+    data = doc.tobytes()
+    doc.close()
+    return data
+
 
 # arXiv Atom XML 响应示例（精简版）
 ARXIV_ATOM_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -119,7 +130,7 @@ class TestArxivAdapter:
         （表示大小未知）→ 走原下载流程。
         """
         adapter = ArxivAdapter()
-        fake_pdf = b"%PDF-1.4 fake content"
+        fake_pdf = _make_min_pdf()
         with (
             patch.object(
                 adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
@@ -131,6 +142,79 @@ class TestArxivAdapter:
             assert raw.item_id == "2304.06524"
             assert raw.format == "pdf"
             assert raw.data == fake_pdf
+
+    @pytest.mark.asyncio
+    async def test_arxiv_fetch_falls_back_when_pdf_invalid(self) -> None:
+        """下载内容非有效 PDF（%PDF 魔数缺失）时重试一次后返回 metadata JSON。"""
+        import json as _json
+
+        adapter = ArxivAdapter()
+        bad = b"<html>request blocked</html>"
+        with (
+            patch.object(
+                adapter,
+                "_head_content_length",
+                new_callable=AsyncMock,
+                return_value=100,  # 小于阈值，走下载路径
+            ),
+            patch.object(
+                adapter,
+                "_download_bytes",
+                new_callable=AsyncMock,
+                return_value=bad,
+            ),
+            patch.object(
+                adapter,
+                "_fetch_paper_metadata",
+                new_callable=AsyncMock,
+                return_value={},
+            ),
+        ):
+            raw = await adapter.fetch("2304.06524")
+        assert raw.format == "json"
+        assert raw.reference is not None
+        assert raw.reference.download_hint == "https://arxiv.org/pdf/2304.06524.pdf"
+        payload = _json.loads(raw.data)
+        assert payload["arxiv_id"] == "2304.06524"
+        assert "unavailable" in payload["note"]
+
+    @pytest.mark.asyncio
+    async def test_arxiv_fetch_falls_back_when_pdf_corrupt_but_magic_ok(self) -> None:
+        """%PDF 魔数正确但结构损坏的下载内容，同样显式降级返回 metadata JSON。
+
+        真实现场：国内网络下载到的 PDF 魔数正确但打开失败（"Failed to open stream"）。
+        """
+        import json as _json
+
+        adapter = ArxivAdapter()
+        corrupt = b"%PDF-1.4 \x00\x00\x00garbage-truncated-payload"
+        with (
+            patch.object(
+                adapter,
+                "_head_content_length",
+                new_callable=AsyncMock,
+                return_value=len(corrupt),
+            ),
+            patch.object(
+                adapter,
+                "_download_bytes",
+                new_callable=AsyncMock,
+                return_value=corrupt,
+            ),
+            patch.object(
+                adapter,
+                "_fetch_paper_metadata",
+                new_callable=AsyncMock,
+                return_value={},
+            ),
+        ):
+            raw = await adapter.fetch("2304.06524")
+        assert raw.format == "json"
+        assert raw.reference is not None
+        assert raw.reference.download_hint == "https://arxiv.org/pdf/2304.06524.pdf"
+        payload = _json.loads(raw.data)
+        assert payload["arxiv_id"] == "2304.06524"
+        assert "unavailable" in payload["note"]
 
     @pytest.mark.asyncio
     async def test_arxiv_fetch_returns_metadata_when_over_threshold(self) -> None:

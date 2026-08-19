@@ -272,6 +272,36 @@ def test_assemble_uses_original_format_extension(output_dir: Path) -> None:
     assert pkg.files[0].path == "sim_config/req_mj.xml"
 
 
+def test_assemble_python_raw_config_uses_py_extension(output_dir: Path) -> None:
+    """D4 修复：IsaacLab python 原始配置以 .py 落盘（不再因 canonical=mjcf 写成 .xml）。"""
+    py_source = b"from isaaclab_assets import FRANKA_PANDA\n"
+    item = ParsedItem(
+        req_id="req_py",
+        req_type=DataReqType.SIM_CONFIG,
+        name="req_py",
+        canonical_format="mjcf",  # SimConfigSkill 对 python 输入的降级 canonical 格式
+        output_path="unused",
+        data=b"<mujoco model='generated_fallback'><worldbody/></mujoco>",
+        raw_bytes=py_source,
+        assets={},
+        provenance=ProvenanceEntry(
+            source=DataSource.ISAAC,
+            source_url="https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+            retrieved_at=_FIXED_TIME,
+            original_format="python",
+        ),
+    )
+    out = node_assemble({"parsed_data": {"req_py": item}})
+    pkg = out["experiment_package"]
+    package_dir = Path(pkg.output_dir)
+
+    # 原始 python 字节以 .py 落盘（内容为 python 源码而非 XML）
+    assert (package_dir / "sim_config/req_py.py").is_file()
+    assert (package_dir / "sim_config/req_py.py").read_bytes() == py_source
+    assert not (package_dir / "sim_config/req_py.xml").exists()
+    assert pkg.files[0].path == "sim_config/req_py.py"
+
+
 # ─── P0-4: 未下载大文件引用 → manifest downloaded=false ───
 
 

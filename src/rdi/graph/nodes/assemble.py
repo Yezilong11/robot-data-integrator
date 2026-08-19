@@ -76,12 +76,21 @@ def _ext_for_format(canonical_format: str) -> str:
 
 
 def _ext_for_raw_format(original_format: str, canonical_format: str) -> str:
-    """按原始格式决定原始 XML 落盘扩展名；未知格式回退 canonical_format 映射。"""
+    """按原始格式决定原始 XML 落盘扩展名；未知格式回退 canonical_format 映射。
+
+    D4 修复：IsaacLab 资产为 Python 配置（原始格式 python/py），此前回退到
+    canonical_format（mjcf→.xml）把 python 脚本落盘为 .xml，MuJoCo 解析报
+    XML_ERROR_PARSING_TEXT（ms_003 req_003 格式错配根因）。python 原始字节
+    必须以 .py 落盘（SimConfigSkill 对 python 的降级产物在 item.data，原始
+    文件本身是 python 源码）。
+    """
     fmt = (original_format or "").lower()
     if fmt in ("urdf", "xacro"):
         return ".urdf"
     if fmt in ("xml", "mjcf"):
         return ".xml"
+    if fmt in ("python", "py"):
+        return ".py"
     return _ext_for_format(canonical_format)
 
 
@@ -300,18 +309,18 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                         )
                     )
             else:
-                content, suggested_ext = _serialize_item_data(item.data)
+                serialized, suggested_ext = _serialize_item_data(item.data)
                 ext = suggested_ext or _ext_for_format(item.canonical_format)
                 filename = f"{_safe_filename(req_id)}{ext}"
                 rel_path = f"{subdir}/{filename}"
                 target = package_dir / rel_path
                 target.parent.mkdir(parents=True, exist_ok=True)
-                if isinstance(content, bytes):
-                    target.write_bytes(content)
-                    written_size = len(content)
+                if isinstance(serialized, bytes):
+                    target.write_bytes(serialized)
+                    written_size = len(serialized)
                 else:
-                    target.write_text(content, encoding="utf-8")
-                    written_size = len(content.encode("utf-8"))
+                    target.write_text(serialized, encoding="utf-8")
+                    written_size = len(serialized.encode("utf-8"))
             # P0-5：文件写入成功后统一计算 SHA-256（raw 分支与序列化分支均覆盖；
             # reference 项写入的是 metadata JSON 代理文件，同样可算校验和）
             sha256 = hashlib.sha256(target.read_bytes()).hexdigest()

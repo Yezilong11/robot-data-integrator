@@ -205,9 +205,11 @@ class CodeSkill(BaseSkill):
                             file_tree.append(member.name)
                             lower = member.name.lower()
                             if lower.endswith("readme.md") or lower.endswith("readme"):
-                                readme_text = (
-                                    tf.extractfile(member).read().decode("utf-8", errors="ignore")
-                                )
+                                readme_file = tf.extractfile(member)
+                                if readme_file is not None:
+                                    readme_text = readme_file.read().decode(
+                                        "utf-8", errors="ignore"
+                                    )
         except (zipfile.BadZipFile, tarfile.TarError, OSError) as exc:
             return StandardResult(
                 success=False,

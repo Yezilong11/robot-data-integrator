@@ -16,6 +16,8 @@ from typing import Any
 
 import numpy as np
 
+# noqa: I001 — 复用 assemble 的打包命名（req_id → 文件名），避免双份清洗逻辑漂移
+from rdi.graph.nodes.assemble import _safe_filename
 from rdi.graph.state import SystemState
 from rdi.intelligence.schemas import SemanticConvention
 from rdi.logging import get_logger
@@ -115,19 +117,31 @@ def _normalize_for_checkpoint(item: ParsedItem) -> ParsedItem:
 def _build_sim_config_context(
     requirements: list[DataReq], parsed_data: dict[str, ParsedItem]
 ) -> dict[str, Any]:
-    """为 sim_config 构建上下文：从已成功解析的项中提取 URDF/Mesh 输出路径。"""
+    """为 sim_config 构建上下文：从已成功解析的项中提取 URDF/Mesh 输出路径。
+
+    D4 修复（资源名回写一致性）：MeshSkill 的 ``output_path`` 用原始 item_id
+    （如 ``objects/ACE_Coffee_Mug_Kristen_16_oz_cup.stl``），而 assemble 节点按
+    ``{subdir}/{_safe_filename(req_id)}{ext}`` 实际落盘（如 ``objects/req_001.stl``）。
+    若沿用 ``output_path``，生成的降级 MJCF 引用的资源名与包内实际文件名不一致，
+    MuJoCo 运行时验证报 'Error opening file ...'（ms_003 req_003 资源引用未解析
+    根因）。此处显式构造与落盘一致的 mesh 相对路径，并把 mesh 字节一并传入，
+    使 SIM_CONFIG 项的 assets 携带该引用（validate 的临时目录运行时验证可解析）。
+    """
     context: dict[str, Any] = {}
-    type_to_key = {
-        DataReqType.ROBOT_URDF: "urdf_path",
-        DataReqType.MESH: "mesh_path",
-    }
     for req in requirements:
-        key = type_to_key.get(req.req_type)
-        if key is None:
-            continue
-        parsed = parsed_data.get(req.req_id)
-        if parsed and parsed.output_path:
-            context[key] = parsed.output_path
+        if req.req_type == DataReqType.ROBOT_URDF:
+            parsed = parsed_data.get(req.req_id)
+            if parsed and parsed.output_path:
+                context["urdf_path"] = parsed.output_path
+        elif req.req_type == DataReqType.MESH:
+            parsed = parsed_data.get(req.req_id)
+            if parsed is None:
+                continue
+            # 与 assemble 的 _serialize_item_data 分支一致：MESH 归一化后为 STL bytes
+            mesh_path = f"objects/{_safe_filename(req.req_id)}.stl"
+            context["mesh_path"] = mesh_path
+            if isinstance(parsed.data, bytes):
+                context["mesh_bytes"] = parsed.data
     return context
 
 
@@ -268,10 +282,28 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
 
     # 第二遍：解析 sim_config，传入已成功解析的 URDF/Mesh 路径
     sim_config_context = _build_sim_config_context(requirements, parsed_data)
+    mesh_path = sim_config_context.get("mesh_path")
+    mesh_bytes = sim_config_context.get("mesh_bytes")
     for req_id, result in retrieval_results.items():
         req = resolved.get(req_id)
         if req is None or req.req_type != DataReqType.SIM_CONFIG:
             continue
+        # D4 修复：把 MESH 项的字节注入 SIM_CONFIG 的 assets（键为落盘一致的
+        # 相对路径）。降级 MJCF 引用该 mesh，注入后 validate 的临时目录运行时
+        # 验证能解析引用（runtime_check skipped → passed），数据包自包含。
+        if mesh_path and mesh_bytes and result.data is not None:
+            result = result.model_copy(
+                update={
+                    "data": result.data.model_copy(
+                        update={
+                            "assets": {
+                                **(result.data.assets or {}),
+                                mesh_path: mesh_bytes,
+                            }
+                        }
+                    )
+                }
+            )
         _process_one(req_id, result, context=sim_config_context)
 
     logger.info(

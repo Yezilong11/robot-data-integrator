@@ -25,6 +25,7 @@ from rdi.hermes.engine import HermesEngine
 from rdi.intelligence import decisions
 from rdi.logging import get_logger
 from rdi.models import DataReqType, DataSource, RetrievalError, RetrievalResult, SearchResult
+from rdi.skills.registry import is_format_allowed
 
 if TYPE_CHECKING:
     from rdi.intelligence.schemas import RetrievalPlan
@@ -256,7 +257,12 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     query = " ".join(str(k) for k in keywords) if keywords else description
 
     hermes = _get_hermes_engine()
-    experience_hint = hermes.inject_experience(description, req_type)
+    # D3 修复：embedding 服务偶发超时不应拖垮整个检索（此前 LLMUnavailableError
+    # 直接冒泡使 retrieve_data 崩溃）。经验提示是优化项，降级为无提示继续。
+    try:
+        experience_hint = hermes.inject_experience(description, req_type)
+    except Exception:  # noqa: BLE001
+        experience_hint = ""
 
     provenance = [f"[{datetime.now().isoformat()}] retrieve_data: 查找 {req_id} (type={req_type})"]
     if experience_hint:
@@ -398,74 +404,133 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     # C2: 累积各源「清单外目标」诊断（跨 adapter 保留），用于 missing 的 error_message
     search_failures: list[str] = []
 
+    # E6: 每源子预算 = per_req_timeout / 候选源数。首源挂起不再占满整个
+    # per_req_timeout（GitHub 慢源占满预算导致 Zenodo/HF 无执行机会），
+    # 超时即记录 timeout 错误并跳过，后续候选源仍有机会执行。
+    source_budget = settings.per_req_timeout / max(len(sorted_adapters), 1)
+
     for idx, adapter_cls in enumerate(sorted_adapters):
         is_fallback = idx > 0
         last_source = adapter_cls.source.value
         try:
-            # ponytail: type[BaseAdapter] 的 __init__ 签名包含 base_url，但各子类均为无参构造；
-            # mypy 无法推导子类重载，此处忽略构造参数检查。
-            adapter = adapter_cls()  # type: ignore[call-arg]
-            search_results: list[SearchResult] = []
-            for q in queries:
-                try:
-                    search_results = await adapter.search(q)
-                except AdapterCatalogError as exc:
-                    # C2: 清单外目标——收集可诊断语义，继续尝试剩余 query（如物体名）
-                    search_failures.append(f"{adapter_cls.source.value}: {exc.message}")
+            async with asyncio.timeout(source_budget):
+                # ponytail: type[BaseAdapter] 的 __init__ 签名包含 base_url，但各子类均为无参构造；
+                # mypy 无法推导子类重载，此处忽略构造参数检查。
+                adapter = adapter_cls()  # type: ignore[call-arg]
+                search_results: list[SearchResult] = []
+                for q in queries:
+                    try:
+                        search_results = await adapter.search(q)
+                    except AdapterCatalogError as exc:
+                        # C2: 清单外目标——收集可诊断语义，继续尝试剩余 query（如物体名）
+                        search_failures.append(f"{adapter_cls.source.value}: {exc.message}")
+                        continue
+                    if search_results:
+                        break
+                if not search_results:
+                    had_empty_search = True
                     continue
-                if search_results:
-                    break
-            if not search_results:
-                had_empty_search = True
-                continue
-            # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
-            # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
-            fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
-            if object_name:
-                fetch_kwargs["object_name"] = object_name
-            try:
-                raw = await adapter.fetch(search_results[0].item_id, **fetch_kwargs)
-            except TypeError:
+                # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
+                # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
+                fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
+                if object_name:
+                    fetch_kwargs["object_name"] = object_name
                 try:
-                    raw = await adapter.fetch(
-                        search_results[0].item_id, req_type=DataReqType(req_type)
-                    )
+                    raw = await adapter.fetch(search_results[0].item_id, **fetch_kwargs)
                 except TypeError:
-                    # 兼容旧 Adapter 的 fetch(item_id) 签名
-                    raw = await adapter.fetch(search_results[0].item_id)
+                    try:
+                        # 兼容旧 Adapter 的 fetch(item_id, req_type=...) 签名
+                        raw = await adapter.fetch(  # type: ignore[call-arg]
+                            search_results[0].item_id, req_type=DataReqType(req_type)
+                        )
+                    except TypeError:
+                        # 兼容旧 Adapter 的 fetch(item_id) 签名
+                        raw = await adapter.fetch(search_results[0].item_id)
+                # C4-pre: 检索期即校验格式白名单（与装配期 C4 同源，is_format_allowed）。
+                # GitHub 等通用源对 robot_urdf 需求常返回 markdown README，检索循环此前
+                # 视为"成功"即停止，专用源（robotiq/franka）再无机会，装配期 C4 才拦截
+                # （ss_robotiq_001/002、ms_005 在 fallback_sources 顺序波动时的失败根因）。
+                # 格式不在白名单内视为本源失败，记 retrieval_errors 并继续下一候选源。
+                if not is_format_allowed(DataReqType(req_type), raw.format):
+                    elapsed = time.monotonic() - start
+                    message = (
+                        f"返回格式 {raw.format} 不属于 {req_type} 期望格式白名单，"
+                        "视为本源失败，继续下一候选源"
+                    )
+                    retrieval_errors.append(
+                        RetrievalError(
+                            req_id=req_id,
+                            source=adapter_cls.source,
+                            error_type="format_mismatch",
+                            error_message=message,
+                        )
+                    )
+                    provenance.append(
+                        f"[{datetime.now().isoformat()}] retrieve_data: "
+                        f"{adapter_cls.source.value} {message}"
+                    )
+                    logger.warning(
+                        "retrieve.format_mismatch",
+                        req_id=req_id,
+                        source=adapter_cls.source.value,
+                        fmt=raw.format,
+                        elapsed_seconds=round(elapsed, 3),
+                    )
+                    continue
+                elapsed = time.monotonic() - start
+                logger.info(
+                    "retrieve.success",
+                    req_id=req_id,
+                    req_type=req_type,
+                    status="success",
+                    source=raw.source.value,
+                    is_fallback=is_fallback,
+                    elapsed_seconds=round(elapsed, 3),
+                )
+                result = RetrievalResult(
+                    req_id=req_id,
+                    status="success",
+                    data=raw,
+                    source=raw.source,
+                    is_fallback=is_fallback,
+                    search_results=search_results,
+                    elapsed_seconds=elapsed,
+                )
+                hermes.record_experience(
+                    task_desc=description,
+                    req_type=req_type,
+                    result_status="success",
+                    sources_used=[raw.source.value],
+                    elapsed_seconds=elapsed,
+                )
+                return {
+                    "retrieval_results": {req_id: result},
+                    "provenance": provenance,
+                    "retrieval_errors": retrieval_errors,
+                    "retrieval_plan": {req_id: retrieval_plan} if retrieval_plan else {},
+                    "llm_usage": [llm_usage_entry] if llm_usage_entry else [],
+                }
+        except TimeoutError:
             elapsed = time.monotonic() - start
-            logger.info(
-                "retrieve.success",
-                req_id=req_id,
-                req_type=req_type,
-                status="success",
-                source=raw.source.value,
-                is_fallback=is_fallback,
-                elapsed_seconds=round(elapsed, 3),
+            message = (
+                f"源级检索超时（超过 {source_budget:.2f}s = per_req_timeout/"
+                f"{len(sorted_adapters)}）"
             )
-            result = RetrievalResult(
-                req_id=req_id,
-                status="success",
-                data=raw,
-                source=raw.source,
-                is_fallback=is_fallback,
-                search_results=search_results,
-                elapsed_seconds=elapsed,
+            retrieval_errors.append(
+                RetrievalError(
+                    req_id=req_id,
+                    source=adapter_cls.source,
+                    error_type="timeout",
+                    error_message=message,
+                )
             )
-            hermes.record_experience(
-                task_desc=description,
-                req_type=req_type,
-                result_status="success",
-                sources_used=[raw.source.value],
-                elapsed_seconds=elapsed,
+            provenance.append(
+                f"[{datetime.now().isoformat()}] retrieve_data: "
+                f"{adapter_cls.source.value} {message}，已跳过继续下一源"
             )
-            return {
-                "retrieval_results": {req_id: result},
-                "provenance": provenance,
-                "retrieval_errors": retrieval_errors,
-                "retrieval_plan": {req_id: retrieval_plan} if retrieval_plan else {},
-                "llm_usage": [llm_usage_entry] if llm_usage_entry else [],
-            }
+# E6: 单源超时不中断整个需求，记录错误后跳过后继候选源；
+            # 需求级超时由 _retrieve_single_with_timeout 统一兜底。
+            continue
         except AdapterError as exc:
             retrieval_errors.append(_to_retrieval_error(req_id, adapter_cls.source, exc))
             continue

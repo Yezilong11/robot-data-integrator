@@ -625,6 +625,53 @@ class TestBaseAdapterXmlAssets:
         assert mock_dl.await_count == 1
         assert mock_dl.call_args.args[0] == "https://example.com/models/pkg/good.stl"
 
+    @pytest.mark.asyncio
+    async def test_mjcf_compiler_meshdir_prefixes_mesh_refs(self) -> None:
+        """MJCF compiler meshdir：mesh 以 meshdir 子目录为基准下载，texture 不受影响。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<mujoco model="panda"><compiler angle="radian" meshdir="assets"/>'
+            b'<asset><mesh name="link0" file="link0.stl"/>'
+            b'<texture type="2d" name="t" file="tex.png"/></asset></mujoco>'
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/scene.xml", xml
+            )
+        # mesh 引用带 meshdir 前缀（数据包内 assets/ 下），texture 无 texturedir 不前缀
+        assert assets == {"assets/link0.stl": b"x", "tex.png": b"x"}
+        assert mock_dl.await_count == 2
+        assert mock_dl.call_args_list[0].args[0] == ("https://example.com/models/assets/link0.stl")
+        assert mock_dl.call_args_list[1].args[0] == "https://example.com/models/tex.png"
+
+    @pytest.mark.asyncio
+    async def test_mjcf_meshdir_applies_in_include_chain(self) -> None:
+        """include 链中子 XML 自己的 compiler meshdir 同样生效（franka_emika_panda 场景）。"""
+        adapter = _StubAdapter()
+        scene_xml = b'<mujoco model="scene"><include file="panda.xml"/></mujoco>'
+        panda_xml = (
+            b'<mujoco model="panda"><compiler meshdir="assets"/>'
+            b'<asset><mesh file="link0.stl"/></asset></mujoco>'
+        )
+
+        def fake_download(url: str) -> bytes:
+            if url.endswith("/models/panda.xml"):
+                return panda_xml
+            if url.endswith("/models/assets/link0.stl"):
+                return b"mesh"
+            raise AssertionError(f"unexpected url: {url}")
+
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
+        ) as mock_dl:
+            assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/scene.xml", scene_xml
+            )
+        assert assets == {"panda.xml": panda_xml, "assets/link0.stl": b"mesh"}
+        assert mock_dl.await_count == 2
+
 
 # ─── 本地文件缓存测试 ───
 

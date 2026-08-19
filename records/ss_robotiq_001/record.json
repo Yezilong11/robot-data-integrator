@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_robotiq_001",
+  "input": "获取 Robotiq 2F-85 夹爪的 URDF 模型",
+  "executor": "D",
+  "executed_at": "2026-08-17T12:45:17",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题（robotiq xacro 展开器参数代入修复未提交）"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "ROBOT_URDF"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Robotiq 2F-85 夹爪的 URDF 描述文件",
+          "priority": "required",
+          "expected_format": "URDF"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "robotiq",
+        "status": "success",
+        "elapsed_seconds": 25,
+        "format": "urdf",
+        "data_size_bytes": 14123,
+        "data_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "robotiq 适配器下载包装 xacro（jsdelivr CDN），在 adapter 层完成 include 内联 + 宏展开 + ${expr} 求值后以纯 URDF 落盘 robots/req_000.urdf；随包抓齐 10 个 mesh 资产（visual 5 DAE + collision 4 DAE + 1 STL）"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [],
+      "note": "UI runtime_check 为空 {}（仅 MuJoCo 类需求适用）；runtime_check=passed 来自独立可加载性验证（yourdfpy 全解析）",
+      "runtime_check_detail": "yourdfpy.URDF.load LOAD_OK：11 links/10 joints，10 处 mesh 引用全部随相对路径 meshes/... 解析；trimesh 10/10（9 DAE + 1 STL）全部可加载"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260817-124542",
+      "manifest_path": "data/output_packages/package-20260817-124542/manifest.json",
+      "status": "complete",
+      "file_count": 11,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    },
+    "loadability": {
+      "urdf": {
+        "file": "robots/req_000.urdf",
+        "tool": "yourdfpy.URDF.load",
+        "status": "passed",
+        "detail": "11 links/10 joints，全部 <origin> xyz/rpy 为完整 3 数值，10 处 mesh 引用随相对路径解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "10/10 mesh（visual 5 DAE + collision 4 DAE + 1 STL）trimesh 全部可加载"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(11) 与磁盘一致（1 URDF + 10 mesh）；robots/ 顶层分类齐全"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x2606，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项（0 error/0 warning，完整长图 2064x1496，页面不滚动单视口）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1940，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度（完整长图 2064x2606，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（0 error/0 warning，完整长图 2064x1496，页面不滚动单视口）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（完整长图 2064x1940，3 段拼接）"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-124517-12fb557c，package-20260817-124542）。修复 robotiq 适配器轻量 xacro 展开器参数代入缺陷（src/rdi/adapters/robotiq.py _eval_xacro_expr 支持宏参数 scope：${reflect * -0.0127} 等「宏参数参与运算」表达式先整词代入实参值再求值），此前展开后 4 处 <origin> 的 xyz/rpy 退化为 2 个数值导致 yourdfpy 解析失败（FAIL/P4_FORMAT）；本次展开器产出全 3 数值 origin，yourdfpy 11 links/10 joints 全解析、mesh 10/10 可加载，validation_issues=0（error=0/warning=0），missing=0，11 文件全落盘 → 判定 PASS。manifest is_fallback=false、confidence=1.0/completeness=100%（data_source_quality=unknown 为 robotiq adapter 未标注真实度）。\n（A 2026-08-17 合规化：req_list.lower、quality real，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
+}

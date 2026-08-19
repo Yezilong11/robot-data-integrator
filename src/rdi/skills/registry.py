@@ -69,11 +69,17 @@ _REQ_EXPECTED_LABELS: dict[DataReqType, str] = {
 }
 
 
+def is_format_allowed(req_type: DataReqType, fmt: str) -> bool:
+    """返回原始格式是否属于该需求类型的合法格式白名单；未约束类型恒 True。"""
+    expected = _REQ_EXPECTED_FORMATS.get(req_type)
+    return expected is None or fmt.lower() in expected
+
+
 def _format_mismatch_reason(req: DataReq, raw_fmt: str) -> str | None:
     """返回类型错配的 MissingItem reason；格式合法返回 None。"""
-    expected = _REQ_EXPECTED_FORMATS.get(req.req_type)
-    if expected is None or raw_fmt.lower() in expected:
+    if is_format_allowed(req.req_type, raw_fmt):
         return None
+    expected = _REQ_EXPECTED_FORMATS.get(req.req_type)
     label = _REQ_EXPECTED_LABELS.get(req.req_type, str(expected))
     return f"需求类型 {req.req_type.value} 期望 {label}，实际返回 {raw_fmt}（类型错配）"
 

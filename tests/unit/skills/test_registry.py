@@ -197,7 +197,7 @@ class TestProcessRetrievalResult:
         assert outcome.reason  # skill errors propagated as reason
 
     def test_grasp_metadata_missing_item_with_reference_alternative(self) -> None:
-        """GRASP 仅返回元数据 JSON → MissingItem：reason 含合成占位说明，reference url 进 alternatives。"""
+        """GRASP 仅返回元数据 JSON → ParsedItem（is_fallback），reference 透传。"""
         payload = json.dumps(
             {"dataset_id": "graspnet-1b", "reason": "no single npz available"}
         ).encode("utf-8")
@@ -217,10 +217,12 @@ class TestProcessRetrievalResult:
 
         outcome = SkillRegistry().process_retrieval_result(result, req)
 
-        assert isinstance(outcome, MissingItem)
-        assert "原始数据缺失，合成占位仅作参考" in outcome.reason
-        assert outcome.alternatives, "reference url 应进入 alternatives 供手动获取"
-        assert "https://hf.co/datasets/graspnet-1b" in outcome.alternatives[0]
+        assert isinstance(outcome, ParsedItem)
+        assert outcome.is_fallback is True
+        assert outcome.data_source_quality == "fallback"
+        # reference 仍透传到 ParsedItem（未下载大文件引用供手动获取）
+        assert outcome.reference is not None
+        assert outcome.reference.url == "https://hf.co/datasets/graspnet-1b"
 
     # ─── P0-3: URDF/MJCF 原始字节与资产透传 ───
 

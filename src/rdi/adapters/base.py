@@ -404,7 +404,7 @@ class BaseAdapter(ABC):
                         ) as resp,
                     ):
                         resp.raise_for_status()
-                        text = await resp.text()
+                        text = str(await resp.text())
                         self.cache[cache_key] = text
                         return text
                 except (aiohttp.ClientError, TimeoutError) as e:
@@ -487,7 +487,7 @@ class BaseAdapter(ABC):
                         ) as resp,
                     ):
                         resp.raise_for_status()
-                        text = await resp.text()
+                        text = str(await resp.text())
                         self.cache[cache_key] = text
                         return text
                 except (aiohttp.ClientError, TimeoutError) as e:
@@ -567,7 +567,7 @@ class BaseAdapter(ABC):
                         ) as resp,
                     ):
                         resp.raise_for_status()
-                        return await resp.read()
+                        return bytes(await resp.read())
                 except (aiohttp.ClientError, TimeoutError) as e:
                     # C13: 4xx 永久错误（除 408 超时、429 限流）不重试，立即抛
                     status = getattr(e, "status", None)
@@ -634,8 +634,9 @@ class BaseAdapter(ABC):
         同样下载，子 XML 内的相对路径以其所在目录为基准。
 
         降级策略：XML 解析失败返回空 dict（不抛异常，不阻塞主下载流程）；
-        model://、http(s):// 等绝对 URL、xacro 变量（$(...)）与绝对路径（/ 开头）
-        不下载；package://<rest> 按相对路径解析（pybullet_robots panda 语义：
+        MJCF ``<compiler meshdir/texturedir>`` 目录基准会套用到 mesh/texture 引用
+        （assets 键带前缀）；model://、http(s):// 等绝对 URL、xacro 变量（$(...)）
+        与绝对路径（/ 开头）不下载；package://<rest> 按相对路径解析（pybullet_robots panda 语义：
         ``package://panda_description/...`` 等价于同仓库目录下，即 rest 直接相对
         于 XML 所在目录）；include 深度超过 _MAX_ASSET_DEPTH 终止展开；
         同一规范化路径只下载一次（去重防环）；单个资产下载失败只跳过该资产。
@@ -672,6 +673,18 @@ class BaseAdapter(ABC):
         """
         if depth > _MAX_ASSET_DEPTH:
             return
+        # MJCF compiler 目录基准：<compiler meshdir="assets"/> 表示 mesh 引用实际位于
+        # XML 所在目录的 meshdir 子目录下（texturedir 同理）。URDF/xacro 无该属性 →
+        # 前缀为空，行为不变。每个 XML（含 include 子文件）独立检测，子文件可覆盖。
+        mesh_dir = ""
+        texture_dir = ""
+        for elem in root.iter():
+            if elem.tag.split("}")[-1].lower() != "compiler":
+                continue
+            mesh_dir = (elem.get("meshdir") or "").strip() or mesh_dir
+            texture_dir = (elem.get("texturedir") or "").strip() or texture_dir
+        # 第一遍：收集本节点所有 mesh/texture/include 引用（含 include 待下载项）
+        refs: list[tuple[str, str, str, str]] = []  # (tag, full_rel, asset_url, norm_rel)
         for elem in root.iter():
             # 去掉命名空间前缀（如 {http://...}mesh → mesh）后统一小写匹配
             tag = elem.tag.split("}")[-1].lower()
@@ -686,13 +699,24 @@ class BaseAdapter(ABC):
             if tag == "include" and depth + 1 > _MAX_ASSET_DEPTH:
                 skipped.add(norm_rel)
                 continue  # 深度超限：该子 XML 及其引用不再展开（不下载）
+            # mesh/texture 引用套用 compiler 目录基准（assets 键带前缀，MuJoCo 加载时
+            # 才能按 meshdir 定位到数据包内 assets/ 下的文件）
+            if tag == "mesh" and mesh_dir:
+                norm_rel = posixpath.join(mesh_dir, norm_rel)
+            elif tag == "texture" and texture_dir:
+                norm_rel = posixpath.join(texture_dir, norm_rel)
             full_rel = posixpath.join(rel_prefix, norm_rel) if rel_prefix else norm_rel
             if full_rel in seen:
                 continue  # 同一路径已处理（去重/防环）
             asset_url = posixpath.join(base_dir, norm_rel)
-            try:
-                content = await self._download_bytes(asset_url)
-            except AdapterError:
+            refs.append((tag, full_rel, asset_url, norm_rel))
+        # 并发下载全部引用：assets/seen 在 gather 完成后统一写入，无并发写冲突
+        contents = await asyncio.gather(
+            *(self._download_bytes(url) for _, _, url, _ in refs),
+            return_exceptions=True,
+        )
+        for (tag, full_rel, _asset_url, norm_rel), content in zip(refs, contents, strict=False):
+            if isinstance(content, BaseException):
                 skipped.add(norm_rel)
                 continue  # 单个资产失败只跳过，不中断整体
             assets[full_rel] = content

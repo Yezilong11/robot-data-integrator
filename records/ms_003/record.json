@@ -1,0 +1,209 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_003",
+  "input": "Kinova Gen3 picks up EGAD mug in Isaac Sim",
+  "executor": "D",
+  "executed_at": "2026-08-17T12:28:45",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "robot_urdf",
+    "mesh"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "vs_expected": "partial",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Kinova Gen3 机械臂 URDF"
+        },
+        {
+          "req_id": "req_001",
+          "req_type": "mesh",
+          "description": "EGAD mug 网格"
+        },
+        {
+          "req_id": "req_002",
+          "req_type": "grasp",
+          "description": "抓取姿态数据"
+        },
+        {
+          "req_id": "req_003",
+          "req_type": "sim_config",
+          "description": "Isaac Sim 仿真场景配置"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "kinova",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "urdf",
+        "data_size_bytes": 8089,
+        "data_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/robots/gen3_6dof.urdf",
+        "quality": "real",
+        "is_fallback": true,
+        "confidence": 0.9,
+        "completeness": 90.0,
+        "error": null,
+        "error_type": null,
+        "note": "kinova 适配器命中 ros_kortex gen3_6dof.urdf（github raw，primary 直连源不可用走此 fallback），随包抓齐 7 个 STL 网格（base/shoulder/bicep/forearm/spherical_wrist_1/2/bracelet_with_vision）",
+        "fallback_reason": "kinova 专用适配器命中（题设源 github/isaac 外的新增源，源偏移显式标记），URDF+7 STL 随包交付"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "stl",
+        "data_size_bytes": 561284,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/ACE_Coffee_Mug_Kristen_16_oz_cup/tip/files/meshes/model.obj",
+        "quality": "real",
+        "is_fallback": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "fallback_reason": "mesh 命中题设源外的 google_scanned（fuel.gazebosim 直连 EGAD mug），obj 转 stl 落盘（格式超集），源偏移+格式偏移显式标记",
+        "note": "EGAD mug（ACE_Coffee_Mug_Kristen_16_oz_cup）主源 fuel.gazebosim 直连，obj 转 stl"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "json",
+        "data_size_bytes": 0,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "quality": "real",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "error": null,
+        "error_type": null,
+        "note": "grasp 数据源标注抓取姿态（GraspNet-1Billion），姿态为近似值（in-plane 旋转量化），completeness 降为 60",
+        "fallback_reason": "grasp 为 LLM 合理补充需求（题设外），GraspNet 命中元数据/近似姿态，显式降级"
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "mjcf",
+        "data_size_bytes": 5243,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/kinova/gen3.scene.xml",
+        "quality": "real",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "IsaacLab gen3 场景配置（mjcf），附 sim_config/objects/req_001.stl（mug 网格复用）",
+        "fallback_reason": "Isaac 场景配置经 IsaacLab 仓库 mjcf 资产获取（source=isaac_lab 标准化为 isaac），显式降级"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 7,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 90.0%（completeness_pct=90）",
+        "req_000: 置信度不足 0.90（confidence_score=0.9）",
+        "req_002: 完整度不足 60.0%（completeness_pct=60）",
+        "req_002: 置信度不足 0.60（confidence_score=0.6）",
+        "req_002: 抓取姿态为近似值（in-plane r*π/2 量化）",
+        "req_003: 完整度不足 80.0%（completeness_pct=80）",
+        "req_003: 置信度不足 0.80（confidence_score=0.8）"
+      ],
+      "runtime_check_detail": "yourdfpy.URDF.load LOAD_OK：11 links/10 joints；mesh 9/9 全部可加载（kinova 7 STL + mug stl×2）；sim_config 静态检查通过"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260817-122845",
+      "manifest_path": "data/output_packages/package-20260817-122845/manifest.json",
+      "status": "complete",
+      "file_count": 12,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": true,
+      "avg_confidence": 0.867,
+      "avg_completeness": 86.67
+    },
+    "loadability": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，11 links/10 joints，7 处 mesh 引用随相对路径 kortex_description/... 解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "9/9 mesh 可加载（robots/kortex_description 7 STL + objects/req_001.stl + sim_config/objects/req_001.stl）"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(12) 与磁盘一致（robots/ + objects/ + grasps/ + sim_config/ 分类目录正确）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x3172，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项（完整长图 2064x1940，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1908，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度（完整长图 2064x3172，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（0 error/7 warning，完整长图 2064x2176，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（完整长图 2064x1908，3 段拼接）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-122727-1d9310e4）。旧记录为 FAIL/P2_RETRIEVE（Kinova 无适配器、主源检索失败）：本次 kinova 适配器命中 ros_kortex，4 条需求（URDF+MESH+GRASP+SIM_CONFIG）全 fulfilled、12 文件全落盘、missing=0 → 判定 PASS_WITH_FALLBACK（req_000/002/003 显式 fallback，fallback_explicit=true）。仅 validation_issues=7（置信度/完整度未达 1.0 阈值 + grasp 近似姿态）为 warn 级。\n（A 2026-08-17 合规化：req_type 大写转小写；ms_003 vs_expected→partial、source isaac_lab→isaac、补 fallback_reason，待 D 复核）",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
+}
