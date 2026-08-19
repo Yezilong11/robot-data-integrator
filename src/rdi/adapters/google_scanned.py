@@ -8,7 +8,7 @@
 """
 
 import re
-from typing import Any
+from typing import Any, NoReturn
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -24,9 +24,33 @@ _MESH_EXTS = (".obj", ".stl", ".ply", ".dae")
 # 完整 query → 英文词元 → 语义别名 → 通用兜底候选（探测确认 tree 可下载）。
 _SEARCH_STOPWORDS: frozenset[str] = frozenset(
     {
-        "mesh", "model", "models", "object", "objects", "obj", "stl", "ply", "dae", "glb",
-        "google", "scanned", "gso", "any", "任意", "一个", "物体", "中的", "获取",
-        "dataset", "数据", "集合", "大", "体积", "big", "large", "download",
+        "mesh",
+        "model",
+        "models",
+        "object",
+        "objects",
+        "obj",
+        "stl",
+        "ply",
+        "dae",
+        "glb",
+        "google",
+        "scanned",
+        "gso",
+        "any",
+        "任意",
+        "一个",
+        "物体",
+        "中的",
+        "获取",
+        "dataset",
+        "数据",
+        "集合",
+        "大",
+        "体积",
+        "big",
+        "large",
+        "download",
         # D3 修复："3d" 是格式/通用描述词（非物体名）。此前 stopword-only query 中
         # "3d" 被当有意义词元搜索，Fuel 返回无关模型（如 "RoboCup 3D Simulator Goal"）
         # 且 file tree 404，命中兜底候选失败（ss_google_scanned_001/003 次根因）。
@@ -261,7 +285,7 @@ class GoogleScannedAdapter(BaseAdapter):
         mesh_path: str | None = None,
         mesh_url: str | None = None,
         file_tree: list[dict[str, Any]] | None = None,
-    ) -> None:
+    ) -> NoReturn:
         """网络/文件不可用时抛 AdapterError 让检索循环继续下一候选源。
 
         D3 修复：原实现返回 format="json" 的 metadata（含 zip 引用），但 MESH 需求

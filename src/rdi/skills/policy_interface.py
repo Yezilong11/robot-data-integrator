@@ -193,9 +193,7 @@ class PolicyInterfaceSkill(BaseSkill):
                 confidence_score=0.6,
                 data_source_quality="fallback",
                 is_fallback=True,
-                warnings=[
-                    f"策略模型元数据非合法 JSON（{str(exc)[:80]}），返回降级引用"
-                ],
+                warnings=[f"策略模型元数据非合法 JSON（{str(exc)[:80]}），返回降级引用"],
             )
         weight_files_meta = self._parse_kwarg_json(kwargs, "weight_files_json")
         config = self._parse_kwarg_json(kwargs, "config_json")

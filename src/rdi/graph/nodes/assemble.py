@@ -490,7 +490,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
     state_semantic = state.get("semantic_map", {}) or {}
     semantic_map_meta = {}
     for req_id, item in parsed_data.items():
-        entry = {
+        entry: dict[str, Any] = {
             "units": item.units,
             "coordinate_frame": item.coordinate_frame,
             "timestamp_epoch": item.timestamp_epoch,

@@ -926,10 +926,10 @@ def _board_completed(state: dict[str, Any]) -> list[str]:
     recorded = to_plain(state.get("stage_progress"))
     if isinstance(recorded, list):
         done = set(recorded)
-        out = [name for name, _ in BOARD_STAGES if name in done]
-        if "human_review" not in out and state.get("review_suggestions") is not None:
-            out.append("human_review")
-        return out
+        recorded_stages = [name for name, _ in BOARD_STAGES if name in done]
+        if "human_review" not in recorded_stages and state.get("review_suggestions") is not None:
+            recorded_stages.append("human_review")
+        return recorded_stages
     out: list[str] = []
     if state.get("retrieval_plan"):
         out.append("retrieve_data")
@@ -1780,7 +1780,7 @@ def semantic_map_json(state: dict[str, Any]) -> str:
 #  semantic_map_json, status_bar)
 
 
-def _empty_result(status: str) -> tuple:
+def _empty_result(status: str) -> tuple[Any, ...]:
     """空结果 14 元组（空 goal / 无待继续运行 / 「运行中」占位等场景）。"""
     req_headers, _ = build_req_status_table({})
     return (

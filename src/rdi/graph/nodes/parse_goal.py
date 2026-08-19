@@ -300,10 +300,7 @@ def _dedupe_requirements(requirements: list[DataReq]) -> list[DataReq]:
             continue
         seen.add(key)
         unique.append(req)
-    return [
-        req.model_copy(update={"req_id": f"req_{i:03d}"})
-        for i, req in enumerate(unique)
-    ]
+    return [req.model_copy(update={"req_id": f"req_{i:03d}"}) for i, req in enumerate(unique)]
 
 
 def node_parse_goal(state: SystemState) -> dict[str, Any]:

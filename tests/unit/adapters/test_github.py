@@ -222,9 +222,7 @@ class TestGitHubAdapter:
                 return_value=fake_urdf,
             ) as mock_fetch_file,
         ):
-            raw = await adapter.fetch(
-                "Kinovarobotics/ros_kortex", req_type=DataReqType.ROBOT_URDF
-            )
+            raw = await adapter.fetch("Kinovarobotics/ros_kortex", req_type=DataReqType.ROBOT_URDF)
             assert raw.format == "urdf"
             # fetch_file 以探测到的 default_branch 下载（此前固定 main 会 404 回退 README）
             assert mock_fetch_file.await_args.args == (

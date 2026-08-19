@@ -7,7 +7,7 @@ At line:15 char:5408
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (HTTP Request: P...TTP/1.1 200 OK":String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 {"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
 :39:30.746073"}
 HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
@@ -68,10 +68,10 @@ mon', 'Priority')]
 Deserializing unregistered type rdi.models.common.DataSource from checkpoint. This will be blocked in a future version.
  Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.c
 ommon', 'DataSource')]
-Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set 
+Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set
 LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal',
  'DataReq')]
-Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future 
+Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future
 version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.
 models.retrieval', 'RetrievalResult')]
 Deserializing unregistered type rdi.models.parsed.ParsedItem from checkpoint. This will be blocked in a future version.

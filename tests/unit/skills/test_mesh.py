@@ -132,9 +132,7 @@ def test_metadata_json_degrades_to_fallback() -> None:
     import json
 
     payload = {"dataset_id": "ycb-1", "reason": "no single mesh file available"}
-    result = MeshSkill().process(
-        json.dumps(payload).encode("utf-8"), fmt="json", name="banana"
-    )
+    result = MeshSkill().process(json.dumps(payload).encode("utf-8"), fmt="json", name="banana")
     assert result.success is True
     assert result.is_fallback is True
     assert result.data_source_quality == "fallback"

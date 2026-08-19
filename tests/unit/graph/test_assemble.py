@@ -683,7 +683,9 @@ def test_assemble_quality_explanation_rule_fallback(output_dir: Path) -> None:
 
 def test_assemble_llm_usage_appends_quality_decision(output_dir: Path) -> None:
     """⑤ llm_usage 为累积字段（Annotated operator.add）：节点只返回本次 explain_quality 条目（含 elapsed），既有记录由框架拼接。"""
-    out = node_assemble({"llm_usage": [{"decision": "retrieval_plan", "status": "ok", "model": "mock"}]})
+    out = node_assemble(
+        {"llm_usage": [{"decision": "retrieval_plan", "status": "ok", "model": "mock"}]}
+    )
     assert len(out["llm_usage"]) == 1
     entry = out["llm_usage"][0]
     assert entry["decision"] == "explain_quality"

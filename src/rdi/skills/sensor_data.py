@@ -254,9 +254,7 @@ class SensorDataSkill(BaseSkill):
             transformations=transformations,
         )
 
-    def _fallback_result(
-        self, reason: str, name: str | None, fmt: str
-    ) -> StandardResult:
+    def _fallback_result(self, reason: str, name: str | None, fmt: str) -> StandardResult:
         """fetch 显式降级的 metadata/文档：装配为可用结果并标记 is_fallback。
 
         按 Day2 fmt=json 降级消费契约：源返回数据集元数据（缺 signals 键的 JSON）

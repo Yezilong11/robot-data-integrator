@@ -136,15 +136,8 @@ class AllegroAdapter(BaseAdapter):
             m
             for m in _FALLBACK_MODELS
             if normalized in re.sub(r"[\s_\-]+", "", f"{m['id']} {m['title']}".lower())
-            or bool(
-                tokens
-                & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']}".lower()))
-            )
-            or len(
-                tokens
-                & set(re.findall(r"[a-z0-9]+", f"{m['description']}".lower()))
-            )
-            >= 2
+            or bool(tokens & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']}".lower())))
+            or len(tokens & set(re.findall(r"[a-z0-9]+", f"{m['description']}".lower()))) >= 2
         ]
         if not matched:
             raise AdapterCatalogError(

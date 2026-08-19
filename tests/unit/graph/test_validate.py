@@ -408,8 +408,7 @@ def test_validate_skips_loadability_for_is_fallback() -> None:
     out = node_validate(state)
     # 不应出现 Grasp 必要字段缺失 ERROR（降级项不校验可加载性）
     assert not any(
-        i.req_id == "r1" and "Grasp 数据缺少必要字段" in i.message
-        for i in out["validation_issues"]
+        i.req_id == "r1" and "Grasp 数据缺少必要字段" in i.message for i in out["validation_issues"]
     )
 
 

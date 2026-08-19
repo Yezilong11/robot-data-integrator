@@ -61,7 +61,7 @@ def _decode_pdf(b64: str | None) -> bytes | None:
 
 def _run_pipeline(
     task_id: str, mode: str, goal: str, paper_bytes: bytes | None, local_files_json: str
-) -> tuple:
+) -> tuple[Any, ...]:
     """真实流程：astream 逐节点执行，边跑边更新 stage_progress（供前端轮询）。"""
     if not goal.strip():
         return fe._empty_result("请输入实验目标。")

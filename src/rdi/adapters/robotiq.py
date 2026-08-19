@@ -8,7 +8,7 @@
 
 import asyncio
 import re
-from typing import Any
+from typing import Any, cast
 
 from rdi.adapters.base import BaseAdapter
 from rdi.config.settings import settings
@@ -105,8 +105,8 @@ def _eval_xacro_expr(expr: str, scope: dict[str, str] | None = None) -> str:
     import math
 
     allowed = {"pi": math.pi, "radians": math.radians, "sin": math.sin, "cos": math.cos}
-    for name, val in (scope or {}).items():
-        expr = re.sub(rf"\b{re.escape(name)}\b", str(val), expr)
+    for name, sv in (scope or {}).items():
+        expr = re.sub(rf"\b{re.escape(name)}\b", str(sv), expr)
 
     def _ev(node: Any) -> float:
         if isinstance(node, ast.Expression):
@@ -114,7 +114,7 @@ def _eval_xacro_expr(expr: str, scope: dict[str, str] | None = None) -> str:
         if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
             return float(node.value)
         if isinstance(node, ast.Name) and node.id in allowed:
-            return allowed[node.id]
+            return cast("float", allowed[node.id])  # allowed 混合常量与函数，取回后按数值返回
         if isinstance(node, ast.UnaryOp):
             v = _ev(node.operand)
             return v if isinstance(node.op, ast.UAdd) else -v
@@ -151,7 +151,9 @@ def _expand_xacro(text: str, load_include: Any) -> str:
             break
         rel = _resolve_xacro_include(_parse_xacro_attrs(m.group(1)).get("filename", ""))
         content = load_include(rel) if rel else None
-        text = text[: m.start()] + (_strip_xml_wrapper(content) if content else "") + text[m.end() :]
+        text = (
+            text[: m.start()] + (_strip_xml_wrapper(content) if content else "") + text[m.end() :]
+        )
     # 2. 提取宏定义并移除定义块（宏体展开到调用位置）
     macros: dict[str, tuple[str, str]] = {}
     for name, params, body in _XACRO_MACRO_DEF_RE.findall(text):
@@ -166,7 +168,7 @@ def _expand_xacro(text: str, load_include: Any) -> str:
             name, attrs_str = m.group(1), m.group(2)
             entry = macros.get(name)
             if entry is None:
-                return m.group(0)
+                return str(m.group(0))
             params, body = entry
             args = _parse_xacro_attrs(attrs_str)
             evaled = {
@@ -285,7 +287,8 @@ class RobotiqAdapter(BaseAdapter):
             if query_lower in m["id"].lower()
             or query_lower in m["title"].lower()
             or query_lower in m["description"].lower()
-            or query_tokens & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']} {m['description']}".lower()))
+            or query_tokens
+            & set(re.findall(r"[a-z0-9]+", f"{m['id']} {m['title']} {m['description']}".lower()))
         ]
         if not matched:
             raise AdapterCatalogError(
@@ -439,14 +442,17 @@ class RobotiqAdapter(BaseAdapter):
         assets: dict[str, bytes] = {}
         refs: set[str] = set(re.findall(r'<mesh\s+filename="([^"]+)"', expanded))
         refs |= set(re.findall(r'<texture\s+filename="([^"]+)"', expanded))
-        urls = {ref: f"{self.base_url}/{pkg}/{ref}" for ref in refs
-                if not (ref.startswith(("http://", "https://", "package://", "/")) or "$(" in ref)}
+        urls = {
+            ref: f"{self.base_url}/{pkg}/{ref}"
+            for ref in refs
+            if not (ref.startswith(("http://", "https://", "package://", "/")) or "$(" in ref)
+        }
         contents = await asyncio.gather(
             *(self._download_bytes(u) for u in urls.values()),
             return_exceptions=True,
         )
-        for ref, content in zip(urls, contents, strict=False):
-            if isinstance(content, BaseException):
+        for ref, item in zip(urls, contents, strict=False):
+            if isinstance(item, BaseException):
                 continue
-            assets[ref] = content
+            assets[ref] = item
         return expanded.encode("utf-8"), assets

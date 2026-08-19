@@ -528,7 +528,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 f"[{datetime.now().isoformat()}] retrieve_data: "
                 f"{adapter_cls.source.value} {message}，已跳过继续下一源"
             )
-# E6: 单源超时不中断整个需求，记录错误后跳过后继候选源；
+            # E6: 单源超时不中断整个需求，记录错误后跳过后继候选源；
             # 需求级超时由 _retrieve_single_with_timeout 统一兜底。
             continue
         except AdapterError as exc:

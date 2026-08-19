@@ -7,7 +7,7 @@ At line:15 char:5380
 +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotSpecified: (HTTP Request: P...TTP/1.1 200 OK":String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
- 
+
 {"req_id": "req_000", "req_type": "mesh", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15:22:18
 .254422"}
 HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
@@ -36,10 +36,10 @@ mon', 'Priority')]
 Deserializing unregistered type rdi.models.common.DataSource from checkpoint. This will be blocked in a future version.
  Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.c
 ommon', 'DataSource')]
-Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set 
+Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set
 LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal',
  'DataReq')]
-Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future 
+Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future
 version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.
 models.retrieval', 'RetrievalResult')]
 Deserializing unregistered type rdi.models.parsed.ParsedItem from checkpoint. This will be blocked in a future version.
@@ -150,11 +150,11 @@ HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings 
 {"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
 :23:14.347750"}
 HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
-{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.017, "event": "retrieve.timeout", "level": "warning", 
+{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.017, "event": "retrieve.timeout", "level": "warning",
 "timestamp": "2026-08-14T15:24:12.877139"}
-{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.027, "event": "retrieve.timeout", "level": "warning", 
+{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.027, "event": "retrieve.timeout", "level": "warning",
 "timestamp": "2026-08-14T15:24:14.375291"}
-{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event": 
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event":
 "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:24:14.385767"}
 {"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "missing", "elapsed_seconds": 0.0, "ev
 ent": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:24:14.386484"}
@@ -172,11 +172,11 @@ HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings 
 {"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
 :24:19.086494"}
 HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
-{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.032, "event": "retrieve.timeout", "level": "warning", 
+{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.032, "event": "retrieve.timeout", "level": "warning",
 "timestamp": "2026-08-14T15:25:14.423979"}
-{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.059, "event": "retrieve.timeout", "level": "warning", 
+{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.059, "event": "retrieve.timeout", "level": "warning",
 "timestamp": "2026-08-14T15:25:19.146675"}
-{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event": 
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event":
 "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:25:19.170570"}
 {"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "missing", "elapsed_seconds": 0.0, "ev
 ent": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:25:19.171890"}
@@ -194,11 +194,11 @@ HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings 
 {"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
 :25:24.716068"}
 HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
-{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.024, "event": "retrieve.timeout", "level": "warning", 
+{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.024, "event": "retrieve.timeout", "level": "warning",
 "timestamp": "2026-08-14T15:26:19.205694"}
-{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.049, "event": "retrieve.timeout", "level": "warning", 
+{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.049, "event": "retrieve.timeout", "level": "warning",
 "timestamp": "2026-08-14T15:26:24.765970"}
-{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event": 
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event":
 "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:26:24.789797"}
 {"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "missing", "elapsed_seconds": 0.0, "ev
 ent": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:26:24.791331"}

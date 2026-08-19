@@ -21,6 +21,7 @@ import io
 import json
 import pickle
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -123,7 +124,7 @@ class GraspSkill(BaseSkill):
         self,
         raw_grasps: list[Any],
         dataset_name: str,
-        convention: dict[str, str] | None = None,
+        convention: Mapping[str, str] | None = None,
         field_map: dict[str, str] | None = None,
     ) -> list[CanonicalGrasp]:
         """按约定标准化原始抓取。
@@ -324,7 +325,7 @@ class GraspSkill(BaseSkill):
         raw: Any,
         dataset_name: str,
         output_path: str | None,
-        convention: dict[str, str] | None = None,
+        convention: Mapping[str, str] | None = None,
         field_map: dict[str, str] | None = None,
     ) -> StandardResult:
         """对已加载的原始抓取列表调用 standardize_grasps 装配结果。

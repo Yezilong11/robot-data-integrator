@@ -20,11 +20,11 @@ _URDF = (
     b'  <link name="base_link">\n'
     b'    <visual><geometry><mesh filename="package://kortex_description/arms/gen3/6dof/meshes/base_link.STL"/></geometry></visual>\n'
     b'    <collision><geometry><mesh filename="package://kortex_description/arms/gen3/6dof/meshes/base_link.STL"/></geometry></collision>\n'
-    b'  </link>\n'
+    b"  </link>\n"
     b'  <link name="shoulder_link">\n'
     b'    <visual><geometry><mesh filename="package://kortex_description/arms/gen3/6dof/meshes/shoulder_link.STL"/></geometry></visual>\n'
-    b'  </link>\n'
-    b'</robot>\n'
+    b"  </link>\n"
+    b"</robot>\n"
 )
 
 

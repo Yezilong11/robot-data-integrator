@@ -102,9 +102,11 @@ class TestGoogleScannedAdapter:
                 {"path": "/textures/foo.png"},
             ]
         }
-        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=file_tree_info):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter.fetch("ACE_Coffee_Mug")
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=file_tree_info),
+            pytest.raises(AdapterError) as exc_info,
+        ):
+            await adapter.fetch("ACE_Coffee_Mug")
         assert "zip 供手动下载" in exc_info.value.message
         assert "ACE_Coffee_Mug.zip" in exc_info.value.message
 
@@ -125,9 +127,9 @@ class TestGoogleScannedAdapter:
                 new_callable=AsyncMock,
                 side_effect=AdapterError("timeout", source="google_scanned"),
             ),
+            pytest.raises(AdapterError) as exc_info,
         ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter.fetch("ACE_Coffee_Mug")
+            await adapter.fetch("ACE_Coffee_Mug")
         assert "mesh 文件下载失败" in exc_info.value.message
         assert "zip 供手动下载" in exc_info.value.message
 
@@ -160,13 +162,15 @@ class TestGoogleScannedAdapter:
         zip 引用通过异常 message 带出。
         """
         adapter = GoogleScannedAdapter()
-        with patch.object(
-            adapter,
-            "_request",
-            new_callable=AsyncMock,
-            side_effect=AdapterError("network down", source="google_scanned"),
+        with (
+            patch.object(
+                adapter,
+                "_request",
+                new_callable=AsyncMock,
+                side_effect=AdapterError("network down", source="google_scanned"),
+            ),
+            pytest.raises(AdapterError) as exc_info,
         ):
-            with pytest.raises(AdapterError) as exc_info:
-                await adapter.fetch("ACE_Coffee_Mug")
+            await adapter.fetch("ACE_Coffee_Mug")
         assert "zip 供手动下载" in exc_info.value.message
         assert ".zip" in exc_info.value.message

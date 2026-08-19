@@ -136,4 +136,6 @@ def test_system_prompt_explains_sensor_data() -> None:
     # 传感器示例 fallback_sources 非空且 Zenodo 优先（GitHub 检索仅返回 README，
     # 不适合传感器时序数据；Zenodo 收录真实数据集），
     # 唯一带 expected_format: CSV 的条目即示例 14 的 sensor_data
-    assert '"fallback_sources": ["zenodo", "github"], "expected_format": "CSV"' in GOAL_PARSING_SYSTEM
+    assert (
+        '"fallback_sources": ["zenodo", "github"], "expected_format": "CSV"' in GOAL_PARSING_SYSTEM
+    )
