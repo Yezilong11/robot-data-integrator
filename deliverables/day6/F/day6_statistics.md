@@ -164,7 +164,7 @@
 - [x] P0 可用 11/11，记录完整率和截图合规率 100%，校验 ERROR 0。
 - [x] `_management/progress.csv`、`quality_report.json`、`statistics_summary.md` 已按 2026-08-19 严格快照刷新。
 - [x] C/D/E 定稿材料已纳入本报告引用；F 的原始 case 明细见 [case_statistics.csv](case_statistics.csv)。
-- [ ] A 对本报告的改进优先级和冻结后变更完成最终签字（交付前最后人工动作）。
+- [x] A 对本报告的改进优先级和冻结后变更完成最终签字（交付前最后人工动作）。（A 2026-08-20 签字，见 [改进建议清单.md](改进建议清单.md) 复盘决议记录）
 
 推荐复核命令（Windows）：
 
