@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_policy_hf_001",
+  "input": "获取一个 Hugging Face 上的机械臂抓取策略模型权重",
+  "executor": "D",
+  "executed_at": "2026-08-21T21:13:11+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "policy_model"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 policy_model 需求（expected_format=bin），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "policy_model",
+        "source": "huggingface",
+        "status": "success",
+        "elapsed": null,
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://hf-mirror.com/roboticshack/TEAM-1-BIMANUAL-LEMON-GRASPING/resolve/main/config.json",
+        "note": "经 hf-mirror.com 镜像命中真实抓取策略仓库 roboticshack/TEAM-1-BIMANUAL-LEMON-GRASPING，但仅取回 config.json（126B PolicyInterfaceDoc），未取回任何权重文件（expected_format=bin）。is_fallback=true、完整度 60%。相比 ms_014 的 agents-course README，本次镜像命中相关性更高，但核心'权重'仍缺失"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=2 全为 warning：完整度 60.0% 低于 80% 阈值、置信度 0.8 略低于 0.85。0 error。policy_model 类型无运行时校验"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-211343",
+      "manifest_path": "data/output_packages/package-20260821-211343/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing、1 文件 policies/req_000.json（config 文档 126B）。清单层面无缺失，但权重 bin 未落盘，核心需求实质未满足"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "策略权重需求仅取回 config.json（126B 接口文档），expected_format=bin 的权重文件未获取，核心需求未满足",
+  "notes": "正向变化：huggingface 直达不可达时成功走通 hf-mirror.com 镜像（对比 ms_014 的 agents-course README 更相关——命中真实抓取策略仓库 config）。但策略权重本身未下载：镜像只取了 config.json，无 bin 权重，完整度 60%、显式降级。policy_model 类型的权重获取链路仍是缺口。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

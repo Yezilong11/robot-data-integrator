@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mesh_ycb_008",
+  "input": "获取 YCB 数据集中钳子（pliers）的 mesh 模型",
+  "executor": "D",
+  "executed_at": "2026-08-21T20:37:00+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 mesh 需求（pliers 钳子），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "mesh",
+        "source": "ycb",
+        "status": "error",
+        "elapsed": null,
+        "format": "stl",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker/tip/files/meshes/model.obj",
+        "note": "ycb 源级检索超时（per_req_timeout/3=60s，直接跳过触发降级）；降级 google_scanned 命中 Black_Decker 咖啡机 mesh（1.4MB），与目标'钳子（pliers）'语义完全无关。置信度 1.0、完整度 100%（校验只看 mesh 可用性，不看语义匹配）"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error 0 warning）。mesh 格式校验通过，但语义层面交付的是咖啡机而非钳子，校验体系无语义匹配检查"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-203900",
+      "manifest_path": "data/output_packages/package-20260821-203900/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing、1 文件（objects/req_000.stl）。降级显式标记 is_fallback=true，但产物与目标语义无关，0 error 使问题被掩盖"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "ycb 源级检索 60s 超时触发降级，google_scanned 返回 Black_Decker 咖啡机 mesh，与目标'钳子（pliers）'语义完全无关；0 validation issue 掩盖内容错配",
+  "notes": "同类语义错配问题再现：ycb 源对 pliers 无覆盖/超时后降级产物无目标语义过滤（pliers→咖啡机）。校验阶段仅检查格式/文件可用性，无语义匹配校验，导致 0 error 通过。YCB 已知目标覆盖不足（banana/apple/pliers 等常见物体缺失）是底层根因。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}
