@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_google_scanned_005",
+  "input": "获取 Google Scanned Objects 中一个杯子的 mesh 模型用于仿真",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:44:39+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['mesh']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "status": "missing",
+        "format": null,
+        "quality": "unknown",
+        "is_fallback": false,
+        "error": "ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects cup mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects 杯子 3D 网格模型'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects cup 3D mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '杯子 Google Scanned Objects mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects cup 杯子 mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'cup'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '杯子'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'Google Scanned Objects cup mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'Google Scanned Objects 杯子 3D 网格模型'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'Google Scanned Objects cup 3D mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '杯子 Google Scanned Objects mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'Google Scanned Objects cup 杯子 mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'Google Scanned Objects'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'cup'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '杯子'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'mesh'（有源但未收录）",
+        "error_type": "unknown",
+        "fallback_reason": null,
+        "note": ""
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=1（1 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-191800",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-191800\\manifest.json",
+      "status": "missing",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "file_info": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 0,
+        "missing": 1,
+        "validation_issues": 1,
+        "avg_confidence": 0.0,
+        "avg_completeness": 0.0
+      },
+      "notes": "包状态 failed，落盘 0 个文件，缺失 1 项（已同步前端运行包 package-20260821-191800）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content-fail-错误说明（无主数据文件，FAIL）"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "检索失败：req_000:missing",
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=获取 Google Scanned Objects 中一个杯子的 mesh 模型用于仿真，verdict=FAIL，retrieve=['req_000:missing']，run_id=rerun-20260821-104105-11a71030；截图已按新口径重采集并登记 screenshots[]（4 张）；该包无主数据文件（FAIL），未生成 03_req_file.png；package 已同步前端运行包 package-20260821-191800",
+  "reviewer": null,
+  "reviewed_at": null
+}

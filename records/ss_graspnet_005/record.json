@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_graspnet_005",
+  "input": "获取 GraspNet-1Billion 数据集的说明和目录结构",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:41:05+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['dataset']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "github",
+        "status": "success",
+        "format": "markdown",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 dataset 命中非题设源 github，经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 github（markdown，quality=fallback，is_fallback=true），url=https://github.com/TX-Leo/PID-GraspNet/blob/master/README.md"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=1（1 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-192658",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-192658\\manifest.json",
+      "status": "missing",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "file_info": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 0,
+        "missing": 1,
+        "validation_issues": 1,
+        "avg_confidence": 0.0,
+        "avg_completeness": 0.0
+      },
+      "notes": "包状态 failed，落盘 0 个文件，缺失 1 项（已同步前端运行包 package-20260821-192658）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content-fail-错误说明（无主数据文件，FAIL）"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "数据包不可用：status=missing, file_count=0",
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=获取 GraspNet-1Billion 数据集的说明和目录结构，verdict=FAIL，retrieve=['req_000:success']，run_id=rerun-20260821-104043-cb9a722d；截图已按新口径重采集并登记 screenshots[]（4 张）；该包无主数据文件（FAIL），未生成 03_req_file.png；package 已同步前端运行包 package-20260821-192658",
+  "reviewer": null,
+  "reviewed_at": null
+}

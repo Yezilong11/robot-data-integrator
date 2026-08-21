@@ -62,7 +62,7 @@
   },
   "screenshots": [],
   "verdict": "FAIL",
-  "failure_category": "P5_RUNTIME",
+  "failure_category": "P6_VALIDATE",
   "failure_reason": "质量校验存在 1 个 error",
   "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=获取 banana 的 DexGrasp 抓取文件，verdict=FAIL，retrieve=['req_000:success']，run_id=rerun-20260820-161150-eb50e4cf；按要求未截图，screenshots 置空",
   "reviewer": null,
