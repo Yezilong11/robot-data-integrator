@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_014",
+  "input": "找一个机械臂抓取策略的开源代码并加载其 Hugging Face 权重",
+  "executor": "D",
+  "executed_at": "2026-08-21T13:52:13+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "code",
+        "policy_model"
+      ],
+      "vs_expected": "match",
+      "notes": "2 类需求全部解析出（开源代码 + 策略权重），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "code",
+        "source": "github",
+        "status": "success",
+        "elapsed": null,
+        "format": "json",
+        "quality": "real",
+        "is_fallback": false,
+        "data_url": "https://github.com/GeorgeDu/vision-based-robotic-grasping/blob/master/README.md",
+        "note": "命中 github 仓库 GeorgeDu/vision-based-robotic-grasping（视觉抓取），产出 CodeRepoSummary 摘要 203KB。置信度 0.9、完整度 80%（低于 100% 但接近临界）。expected.format 为 markdown，实际以 json 摘要形式落盘"
+      },
+      {
+        "req_id": "req_001",
+        "type": "policy_model",
+        "source": "huggingface",
+        "status": "error",
+        "elapsed": null,
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://github.com/huggingface/agents-course/blob/main/README.md",
+        "note": "huggingface 源检索失败（retrieval_errors：Failed GET /models，Cannot connect to huggingface.co:443 信号灯超时）→ 降级 github 命中 agents-course README，产出 PolicyInterfaceDoc 仅 126B。expected.format 为 safetensors，实际未产出任何权重文件，核心需求未满足"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 5,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=5 全部为 warning：req_000 完整度 80% 低于 90% 基准、置信度 0.9 达标；req_001 完整度 60%、置信度 0.6、输出路径为空三项告警。0 error。无 runtime_check（code/policy_model 类型未执行仿真验证）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-135341",
+      "manifest_path": "data/output_packages/package-20260821-135341/manifest.json",
+      "status": "complete",
+      "file_count": 2,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing（清单层面），2 个文件均为 json 摘要/文档，无真实代码文件与权重文件。req_001 降级产物（agents-course README）与策略权重完全无关"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "policy_model 核心需求未满足：huggingface.co 连接超时（信号灯超时已到）导致 /models 检索失败，降级 github 后仅产出 126B 的 PolicyInterfaceDoc（agents-course README 摘要），未产出任何 safetensors 权重；req_000 虽命中真实抓取代码仓库但仅为摘要 json，完整度 80%",
+  "notes": "网络层 huggingface.co 不可达是直接根因（环境因素，P5 网络类），但系统降级策略将无关文档当作 policy_model 交付、无快速失败，放大问题。end_to_end 的代码+权重组合在 HF 不可达时无可用备份源。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_isaac_003",
+  "input": "获取 Isaac Sim 中 UR5 的仿真场景配置",
+  "executor": "D",
+  "executed_at": "2026-08-21T17:55:40+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 sim_config 需求（UR5 在 Isaac Sim 中仿真场景配置），与题设 expected.req_types 一致。expected_format=USD，fallback_sources=[isaac, mujoco]"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "elapsed": null,
+        "format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "note": "isaac 源检索成功但产出 IsaacLab robots/franka.py（Franka Panda 资产，5.1KB mjcf），与目标 UR5 内容错配——用户要 UR5，交付 Franka。data_source_quality=fallback、is_fallback=true，但 UI 检索表显示'fallback 否'，与 manifest 不一致"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "notes": "validation_issues=2 全为 warning：完整度 80.0% 压临界、置信度 0.8 未达 0.85。runtime_check passed（MuJoCo 加载 franka.py 一步仿真成功——验证通过但验证的是 Franka 而非 UR5）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-175605",
+      "manifest_path": "data/output_packages/package-20260821-175605/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing，仅 1 个文件 sim_config/req_000.py（franka.py 内容）。清单层面完整但内容主体错误"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "UR5 仿真场景需求被交付为 IsaacLab franka.py（Franka Panda 资产），isaac 适配器无 UR5 资产、兜底固定返回 franka.py，内容主体与目标完全错配",
+  "notes": "与 mujoco_003（UR5e→ant.py）同类的'适配器无目标资产时固定兜底返回错误机器人'问题，此处为 UR5→Franka。题设 expected_format=USD 未产出，fallback 产出的 franka.py 与 UR5 无关，用户拿到无法用于 UR5 仿真。UI 侧栏'fallback 否'与 manifest is_fallback=true 不一致（前端展示一致性缺陷再现）。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

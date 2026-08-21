@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_sensor_github_002",
+  "input": "Find joint position/velocity sensor log data on GitHub",
+  "executor": "D",
+  "executed_at": "2026-08-21T21:23:14+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sensor_data"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 sensor_data 需求（joint position/velocity 传感器日志，期望 CSV），与题设 expected.req_types 一致。fallback_sources=[zenodo, github]"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "sensor_data",
+        "source": "zenodo",
+        "status": "error",
+        "elapsed": null,
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://zenodo.org/records/22015393",
+        "note": "github 源未命中，降级 zenodo（records/22015393）。产出 resources/req_000.json 仅 68B，内容为占位元数据 {\"metadata\": {\"reason\": \"JSON dict 缺少 signals 键\"}}——实际信号数据缺失，期望 CSV 未产出。置信度 0.6、完整度 60%"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=2 全为 warning：完整度 60%、置信度 0.6。0 error——占位元数据通过格式校验（SensorDataset 类型），但内容无任何信号数据"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-212335",
+      "manifest_path": "data/output_packages/package-20260821-212335/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing（清单层面）、1 文件（68B 占位 json）。数据内容缺失被清单完整性掩盖"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "github 源未命中、降级 zenodo 后仅产出 68B 占位元数据（JSON dict 缺少 signals 键），joint position/velocity 传感器日志数据完全缺失，期望 CSV 未产出",
+  "notes": "sensor_data 类型（二轮新增需求类型）首次验证即失败：源数据解析后格式不合法（缺 signals 键），系统未做解析校验/格式转换兜底，直接以占位元数据交付且 0 error 通过。校验体系对'有文件但无内容'场景无感知。另页面状态表'fallback 否'与 manifest is_fallback=true 口径不一致。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

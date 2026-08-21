@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_arxiv_006",
+  "input": "检索机器人抓取的 arXiv 论文（中文描述）",
+  "executor": "D",
+  "executed_at": "2026-08-21T14:24:16+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "paper"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 paper 需求（中文描述正常触发 arxiv 源），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "paper",
+        "source": "arxiv",
+        "status": "success",
+        "elapsed": null,
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://arxiv.org/pdf/2104.02271v1.pdf",
+        "note": "命中 arXiv 2104.02271（机器人抓取相关论文）。但 PDF（远程 6MB）downloaded=false、local_path 为空，仅本地落盘 1.6KB 元数据 json（resources/req_000.json），完整度 60%、置信度 0.6"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 3,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=3 全为 warning：完整度 60% 低于 80% 阈值、置信度 0.6 低于 0.8、输出路径为空。0 error。paper 类型无运行时仿真校验"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-142426",
+      "manifest_path": "data/output_packages/package-20260821-142426/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing。唯一文件为论文元数据 json（PDF 本体未下载）。UI 侧栏显示'fallback 否'，与 manifest is_fallback=true 不一致（UI 展示一致性隐患）"
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "中文描述成功触发 arxiv 检索并命中抓取相关论文（2104.02271），降级显式标记 is_fallback=true；不足为 PDF 全文未落盘（仅元数据 json），完整度/置信度未达标但题设允许 fallback 与 json 格式。判定 PASS_WITH_FALLBACK",
+  "reviewer": null,
+  "reviewed_at": null
+}
