@@ -2,89 +2,83 @@
   "schema_version": "1.0",
   "case_id": "ss_mujoco_004",
   "input": "获取 mujoco_menagerie 中的厨房（Kitchen）场景配置",
-  "executor": "C",
-  "executed_at": "2026-08-15T20:12:33",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:20:17",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
+  "layer": "single_source",
+  "expected_req_types": [
+    "sim_config"
+  ],
   "observations": {
     "parse_goal": {
       "req_list": [
         "sim_config"
       ],
-      "vs_expected": "match"
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Kitchen 场景的 MuJoCo 仿真配置文件",
+          "priority": "required",
+          "expected_format": "XML"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "github",
-        "quality": "fallback",
-        "error": "题设源 mujoco_menagerie 配置不可得，经 github 兜底获取 mjcf",
-        "error_type": "none",
-        "format": "mjcf",
-        "is_fallback": true,
         "req_type": "sim_config",
-        "status": "error",
-        "fallback_reason": "题设源 mujoco_menagerie 配置不可得，经 github 兜底获取 mjcf"
+        "source": "isaac",
+        "status": "success",
+        "elapsed_seconds": 29.2,
+        "format": "mjcf",
+        "data_size_bytes": 1772,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "严重内容错误：目标为 mujoco_menagerie 中 Kitchen 厨房场景，但 isaac 降级适配器返回 IsaacLab robots/ant.py（蚂蚁机器人），与 Kitchen 场景完全无关；mujoco 源无检索错误但未命中，isaac 兜底未做场景/对象语义匹配",
+        "fallback_reason": "mujoco 源未命中 Kitchen 场景（无检索错误但无有效结果），isaac 兜底返回默认 ant.py，内容与目标不符"
       }
     ],
     "validate": {
-      "errors": 2,
-      "warnings": 0,
-      "runtime_check": "not_applicable"
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%",
+        "req_000: 置信度不足 0.80"
+      ]
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201251",
+      "dir": "data/output_packages/package-20260820-162017",
+      "manifest_path": "data/output_packages/package-20260820-162017/manifest.json",
       "status": "complete",
       "file_count": 1,
       "missing_items_count": 0,
+      "validation_issues_error": 0,
       "fallback_explicit": true,
-      "manifest_path": "manifest.json"
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态"
-    }
-  ],
-  "verdict": "PASS_WITH_FALLBACK",
-  "failure_category": null,
-  "failure_reason": null,
-  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 1（文件 1），validation_issues=2。verdict=PASS_WITH_FALLBACK。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P4",
+  "failure_reason": "内容正确性隐患：目标为 mujoco_menagerie 中 Kitchen 厨房场景配置，实际交付为 IsaacLab ant.py（蚂蚁机器人），与厨房场景完全无关；isaac 兜底适配器对非机械臂类目标（场景/物体）无匹配能力，直接返回默认 ant.py 资产。",
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-161937-42f8301b，包 package-20260820-162017）。Kitchen 厨房场景请求降级后命中 ant.py，内容与目标完全不符——与 ss_mujoco_003（UR5e→ant.py）为同源缺陷：isaac 兜底适配器对无匹配语义的目标一律返回默认 ant.py 资产且不校验匹配性。0 缺失、0 error、runtime_check 通过但验证的是错误模型。连续两个用例暴露同一 P4 缺陷，需在兜底前增加目标-资产语义校验。判定 FAIL。",
+  "reviewer": null,
+  "reviewed_at": null
 }

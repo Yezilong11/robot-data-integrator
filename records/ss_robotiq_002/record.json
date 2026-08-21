@@ -3,25 +3,25 @@
   "case_id": "ss_robotiq_002",
   "input": "获取 Robotiq 2F-85 夹爪 URDF，并确认其手指开合参数",
   "executor": "D",
-  "executed_at": "2026-08-17T13:17:50",
+  "executed_at": "2026-08-20T16:30:29",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题（robotiq xacro 展开器参数代入修复未提交）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
   "layer": "single_source",
   "expected_req_types": [
-    "ROBOT_URDF"
+    "robot_urdf"
   ],
   "observations": {
     "parse_goal": {
       "req_list": [
         "robot_urdf"
       ],
-      "vs_expected": "match",
+      "vs_expected": "exact",
       "requirements": [
         {
           "req_id": "req_000",
@@ -31,7 +31,7 @@
           "expected_format": "URDF"
         }
       ],
-      "note": "LLM 将「确认手指开合参数」并入 req_000（未拆出无内置源需求类型，vs_expected=match）"
+      "note": "目标含'确认其手指开合参数'子意图，但 LLM 解析仅生成 1 条 robot_urdf 需求，未将开合参数提取为独立验证项；URDF 文件内关节 limit 包含该信息，用户可从交付文件中获得"
     },
     "retrieve": [
       {
@@ -39,95 +39,44 @@
         "req_type": "robot_urdf",
         "source": "robotiq",
         "status": "success",
-        "elapsed_seconds": 24,
+        "elapsed_seconds": 25.7,
         "format": "urdf",
         "data_size_bytes": 14123,
         "data_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
-        "quality": "real",
+        "quality": "unknown",
         "is_fallback": false,
         "confidence": 1.0,
         "completeness": 100.0,
         "error": null,
         "error_type": null,
-        "note": "robotiq 适配器下载包装 xacro（jsdelivr CDN），adapter 层 include 内联 + 宏展开 + ${expr} 求值后以纯 URDF 落盘；随包抓齐 10 个 mesh 资产"
+        "note": "robotiq 适配器命中 ros-industrial-attic/robotiq（jsdelivr CDN）robotiq_arg2f_85_model.xacro：URDF（14.1KB）+ 10 个 DAE/STL mesh，共 11 文件全量落盘，无校验问题；手指开合参数（关节 limit）内含于 URDF",
+        "fallback_reason": null
       }
     ],
     "validate": {
       "errors": 0,
       "warnings": 0,
-      "runtime_check": "passed",
+      "runtime_check": "not_required",
       "errors_detail": [],
-      "warnings_detail": [],
-      "note": "UI runtime_check 为空 {}（仅 MuJoCo 类需求适用）；runtime_check=passed 来自独立可加载性验证（yourdfpy 全解析）",
-      "runtime_check_detail": "yourdfpy.URDF.load LOAD_OK：11 links/10 joints，10 处 mesh 引用全部随相对路径 meshes/... 解析；trimesh 10/10（9 DAE + 1 STL）全部可加载"
+      "warnings_detail": []
     },
     "package": {
-      "dir": "data/output_packages/package-20260817-131814",
-      "manifest_path": "data/output_packages/package-20260817-131814/manifest.json",
+      "dir": "data/output_packages/package-20260820-163029",
+      "manifest_path": "data/output_packages/package-20260820-163029/manifest.json",
       "status": "complete",
       "file_count": 11,
-      "missing_items": 0,
       "missing_items_count": 0,
       "validation_issues_error": 0,
       "fallback_explicit": false,
       "avg_confidence": 1.0,
       "avg_completeness": 100.0
-    },
-    "loadability": {
-      "urdf": {
-        "file": "robots/req_000.urdf",
-        "tool": "yourdfpy.URDF.load",
-        "status": "passed",
-        "detail": "11 links/10 joints，全部 <origin> xyz/rpy 为完整 3 数值，10 处 mesh 引用随相对路径解析"
-      },
-      "mesh": {
-        "status": "passed",
-        "detail": "10/10 mesh（visual 5 DAE + collision 4 DAE + 1 STL）trimesh 全部可加载"
-      }
-    },
-    "structure_consistency": {
-      "verified": true,
-      "note": "manifest.files(11) 与磁盘一致（1 URDF + 10 mesh）；robots/ 顶层分类齐全"
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-检索进度（完整长图 2064x2606，3 段拼接）"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项（0 error/0 warning，完整长图 2064x1496，页面不滚动单视口）"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1940，3 段拼接）"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-检索进度（完整长图 2064x2606，3 段拼接）"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项（0 error/0 warning，完整长图 2064x1496，页面不滚动单视口）"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查（完整长图 2064x1940，3 段拼接）"
-    }
-  ],
+  "screenshots": [],
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-131750-98d2ea2a，package-20260817-131814）。与 ss_robotiq_001 同根因修复生效：xacro 展开器参数代入（src/rdi/adapters/robotiq.py _eval_xacro_expr 宏参数 scope）修复后 4 处 <origin> 退化为 2 数值问题消除，yourdfpy 11 links/10 joints 全解析、mesh 10/10 可加载，validation_issues=0（error=0/warning=0）、missing=0、11 文件全落盘 → 判定 PASS（旧记录 FAIL/P4_FORMAT，1 条 ERROR：could not broadcast...）。「手指开合参数」由 LLM 并入 req_000（URDF 内含关节限位，可查开合参数），P1_PARSE 部分无问题。\n（A 2026-08-17 合规化：req_list.lower、quality real，待 D 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-162948-4843cd0f，包 package-20260820-163029）。Robotiq 2F-85 URDF 由 robotiq 适配器命中（与 ss_robotiq_001 同源同文件），11 文件、0 缺失、0 校验问题、无降级。轻微隐患：目标中的'确认手指开合参数'子意图未被 LLM 显式解析为独立需求/验证项，开合参数仅内嵌于 URDF 关节 limit，用户需自行从文件中读取（P4 类轻微）。判定 PASS。",
+  "reviewer": null,
+  "reviewed_at": null
 }

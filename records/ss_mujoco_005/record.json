@@ -2,88 +2,80 @@
   "schema_version": "1.0",
   "case_id": "ss_mujoco_005",
   "input": "我要在 MuJoCo 里搭 Franka 的仿真环境，帮我找场景配置文件",
-  "executor": "C",
-  "executed_at": "2026-08-15T20:12:57",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:24:30",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
+  "layer": "single_source",
+  "expected_req_types": [
+    "sim_config"
+  ],
   "observations": {
     "parse_goal": {
       "req_list": [
         "sim_config"
       ],
-      "vs_expected": "match"
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置文件",
+          "priority": "required",
+          "expected_format": "XML"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "mujoco",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "xml",
-        "is_fallback": false,
         "req_type": "sim_config",
-        "status": "success"
+        "source": "mujoco",
+        "status": "success",
+        "elapsed_seconds": 63.7,
+        "format": "xml",
+        "data_size_bytes": 819,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "mujoco 适配器直连命中 google-deepmind/mujoco_menagerie franka_emika_panda 场景：scene.xml（819B）+ panda.xml（14.4KB）+ 67 个 STL/OBJ mesh 资产，共 69 文件全量落盘；用户以口语化目标提问，LLM 正确解析为 Franka Panda 场景配置需求",
+        "fallback_reason": null
       }
     ],
     "validate": {
       "errors": 0,
       "warnings": 0,
-      "runtime_check": "passed"
+      "runtime_check": "not_required",
+      "errors_detail": [],
+      "warnings_detail": []
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201322",
+      "dir": "data/output_packages/package-20260820-162430",
+      "manifest_path": "data/output_packages/package-20260820-162430/manifest.json",
       "status": "complete",
       "file_count": 69,
       "missing_items_count": 0,
+      "validation_issues_error": 0,
       "fallback_explicit": false,
-      "manifest_path": "manifest.json"
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态"
-    }
-  ],
+  "screenshots": [],
   "verdict": "PASS",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 69（文件 69），validation_issues=0。verdict=PASS。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-162310-bee9a6a1，包 package-20260820-162430）。口语化输入（'我要在 MuJoCo 里搭 Franka 的仿真环境，帮我找场景配置文件'）被正确解析为 Franka Panda 场景配置需求，mujoco_menagerie 直连命中（scene.xml + panda.xml + 67 mesh，69 文件），0 缺失、0 校验问题，quality=real、无降级。与 ss_mujoco_001 一致命中。判定 PASS。",
+  "reviewer": null,
+  "reviewed_at": null
 }

@@ -2,89 +2,119 @@
   "schema_version": "1.0",
   "case_id": "ss_ycb_002",
   "input": "获取 YCB 数据集中的苹果（apple）mesh 模型",
-  "executor": "C",
-  "executed_at": "2026-08-15T20:09:15",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:52:38",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
+  "layer": "single_source",
+  "expected_req_types": [
+    "mesh"
+  ],
   "observations": {
     "parse_goal": {
       "req_list": [
         "mesh"
       ],
-      "vs_expected": "match"
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "description": "YCB apple 的 3D 网格模型",
+          "priority": "required",
+          "expected_format": "STL",
+          "object_name": "apple"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "ycb",
-        "quality": "fallback",
-        "error": "YCB 官方 mesh 不可直接下载，经 trimesh 处理生成可用 mesh（显式降级）",
-        "error_type": "none",
-        "format": "stl",
-        "is_fallback": true,
         "req_type": "mesh",
-        "status": "error",
-        "fallback_reason": "YCB 官方 mesh 不可直接下载，经 trimesh 处理生成可用 mesh（显式降级）"
+        "source": "ycb",
+        "status": "failed",
+        "elapsed_seconds": null,
+        "format": null,
+        "data_size_bytes": null,
+        "data_url": null,
+        "quality": null,
+        "is_fallback": false,
+        "confidence": null,
+        "completeness": null,
+        "error": "ycb: 该源仅收录 20 个已知目标，未收录 'YCB apple mesh'（有源但未收录）",
+        "error_type": "not_found",
+        "note": "ycb 适配器已知目标列表（20 项）未收录 apple 相关名称；与 ss_ycb_001（banana）同源缺陷",
+        "fallback_reason": null
+      },
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "status": "failed",
+        "elapsed_seconds": null,
+        "format": null,
+        "data_size_bytes": null,
+        "data_url": null,
+        "quality": null,
+        "is_fallback": false,
+        "confidence": null,
+        "completeness": null,
+        "error": "google_scanned 源检索未命中 apple 模型",
+        "error_type": "not_found",
+        "note": "google_scanned 适配器未能匹配到 apple 对应模型（YCB apple 在 Google Scanned Objects 中无对应收录项）",
+        "fallback_reason": null
+      },
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "graspnet",
+        "status": "failed",
+        "elapsed_seconds": null,
+        "format": null,
+        "data_size_bytes": null,
+        "data_url": null,
+        "quality": null,
+        "is_fallback": false,
+        "confidence": null,
+        "completeness": null,
+        "error": "graspnet: 该源仅收录 2 个已知目标，未收录 'YCB apple mesh'",
+        "error_type": "not_found",
+        "note": "graspnet 适配器仅收录 2 个已知目标，未覆盖 apple",
+        "fallback_reason": null
       }
     ],
     "validate": {
-      "errors": 3,
+      "errors": 1,
       "warnings": 0,
-      "runtime_check": "not_applicable"
+      "runtime_check": "not_required",
+      "errors_detail": [
+        "req_000: 必需需求缺失（ycb/google_scanned/graspnet 均未命中）"
+      ],
+      "warnings_detail": []
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-200953",
-      "status": "complete",
-      "file_count": 1,
-      "missing_items_count": 0,
-      "fallback_explicit": true,
-      "manifest_path": "manifest.json"
+      "dir": "data/output_packages/package-20260820-165238",
+      "manifest_path": "data/output_packages/package-20260820-165238/manifest.json",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "validation_issues_error": 1,
+      "fallback_explicit": false,
+      "avg_confidence": 0.0,
+      "avg_completeness": 0.0
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态"
-    }
-  ],
-  "verdict": "PASS_WITH_FALLBACK",
-  "failure_category": null,
-  "failure_reason": null,
-  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 1（文件 1），validation_issues=3。verdict=PASS_WITH_FALLBACK。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "YCB apple mesh 检索失败：ycb 适配器已知目标列表（20 项）未收录 apple；google_scanned 无对应 apple 模型；graspnet 仅 2 个已知目标。全部数据源未命中，0 文件交付，包 status=failed。",
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-164552-1c24108f，包 package-20260820-165238）。YCB apple mesh 请求全源失败，与 ss_ycb_001（banana）模式完全一致：ycb 适配器已知目标列表未收录 apple、google_scanned 无对应收录、graspnet 仅 2 个已知目标。0 文件交付、missing=1、1 error，包 status=failed。注意：进入 human_review 时任务已在中断态，resume 依赖内存 checkpoint 成功执行（_TASKS 表 10 分钟清理后 /api/status 返回 not found，但 resume 仍可用）。判定 FAIL（P2_RETRIEVE）。",
+  "reviewer": null,
+  "reviewed_at": null
 }
