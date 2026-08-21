@@ -2,88 +2,83 @@
   "schema_version": "1.0",
   "case_id": "ss_mujoco_002",
   "input": "获取 mujoco_menagerie 中 Franka Panda 的抓取操作场景配置",
-  "executor": "C",
-  "executed_at": "2026-08-15T20:11:41",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:12:57",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
+  "layer": "single_source",
+  "expected_req_types": [
+    "sim_config"
+  ],
   "observations": {
     "parse_goal": {
       "req_list": [
         "sim_config"
       ],
-      "vs_expected": "match"
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的抓取操作场景配置文件（XML）",
+          "priority": "required",
+          "expected_format": "XML"
+        }
+      ]
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "mujoco",
-        "quality": "real",
-        "error": null,
-        "error_type": "none",
-        "format": "xml",
-        "is_fallback": false,
         "req_type": "sim_config",
-        "status": "success"
+        "source": "isaac",
+        "status": "success",
+        "elapsed_seconds": 10.9,
+        "format": "mjcf",
+        "data_size_bytes": 5243,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "mujoco 适配器源级检索超时（90.00s = per_req_timeout/2，16:12:46 记录）后回退 isaac，命中 IsaacLab robots/franka.py（mjcf 兜底），仅 1 个资产文件、无场景 mesh 资产；runtime_check 通过（MuJoCo 加载与一步仿真成功）",
+        "fallback_reason": "mujoco 源级检索超时（>90.00s = per_req_timeout/2），显式降级走 isaac"
       }
     ],
     "validate": {
       "errors": 0,
-      "warnings": 0,
-      "runtime_check": "passed"
+      "warnings": 2,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%",
+        "req_000: 置信度不足 0.80"
+      ]
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201206",
+      "dir": "data/output_packages/package-20260820-161257",
+      "manifest_path": "data/output_packages/package-20260820-161257/manifest.json",
       "status": "complete",
-      "file_count": 69,
+      "file_count": 1,
       "missing_items_count": 0,
-      "fallback_explicit": false,
-      "manifest_path": "manifest.json"
+      "validation_issues_error": 0,
+      "fallback_explicit": true,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态"
-    }
-  ],
-  "verdict": "PASS",
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 69（文件 69），validation_issues=0。verdict=PASS。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-161102-59344423，包 package-20260820-161257）。mujoco 适配器对'抓取操作场景'检索超时（90s，per_req_timeout/2）→ 显式降级 isaac 命中 IsaacLab franka.py（mjcf 兜底，置信度 0.8/完整度 80），0 缺失、0 error、2 warning，runtime_check 通过。注意：同为目标 Franka Panda，ss_mujoco_001（仅'场景配置'）mujoco 源 62s 直连命中 69 文件，本用例（含'抓取操作'语义）mujoco 源却 90s 超时，疑因抓取场景检索逻辑更重/命中路径不同，存在检索稳定性差异（P5 类隐患）。判定 PASS_WITH_FALLBACK。",
+  "reviewer": null,
+  "reviewed_at": null
 }
