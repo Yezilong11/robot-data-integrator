@@ -3,89 +3,79 @@
   "case_id": "ss_zenodo_001",
   "input": "检索 robot grasp dataset",
   "executor": "C",
-  "executed_at": "2026-08-15T08:34:31",
+  "executed_at": "2026-08-20T15:36:41+08:00",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
   "observations": {
     "parse_goal": {
       "req_list": [
         "dataset"
       ],
-      "vs_expected": "match"
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['dataset']，判定 match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "zenodo",
+        "req_type": "dataset",
+        "source": "dexgrasp",
+        "status": "success",
+        "format": "DatasetSummary",
         "quality": "fallback",
+        "is_fallback": true,
         "error": null,
         "error_type": "none",
-        "format": "json",
-        "is_fallback": true,
-        "status": "success",
-        "req_type": "dataset",
-        "fallback_reason": "源未产出真实数据文件，显式降级（元数据/summary）"
+        "fallback_reason": "非首选源/元数据降级回退（is_fallback=true）",
+        "note": "真实流程命中 dexgrasp（DatasetSummary，quality=fallback，is_fallback=true），url=https://huggingface.co/datasets/lhrlhr/DexGraspNet2.0"
       }
     ],
     "validate": {
       "errors": 0,
-      "warnings": 0,
-      "runtime_check": "not_applicable"
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=2（0 error, 2 warning）"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083500",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-153633",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-153633/manifest.json",
       "status": "complete",
       "file_count": 1,
-      "missing_items": 0,
-      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-083500/manifest.json",
       "missing_items_count": 0,
-      "fallback_explicit": true
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "DatasetSummary",
+          "source_url": "https://huggingface.co/datasets/lhrlhr/DexGraspNet2.0",
+          "is_fallback": true,
+          "completeness": 75.0,
+          "downloaded": true,
+          "size_bytes": 100
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.85,
+        "avg_completeness": 75.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项"
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-进度展示"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-进度展示"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
-    }
-  ],
+  "screenshots": [],
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 重跑（项目优化后）。",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=检索 robot grasp dataset，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260820-153606-f9f4f123；按要求未截图，screenshots 置空",
+  "reviewer": null,
+  "reviewed_at": null
 }
