@@ -3,89 +3,259 @@
   "case_id": "ss_github_002",
   "input": "检索 GitHub 上的 Franka Panda URDF 模型",
   "executor": "C",
-  "executed_at": "2026-08-15T10:49:42",
+  "executed_at": "2026-08-20T16:02:17+08:00",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
   },
   "observations": {
     "parse_goal": {
       "req_list": [
-        "robot_urdf",
-        "code"
+        "robot_urdf"
       ],
-      "vs_expected": "partial"
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['robot_urdf']，判定 match"
     },
     "retrieve": [
       {
         "req_id": "req_000",
-        "source": "github",
-        "quality": "unknown",
-        "error": "GitHub 命中 Franka URDF，来源质量无法完全判定（quality=unknown），显式标记降级",
-        "error_type": "none",
-        "format": "urdf",
-        "is_fallback": true,
         "req_type": "robot_urdf",
-        "status": "error",
-        "fallback_reason": "GitHub 命中 Franka URDF，来源质量无法完全判定（quality=unknown），显式标记降级"
+        "source": "franka",
+        "status": "success",
+        "format": "urdf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 robot_urdf 命中非题设源 franka，经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 franka（urdf，quality=fallback，is_fallback=true），url=https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf"
       }
     ],
     "validate": {
-      "errors": 2,
-      "warnings": 0,
-      "runtime_check": "not_applicable"
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=2（0 error, 2 warning）"
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-105007",
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-160209",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-160209/manifest.json",
       "status": "complete",
-      "file_count": 1,
+      "file_count": 19,
       "missing_items_count": 0,
       "fallback_explicit": true,
-      "manifest_path": "manifest.json"
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "urdf",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 11043
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link0.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 14925
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link1.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 1070650
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link1.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 22976
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link2.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 1084458
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link2.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 22688
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link3.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 1237175
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link3.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 22870
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link4.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 1272305
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link4.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 68016
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link5.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 1582192
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link5.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 67745
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/link6.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 2236857
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link6.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 140218
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/link7.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 45132
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/hand.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 713204
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/hand.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 15247
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/finger.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 65359
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/finger.obj",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+          "is_fallback": false,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 7603
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 19,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      },
+      "notes": "包状态 complete，落盘 19 个文件，缺失 0 项"
     }
   },
-  "screenshots": [
-    {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入"
-    },
-    {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-进度展示"
-    },
-    {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-进度展示"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
-    }
-  ],
+  "screenshots": [],
   "verdict": "PASS_WITH_FALLBACK",
   "failure_category": null,
   "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=检索 GitHub 上的 Franka Panda URDF 模型，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260820-160128-4664b1a6；按要求未截图，screenshots 置空",
+  "reviewer": null,
+  "reviewed_at": null
 }
