@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_google_scanned_004",
+  "input": "获取 Google Scanned Objects 中的椅子（chair）mesh 模型",
+  "executor": "A",
+  "executed_at": "2026-08-22T08:40:02",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match",
+      "notes": "parse_goal: LLM 解析成功，生成 1 条 mesh 需求，与题设 expected.req_types=[mesh] 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "ycb",
+        "status": "missing",
+        "elapsed_seconds": null,
+        "format": "glb",
+        "data_size_bytes": 0,
+        "data_url": null,
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.0,
+        "completeness": 0.0,
+        "error": "ycb 源级检索超时（>60s = per_req_timeout/3）且未收录目标：该源仅收录 20 个已知目标，未收录 'Google Scanned Objects chair mesh' 等 6 个查询词；3 轮检索均失败",
+        "error_type": "P2_RETRIEVE",
+        "note": "题设 source=google_scanned，但实际检索仅执行 ycb/graspnet（均未收录该目标），google_scanned 源未被检索（历史经验中已有 'Google Scanned object → google_scanned success 46.6s' 参考）；manifest missing_items 记录 16 条未收录原因",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_run",
+      "notes": "validate: 检查 0 项解析数据、1 项缺失，发现 1 个问题（1 error, 0 warning）；manifest validation_issues=1"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-084002",
+      "manifest_path": "data/output_packages/package-20260822-084002/manifest.json",
+      "status": "error",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "notes": "manifest status=failed，落盘 0 个数据文件（仅 quality_explanation.md）；quality_report total=1 fulfilled=0 missing=1；missing_items 仅 req_000（ycb/graspnet 均未收录）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest"
+    },
+    {
+      "file": "screenshots/01_manifest_2.png",
+      "desc": "manifest-2"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/03_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "mesh 检索全部失败（missing=1，0 文件空包）：LLM retrieval_plan 仅规划执行 ycb/graspnet 两个源（ycb 仅收录 20 目标、graspnet 仅 2 目标，均未收录 'Google Scanned Objects chair' 相关查询词），未检索题设对应源 google_scanned（历史经验含该源 success 46.6s 参考）；且 ycb 3 轮源级检索均超时（>60s）",
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-083513-fd31185e，包 package-20260822-084002，前端真实流程 qwen3.7-plus）。题设（ss_google_scanned_004）为 Google Scanned Objects 椅子 mesh（single_source/mesh，source=[google_scanned]，expected.req_types=[mesh]、format=[glb,obj]）。parse_goal 成功（1 req mesh），但检索阶段 LLM 源规划错误：仅走 ycb/graspnet（均未收录），未用 google_scanned；ycb 3 次源级超时（60s each）→ mesh 缺失 → 空包。llm_usage 3 次 retrieval_plan 均 ok（LLM 调用成功，决策错误）。建议组长 B：检索规划需优先匹配题设 source，并将 ycb 等小型受限源（仅 20 目标）纳入源选择约束。",
+  "reviewer": null,
+  "reviewed_at": null
+}

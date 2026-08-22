@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_zenodo_007",
+  "input": "Zenodo 上查找机械臂关节传感器数据集",
+  "executor": "A",
+  "executed_at": "2026-08-22T09:51:57",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sensor_data"
+      ],
+      "vs_expected": "mismatch",
+      "notes": "parse_goal: LLM 解析成功，生成 1 条 sensor_data 需求；题设 expected.req_types=[dataset]，解析出 sensor_data 与题设不一致 → mismatch"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "source": "zenodo",
+        "status": "error",
+        "elapsed_seconds": null,
+        "format": "SensorDataset",
+        "data_size_bytes": 68,
+        "data_url": "https://zenodo.org/records/22051891",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "error": "命中目标源 zenodo，但降级产出 68B 占位元数据，无任何真实传感器数据（仅 {\"metadata\": {\"reason\": \"JSON dict 缺少 signals 键\"}}）",
+        "error_type": "P2_RETRIEVE",
+        "note": "manifest 已显式标记降级（is_fallback=true、data_source_quality=fallback、confidence 0.6、completeness 60）；zenodo.org/records/22051891 未检索到可用 signals 数据",
+        "fallback_reason": "JSON dict 缺少 signals 键（占位元数据，未获取到真实关节传感器数据）"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validate: 0 error 2 warning（完整度 60% 与置信度 0.6 低于阈值，均不可自动修复）；sensor_data 无需运行时加载验证（not_applicable）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-095157",
+      "manifest_path": "data/output_packages/package-20260822-095157/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "manifest status=complete、missing=0、validation_issues=2、avg_confidence 0.6、avg_completeness 60；1 文件 = resources/req_000.json(68B 占位) + quality_explanation.md；LLM 自评称'需求全部满足、可用于探索性实验'，但实际数据仅占位元数据无 signals 内容，自评严重高估"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest"
+    },
+    {
+      "file": "screenshots/01_manifest_2.png",
+      "desc": "manifest-2"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "命中目标源 zenodo 但未检索到真实传感器数据：降级产出 68B 占位元数据（仅 metadata.reason，无 signals 键），置信度 0.6、完整度 60%，LLM 自评严重高估为'基本可用'",
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-095117-e823f402，包 package-20260822-095157，前端真实流程 qwen3.7-plus）。题设（ss_zenodo_007）为 Zenodo 机械臂关节传感器数据集（single_source/sensor_data，source=[zenodo]）。命中目标源 zenodo.org/records/22051891，但 parse_convert 因'JSON dict 缺少 signals 键'降级为 68B 占位（is_fallback=true 已显式标记）→ P2_RETRIEVE。与 D 二轮 ss_sensor_zenodo_002 同属 zenodo 源弱命中/占位问题。另暴露：LLM 自评与真实内容严重不符（自评'基本可用'，实际 0 数据）。",
+  "reviewer": null,
+  "reviewed_at": null
+}

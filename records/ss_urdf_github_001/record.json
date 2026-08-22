@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_urdf_github_001",
+  "input": "检索 GitHub 上的 UR5 机械臂 URDF 模型",
+  "executor": "A",
+  "executed_at": "2026-08-22T09:40:52",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "parse_goal: LLM 解析成功，生成 1 条 robot_urdf 需求，与题设 expected.req_types=[robot_urdf] 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "error",
+        "elapsed_seconds": null,
+        "format": "xacro",
+        "data_size_bytes": 19899,
+        "data_url": "https://raw.githubusercontent.com/UniversalRobots/Universal_Robots_ROS2_Description/rolling/urdf/inc/ur_common.xacro",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": "命中目标源（source=[github]），但检索到的是 xacro 宏模板 ur_common.xacro（xmlns:xacro，369 处宏/属性表达式引用，仅宏定义无 UR5 机器人链接结构），未展开为可用 URDF",
+        "error_type": "P4_FORMAT",
+        "note": "3 轮检索均命中同一 xacro 文件（UniversalRobots/Universal_Robots_ROS2_Description 的公共宏库），存为 robots/req_000.urdf；文件真实下载（downloaded=true、is_fallback=false）但内容为 xacro 模板，无 <robot name> 顶层结构",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 2,
+      "runtime_check": "failed",
+      "notes": "validate: 1 error 2 warning（3 轮均相同）；runtime_check failed：yourdfpy 真实加载报 KeyError: 'name'（xacro 宏文件无 <robot name> 顶层机器人，非有效 URDF），与 ms_012 同根因"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-094052",
+      "manifest_path": "data/output_packages/package-20260822-094052/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "notes": "manifest status=complete、missing=0、validation_issues=3、avg_confidence 0.8、avg_completeness 80；1 文件 = robots/req_000.urdf(19899B, xacro 模板) + quality_explanation.md，无任何 mesh/UR5 结构文件"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest"
+    },
+    {
+      "file": "screenshots/01_manifest_2.png",
+      "desc": "manifest-2"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/03_provenance_log.png",
+      "desc": "provenance-log-2"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "URDF 内容不可用：检索命中目标源 github，但产出为 xacro 宏模板 ur_common.xacro（369 处宏/属性表达式引用，仅宏定义无 UR5 机器人链接结构），未展开为有效 URDF；yourdfpy 加载报 KeyError: 'name'，runtime_check failed",
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-093830-70029d29，包 package-20260822-094052，前端真实流程 qwen3.7-plus）。题设（ss_urdf_github_001）为 GitHub 上 UR5 机械臂 URDF（single_source/robot_urdf，source=[github]）。命中目标源（UniversalRobots 官方 ROS2 Description），但检索到 ur_common.xacro 宏库（非 UR5 具体 URDF，xacro 未展开），3 轮检索内容一致 → P4_FORMAT。与 ms_012（xacro 1430B）、ss_kinova_001（URDF 但 mesh 缺失）同属 URDF/xacro 处理链缺陷：检索规划未筛选具体 UR5 模型文件、parse_convert 无 xacro 展开。",
+  "reviewer": null,
+  "reviewed_at": null
+}

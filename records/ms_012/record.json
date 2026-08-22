@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_012",
+  "input": "UR5 with Robotiq 2F-85 grasps a Google Scanned object",
+  "executor": "A",
+  "executed_at": "2026-08-22T07:11:02",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "robot_urdf",
+    "mesh"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp"
+      ],
+      "vs_expected": "partial",
+      "notes": "LLM 解析出 3 条需求（robot_urdf/mesh/grasp），题设 expected.req_types 仅 [robot_urdf, mesh]，多出 grasp 需求（题设未要求抓取姿态数据）"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "xacro",
+        "data_size_bytes": 1430,
+        "data_url": "https://raw.githubusercontent.com/heretonjneer/ur5e_workstation/master/urdf/ur5e_joint_limited_robotiq_2f_85.urdf.xacro",
+        "quality": "unknown",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "URDF 主源未命中，降级 github（heretonjneer/ur5e_workstation）拿到的实为 xacro 模板（1430B，含 xacro:include 与 ur5e_robot/robotiq_2f_85_full 宏调用），未做 xacro 展开，非有效 URDF，数据不可用",
+        "fallback_reason": "URDF 主源检索失败"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "stl",
+        "data_size_bytes": 1501784,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker/tip/files/meshes/model.obj",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "google_scanned 真实命中 GSO 咖啡机（Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker）model.obj，适配器转 STL 落盘 objects/req_001.stl（1.5MB）；manifest data_source_quality 无人工标注（unknown），数据真实可用",
+        "fallback_reason": null
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "json",
+        "data_size_bytes": 116,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "error": null,
+        "error_type": null,
+        "note": "多余需求（题设无 grasp）。graspnet 主源未找到真实 npz，降级 huggingface 拿到元数据占位 json（116B，内容为 {source: GraspNet, reason: 返回元数据 JSON（未找到真实 npz）}），无真实抓取数据",
+        "fallback_reason": "graspnet 未找到真实 npz"
+      }
+    ],
+    "validate": {
+      "errors": 5,
+      "warnings": 0,
+      "runtime_check": "not_run",
+      "errors_detail": [],
+      "warnings_detail": [],
+      "notes": "validation_issues=5：req_000 URDF 为 xacro 模板未展开（含宏调用，yourdfpy 解析必失败）；req_002 grasp 仅元数据占位（116B，output path 为空）；两者置信度/完整度均低于阈值。runtime_check 未单独执行（手动执行未跑 yourdfpy/trimesh 验证）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-071239",
+      "manifest_path": "data/output_packages/package-20260822-071239/manifest.json",
+      "status": "complete",
+      "file_count": 3,
+      "missing_items_count": 0,
+      "validation_issues_error": 5,
+      "fallback_explicit": true,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0,
+      "notes": "manifest status=complete（missing=0），落盘 3 文件：robots/req_000.urdf（xacro 非法）、objects/req_001.stl（真实 GSO mesh）、grasps/req_002.json（占位）。mesh 真实可用，URDF 不可用"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/03_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "robot_urdf 需求检索到 xacro 模板（1430B，宏未展开）而非有效 URDF，数据不可用；mesh 真实命中，grasp 为多余需求且仅元数据占位",
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-071102-a6500dd9，包 package-20260822-071239，前端真实流程 qwen3.7-plus）。URDF 主源未命中降级 github 拿到 xacro（未展开，非有效 URDF，格式问题 P4_FORMAT）；mesh 由 google_scanned 真实命中 GSO 咖啡机 obj→stl；LLM 多解析出 grasp 需求（题设无），graspnet 无真实 npz 仅占位 json。建议组长 B：URDF 源增加 xacro 展开转换（xacro → URDF），并校验最终产物为合法 URDF。",
+  "reviewer": null,
+  "reviewed_at": null
+}
