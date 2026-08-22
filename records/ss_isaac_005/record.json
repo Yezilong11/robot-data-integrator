@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_isaac_005",
+  "input": "Isaac Sim kitchen environment config for robot manipulation",
+  "executor": "F",
+  "executed_at": "2026-08-22T18:54:58+08:00",
+  "completed_at": "2026-08-22T18:57:38.909422",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "sim_config",
+  "priority": "P2",
+  "variant": "英文特定环境",
+  "expected": {
+    "req_types": [
+      "sim_config"
+    ],
+    "sources": [
+      "isaac"
+    ],
+    "formats": [
+      "python",
+      "mjcf",
+      "xml"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：Isaac Sim kitchen environment config for robot manipulation"
+  },
+  "source_package": {
+    "package_id": "package-20260822-185738",
+    "run_id": "20260822-185458-6db1a134",
+    "manifest_path": "data/output_packages/package-20260822-185738/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-185738",
+    "package_status": "failed"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [],
+    "validate": {
+      "errors": 1,
+      "warnings": 1,
+      "runtime_check": "not_recorded",
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen scene config'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen environment setup'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen simulation configuration'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen 厨房 仿真场景 config'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'kitchen'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 '厨房'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 '仿真场景'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'config'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen scene config'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen environment setup'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen simulation configuration'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen 厨房 仿真场景 config'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'kitchen'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 '厨房'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 '仿真场景'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'config'（有源但未收录）",
+          "alternatives": []
+        }
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-185738",
+      "manifest_path": "data/output_packages/package-20260822-185738/manifest.json",
+      "package_id": "package-20260822-185738",
+      "run_id": "20260822-185458-6db1a134",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "files": [],
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen scene config'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen environment setup'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen simulation configuration'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim kitchen 厨房 仿真场景 config'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'Isaac Sim'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'kitchen'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 '厨房'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 '仿真场景'（有源但未收录）；isaac: 该源仅收录 6 个已知目标，未收录 'config'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen scene config'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen environment setup'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen simulation configuration'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim kitchen 厨房 仿真场景 config'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'Isaac Sim'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'kitchen'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 '厨房'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 '仿真场景'（有源但未收录）；mujoco: 该源仅收录 7 个已知目标，未收录 'config'（有源但未收录）",
+          "alternatives": []
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 0,
+        "missing": 1,
+        "validation_issues": 1,
+        "avg_confidence": 0,
+        "avg_completeness": 0
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T18:57:38.909422] assemble_package: 生成数据包 package-20260822-185738，落盘 0 个文件，缺失 1 项",
+      "[2026-08-22T18:57:38.909422] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-185738 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-185738 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P1_RETRIEVAL",
+  "failure_reason": "Isaac/MuJoCo 源均未收录 kitchen environment 配置，package 为空且 req_000 缺失。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T18:57:38.909422，run_id=20260822-185458-6db1a134，包 package-20260822-185738）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 Isaac/MuJoCo 源均未收录 kitchen environment 配置，package 为空且 req_000 缺失。",
+  "reviewer": null,
+  "reviewed_at": null
+}

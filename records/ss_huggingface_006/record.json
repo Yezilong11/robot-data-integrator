@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_huggingface_006",
+  "input": "帮我找 Hugging Face 上的机器人操作数据集（中文描述）",
+  "executor": "F",
+  "executed_at": "2026-08-22T19:06:05+08:00",
+  "completed_at": "2026-08-22T19:07:46.309754",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "dataset",
+  "priority": "P2",
+  "variant": "中文描述",
+  "expected": {
+    "req_types": [
+      "dataset"
+    ],
+    "sources": [
+      "huggingface"
+    ],
+    "formats": [
+      "json"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：帮我找 Hugging Face 上的机器人操作数据集（中文描述）"
+  },
+  "source_package": {
+    "package_id": "package-20260822-190746",
+    "run_id": "20260822-190605-28418b5f",
+    "manifest_path": "data/output_packages/package-20260822-190746/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-190746",
+    "package_status": "failed"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [],
+    "validate": {
+      "errors": 1,
+      "warnings": 1,
+      "runtime_check": "not_recorded",
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "不支持的数据集格式: markdown",
+          "alternatives": []
+        }
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-190746",
+      "manifest_path": "data/output_packages/package-20260822-190746/manifest.json",
+      "package_id": "package-20260822-190746",
+      "run_id": "20260822-190605-28418b5f",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "files": [],
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "不支持的数据集格式: markdown",
+          "alternatives": []
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 0,
+        "missing": 1,
+        "validation_issues": 1,
+        "avg_confidence": 0,
+        "avg_completeness": 0
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T19:07:46.309754] assemble_package: 生成数据包 package-20260822-190746，落盘 0 个文件，缺失 1 项",
+      "[2026-08-22T19:07:46.309754] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-190746 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-190746 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_FORMAT",
+  "failure_reason": "Hugging Face 检索结果为 markdown，当前 assemble 不支持该数据集格式，req_000 缺失。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:07:46.309754，run_id=20260822-190605-28418b5f，包 package-20260822-190746）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 Hugging Face 检索结果为 markdown，当前 assemble 不支持该数据集格式，req_000 缺失。",
+  "reviewer": null,
+  "reviewed_at": null
+}

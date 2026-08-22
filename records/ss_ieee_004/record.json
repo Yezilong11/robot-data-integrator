@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_ieee_004",
+  "input": "IEEE papers on 6-DOF grasp pose estimation",
+  "executor": "F",
+  "executed_at": "2026-08-22T18:58:06+08:00",
+  "completed_at": "2026-08-22T19:04:22.827035",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "paper",
+  "priority": "P2",
+  "variant": "英文细分主题",
+  "expected": {
+    "req_types": [
+      "paper"
+    ],
+    "sources": [
+      "ieee"
+    ],
+    "formats": [
+      "json",
+      "pdf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：IEEE papers on 6-DOF grasp pose estimation"
+  },
+  "source_package": {
+    "package_id": "package-20260822-190422",
+    "run_id": "20260822-185806-349d42e1",
+    "manifest_path": "data/output_packages/package-20260822-190422/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-190422",
+    "package_status": "failed"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "paper"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [],
+    "validate": {
+      "errors": 2,
+      "warnings": 2,
+      "runtime_check": "not_recorded",
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation arxiv'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose estimation IEEE survey'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation 抓取姿态估计 IEEE'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '抓取姿态估计'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'IEEE'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '估计的研究文献'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation arxiv'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose estimation IEEE survey'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation 抓取姿态估计 IEEE'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '抓取姿态估计'（有源但未收录）",
+          "alternatives": []
+        },
+        {
+          "req_id": "req_001",
+          "reason": "graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation dataset NPZ'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose data graspnet'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose 6-DOF NPZ dataset'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose 6-DOF 抓取姿态 NPZ'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '抓取姿态'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'NPZ'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation dataset NPZ'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose data graspnet'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose 6-DOF NPZ dataset'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose 6-DOF 抓取姿态 NPZ'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose'（有源但未收录）",
+          "alternatives": []
+        }
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-190422",
+      "manifest_path": "data/output_packages/package-20260822-190422/manifest.json",
+      "package_id": "package-20260822-190422",
+      "run_id": "20260822-185806-349d42e1",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items_count": 2,
+      "fallback_explicit": false,
+      "files": [],
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation arxiv'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose estimation IEEE survey'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation 抓取姿态估计 IEEE'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '抓取姿态估计'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'IEEE'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '估计的研究文献'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation arxiv'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose estimation IEEE survey'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation 抓取姿态估计 IEEE'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '抓取姿态估计'（有源但未收录）",
+          "alternatives": []
+        },
+        {
+          "req_id": "req_001",
+          "reason": "graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation dataset NPZ'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose data graspnet'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose 6-DOF NPZ dataset'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose 6-DOF 抓取姿态 NPZ'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'grasp pose'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '6-DOF'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '抓取姿态'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'NPZ'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation dataset NPZ'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose data graspnet'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 '6-DOF grasp pose estimation IEEE paper'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose 6-DOF NPZ dataset'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose 6-DOF 抓取姿态 NPZ'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'grasp pose'（有源但未收录）",
+          "alternatives": []
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 2,
+        "fulfilled": 0,
+        "missing": 2,
+        "validation_issues": 2,
+        "avg_confidence": 0,
+        "avg_completeness": 0
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T19:04:22.827035] assemble_package: 生成数据包 package-20260822-190422，落盘 0 个文件，缺失 2 项",
+      "[2026-08-22T19:04:22.827035] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-190422 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-190422 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P1_RETRIEVAL",
+  "failure_reason": "IEEE 目标未检索到可用论文，实际运行 package 为空且两个需求均缺失；按用户要求记录源问题后继续。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:04:22.827035，run_id=20260822-185806-349d42e1，包 package-20260822-190422）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 IEEE 目标未检索到可用论文，实际运行 package 为空且两个需求均缺失；按用户要求记录源问题后继续。",
+  "reviewer": null,
+  "reviewed_at": null
+}
