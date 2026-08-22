@@ -1,122 +1,188 @@
 {
   "schema_version": "1.0",
+  "round": "round2",
   "case_id": "ms_004",
   "input": "UR5 with Robotiq 2F-85 grasps YCB apple",
-  "executor": "C",
-  "executed_at": "2026-08-15T10:43:16",
+  "executor": "E",
+  "executed_at": "2026-08-20T19:22:13+08:00",
+  "completed_at": "2026-08-20T19:24:23+08:00",
   "env": {
     "llm_model": "qwen-plus",
     "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "mode": "real",
     "review_decision": "satisfied",
-    "git_branch": "feat/arch-langgraph",
-    "git_commit": "C 执行环境（commit 未提供）"
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
   },
   "layer": "multi_source",
-  "expected_req_types": [
-    "robot_urdf",
-    "mesh",
-    "grasp"
-  ],
+  "category": "end_to_end",
+  "priority": "P1",
+  "expected": {
+    "req_types": [
+      "robot_urdf",
+      "mesh",
+      "grasp"
+    ],
+    "sources": [
+      "github",
+      "robotiq",
+      "ycb"
+    ],
+    "formats": [
+      "urdf",
+      "obj",
+      "stl"
+    ],
+    "min_files": 3
+  },
+  "source_package": {
+    "package_id": "package-20260820-192423",
+    "run_id": "20260820-192213-08ff2984",
+    "manifest_path": "data/output_packages/package-20260820-192423/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-192423",
+    "package_status": "complete"
+  },
   "observations": {
     "parse_goal": {
+      "status": "success",
       "req_list": [
+        "robot_urdf",
         "mesh",
-        "grasp",
-        "robot_urdf"
+        "grasp"
       ],
-      "vs_expected": "match"
+      "vs_expected": "match",
+      "notes": "根据 package manifest 反推，本次运行产出 robot_urdf、mesh、grasp 三类需求，与 ms_004 expected.req_types 匹配。"
     },
     "retrieve": [
       {
         "req_id": "req_000",
         "req_type": "robot_urdf",
+        "description": "UR5 with Robotiq 2F-85 机器人/夹爪 URDF",
         "source": "github",
-        "quality": "unknown",
         "status": "success",
-        "error": null,
-        "error_type": "none",
+        "elapsed": null,
         "format": "urdf",
+        "quality": "unknown",
         "is_fallback": true,
-        "fallback_reason": "robot_urdf 经 GitHub raw 直链兜底获取（C 原始记录 source=raw，映射 github），quality 未实测标 unknown，显式降级（A 推断，待 C 复核）"
+        "data_url": "https://raw.githubusercontent.com/heretonjneer/ur5e_workstation/master/urdf/ur5e_joint_limited_robotiq_2f_85.urdf.xacro",
+        "output_path": "robots/req_000.urdf",
+        "file_size": 1430,
+        "downloaded": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "checksum_sha256": "fcd68270a0855ff9296b9cd9eb879b4653f32c6ccb05f84fdb33232021f3a968",
+        "notes": "通过 GitHub raw 链接获取 URDF/xacro 产物；manifest 标记 is_fallback=true，属于显式降级。"
       },
       {
         "req_id": "req_001",
         "req_type": "mesh",
+        "description": "YCB apple 的 3D mesh",
         "source": "google_scanned",
-        "quality": "fallback",
         "status": "success",
-        "error": null,
-        "error_type": "none",
-        "format": "trimesh.Trimesh",
+        "elapsed": null,
+        "format": "stl",
+        "quality": "unknown",
         "is_fallback": true,
-        "fallback_reason": "mesh 经 Gazebo Fuel（google_scanned 后端，C 原始记录 source=fuel）兜底获取；产物为内存 Trimesh 对象，格式偏离题设 obj/stl，显式降级（A 推断，待 C 复核）"
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker/tip/files/meshes/model.obj",
+        "output_path": "objects/req_001.stl",
+        "file_size": 1501784,
+        "downloaded": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "checksum_sha256": "2216393fc6ad6348ebb272e07e47d5b4c71117db5c62779b11846efe15efcc48",
+        "semantic_check": "mismatch",
+        "notes": "manifest 中该 mesh 的 source_url 指向 Black_Decker 咖啡机模型，不是 YCB apple；虽然文件已落盘，但语义对象不匹配。"
       },
       {
         "req_id": "req_002",
         "req_type": "grasp",
-        "source": "huggingface",
-        "quality": "fallback",
+        "description": "YCB apple 的抓取姿态数据",
+        "source": "graspnet",
         "status": "success",
-        "error": null,
-        "error_type": "none",
+        "elapsed": null,
         "format": "CanonicalGrasp",
+        "quality": "fallback",
         "is_fallback": true,
-        "fallback_reason": "grasp 经 huggingface 兜底获取（题设源 github/robotiq/ycb 未命中），CanonicalGrasp 结构化表示非题设格式，显式降级（A 推断，待 C 复核）"
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "output_path": "grasps/req_002.json",
+        "file_size": 0,
+        "downloaded": false,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "checksum_sha256": "e0adf344e562fadaa70cdea908b9af206c0fc3f6a4482b665158058810578545",
+        "notes": "GraspNet 真实数据未下载，产物为 fallback JSON / CanonicalGrasp；manifest 标记 is_fallback=true，可追溯。"
       }
     ],
     "validate": {
-      "errors": 8,
-      "warnings": 0,
-      "runtime_check": "not_applicable"
+      "errors": 1,
+      "warnings": 5,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_001",
+          "message": "mesh 语义对象不匹配：题目要求 YCB apple，但 manifest source_url 指向 Black_Decker coffeemaker。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "robot_urdf 为 fallback/unknown quality，完整度 80.0%，置信度 0.8。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "grasp 为 fallback JSON，完整度 60.0%，置信度 0.6，未下载真实 NPZ。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "基本可用但有风险",
+        "manifest_validation_issues": 5,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      }
     },
     "package": {
-      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-104356",
-      "manifest_path": "manifest.json",
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-192423",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-192423\\manifest.json",
+      "package_id": "package-20260820-192423",
+      "run_id": "20260820-192213-08ff2984",
       "status": "complete",
-      "file_count": 3,
+      "file_count": 4,
+      "requirement_file_count": 3,
       "missing_items_count": 0,
-      "fallback_explicit": true
-    }
+      "fallback_explicit": true,
+      "files": [
+        "robots/req_000.urdf",
+        "objects/req_001.stl",
+        "grasps/req_002.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "notes": "package 层面显示 complete 且 missing_items=0，但人工复核 manifest 后发现 req_001 mesh 数据源对象不符合 YCB apple。"
+    },
+    "provenance": [
+      "2026-08-20T19:24:23.862361 assemble_package: 生成数据包 package-20260820-192423，落盘 3 个文件，缺失 0 项",
+      "2026-08-20T19:24:23.862361 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
   },
   "screenshots": [
     {
-      "file": "screenshots/intermediate/01_parse_goal.png",
-      "desc": "中间态-目标输入"
+      "file": "screenshots/package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260820-192423 的全屏截图（待补）"
     },
     {
-      "file": "screenshots/intermediate/02_retrieve.png",
-      "desc": "中间态-进度展示"
+      "file": "screenshots/explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260820-192423 文件树的全屏截图（待补）"
     },
     {
-      "file": "screenshots/intermediate/03_validate.png",
-      "desc": "中间态-校验与缺失项"
-    },
-    {
-      "file": "screenshots/intermediate/04_package.png",
-      "desc": "中间态-数据包审查"
-    },
-    {
-      "file": "screenshots/final/01_parse_goal.png",
-      "desc": "最终态-目标输入"
-    },
-    {
-      "file": "screenshots/final/02_retrieve.png",
-      "desc": "最终态-进度展示"
-    },
-    {
-      "file": "screenshots/final/03_validate.png",
-      "desc": "最终态-校验与缺失项"
-    },
-    {
-      "file": "screenshots/final/04_package.png",
-      "desc": "最终态-数据包审查"
+      "file": "screenshots/provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
     }
   ],
-  "verdict": "PASS_WITH_FALLBACK",
-  "failure_category": null,
-  "failure_reason": null,
-  "notes": "Day3-C 修复后重跑：已转 complete（PASS/PASS_WITH_FALLBACK）。\n（A 2026-08-17 合规化：req_list 大写转小写；补 req_type/status/fallback_reason/runtime_check/package 字段；source raw→github、fuel→google_scanned 为 A 按记录推断，待 C 复核）",
-  "reviewer": "A",
-  "reviewed_at": "2026-08-17T23:17:17+08:00"
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "req_001 mesh 虽然落盘为 objects/req_001.stl，但 manifest source_url 指向 Black_Decker coffeemaker，不是题目要求的 YCB apple；关键对象数据源语义不匹配，数据不可直接用于该 case。",
+  "notes": "本 record 根据 package-20260820-192423 的 manifest、provenance.log、quality_explanation.md 和文件树生成。包本身显示 complete，且 robot_urdf/mesh/grasp 三类文件均落盘或结构化生成；但人工复核发现 mesh 对象错误，因此按二轮摸底口径记录为 FAIL/P3_SOURCE。截图字段已按二轮 SOP 登记为 package_dir/explorer/provenance 三张，实际 png 仍需按同名文件补入 screenshots/。",
+  "reviewer": null,
+  "reviewed_at": null
 }

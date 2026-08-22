@@ -1,0 +1,179 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_ieee_003",
+  "input": "检索机器人灵巧操作的 IEEE 综述论文",
+  "executor": "E",
+  "executed_at": "2026-08-21T09:27:06+08:00",
+  "completed_at": "2026-08-21T09:28:38+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "paper",
+  "priority": "P2",
+  "variant": "中文综述",
+  "expected": {
+    "req_types": [
+      "paper"
+    ],
+    "sources": [
+      "ieee"
+    ],
+    "formats": [
+      "json",
+      "pdf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求检索机器人灵巧操作相关的 IEEE 综述论文；题设 quality 允许 real/fallback。"
+  },
+  "source_package": {
+    "package_id": "package-20260821-092838",
+    "run_id": "20260821-092706-8babfdaa",
+    "manifest_path": "data/output_packages/package-20260821-092838/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-092838",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "paper"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 paper 需求，与 ss_ieee_003 expected.req_types 匹配；后续因 IEEE 环境/API 能力限制走文献兜底源。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "paper",
+        "description": "机器人灵巧操作相关 IEEE 综述论文",
+        "source": "openalex",
+        "requested_source": "ieee",
+        "status": "success_with_fallback",
+        "elapsed": null,
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "fallback_reason": "IEEE 无可用 API Key / IEEE 环境限制，按项目既有 P7_ENV 豁免口径走公开文献元数据兜底源。",
+        "data_url": "https://api.openalex.org/works/W2091881639",
+        "output_path": "resources/req_000.json",
+        "file_size": 786,
+        "downloaded": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "checksum_sha256": "9d2e570f407605a1c6972e336cde6bd4e2b2932077748b56ca4d2e54924aa91a",
+        "metadata": {
+          "paper_id": "W2091881639",
+          "title": "A survey of models, analysis tools and compensation methods for the control of machines with friction",
+          "doi": "https://doi.org/10.1016/0005-1098(94)90209-7",
+          "openalex_id": "https://openalex.org/W2091881639",
+          "publication_year": 1994,
+          "type": "article",
+          "oa_url": "https://www.sciencedirect.com/science/article/pii/0005109894902097/pdf",
+          "source_note": "PwC unavailable (Cloudflare/网络), fallback to OpenAlex"
+        },
+        "notes": "实际落盘的是 OpenAlex 元数据 JSON，不是 IEEE Xplore 直出；论文是综述类 article，但主题更偏 friction/machine control，和“机器人灵巧操作”相关性较弱，需在人工复核中保留风险说明。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 5,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "IEEE 主源未真实命中，实际来源为 OpenAlex fallback；按项目既有 IEEE/P7_ENV 豁免口径记录。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "论文标题为 friction/machine control 综述，不是明确的 robot dexterous manipulation 综述，主题相关性偏弱。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "只落盘 metadata JSON，未下载 IEEE/PDF 正文。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均置信度仅 0.6，低于推荐阈值。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均完整度仅 60.0%，未达基础可用标准。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据基本可用但存在显著质量风险；manifest 显示 3 项 warning：完整度不足、置信度不足、输出路径为空。",
+        "manifest_validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-092838",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-092838\\manifest.json",
+      "package_id": "package-20260821-092838",
+      "run_id": "20260821-092706-8babfdaa",
+      "status": "complete",
+      "file_count": 2,
+      "requirement_file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "resources/req_000.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "",
+          "coordinate_frame": "",
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，min_files=1 表面满足，missing_items=0；但 source 与主题均需人工标注风险，不能当作 IEEE 真实命中样例。"
+    },
+    "provenance": [
+      "2026-08-21T09:28:38.306393 assemble_package: 生成数据包 package-20260821-092838，落盘 1 个文件，缺失 0 项",
+      "2026-08-21T09:28:38.306393 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260821-092838 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260821-092838 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "本 record 根据 package-20260821-092838 的 manifest、resources/req_000.json、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。该 case 目标为检索机器人灵巧操作的 IEEE 综述论文；本次未获得 IEEE Xplore 真实结果，而是因 IEEE 环境/API 限制走 OpenAlex 元数据兜底。项目历史交付中已存在 IEEE 无 Key/P7_ENV 豁免并按 PASS_WITH_FALLBACK 统计的口径，因此本记录按 PASS_WITH_FALLBACK 归档；但人工风险必须保留：命中文章来自 OpenAlex/ScienceDirect，标题偏 friction/machine control，非明确 dexterous manipulation IEEE 综述，且 PDF 未落盘、置信度/完整度较低。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_kinova_004",
+  "input": "获取 Kinova Gen3 的 URDF 并与 Franka Panda 对比关节数",
+  "executor": "E",
+  "executed_at": "2026-08-21T10:02:00+08:00",
+  "completed_at": "2026-08-21T10:04:16+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "robot_urdf",
+  "priority": "P2",
+  "variant": "组合需求（关节校验）",
+  "expected": {
+    "req_types": [
+      "robot_urdf"
+    ],
+    "sources": [
+      "kinova"
+    ],
+    "formats": [
+      "urdf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求获取 Kinova Gen3 URDF，并与 Franka Panda 对比关节数；题设 quality 允许 real/fallback。"
+  },
+  "source_package": {
+    "package_id": "package-20260821-100416",
+    "run_id": "20260821-100200-ab62b38e",
+    "manifest_path": "data/output_packages/package-20260821-100416/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-100416",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 robot_urdf 需求，与 ss_kinova_004 expected.req_types 匹配；关节数对比由人工复核 URDF 后补充记录。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Kinova Gen3 机器人 URDF",
+        "source": "kinova_github",
+        "status": "success_with_geometry_warning",
+        "elapsed": null,
+        "format": "urdf",
+        "manifest_format": "CanonicalRobot",
+        "quality": "fallback",
+        "is_fallback": false,
+        "data_url": "https://raw.githubusercontent.com/deebuls/pybullet_kinova_gen3/main/robots/GEN3_URDF_V12.urdf",
+        "output_path": "robots/req_000.urdf",
+        "file_size": 8479,
+        "downloaded": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "checksum_sha256": "660cc3f51b2ae8cea5898004bcc936bc5e6a1c67df071c5ac75f47922ff6314d",
+        "joint_count_check": {
+          "kinova_total_joints": 8,
+          "kinova_movable_joints": 7,
+          "kinova_movable_joint_names": [
+            "Actuator1",
+            "Actuator2",
+            "Actuator3",
+            "Actuator4",
+            "Actuator5",
+            "Actuator6",
+            "Actuator7"
+          ],
+          "kinova_joint_type_counts": {
+            "continuous": 4,
+            "revolute": 3,
+            "fixed": 1
+          },
+          "franka_panda_arm_dof_reference": 7,
+          "comparison_result": "Kinova Gen3 与 Franka Panda 机械臂主体均为 7 个可动关节。"
+        },
+        "missing_mesh_refs": [
+          "kortex_description/arms/gen3/meshes/base_link.STL",
+          "kortex_description/arms/gen3/meshes/Shoulder_Link.STL",
+          "kortex_description/arms/gen3/meshes/HalfArm1_Link.STL",
+          "kortex_description/arms/gen3/meshes/HalfArm2_Link.STL",
+          "kortex_description/arms/gen3/meshes/ForeArm_Link.STL",
+          "kortex_description/arms/gen3/meshes/SphericalWrist1_Link.STL",
+          "kortex_description/arms/gen3/meshes/SphericalWrist2_Link.STL",
+          "kortex_description/arms/gen3/meshes/Bracelet_Link.STL"
+        ],
+        "notes": "URDF 已落盘且可从 XML 中确认 Kinova Gen3 7 个可动关节；但仅下载 URDF 本体，未下载其引用的 8 个 STL mesh，仿真几何、碰撞检测和可视化不可直接使用。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 4,
+      "runtime_check": "not_run",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "URDF 引用的 8 个 STL mesh 未随包落盘，机器人几何模型不可直接加载。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "来源为第三方 GitHub 仓库 pybullet_kinova_gen3，不是 Kinova 官方 Kortex 仓库直取。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest 仅落盘 1 个 URDF 文件，未生成独立的 Franka 对比报告；关节数对比由人工复核记录补充。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "quality_explanation.md 明确提示当前数据严禁用于依赖机器人几何模型的抓取规划或仿真实验。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据包基本可用，但存在严重 URDF 解析问题：缺失 8 个关键 STL 网格文件，影响仿真与抓取规划。",
+        "manifest_validation_issues": 1,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-100416",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-100416\\manifest.json",
+      "package_id": "package-20260821-100416",
+      "run_id": "20260821-100200-ab62b38e",
+      "status": "complete",
+      "manifest_file_entries": 2,
+      "requirement_file_count": 1,
+      "actual_package_file_count": 6,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "files": [
+        "robots/req_000.urdf",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 1,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "meter",
+          "coordinate_frame": "unknown",
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，min_files=1 已满足，missing_items=0；但缺少 STL mesh，完整仿真加载风险较高。"
+    },
+    "provenance": [
+      "2026-08-21T10:04:16.943270 assemble_package: 生成数据包 package-20260821-100416，落盘 1 个文件，缺失 0 项",
+      "2026-08-21T10:04:16.943270 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260821-100416 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260821-100416 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "本 record 根据 package-20260821-100416 的 manifest、robots/req_000.urdf、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。该 case 目标为获取 Kinova Gen3 URDF 并与 Franka Panda 对比关节数；本次成功落盘 Kinova Gen3 URDF，并人工复核出 Kinova Gen3 有 7 个可动关节，与 Franka Panda 机械臂主体 7-DOF 一致。由于来源为第三方 GitHub 仓库，且 URDF 引用的 8 个 STL mesh 未下载，不能直接用于几何仿真/碰撞检测/抓取规划，因此按二轮口径判 PASS_WITH_FALLBACK，而非纯 PASS。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

@@ -1,0 +1,152 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_ycb_006",
+  "input": "获取 YCB 数据集中的瓶子（bottle）mesh 模型",
+  "executor": "E",
+  "executed_at": "2026-08-22T10:28:48+08:00",
+  "completed_at": "2026-08-22T10:30:05+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "mesh",
+  "priority": "P1",
+  "variant": "物体 E（bottle）",
+  "expected": {
+    "req_types": [
+      "mesh"
+    ],
+    "sources": [
+      "ycb"
+    ],
+    "formats": [
+      "obj",
+      "stl",
+      "ply"
+    ],
+    "min_files": 1,
+    "notes": "题目要求获取 YCB 数据集中的 bottle mesh；二轮题目 expected.quality 允许 real / fallback，因此官方 YCB 不可直接获取时可接受显式 fallback，但需保留来源偏移说明。"
+  },
+  "source_package": {
+    "package_id": "package-20260822-103005",
+    "run_id": "20260822-102848-2220a32e",
+    "manifest_path": "data/output_packages/package-20260822-103005/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-103005",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 mesh 需求，与 ss_ycb_006 expected.req_types 匹配；目标物体为 bottle。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "description": "YCB bottle / bottle mesh 模型",
+        "source": "ycb_fallback_google_research_gazebo_fuel",
+        "status": "success_with_fallback_source",
+        "elapsed": null,
+        "format": "stl",
+        "manifest_format": "stl",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Marc_Anthony_Strictly_Curls_Curl_Envy_Perfect_Curl_Cream_6_fl_oz_bottle/tip/files/meshes/model.obj",
+        "output_path": "objects/req_000.stl",
+        "file_size": 241484,
+        "downloaded": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "checksum_sha256": "7103260ccce6e664f29954277a67aa7fd895f4c343b6baa6ae23c7fd2dc2681e",
+        "fallback_reason": "YCB 官方 bottle mesh 未在本次流程中直接返回，系统使用 Gazebo Fuel / GoogleResearch 的 bottle mesh 作为可用网格模型降级产物。",
+        "notes": "实际落盘文件为 objects/req_000.stl，格式在 expected.formats 中，且大小为 241484 bytes。源 URL 指向 GoogleResearch/Gazebo Fuel 的 bottle 商品模型，不是 YCB 官方对象，因此只能作为显式 fallback 通过。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 1,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "数据包质量报告为 0 个 validation issue，置信度 1.0、完整度 100.0%；人工复核保留来源偏移提醒：source_url 不是 YCB 官方数据集。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "质量解释认为数据包完全可用，所有需求均满足，无缺失项和校验问题。",
+        "manifest_validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-103005",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-103005\\manifest.json",
+      "package_id": "package-20260822-103005",
+      "run_id": "20260822-102848-2220a32e",
+      "status": "complete",
+      "manifest_file_entries": 2,
+      "requirement_file_count": 1,
+      "actual_package_file_count": 6,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "objects/req_000.stl",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "",
+          "coordinate_frame": "",
+          "timestamp_epoch": null,
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，missing_items=0，且落盘 1 个 STL mesh 文件，满足 min_files=1。需要注意题目名含 YCB，但本次产物为可用 bottle mesh fallback，而非官方 YCB bottle 数据。"
+    },
+    "provenance": [
+      "2026-08-22T10:30:05.358045 assemble_package: 生成数据包 package-20260822-103005，落盘 1 个文件，缺失 0 项",
+      "2026-08-22T10:30:05.358045 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260822-103005 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260822-103005 文件树和 objects/req_000.stl 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板展示 assemble_package 记录的截图（待补）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "本 record 根据 package-20260822-103005 的 manifest、objects/req_000.stl、checksums.txt、semantic_map.json、provenance.log、quality_explanation.md 和文件树生成。该 case 的核心目标是 bottle mesh，格式要求 obj/stl/ply，本次产出 STL 且包完整无缺失；但来源 URL 为 Gazebo Fuel / GoogleResearch bottle 模型，不是 YCB 官方数据集。因此按照 YCB mesh 既有口径判 PASS_WITH_FALLBACK，并在记录中显式标注来源偏移。截图字段已按二轮 SOP 登记，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

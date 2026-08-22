@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_isaac_004",
+  "input": "我要在 Isaac Sim 里搭抓取环境，帮我找场景配置",
+  "executor": "E",
+  "executed_at": "2026-08-21T09:34:43+08:00",
+  "completed_at": "2026-08-21T09:35:10+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "sim_config",
+  "priority": "P2",
+  "variant": "中文口语化表述",
+  "expected": {
+    "req_types": [
+      "sim_config"
+    ],
+    "sources": [
+      "isaac"
+    ],
+    "formats": [
+      "python",
+      "mjcf",
+      "xml"
+    ],
+    "min_files": 1,
+    "notes": "题目要求为 Isaac Sim 抓取环境寻找场景配置；题设 quality 允许 real/fallback。"
+  },
+  "source_package": {
+    "package_id": "package-20260821-093510",
+    "run_id": "20260821-093443-0a454af0",
+    "manifest_path": "data/output_packages/package-20260821-093510/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-093510",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 sim_config 需求，与 ss_isaac_004 expected.req_types 匹配。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sim_config",
+        "description": "Isaac Sim / IsaacLab 抓取环境配置",
+        "source": "isaac",
+        "status": "success_with_fallback",
+        "elapsed": null,
+        "format": "python",
+        "manifest_format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "fallback_reason": "Isaac 返回的是 IsaacLab 机器人资产配置组件，而不是完整 tabletop grasping scene；题设 quality 允许 fallback。",
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "output_path": "sim_config/req_000.py",
+        "file_size": 5243,
+        "downloaded": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "checksum_sha256": "54b510f10513df619d5409f40ecae1728ad9655e1d7d282463f2c03b724aecc2",
+        "metadata": {
+          "config_objects": [
+            "FRANKA_PANDA_CFG",
+            "FRANKA_PANDA_HIGH_PD_CFG",
+            "FRANKA_ROBOTIQ_GRIPPER_CFG"
+          ],
+          "isaac_modules": [
+            "isaaclab.sim",
+            "isaaclab.actuators",
+            "isaaclab.assets.articulation"
+          ],
+          "robot_assets": [
+            "Franka Emika Panda robot with Panda hand",
+            "Franka robot with Robotiq_2f_85 gripper"
+          ]
+        },
+        "notes": "产物是 IsaacLab 的 Python 配置文件，包含 Franka Panda、Panda hand、Robotiq_2F_85 gripper、USD 路径、关节初始位姿和 actuator 配置；可作为 Isaac Sim 抓取环境的机器人配置组件。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 4,
+      "runtime_check": "not_run",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "产物是机器人资产配置组件，不是完整 tabletop/object/grasp task 场景。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest 中 format 标记为 mjcf，但实际落盘文件为 Python 配置 sim_config/req_000.py。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均置信度为 0.8，未达到高可靠性标准。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均完整度为 80.0%，处于推荐阈值边缘。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据基本可用但存在质量风险；manifest 显示 2 项 warning，平均置信度和完整度均处于边缘值。",
+        "manifest_validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-093510",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-093510\\manifest.json",
+      "package_id": "package-20260821-093510",
+      "run_id": "20260821-093443-0a454af0",
+      "status": "complete",
+      "manifest_file_entries": 2,
+      "requirement_file_count": 1,
+      "actual_package_file_count": 6,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "sim_config/req_000.py",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "",
+          "coordinate_frame": "",
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，min_files=1 已满足，missing_items=0；产物可用于 IsaacLab/Isaac Sim 机器人配置，但仍需用户补 tabletop、object、task/reward 等完整抓取场景要素。"
+    },
+    "provenance": [
+      "2026-08-21T09:35:10.415644 assemble_package: 生成数据包 package-20260821-093510，落盘 1 个文件，缺失 0 项",
+      "2026-08-21T09:35:10.415644 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260821-093510 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260821-093510 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "本 record 根据 package-20260821-093510 的 manifest、sim_config/req_000.py、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。该 case 目标为在 Isaac Sim 里搭抓取环境并寻找场景配置；本次产物来自 IsaacLab 官方仓库，落盘 Python 配置文件，包含 Franka Panda / Panda hand / Robotiq_2F_85 等机器人和夹爪配置，符合 source=isaac 与 format=python 的基本要求。但它不是完整抓取场景配置，manifest 还将实际 Python 文件标成 mjcf，且置信度/完整度均为 0.8 边缘值，因此按二轮口径判 PASS_WITH_FALLBACK。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

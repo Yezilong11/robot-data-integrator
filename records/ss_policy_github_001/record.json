@@ -1,0 +1,190 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_policy_github_001",
+  "input": "Find a GitHub repo releasing a learned manipulation policy checkpoint",
+  "executor": "E",
+  "executed_at": "2026-08-22T10:20:35+08:00",
+  "completed_at": "2026-08-22T10:20:50+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "policy",
+  "priority": "P2",
+  "variant": "英文",
+  "expected": {
+    "req_types": [
+      "policy_model"
+    ],
+    "sources": [
+      "github"
+    ],
+    "formats": [
+      "safetensors",
+      "json",
+      "onnx",
+      "pth"
+    ],
+    "min_files": 1,
+    "notes": "题目要求找到 GitHub repo 中发布的 learned manipulation policy checkpoint，至少应包含可追溯的策略权重文件或 checkpoint 链接。"
+  },
+  "source_package": {
+    "package_id": "package-20260822-102050",
+    "run_id": "20260822-102035-b3371a00",
+    "manifest_path": "data/output_packages/package-20260822-102050/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-102050",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "policy_model"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 policy_model 需求，与 ss_policy_github_001 expected.req_types 匹配。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "policy_model",
+        "description": "GitHub 上发布的机器人操作策略 checkpoint",
+        "source": "github",
+        "status": "metadata_only_no_checkpoint",
+        "elapsed": null,
+        "format": "json",
+        "manifest_format": "PolicyInterfaceDoc",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://github.com/simpler-env/SimplerEnv/blob/main/README.md",
+        "output_path": "policies/req_000.json",
+        "file_size": 126,
+        "downloaded": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "checksum_sha256": "e45324c7fd1fe74983ce3eee96c9d2e7bdf59ec475691936e20628ec2b9c0f72",
+        "metadata": {
+          "framework": "unknown",
+          "layers": [],
+          "input_spec": {},
+          "output_spec": {},
+          "weight_files": [],
+          "source_url": "",
+          "model_id": "",
+          "tags": []
+        },
+        "notes": "manifest 指向 SimplerEnv README，但实际落盘 JSON 没有 checkpoint 文件、权重链接、model_id 或 policy 接口细节；无法证明找到了 learned manipulation policy checkpoint。"
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 4,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目要求 policy checkpoint，但 req_000.json 中 weight_files 为空，没有 safetensors/onnx/pth/checkpoint 文件。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "req_000.json 中 source_url 和 model_id 为空，无法追溯具体 checkpoint 资源。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest source_url 指向 GitHub README，不是权重 release、checkpoint 文件或模型下载页。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均置信度仅 0.6，低于推荐阈值。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均完整度仅 60.0%，关键字段缺失。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "quality_explanation.md 仅提示质量风险，没有捕获 checkpoint 缺失这一核心验收问题。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据基本可用但存在显著质量风险；manifest 显示 3 项 warning：置信度低、完整度低、输出路径为空。",
+        "manifest_validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-102050",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-102050\\manifest.json",
+      "package_id": "package-20260822-102050",
+      "run_id": "20260822-102035-b3371a00",
+      "status": "complete",
+      "manifest_file_entries": 2,
+      "requirement_file_count": 1,
+      "actual_package_file_count": 6,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "policies/req_000.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "",
+          "coordinate_frame": "",
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，且落盘 1 个 policies JSON；但人工验收按 problem_set 复核后，policy checkpoint 关键证据缺失。"
+    },
+    "provenance": [
+      "2026-08-22T10:20:50.976397 assemble_package: 生成数据包 package-20260822-102050，落盘 1 个文件，缺失 0 项",
+      "2026-08-22T10:20:50.976397 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260822-102050 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260822-102050 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    },
+    {
+      "file": "screenshots/final/04_error.png",
+      "desc": "失败补充证据：前端或文件内容显示 policies/req_000.json 中 weight_files/source_url/model_id 为空的截图（待补）"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "题目要求 GitHub repo releasing a learned manipulation policy checkpoint，但实际产物只是一个 PolicyInterfaceDoc JSON，weight_files 为空，source_url/model_id 为空，没有任何 safetensors、onnx、pth 或 checkpoint 链接，无法证明检索到了策略权重。",
+  "notes": "本 record 根据 package-20260822-102050 的 manifest、policies/req_000.json、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。虽然 package_status=complete，且 min_files=1 表面满足，但二轮人工验收要求看 checkpoint 是否真实可追溯；当前只有 README fallback 元数据，缺失权重文件/下载链接，因此判 FAIL/P2_RETRIEVE。若后续重跑能拿到 GitHub release/checkpoints/权重文件或明确模型下载页，应以新 package 覆盖本记录。",
+  "reviewer": null,
+  "reviewed_at": null
+}
