@@ -18,7 +18,11 @@ from rdi.exceptions import (
     AdapterNotFoundError,
     AdapterRateLimitError,
 )
-from rdi.graph.nodes.retrieve_data import node_retrieve_data, node_retrieve_single
+from rdi.graph.nodes.retrieve_data import (
+    _compute_source_cap,
+    node_retrieve_data,
+    node_retrieve_single,
+)
 from rdi.intelligence.schemas import RetrievalPlan
 from rdi.models.common import DataReqType, DataSource, Priority
 from rdi.models.goal import DataReq
@@ -982,4 +986,84 @@ async def test_retrieve_single_source_timeout_falls_back_to_next_source(
     assert retrieval.source == DataSource.ZENODO
     # 源级超时被记录为 timeout 错误，但不阻塞后续源
     assert any(e.error_type == "timeout" for e in result["retrieval_errors"])
+    zenodo_mock.search.assert_called_once()
+
+
+# ─── spec-3 Task1: 需求级 deadline 动态收紧本源预算 ───
+
+
+def test_compute_source_cap_keeps_ceiling_and_deadline_floor() -> None:
+    """本源执行上限 = min(source_budget, deadline 剩余)，remaining<=0 时夹到 0。"""
+    # 快源释放：首源快完成，deadline 剩余 > 本源预算 → 上限不被削减
+    assert _compute_source_cap(source_budget=2.0, deadline=100.0, now=97.0) == 2.0
+    # 剩余收紧：deadline 剩余(0.5s) < source_budget(2.0s) → 上限取剩余
+    assert _compute_source_cap(source_budget=2.0, deadline=100.0, now=99.5) == pytest.approx(0.5)
+    # 总预算到点：remaining == 0 → 上限为 0（调用方跳过该源）
+    assert _compute_source_cap(source_budget=2.0, deadline=100.0, now=100.0) == 0.0
+    # 总预算到点：remaining < 0 → 上限夹到 0
+    assert _compute_source_cap(source_budget=2.0, deadline=100.0, now=105.0) == 0.0
+
+
+async def test_retrieve_single_source_cap_timeout_continues_next_source(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """spec-3/Task1: 慢源吃掉本源预算被超时中止后，deadline 剩余预算仍够时后续源继续执行。
+
+    与 E6 均分硬切的区别：本源上限先取 min(source_budget, deadline 剩余)，
+    慢源中止后剩余预算仍允许后续候选源执行；超时文案携带本源上限与剩余预算。
+    """
+    zenodo_mock = AsyncMock()
+    zenodo_mock.search.return_value = [
+        SearchResult(item_id="zo-1", title="Zenodo", source=DataSource.ZENODO)
+    ]
+    zenodo_mock.fetch.return_value = RawData(
+        source=DataSource.ZENODO,
+        item_id="zo-1",
+        format="csv",
+        data=b"timestamp,fx\n0,0.1\n",
+        url="https://zenodo.org/zo-1",
+    )
+
+    class SlowGitHubAdapter:
+        source = DataSource.GITHUB
+
+        async def search(self, query: str) -> list[SearchResult]:
+            await asyncio.sleep(0.5)  # 远超本源预算，模拟 GitHub 慢源挂起
+            raise AssertionError("源级超时应已中断，不应到达这里")
+
+    class FakeZenodoAdapter:
+        source = DataSource.ZENODO
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await zenodo_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await zenodo_mock.fetch(item_id, req_type=req_type)
+
+    # GitHub 优先（mock_hermes 默认优先级），但会源级超时；Zenodo 随后成功
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter",
+        lambda req_type: [SlowGitHubAdapter, FakeZenodoAdapter],
+    )
+    # per_req_timeout=0.1s、2 个源 → source_budget=0.05s；
+    # 慢源在 0.05s 被中止后 deadline 仍剩约 0.05s → 后续源正常执行
+    monkeypatch.setattr(settings, "per_req_timeout", 0.1)
+
+    payload = {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "description": "force torque sensor time series",
+        "keywords": [],
+        "fallback_sources": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_000"]
+    assert retrieval.status == "success"
+    assert retrieval.source == DataSource.ZENODO
+    # 慢源被本源上限超时中止（记录 timeout 错误），后续源仍执行
+    timeout_errors = [e for e in result["retrieval_errors"] if e.error_type == "timeout"]
+    assert len(timeout_errors) == 1
+    assert "本源上限" in timeout_errors[0].error_message
+    assert "剩余" in timeout_errors[0].error_message
     zenodo_mock.search.assert_called_once()

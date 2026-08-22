@@ -8,10 +8,60 @@ PolicyInterfaceSkill / SensorDataSkill）继承此类，实现 process / validat
 符合开发规范「节点内部不直接调用外部 API，必须通过 Adapter 或 Skill」。
 """
 
+import json
 from abc import ABC, abstractmethod
 from typing import Any
 
+from rdi.adapters.selectors import build_download_guide
 from rdi.models.common import StandardResult, ValidationReport
+
+
+def extract_download_guide(raw_data: bytes, kwargs: dict[str, Any]) -> dict[str, Any] | None:
+    """从降级输入中提取下载指引（download_guide）；无引用信息时返回 None。
+
+    两条来源（均对应 adapter 超限/降级场景）：
+    1. ``raw_data``（JSON）内已嵌入的 ``download_guide`` 键（结构同
+       ``build_download_guide`` 输出，zenodo/huggingface/github adapter 均如此产出）；
+    2. registry 透传的 ``reference``（RawReference 或等价 dict，含 url/file_size/
+       reason/download_hint），由 ``build_download_guide`` 构造同构指引。
+
+    两者皆无时返回 None，调用方保持原降级产物结构（不回归）。
+    """
+    guide = _guide_from_data(raw_data)
+    if guide is not None:
+        return guide
+    return _guide_from_reference(kwargs.get("reference"))
+
+
+def _guide_from_data(raw_data: bytes) -> dict[str, Any] | None:
+    """raw_data 为 JSON dict 且含 download_guide 键时直接复用；否则返回 None。"""
+    try:
+        obj = json.loads(raw_data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    guide = obj.get("download_guide") if isinstance(obj, dict) else None
+    return guide if isinstance(guide, dict) else None
+
+
+def _guide_from_reference(reference: Any) -> dict[str, Any] | None:
+    """由 RawReference（或等价 dict）构造 download_guide；无 url 时返回 None。"""
+    if reference is None:
+        return None
+    ref = reference.model_dump() if hasattr(reference, "model_dump") else reference
+    if not isinstance(ref, dict):
+        return None
+    url = str(ref.get("url") or "")
+    if not url:
+        return None
+    local = str(ref.get("local_path") or "") or url.rstrip("/").rsplit("/", 1)[-1]
+    guide = build_download_guide(
+        {"url": url, "path": local, "size": ref.get("file_size") or 0, "name": local},
+        str(ref.get("reason") or "") or "引用数据源未自动下载",
+    )
+    hint = ref.get("download_hint")
+    if isinstance(hint, str) and hint:
+        guide["method_hint"] = hint
+    return guide
 
 
 class BaseSkill(ABC):

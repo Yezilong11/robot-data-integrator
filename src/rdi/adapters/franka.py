@@ -174,7 +174,7 @@ class FrankaAdapter(BaseAdapter):
             assert cached is not None  # is_cached 已保证非空
             data_bytes = cached
         # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产
-        assets = await self._download_xml_with_assets(url, data_bytes)
+        assets, missing_assets = await self._download_xml_with_assets(url, data_bytes)
         # D3 修复：panda URDF 引用 package://meshes/...（无包名），资产已按
         # _resolve_asset_rel 以剥离 package:// 后的相对路径落盘；URDF 文本同步
         # 剥离前缀使引用与资产键一致（离线可加载——ms_005 franka urdf 完整性
@@ -188,6 +188,7 @@ class FrankaAdapter(BaseAdapter):
             url=url,
             size_bytes=len(data_bytes),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
@@ -212,7 +213,7 @@ class FrankaAdapter(BaseAdapter):
             assert cached is not None  # is_cached 已保证非空
             data_bytes = cached
         # 无论来自缓存还是网络，都解析引用的 mesh/texture 等外部资产
-        assets = await self._download_xml_with_assets(url, data_bytes)
+        assets, missing_assets = await self._download_xml_with_assets(url, data_bytes)
         # D3 修复：与 _fetch_primary 同源——URDF 文本剥离 package:// 前缀，
         # 使 mesh/texture 引用与资产键（_resolve_asset_rel 剥离后的相对路径）一致。
         data_bytes = re.sub(rb"package://", b"", data_bytes)
@@ -224,4 +225,5 @@ class FrankaAdapter(BaseAdapter):
             url=url,
             size_bytes=len(data_bytes),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )

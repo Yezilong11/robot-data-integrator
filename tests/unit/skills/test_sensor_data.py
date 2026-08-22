@@ -11,11 +11,13 @@
 - 校验：空信号 WARNING
 """
 
+import json
 from pathlib import Path
 
 import numpy as np
 
 from rdi.models.common import Severity, StandardResult
+from rdi.models.retrieval import RawReference
 from rdi.skills.sensor_data import SensorDataset, SensorDataSkill
 
 _SAMPLE_DIR = Path(__file__).parent / "sample_data" / "sensor"
@@ -134,3 +136,61 @@ class TestSensorValidate:
         report = SensorDataSkill().validate(result)
         assert report.is_valid is True  # WARNING 不影响 is_valid
         assert any(vi.severity == Severity.WARNING for vi in report.issues)
+
+
+class TestSensorFallbackDownloadGuide:
+    """降级产物 download_guide 结构扩展（Task 8）。"""
+
+    def test_fallback_with_reference_kwarg_adds_download_guide(self) -> None:
+        """registry 透传 RawReference → 降级产物含 download_guide（wget 命令可见）。"""
+        payload = {"dataset_id": "zenodo-1", "title": "robot joint dataset"}
+        ref = RawReference(
+            url="https://zenodo.org/records/1/files/joints.csv",
+            local_path="joints.csv",
+            file_size=2048,
+            reason="超过自动下载上限",
+        )
+        result = SensorDataSkill().process(
+            json.dumps(payload).encode("utf-8"), fmt="json", name="joints", reference=ref
+        )
+        assert result.is_fallback is True
+        assert result.data is not None
+        # 原瘦 JSON 基础保留，顶层新增 download_guide
+        assert "reason" in result.data["metadata"]
+        guide = result.data["download_guide"]
+        assert guide["status"] == "not_downloaded"
+        assert guide["source_file_url"] == ref.url
+        assert guide["file_size_bytes"] == 2048
+        assert "超过自动下载上限" in guide["reason"]
+        assert guide["method_hint"].startswith("wget ")
+        assert guide["selected_by"]
+        assert guide["alternatives"] == []
+
+    def test_fallback_with_inline_download_guide_reuses(self) -> None:
+        """data JSON 内嵌 download_guide（adapter 产出）→ 原样复用。"""
+        guide = {
+            "status": "not_downloaded",
+            "reason": "超过 max_fetch_bytes 自动下载上限",
+            "source_file_url": "https://zenodo.org/records/1/files/joints.csv",
+            "file_size_bytes": 2048,
+            "method_hint": "wget https://zenodo.org/records/1/files/joints.csv -O joints.csv",
+            "selected_by": "ext=.csv; signals=joint",
+            "alternatives": [],
+        }
+        payload = {"dataset_id": "zenodo-1", "downloaded": False, "download_guide": guide}
+        result = SensorDataSkill().process(json.dumps(payload).encode("utf-8"), fmt="json", name="j")
+        assert result.is_fallback is True
+        assert result.data["download_guide"] == guide
+        assert "reason" in result.data["metadata"]
+
+    def test_fallback_without_reference_keeps_original(self) -> None:
+        """无引用 → 产物保持 {"metadata": {"reason": ...}}，顶层无 download_guide（不回归）。"""
+        result = SensorDataSkill().process(b"# README", fmt="markdown", name="joints")
+        assert set(result.data) == {"metadata"}
+        assert "download_guide" not in result.data
+
+    def test_fallback_reference_without_url_keeps_original(self) -> None:
+        """reference 无 url → 无下载指引，保持原结构。"""
+        ref = RawReference(reason="无法下载")
+        result = SensorDataSkill().process(b"# README", fmt="markdown", name="j", reference=ref)
+        assert "download_guide" not in result.data

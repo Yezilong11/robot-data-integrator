@@ -54,12 +54,26 @@ ALLOWED_FAILURE_CATEGORIES = {
     "P2_RETRIEVE",
     "P3_SOURCE",
     "P4_FORMAT",
-    "P5_RUNTIME",
-    "P6_FRONTEND",
-    "P7_ENV",
+    "P5_LLM",
+    "P6_VALIDATE",
+    "P7_PACKAGE",
     "P8_OTHER",
 }
+# 二轮重新定义失败分类为八类（P1_PARSE…P8_OTHER）后，旧的 P5_RUNTIME/
+# P6_FRONTEND/P7_ENV 已不在枚举内。历史 FAIL 记录摊上旧值时登记 WARNING
+# 并映射到等价新类（归入统计），不阻塞校验。
+LEGACY_FAILURE_CATEGORY_MAP = {
+    "P5_RUNTIME": "P6_VALIDATE",
+    "P6_FRONTEND": "P8_OTHER",
+    "P7_ENV": "P8_OTHER",
+}
+# 一轮题库 63 题。round 列由分配清单行序推导：前 ROUND1_COUNT 行属于
+# 一轮回归（git 59f2cde 的 63 题问题集），其余为二轮新增 59 题。
+ROUND1_COUNT = 63
 ALLOWED_RETRIEVE_STATUSES = {"success", "missing", "error"}
+# 检索未成功的状态集合：dict 形态的 retrieve 容器仅在 status 命中时，
+# 其 error 字段才作为可回填的错误依据（历史记录也出现过 "failed" 旧值）。
+RETRIEVE_FAIL_STATUSES = {"error", "timeout", "missing", "failed"}
 ALLOWED_PACKAGE_STATUSES = {"complete", "partial", "missing", "error"}
 ALLOWED_VS_EXPECTED = {"match", "partial", "mismatch"}
 ALLOWED_RUNTIME_CHECKS = {"passed", "failed", "not_applicable", "not_run"}
@@ -474,6 +488,32 @@ def _case_relative_path(case_dir: Path, value: Any) -> Path | None:
     return resolved
 
 
+def _resolve_manifest_path(case_dir: Path, value: Any) -> Path | None:
+    """解析 package.manifest_path 指向的 manifest 文件路径。
+
+    兼容三种形态：绝对路径、相对 case 目录（测试/本地包）、相对仓库根
+    （record.json 中常见写法，如 data/output_packages/.../manifest.json）。
+    仅当解析出的文件真实存在才返回；否则返回 None —— 数据包在各执行机
+    本地、被 .gitignore 排除时无法核验属正常，调用方据此跳过规则。
+    """
+    if not isinstance(value, str) or not value.strip():
+        return None
+    candidate = Path(value)
+    candidates = (
+        [candidate]
+        if candidate.is_absolute()
+        else [case_dir / candidate, ROOT / candidate]
+    )
+    for path in candidates:
+        try:
+            resolved = path.resolve()
+        except OSError:
+            continue
+        if resolved.is_file():
+            return resolved
+    return None
+
+
 def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: Path) -> list[Issue]:
     case_id = problem["case_id"]
     issues: list[Issue] = []
@@ -538,8 +578,12 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
     elif any(item not in VALID_REQ_TYPES for item in req_list):
         issues.append(Issue("ERROR", case_id, "parse_goal.req_list 含未知需求类型"))
     vs_expected = parse_goal.get("vs_expected")
-    if vs_expected not in ALLOWED_VS_EXPECTED:
-        issues.append(Issue("ERROR", case_id, "parse_goal.vs_expected 取值非法"))
+    if not isinstance(vs_expected, str):
+        issues.append(
+            Issue("ERROR", case_id, "parse_goal.vs_expected 必须为字符串（match/partial/mismatch）")
+        )
+    elif vs_expected not in ALLOWED_VS_EXPECTED:
+        issues.append(Issue("ERROR", case_id, f"parse_goal.vs_expected 取值非法: {vs_expected!r}"))
     elif vs_expected == "match" and set(req_list) != expected_req_types:
         issues.append(Issue("ERROR", case_id, "标为 match，但 req_list 与 expected 不一致"))
 
@@ -641,7 +685,14 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
     if not isinstance(warnings, int) or isinstance(warnings, bool) or warnings < 0:
         issues.append(Issue("ERROR", case_id, "validate.warnings 必须为非负整数"))
     if runtime_check not in ALLOWED_RUNTIME_CHECKS:
-        issues.append(Issue("ERROR", case_id, "validate.runtime_check 取值非法"))
+        issues.append(
+            Issue(
+                "ERROR",
+                case_id,
+                "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），"
+                f"当前为 {runtime_check!r}",
+            )
+        )
 
     package = observations.get("package")
     if not isinstance(package, dict):
@@ -766,7 +817,16 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
             if fallback_explicit is not True:
                 issues.append(Issue("ERROR", case_id, "降级必须在 package 中显式记录"))
         elif verdict == "FAIL":
-            if record.get("failure_category") not in ALLOWED_FAILURE_CATEGORIES:
+            if record.get("failure_category") in LEGACY_FAILURE_CATEGORY_MAP:
+                issues.append(
+                    Issue(
+                        "WARNING",
+                        case_id,
+                        f"failure_category 旧值 {record.get('failure_category')} 已映射为 "
+                        f"{LEGACY_FAILURE_CATEGORY_MAP[record.get('failure_category')]}",
+                    )
+                )
+            elif record.get("failure_category") not in ALLOWED_FAILURE_CATEGORIES:
                 issues.append(Issue("ERROR", case_id, "FAIL 必须填写 P1_PARSE 到 P8_OTHER"))
             if is_placeholder(record.get("failure_reason")):
                 issues.append(Issue("ERROR", case_id, "FAIL 必须填写 failure_reason"))
@@ -777,6 +837,29 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
         record.get("failure_category") is not None or record.get("failure_reason") is not None
     ):
         issues.append(Issue("ERROR", case_id, "非 FAIL 记录不得填写失败分类或原因"))
+
+    # 严口径（验收判定）：package.manifest_path 指向的 manifest 若含任一
+    # downloaded=false 的主文件项，数据包开箱不可用，verdict 必须为 FAIL；
+    # PASS/PASS_WITH_FALLBACK 视为误判（指引照给）。manifest 路径不存在或
+    # 读取失败时跳过，避免误伤无法核验的历史记录。
+    manifest_undownloaded = False
+    resolved_manifest = _resolve_manifest_path(case_dir, package.get("manifest_path"))
+    if resolved_manifest is not None:
+        try:
+            manifest_data = read_json(resolved_manifest)
+        except (OSError, ValueError, json.JSONDecodeError):
+            manifest_data = None
+        if isinstance(manifest_data, dict):
+            manifest_files = manifest_data.get("files")
+            if isinstance(manifest_files, list):
+                manifest_undownloaded = any(
+                    isinstance(item, dict) and item.get("downloaded") is False
+                    for item in manifest_files
+                )
+    if manifest_undownloaded and verdict in {"PASS", "PASS_WITH_FALLBACK"}:
+        issues.append(
+            Issue("ERROR", case_id, "严口径：含未下载文件项必须判 FAIL，指引照给")
+        )
 
     reviewer = record.get("reviewer")
     reviewed_at = record.get("reviewed_at")
@@ -791,6 +874,132 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
     if completeness < 90:
         issues.append(Issue("ERROR", case_id, f"字段完整率 {completeness:.1f}% 低于 90%"))
     return issues
+
+
+def _retrieve_containers(record: dict[str, Any]) -> tuple[dict[str, Any] | None, list[Any]]:
+    """取 (retrieve 容器 dict 或 None, items 列表)。
+
+    兼容两种落盘形态：observations.retrieve 直接为条目数组；或 retrieve
+    为 dict（status/error/items 容器）。同结构顶层 retrieve 优先于 observations。
+    """
+    observations = record.get("observations")
+    retrieve = record.get("retrieve")
+    if not isinstance(retrieve, dict) and isinstance(observations, dict):
+        retrieve = observations.get("retrieve")
+    if isinstance(retrieve, dict):
+        items = retrieve.get("items")
+        return retrieve, items if isinstance(items, list) else []
+    if isinstance(retrieve, list):
+        return None, retrieve
+    return None, []
+
+
+def _clean_fragment(value: Any) -> str:
+    """错误原文候选清洗：非字符串转字符串、忽略占位、每段截断 200 字符。"""
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if is_placeholder(text):
+        return ""
+    return text[:200] + ("…" if len(text) > 200 else "")
+
+
+def _dedupe_parts(parts: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique: list[str] = []
+    for part in parts:
+        if part and part not in seen:
+            seen.add(part)
+            unique.append(part)
+    return unique
+
+
+def extract_error_summary(record: dict[str, Any]) -> str:
+    """按优先级提取 FAIL 记录可回填的 error 摘要；无任何依据返回空串。
+
+    提取顺序：检索容器级 error（status∈{error,timeout,missing,failed}）
+    → items[*].error（拼接去重）→ 形如 RetrievalError 的 dict 字段
+    error_message/message → result.error。不虚构错误内容。
+    """
+    container, items = _retrieve_containers(record)
+
+    if (
+        container is not None
+        and container.get("status") in RETRIEVE_FAIL_STATUSES
+        and not is_placeholder(container.get("error"))
+    ):
+        return _clean_fragment(container.get("error"))
+
+    item_parts = [
+        _clean_fragment(item.get("error")) for item in items if isinstance(item, dict)
+    ]
+    joined = "；".join(_dedupe_parts(item_parts))
+    if joined:
+        return joined
+
+    retrieval_error_parts = [
+        _clean_fragment(item.get(key))
+        for item in items
+        if isinstance(item, dict)
+        for key in ("error_message", "message")
+    ]
+    joined = "；".join(_dedupe_parts(retrieval_error_parts))
+    if joined:
+        return joined
+
+    for source in (record, record.get("observations") if isinstance(record.get("observations"), dict) else {}):
+        result = source.get("result") if isinstance(source, dict) else None
+        if isinstance(result, dict) and not is_placeholder(result.get("error")):
+            return _clean_fragment(result.get("error"))
+    return ""
+
+
+def run_backfill_errors(records_dir: Path, apply: bool) -> int:
+    """为 verdict==FAIL 且顶层 error 缺失的记录回填 error 原文（默认 dry-run）。"""
+    to_fill: list[tuple[str, str]] = []
+    manual: list[str] = []
+    already_filled = 0
+    non_fail = 0
+    for path in sorted(records_dir.iterdir()):
+        if not path.is_dir() or path.name.startswith("_"):
+            continue
+        record_path = path / "record.json"
+        if not record_path.exists():
+            continue
+        try:
+            record = read_json(record_path)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"  [WARNING] {path.name}: record.json 无法读取: {exc}")
+            continue
+        if record.get("verdict") != "FAIL":
+            non_fail += 1
+            continue
+        if not is_placeholder(record.get("error")):
+            already_filled += 1
+            continue  # 幂等：已有非空 error 不覆盖
+        summary = extract_error_summary(record)
+        if summary:
+            to_fill.append((path.name, summary))
+        else:
+            manual.append(path.name)
+
+    fail_total = len(to_fill) + len(manual) + already_filled
+    print(f"\n[backfill-errors] 模式={'apply' if apply else 'dry-run'}："
+          f"FAIL 记录 {fail_total} 条（非 FAIL {non_fail} 条未处理），"
+          f"可回填 {len(to_fill)} 条、待人工补正 {len(manual)} 条"
+          f"{'' if already_filled == 0 else f'（已有 error 跳过 {already_filled} 条）'}")
+    for case_id, summary in to_fill:
+        if apply:
+            record_path = records_dir / case_id / "record.json"
+            record = read_json(record_path)
+            record["error"] = summary
+            write_json(record_path, record)
+            print(f"  [INFO] {case_id}: 已回填 error")
+        else:
+            print(f"  [INFO] {case_id}: 将回填 error = {summary}")
+    for case_id in manual:
+        print(f"  [WARNING] {case_id}: 无错误原文可提取，需人工补正错误原因")
+    return 0
 
 
 def load_records(
@@ -837,6 +1046,12 @@ def build_progress_rows(
     records: dict[str, dict[str, Any]],
     issues_by_case: dict[str, list[Issue]],
 ) -> list[dict[str, Any]]:
+    # round 由分配清单行序推导：前 ROUND1_COUNT 行 = 一轮回归 63 题，
+    # 其余 = 二轮新增 59 题。dict 保持 csv 读取顺序。
+    round_by_case = {
+        case_id: 1 if index < ROUND1_COUNT else 2
+        for index, case_id in enumerate(assignments)
+    }
     rows: list[dict[str, Any]] = []
     for problem in problems.values():
         case_id = problem["case_id"]
@@ -846,6 +1061,7 @@ def build_progress_rows(
         rows.append(
             {
                 "case_id": case_id,
+                "round": round_by_case.get(case_id, ""),
                 "layer": problem["layer"],
                 "category": problem["category"],
                 "priority": problem["priority"],
@@ -939,7 +1155,8 @@ def build_quality_report(
         for case_id in p0_ids
     )
     failure_counter = Counter(
-        record.get("failure_category")
+        LEGACY_FAILURE_CATEGORY_MAP.get(record.get("failure_category"))
+        or record.get("failure_category")
         for record in judged.values()
         if record.get("verdict") == "FAIL" and record.get("failure_category")
     )
@@ -1164,6 +1381,18 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--executor", choices=sorted(ALLOWED_EXECUTORS))
     subparsers.add_parser("validate-records", help="校验所有已有记录")
     subparsers.add_parser("sync-progress", help="刷新 progress.csv")
+    backfill_parser = subparsers.add_parser(
+        "backfill-errors", help="为 FAIL 且缺失 error 的记录回填错误原文（默认 dry-run）"
+    )
+    backfill_parser.add_argument(
+        "--records",
+        type=Path,
+        default=RECORDS_DIR,
+        help="记录根目录（默认 records/，测试可指向临时副本）",
+    )
+    backfill_parser.add_argument(
+        "--apply", action="store_true", help="真正写回 record.json（缺省仅 dry-run 预览）"
+    )
     subparsers.add_parser("summarize", help="刷新质量报告和统计摘要")
     all_parser = subparsers.add_parser("all", help="执行全部校验、进度与统计任务")
     all_parser.add_argument("--strict", action="store_true", help="按 Day6-8 合并收尾验收线严格检查")
@@ -1193,6 +1422,8 @@ def main() -> int:
         issues = [item for values in issues_by_case.values() for item in values]
         print_issues("已有记录", issues)
         return 1 if any(item.severity == "ERROR" for item in issues) else 0
+    if args.command == "backfill-errors":
+        return run_backfill_errors(args.records, args.apply)
     if args.command in {"sync-progress", "summarize", "all"}:
         return run_all(getattr(args, "strict", False))
     return 2

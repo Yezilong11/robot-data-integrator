@@ -198,7 +198,7 @@ class MuJoCoAdapter(BaseAdapter):
             )
         xml_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(xml_url)
-        assets = await self._download_xml_with_assets(xml_url, content)
+        assets, missing_assets = await self._download_xml_with_assets(xml_url, content)
         return RawData(
             source=DataSource.MUJOCO,
             item_id=item_id,
@@ -207,6 +207,7 @@ class MuJoCoAdapter(BaseAdapter):
             url=xml_url,
             size_bytes=len(content),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
     def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:

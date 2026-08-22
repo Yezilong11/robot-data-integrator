@@ -14,7 +14,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
-from rdi.skills.base import BaseSkill
+from rdi.skills.base import BaseSkill, extract_download_guide
 
 _FRAMEWORK_BY_EXT: dict[str, str] = {
     ".pt": "pytorch",
@@ -52,6 +52,13 @@ class PolicyInterfaceDoc(BaseModel):
     source_url: str = ""
     model_id: str = ""
     tags: list[str] = Field(default_factory=list)
+    # Task 8: 未下载权重的下载指引（结构复用 build_download_guide 输出，含 wget 命令）；
+    # 无引用信息时为 None（保持原结构，不回归）
+    download_guide: dict[str, Any] | None = Field(
+        default=None,
+        description="未下载权重的下载指引（status/reason/source_file_url/file_size_bytes/"
+        "method_hint/selected_by/alternatives）；无引用为 None",
+    )
 
 
 class PolicyInterfaceSkill(BaseSkill):
@@ -153,11 +160,13 @@ class PolicyInterfaceSkill(BaseSkill):
         weight_files_meta: Any,
         config: Any,
         kwargs: dict[str, Any],
+        raw_data: bytes = b"",
     ) -> StandardResult:
         framework = self._infer_framework_from_meta(weight_files_meta)
         model_id, tags, source_url = self._extract_meta(model_info)
         weight_files = self._normalize_weight_meta(weight_files_meta)
         input_spec, output_spec = self._specs_from_config(config)
+        guide = extract_download_guide(raw_data, kwargs)
         doc = PolicyInterfaceDoc(
             framework=framework,
             input_spec=input_spec,
@@ -166,6 +175,7 @@ class PolicyInterfaceSkill(BaseSkill):
             source_url=source_url,
             model_id=model_id,
             tags=tags,
+            download_guide=guide,
         )
         # 仅元数据（权重未本地化）→ 标记 is_fallback（fetch 降级消费契约）
         return self._ok(
@@ -184,11 +194,13 @@ class PolicyInterfaceSkill(BaseSkill):
             model_info = json.loads(data)
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             # fetch 显式降级（源返回 README/HTML 等非 JSON，如 GitHub 兜底）：
-            # 按 Day2 fmt=json 降级消费契约标记 is_fallback，不伪造权重结构
+            # 按 Day2 fmt=json 降级消费契约标记 is_fallback，不伪造权重结构；
+            # 存在下载引用时 doc 附 download_guide（含 wget 命令），无则保持 None
+            guide = extract_download_guide(data, kwargs)
             return StandardResult(
                 success=True,
                 canonical_format="PolicyInterfaceDoc",
-                data=PolicyInterfaceDoc(framework="unknown", model_id=""),
+                data=PolicyInterfaceDoc(framework="unknown", model_id="", download_guide=guide),
                 completeness_pct=60.0,
                 confidence_score=0.6,
                 data_source_quality="fallback",
@@ -197,7 +209,7 @@ class PolicyInterfaceSkill(BaseSkill):
             )
         weight_files_meta = self._parse_kwarg_json(kwargs, "weight_files_json")
         config = self._parse_kwarg_json(kwargs, "config_json")
-        return self._build_metadata_only(model_info, weight_files_meta, config, kwargs)
+        return self._build_metadata_only(model_info, weight_files_meta, config, kwargs, raw_data=data)
 
     def _inspect_weight(self, path: Path, framework: str) -> _InspectResult:
         if framework == "safetensors":

@@ -6,8 +6,10 @@
 ``LLMUnavailableError``；结构化输出的 JSON 解析失败抛 ``LLMParseError``。
 """
 
+import json
+import re
 import time
-from typing import Any, TypeVar, cast
+from typing import Any, TypeVar, cast, get_args, get_origin
 
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
@@ -79,11 +81,44 @@ class LLMClient:
         try:
             return schema.model_validate_json(raw)
         except PydanticValidationError as e:
+            normalized = self._split_list_fields(raw, schema)
+            if normalized is not None:
+                try:
+                    return schema.model_validate_json(normalized)
+                except PydanticValidationError:
+                    pass  # 拆分后仍失败，走原降级路径
             raise LLMParseError(
                 f"LLM 返回的 JSON 不符合 schema: {e}; raw={raw[:200]}",
                 model=self._model,
                 retry_count=0,
             ) from e
+
+    @staticmethod
+    def _split_list_fields(raw: str, schema: type[T]) -> str | None:
+        """P1-C：把 list[str] 字段的字符串输出拆分为数组后重组 JSON。
+
+        qwen-max 等模型对 ``keywords: [\"...\"]`` 常输出 ``"apple,banana"``
+         字符串导致 pydantic 校验失败；命中 schema 中类型为 list[str] 的字段时
+         按 ``[，,、;;；\\s]+`` 拆分重试一次（仍失败走原降级）。无 list[str] 字段、
+        JSON 无法解析或没有可拆分字段时返回 None。
+        """
+        try:
+            obj = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+        changed = False
+        for name, field in schema.model_fields.items():
+            args = get_args(field.annotation)
+            if get_origin(field.annotation) is not list or not args or args[0] is not str:
+                continue
+            val = obj.get(name)
+            if not isinstance(val, str):
+                continue
+            parts = [p.strip() for p in re.split(r"[，,、;;；\s]+", val) if p.strip()]
+            if parts:
+                obj[name] = parts
+                changed = True
+        return json.dumps(obj, ensure_ascii=False) if changed else None
 
     @staticmethod
     def _build_messages(prompt: str, system: str | None) -> list[dict[str, str]]:

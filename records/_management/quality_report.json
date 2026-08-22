@@ -1,149 +1,157 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-20T00:46:52+08:00",
-  "strict_mode": true,
+  "generated_at": "2026-08-23T01:38:39+08:00",
+  "strict_mode": false,
   "problem_set": {
-    "total": 63,
-    "single_source": 55,
-    "multi_source": 8,
-    "p0_total": 11
+    "total": 122,
+    "single_source": 107,
+    "multi_source": 15,
+    "p0_total": 12
   },
   "progress": {
-    "executed": 63,
-    "judged": 63,
-    "reviewed": 63,
+    "executed": 122,
+    "judged": 122,
+    "reviewed": 2,
     "execution_rate": 1.0,
-    "review_rate": 1.0
+    "review_rate": 0.0164
   },
   "verdicts": {
-    "pass": 14,
-    "pass_with_fallback": 48,
-    "fail": 1,
-    "pass_rate": 0.2222,
-    "fallback_rate": 0.7619,
-    "fail_rate": 0.0159,
-    "usable_rate": 0.9841
+    "pass": 16,
+    "pass_with_fallback": 56,
+    "fail": 50,
+    "pass_rate": 0.1311,
+    "fallback_rate": 0.459,
+    "fail_rate": 0.4098,
+    "usable_rate": 0.5902
   },
   "quality": {
-    "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 63,
+    "record_completeness_avg_pct": 97.3,
+    "records_at_least_90_pct": 122,
     "records_at_least_90_rate": 1.0,
-    "screenshot_compliance_rate": 1.0,
-    "validation_error_count": 0
+    "screenshot_compliance_rate": 0.1475,
+    "validation_error_count": 412
   },
   "p0_acceptance": {
-    "usable": 11,
-    "total": 11,
+    "usable": 7,
+    "total": 12,
     "target": 8,
-    "passed": true
+    "passed": false
   },
   "dimensions": {
     "language": {
       "EN": {
-        "cases": 29,
-        "judged": 29,
+        "cases": 49,
+        "judged": 49,
         "pass": 1,
-        "fallback": 27,
-        "fail": 1,
-        "usable_rate": 0.9655
+        "fallback": 31,
+        "fail": 17,
+        "usable_rate": 0.6531
       },
       "ZH": {
-        "cases": 34,
-        "judged": 34,
-        "pass": 13,
-        "fallback": 21,
-        "fail": 0,
-        "usable_rate": 1.0
+        "cases": 73,
+        "judged": 73,
+        "pass": 15,
+        "fallback": 25,
+        "fail": 33,
+        "usable_rate": 0.5479
       }
     },
     "source": {
       "allegro": {
-        "cases": 3,
-        "judged": 3,
-        "pass": 3,
-        "fallback": 0,
-        "fail": 0,
-        "usable_rate": 1.0
+        "cases": 7,
+        "judged": 7,
+        "pass": 4,
+        "fallback": 1,
+        "fail": 2,
+        "usable_rate": 0.7143
       },
       "arxiv": {
-        "cases": 5,
-        "judged": 5,
-        "pass": 0,
-        "fallback": 5,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "dexgrasp": {
-        "cases": 6,
-        "judged": 6,
+        "cases": 7,
+        "judged": 7,
         "pass": 0,
         "fallback": 6,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.8571
       },
-      "franka": {
+      "dexgrasp": {
         "cases": 8,
         "judged": 8,
-        "pass": 3,
+        "pass": 0,
         "fallback": 4,
-        "fail": 1,
-        "usable_rate": 0.875
+        "fail": 4,
+        "usable_rate": 0.5
+      },
+      "franka": {
+        "cases": 12,
+        "judged": 12,
+        "pass": 1,
+        "fallback": 7,
+        "fail": 4,
+        "usable_rate": 0.6667
       },
       "github": {
+        "cases": 16,
+        "judged": 16,
+        "pass": 1,
+        "fallback": 6,
+        "fail": 9,
+        "usable_rate": 0.4375
+      },
+      "google_scanned": {
         "cases": 8,
         "judged": 8,
         "pass": 1,
-        "fallback": 6,
-        "fail": 1,
-        "usable_rate": 0.875
-      },
-      "google_scanned": {
-        "cases": 3,
-        "judged": 3,
-        "pass": 0,
-        "fallback": 3,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fallback": 2,
+        "fail": 5,
+        "usable_rate": 0.375
       },
       "graspnet": {
-        "cases": 3,
-        "judged": 3,
-        "pass": 0,
-        "fallback": 3,
-        "fail": 0,
-        "usable_rate": 1.0
+        "cases": 7,
+        "judged": 7,
+        "pass": 1,
+        "fallback": 2,
+        "fail": 4,
+        "usable_rate": 0.4286
       },
       "huggingface": {
-        "cases": 5,
-        "judged": 5,
+        "cases": 11,
+        "judged": 11,
         "pass": 0,
-        "fallback": 5,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fallback": 6,
+        "fail": 5,
+        "usable_rate": 0.5455
       },
       "ieee": {
-        "cases": 1,
-        "judged": 1,
-        "pass": 0,
-        "fallback": 1,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "isaac": {
-        "cases": 3,
-        "judged": 3,
+        "cases": 4,
+        "judged": 4,
         "pass": 0,
         "fallback": 3,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.75
+      },
+      "isaac": {
+        "cases": 7,
+        "judged": 7,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 4,
+        "usable_rate": 0.4286
+      },
+      "kinova": {
+        "cases": 6,
+        "judged": 6,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 3,
+        "usable_rate": 0.5
       },
       "mujoco": {
-        "cases": 9,
-        "judged": 9,
-        "pass": 3,
-        "fallback": 5,
-        "fail": 1,
-        "usable_rate": 0.8889
+        "cases": 15,
+        "judged": 15,
+        "pass": 2,
+        "fallback": 3,
+        "fail": 10,
+        "usable_rate": 0.3333
       },
       "paperswithcode": {
         "cases": 3,
@@ -154,166 +162,250 @@
         "usable_rate": 1.0
       },
       "robotiq": {
-        "cases": 4,
-        "judged": 4,
-        "pass": 3,
+        "cases": 7,
+        "judged": 7,
+        "pass": 4,
         "fallback": 1,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 2,
+        "usable_rate": 0.7143
       },
       "ycb": {
-        "cases": 11,
-        "judged": 11,
+        "cases": 18,
+        "judged": 18,
         "pass": 1,
-        "fallback": 10,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fallback": 7,
+        "fail": 10,
+        "usable_rate": 0.4444
       },
       "zenodo": {
-        "cases": 5,
-        "judged": 5,
-        "pass": 0,
-        "fallback": 5,
-        "fail": 0,
-        "usable_rate": 1.0
+        "cases": 10,
+        "judged": 10,
+        "pass": 1,
+        "fallback": 6,
+        "fail": 3,
+        "usable_rate": 0.7
       }
     },
     "req_type": {
       "code": {
-        "cases": 3,
-        "judged": 3,
+        "cases": 8,
+        "judged": 8,
         "pass": 1,
-        "fallback": 2,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fallback": 4,
+        "fail": 3,
+        "usable_rate": 0.625
       },
       "dataset": {
+        "cases": 13,
+        "judged": 13,
+        "pass": 2,
+        "fallback": 5,
+        "fail": 6,
+        "usable_rate": 0.5385
+      },
+      "grasp": {
+        "cases": 20,
+        "judged": 20,
+        "pass": 0,
+        "fallback": 8,
+        "fail": 12,
+        "usable_rate": 0.4
+      },
+      "mesh": {
+        "cases": 24,
+        "judged": 24,
+        "pass": 2,
+        "fallback": 7,
+        "fail": 15,
+        "usable_rate": 0.375
+      },
+      "paper": {
+        "cases": 14,
+        "judged": 14,
+        "pass": 0,
+        "fallback": 12,
+        "fail": 2,
+        "usable_rate": 0.8571
+      },
+      "policy_model": {
         "cases": 7,
         "judged": 7,
         "pass": 0,
-        "fallback": 7,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "grasp": {
-        "cases": 13,
-        "judged": 13,
-        "pass": 0,
-        "fallback": 13,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "mesh": {
-        "cases": 13,
-        "judged": 13,
-        "pass": 1,
-        "fallback": 12,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "paper": {
-        "cases": 9,
-        "judged": 9,
-        "pass": 0,
-        "fallback": 9,
-        "fail": 0,
-        "usable_rate": 1.0
-      },
-      "policy_model": {
-        "cases": 3,
-        "judged": 3,
-        "pass": 0,
         "fallback": 3,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 4,
+        "usable_rate": 0.4286
       },
       "robot_urdf": {
-        "cases": 17,
-        "judged": 17,
+        "cases": 35,
+        "judged": 35,
         "pass": 9,
-        "fallback": 7,
-        "fail": 1,
-        "usable_rate": 0.9412
+        "fallback": 13,
+        "fail": 13,
+        "usable_rate": 0.6286
       },
       "sensor_data": {
-        "cases": 3,
-        "judged": 3,
+        "cases": 8,
+        "judged": 8,
         "pass": 0,
-        "fallback": 3,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fallback": 6,
+        "fail": 2,
+        "usable_rate": 0.75
       },
       "sim_config": {
-        "cases": 11,
-        "judged": 11,
-        "pass": 3,
-        "fallback": 8,
-        "fail": 0,
-        "usable_rate": 1.0
+        "cases": 21,
+        "judged": 21,
+        "pass": 2,
+        "fallback": 6,
+        "fail": 13,
+        "usable_rate": 0.381
       }
     },
     "llm_model": {
-      "qwen-plus": 61,
-      "qwen3.7-plus": 2
+      "deepseek-chat": 11,
+      "qwen-plus": 84,
+      "qwen-turbo": 12,
+      "qwen3.7-plus": 15
     }
   },
   "failure_top3": [
     {
       "category": "P2_RETRIEVE",
-      "count": 1
+      "count": 20
+    },
+    {
+      "category": "P3_SOURCE",
+      "count": 10
+    },
+    {
+      "category": "P4_FORMAT",
+      "count": 10
     }
   ],
   "issues": {
-    "problem_set": [
-      {
-        "severity": "WARNING",
-        "location": "problems",
-        "message": "未覆盖 DataSource: kinova（已注册源暂无对应题目）"
-      }
-    ],
+    "problem_set": [],
     "assignments": [],
     "records": {
       "ms_001": [
         {
           "severity": "WARNING",
-          "location": "ms_001.retrieve[1]",
-          "message": "format obj 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ms_001.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_001",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ms_002": [
         {
           "severity": "WARNING",
-          "location": "ms_002.retrieve[1]",
-          "message": "format obj 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ms_002.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_002.retrieve[2]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_002",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ms_003": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ms_003.retrieve[1]",
-          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "message": "source 非法"
         },
         {
           "severity": "WARNING",
           "location": "ms_003.retrieve[2]",
           "message": "出现题设外补充需求: grasp"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_003",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_003",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ms_004": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ms_004.retrieve[0]",
-          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+          "message": "quality unknown 不在允许范围"
         },
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
+          "location": "ms_004.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
           "location": "ms_004.retrieve[1]",
-          "message": "format trimesh.Trimesh 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "message": "quality unknown 不在允许范围"
         },
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
+          "location": "ms_004.retrieve[1]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
           "location": "ms_004.retrieve[2]",
-          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "message": "format CanonicalGrasp 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_004.retrieve[2]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_004.screenshots[0]",
+          "message": "截图文件不存在: screenshots/package_dir.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_004.screenshots[1]",
+          "message": "截图文件不存在: screenshots/explorer.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_004.screenshots[2]",
+          "message": "截图文件不存在: screenshots/provenance.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_004",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ms_005": [
@@ -321,6 +413,11 @@
           "severity": "WARNING",
           "location": "ms_005.retrieve[2]",
           "message": "出现题设外补充需求: sim_config"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
         }
       ],
       "ms_006": [
@@ -330,22 +427,313 @@
           "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
         },
         {
+          "severity": "ERROR",
+          "location": "ms_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_006",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ms_007": [
+        {
+          "severity": "ERROR",
+          "location": "ms_007.screenshots[0]",
+          "message": "截图文件不存在: screenshots/01_input.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_007.screenshots[1]",
+          "message": "截图文件不存在: screenshots/02_progress.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_007.screenshots[2]",
+          "message": "截图文件不存在: screenshots/03_package.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_007.screenshots[3]",
+          "message": "截图文件不存在: screenshots/04_validation.png"
+        }
+      ],
+      "ms_009": [
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[1]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[1]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[2]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[2]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[2]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009.retrieve[3]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_009",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ms_010": [
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[0]",
+          "message": "format CanonicalRobot 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[1]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[1]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[2]",
+          "message": "format CanonicalGrasp 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010.retrieve[2]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_010",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ms_011": [
+        {
+          "severity": "ERROR",
+          "location": "ms_011",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[0]",
+          "message": "format CanonicalRobot 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[1]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[1]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[1]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[2]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[2]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011.retrieve[2]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_011",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ms_012": [
+        {
           "severity": "WARNING",
-          "location": "ms_006.retrieve[1]",
-          "message": "format trimesh.Trimesh 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ms_012.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
         },
         {
           "severity": "WARNING",
-          "location": "ms_006.retrieve[2]",
-          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ms_012.retrieve[0]",
+          "message": "format xacro 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_012.retrieve[1]",
+          "message": "quality unknown 不在允许范围"
         },
         {
           "severity": "WARNING",
-          "location": "ms_006.retrieve[3]",
-          "message": "format mjcf 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ms_012.retrieve[2]",
+          "message": "出现题设外补充需求: grasp"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_012",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ms_013": [
+        {
+          "severity": "WARNING",
+          "location": "ms_013.retrieve[1]",
+          "message": "format python 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_013.retrieve[2]",
+          "message": "format markdown 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ms_014": [
+        {
+          "severity": "ERROR",
+          "location": "ms_014.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_014.retrieve[1]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_014.retrieve[1]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_014.retrieve[1]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_014",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_014",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ms_015": [
+        {
+          "severity": "ERROR",
+          "location": "ms_015.retrieve[0]",
+          "message": "format SensorDataset 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_015.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_015.retrieve[1]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_015.retrieve[1]",
+          "message": "format CodeRepoSummary 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ms_015",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
         }
       ],
       "ss_allegro_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_001",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_001",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_001",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
         {
           "severity": "WARNING",
           "location": "ss_allegro_001",
@@ -359,6 +747,31 @@
       ],
       "ss_allegro_002": [
         {
+          "severity": "ERROR",
+          "location": "ss_allegro_002",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_002",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
           "severity": "WARNING",
           "location": "ss_allegro_002",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
@@ -371,6 +784,31 @@
       ],
       "ss_allegro_003": [
         {
+          "severity": "ERROR",
+          "location": "ss_allegro_003",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_003",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_003",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_003",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
           "severity": "WARNING",
           "location": "ss_allegro_003",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
@@ -379,21 +817,389 @@
           "severity": "WARNING",
           "location": "ss_allegro_003",
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_allegro_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_004",
+          "message": "存在降级时不能判 PASS"
+        }
+      ],
+      "ss_allegro_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_005.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_005.retrieve[1]",
+          "message": "出现非预期 req_type: grasp"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_005.retrieve[2]",
+          "message": "出现题设外补充需求: sim_config"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_allegro_005",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_arxiv_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_arxiv_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_arxiv_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_arxiv_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_arxiv_005": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_arxiv_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_006.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_006.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_arxiv_007": [
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_007.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_007.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_007",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_007.screenshots[0]",
+          "message": "截图文件不存在: screenshots/final/01_package_dir.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_arxiv_007",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_code_github_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_code_github_001",
+          "message": "failure_category 旧值 P5_RUNTIME 已映射为 P6_VALIDATE"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_code_github_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_code_hf_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_code_hf_001.retrieve[0]",
+          "message": "format markdown 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_dataset_graspnet_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001",
+          "message": "FAIL 必须填写 P1_PARSE 到 P8_OTHER"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_graspnet_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_dataset_hf_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_hf_002",
+          "message": "parse_goal.vs_expected 取值非法: 'type_match'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_hf_002.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_hf_002.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_hf_002.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_hf_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dataset_hf_002",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_dexgrasp_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_dexgrasp_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_dexgrasp_002.retrieve[0]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_dexgrasp_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_003",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_dexgrasp_004": [
+        {
+          "severity": "WARNING",
+          "location": "ss_dexgrasp_004.retrieve[0]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_dexgrasp_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_dexgrasp_005.retrieve[0]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_dexgrasp_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_006.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_006.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_006.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_006",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_dexgrasp_006",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ss_franka_001": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ss_franka_001",
-          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
         },
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ss_franka_001",
-          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_001",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_001",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
         }
       ],
       "ss_franka_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_002",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_002",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
         {
           "severity": "WARNING",
           "location": "ss_franka_002",
@@ -407,18 +1213,162 @@
       ],
       "ss_franka_003": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ss_franka_003",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_003",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_003",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_003",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        }
+      ],
+      "ss_franka_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004.retrieve[0]",
+          "message": "source 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004",
+          "message": "文件数 0 低于 min_files=1"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_004",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         },
         {
           "severity": "WARNING",
-          "location": "ss_franka_003",
+          "location": "ss_franka_004",
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004",
+          "message": "PASS_WITH_FALLBACK 必须有降级证据"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_004",
+          "message": "降级必须在 package 中显式记录"
+        }
+      ],
+      "ss_franka_005": [
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005.retrieve[0]",
+          "message": "source 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005.retrieve[0]",
+          "message": "命中非目标源但未标记，属于静默降级"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "可用判定要求 validate.errors=0"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_005",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_005",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "降级必须在 package 中显式记录"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_franka_005",
+          "message": "非 FAIL 记录不得填写失败分类或原因"
         }
       ],
       "ss_github_001": [
         {
+          "severity": "ERROR",
+          "location": "ss_github_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
           "severity": "WARNING",
           "location": "ss_github_001",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
@@ -429,52 +1379,305 @@
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         }
       ],
-      "ss_google_scanned_001": [
+      "ss_github_002": [
         {
           "severity": "WARNING",
-          "location": "ss_google_scanned_001.retrieve[0]",
-          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ss_github_002.retrieve[0]",
+          "message": "format urdf 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_github_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_github_003": [
+        {
+          "severity": "WARNING",
+          "location": "ss_github_003.retrieve[0]",
+          "message": "format DatasetSummary 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_github_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_github_004": [
+        {
+          "severity": "WARNING",
+          "location": "ss_github_004.retrieve[0]",
+          "message": "format PolicyInterfaceDoc 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_github_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_github_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_github_005.retrieve[0]",
+          "message": "format SensorDataset 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_github_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_github_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_github_006.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_github_006.retrieve[0]",
+          "message": "format CodeRepoSummary 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_github_006",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_google_scanned_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_001",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_001",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_001",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ss_google_scanned_002": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
+          "location": "ss_google_scanned_002",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
           "location": "ss_google_scanned_002.retrieve[0]",
-          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "message": "format stl 不在预期格式中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_002",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_google_scanned_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_google_scanned_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         }
       ],
       "ss_google_scanned_003": [
         {
-          "severity": "WARNING",
-          "location": "ss_google_scanned_003.retrieve[0]",
-          "message": "quality real 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+          "severity": "ERROR",
+          "location": "ss_google_scanned_003",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_003",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_003",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_003",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_google_scanned_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_004",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_google_scanned_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_006.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_006.retrieve[1]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_006.retrieve[1]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_google_scanned_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_grasp_dexgrasp_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_dexgrasp_002",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_grasp_ycb_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_ycb_001",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_ycb_001.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_ycb_001.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_ycb_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_ycb_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_grasp_ycb_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_graspnet_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_graspnet_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
         },
         {
           "severity": "WARNING",
-          "location": "ss_google_scanned_003.retrieve[0]",
-          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+          "location": "ss_graspnet_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_graspnet_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_graspnet_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_graspnet_002.retrieve[0]",
+          "message": "quality fallback 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_graspnet_002.retrieve[0]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_graspnet_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_graspnet_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_graspnet_003.retrieve[0]",
+          "message": "出现非预期 req_type: dataset"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_graspnet_003",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_graspnet_004": [
+        {
+          "severity": "WARNING",
+          "location": "ss_graspnet_004.retrieve[0]",
+          "message": "出现题设外补充需求: dataset"
+        }
+      ],
+      "ss_huggingface_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_001.retrieve[0]",
+          "message": "format DatasetSummary 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
         }
       ],
       "ss_huggingface_002": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ss_huggingface_002.retrieve[0]",
-          "message": "出现题设外补充需求: dataset"
-        },
-        {
-          "severity": "WARNING",
-          "location": "ss_huggingface_002.retrieve[0]",
-          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
-        },
-        {
-          "severity": "WARNING",
-          "location": "ss_huggingface_002.retrieve[1]",
-          "message": "出现题设外补充需求: code"
-        },
-        {
-          "severity": "WARNING",
-          "location": "ss_huggingface_002.retrieve[1]",
-          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+          "message": "出现非预期 req_type: robot_urdf"
         },
         {
           "severity": "WARNING",
@@ -482,16 +1685,430 @@
           "message": "出现题设外补充需求: dataset"
         },
         {
+          "severity": "ERROR",
+          "location": "ss_huggingface_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_002",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_huggingface_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_huggingface_004": [
+        {
           "severity": "WARNING",
-          "location": "ss_huggingface_002.retrieve[2]",
-          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+          "location": "ss_huggingface_004.retrieve[0]",
+          "message": "format DatasetSummary 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_huggingface_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_005.retrieve[0]",
+          "message": "format PolicyInterfaceDoc 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_huggingface_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_006",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_006",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_006",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_006",
+          "message": "FAIL 必须填写 P1_PARSE 到 P8_OTHER"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_huggingface_006",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_ieee_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_ieee_001.retrieve[0]",
+          "message": "quality fallback 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_ieee_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_002.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_002.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_002.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_ieee_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_003.retrieve[0]",
+          "message": "source 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_003.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_003.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_ieee_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_004",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_004",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_004",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_004",
+          "message": "FAIL 必须填写 P1_PARSE 到 P8_OTHER"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ieee_004",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_isaac_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_001",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_001",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        }
+      ],
+      "ss_isaac_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_002",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_002",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        }
+      ],
+      "ss_isaac_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_003.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_003.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_003",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_isaac_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_004.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_004.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_004",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_004",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        }
+      ],
+      "ss_isaac_005": [
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_005",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_005",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_005",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_005",
+          "message": "FAIL 必须填写 P1_PARSE 到 P8_OTHER"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_isaac_005",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_kinova_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_kinova_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_003.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_003",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_kinova_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004.retrieve[0]",
+          "message": "source 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004.screenshots[0]",
+          "message": "截图文件不存在: screenshots/final/01_package_dir.png"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004",
+          "message": "文件数 0 低于 min_files=1"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_kinova_004",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_kinova_004",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_kinova_004",
+          "message": "降级必须在 package 中显式记录"
+        }
+      ],
+      "ss_mesh_ycb_008": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mesh_ycb_008.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mesh_ycb_008.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mesh_ycb_008.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mesh_ycb_008",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mesh_ycb_008",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ss_mujoco_001": [
         {
-          "severity": "WARNING",
-          "location": "ss_mujoco_001.retrieve[0]",
-          "message": "出现题设外补充需求: robot_urdf"
+          "severity": "ERROR",
+          "location": "ss_mujoco_001",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_001",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_001",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
         },
         {
           "severity": "WARNING",
@@ -506,18 +2123,107 @@
       ],
       "ss_mujoco_002": [
         {
-          "severity": "WARNING",
+          "severity": "ERROR",
           "location": "ss_mujoco_002",
-          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
         },
         {
           "severity": "WARNING",
+          "location": "ss_mujoco_002.retrieve[0]",
+          "message": "quality fallback 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
           "location": "ss_mujoco_002",
-          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        }
+      ],
+      "ss_mujoco_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_003",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_003.retrieve[0]",
+          "message": "quality fallback 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_003",
+          "message": "FAIL 必须填写 P1_PARSE 到 P8_OTHER"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_003",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_mujoco_004": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_004",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_004.retrieve[0]",
+          "message": "quality fallback 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_004",
+          "message": "FAIL 必须填写 P1_PARSE 到 P8_OTHER"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_004",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ss_mujoco_005": [
         {
+          "severity": "ERROR",
+          "location": "ss_mujoco_005",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_005",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_005",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_005",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
           "severity": "WARNING",
           "location": "ss_mujoco_005",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
@@ -526,16 +2232,202 @@
           "severity": "WARNING",
           "location": "ss_mujoco_005",
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_mujoco_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_006.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_006.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_006.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_mujoco_007": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_007",
+          "message": "parse_goal.vs_expected 取值非法: 'type_match'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_007.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_007.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_007",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_007.screenshots[3]",
+          "message": "截图文件不存在: screenshots/final/04_error.png"
+        }
+      ],
+      "ss_mujoco_008": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_008",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_008.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_008.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_008.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_008",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_008",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_mujoco_009": [
+        {
+          "severity": "ERROR",
+          "location": "ss_mujoco_009",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_paperswithcode_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_paperswithcode_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
         }
       ],
       "ss_paperswithcode_002": [
         {
           "severity": "WARNING",
           "location": "ss_paperswithcode_002.retrieve[1]",
-          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+          "message": "format markdown 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_paperswithcode_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_paperswithcode_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_paperswithcode_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_policy_github_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_github_001.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_github_001.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_github_001.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_github_001",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_github_001.screenshots[3]",
+          "message": "截图文件不存在: screenshots/final/04_error.png"
+        }
+      ],
+      "ss_policy_hf_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_hf_001.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_hf_001.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_hf_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_policy_hf_001",
+          "message": "FAIL 必须包含报错截图"
         }
       ],
       "ss_robotiq_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_001",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_001.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_001",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_001",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
         {
           "severity": "WARNING",
           "location": "ss_robotiq_001",
@@ -549,6 +2441,36 @@
       ],
       "ss_robotiq_002": [
         {
+          "severity": "ERROR",
+          "location": "ss_robotiq_002",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_002.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_002",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
           "severity": "WARNING",
           "location": "ss_robotiq_002",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
@@ -561,6 +2483,36 @@
       ],
       "ss_robotiq_003": [
         {
+          "severity": "ERROR",
+          "location": "ss_robotiq_003",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_003.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_003",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_003",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_robotiq_003",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
           "severity": "WARNING",
           "location": "ss_robotiq_003",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
@@ -571,16 +2523,435 @@
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         }
       ],
-      "ss_ycb_001": [
+      "ss_robotiq_005": [
         {
           "severity": "WARNING",
-          "location": "ss_ycb_001",
+          "location": "ss_robotiq_005",
           "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
         },
         {
           "severity": "WARNING",
-          "location": "ss_ycb_001",
+          "location": "ss_robotiq_005",
           "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_sensor_github_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_github_002.retrieve[0]",
+          "message": "req_type 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_github_002.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_github_002.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_github_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_github_002",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_sensor_zenodo_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_001.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_001.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_001.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_001",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_001.screenshots[3]",
+          "message": "截图文件不存在: screenshots/final/04_error.png"
+        }
+      ],
+      "ss_sensor_zenodo_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002.retrieve[0]",
+          "message": "降级必须填写 fallback_reason"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_sensor_zenodo_002",
+          "message": "非 FAIL 记录不得填写失败分类或原因"
+        }
+      ],
+      "ss_urdf_github_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_urdf_github_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_ycb_001": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001.retrieve[0]",
+          "message": "quality 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001.retrieve[1]",
+          "message": "quality 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001.retrieve[1]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001.retrieve[2]",
+          "message": "quality 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001.retrieve[2]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_001",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_ycb_002": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002.retrieve[0]",
+          "message": "quality 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002.retrieve[1]",
+          "message": "quality 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002.retrieve[1]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002.retrieve[2]",
+          "message": "quality 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002.retrieve[2]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002",
+          "message": "package.status 取值非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_002",
+          "message": "FAIL 必须包含报错截图"
+        }
+      ],
+      "ss_ycb_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_003",
+          "message": "parse_goal.vs_expected 取值非法: 'exact'"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_003.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_003",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_required'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_003",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_003",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        }
+      ],
+      "ss_ycb_004": [
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_004.retrieve[0]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_ycb_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_005.retrieve[0]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_ycb_006": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_006.retrieve[0]",
+          "message": "source 非法"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_006.retrieve[0]",
+          "message": "status 必须为 success/missing/error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_006.retrieve[0]",
+          "message": "检索未成功时必须填写 error"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_006",
+          "message": "package.file_count 必须为非负整数"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_006",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_ycb_007": [
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_007",
+          "message": "parse_goal.vs_expected 取值非法: 'recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_007.retrieve[0]",
+          "message": "quality unknown 不在允许范围"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_007",
+          "message": "validate.runtime_check 必须为字符串（passed/failed/not_applicable/not_run），当前为 'not_recorded'"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_007",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_007",
+          "message": "可用判定要求目标解析完全匹配或核心需求全命中"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_ycb_007",
+          "message": "URDF/Mesh/MJCF 必须完成可加载性验证"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_007",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_007",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_zenodo_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_zenodo_001.retrieve[0]",
+          "message": "format DatasetSummary 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_001",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_zenodo_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_zenodo_002.retrieve[0]",
+          "message": "format SensorDataset 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_002",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_zenodo_003": [
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_003",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_zenodo_003",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_zenodo_003",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_zenodo_004": [
+        {
+          "severity": "WARNING",
+          "location": "ss_zenodo_004.retrieve[0]",
+          "message": "format SensorDataset 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_004",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_zenodo_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_zenodo_005.retrieve[0]",
+          "message": "format DatasetSummary 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_005",
+          "message": "每题至少 4 张截图（input/progress/package/validation）"
+        }
+      ],
+      "ss_zenodo_007": [
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_007.retrieve[0]",
+          "message": "出现非预期 req_type: sensor_data"
+        },
+        {
+          "severity": "ERROR",
+          "location": "ss_zenodo_007",
+          "message": "FAIL 必须包含报错截图"
         }
       ]
     }
@@ -588,10 +2959,10 @@
   "acceptance_checks": {
     "problem_set_valid": true,
     "assignments_valid": true,
-    "p0_usable_at_least_target": true,
+    "p0_usable_at_least_target": false,
     "record_completeness_at_least_90_pct": true,
     "all_cases_executed": true,
-    "all_judged_records_reviewed": true,
-    "no_record_validation_errors": true
+    "all_judged_records_reviewed": false,
+    "no_record_validation_errors": false
   }
 }

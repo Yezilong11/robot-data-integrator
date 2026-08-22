@@ -8,6 +8,7 @@
 import asyncio
 import time
 from datetime import datetime
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from rdi.adapters.registry import select_adapter
@@ -19,6 +20,11 @@ from rdi.exceptions import (
     AdapterNotFoundError,
     AdapterRateLimitError,
     AdapterTimeoutError,
+)
+from rdi.graph.nodes.validate import (
+    SEMANTIC_REQ_TYPES,
+    _extract_semantic_terms,
+    semantic_score,
 )
 from rdi.graph.state import SystemState
 from rdi.hermes.engine import HermesEngine
@@ -105,6 +111,52 @@ def _first_candidate_source(req_type: str) -> DataSource:
     # 兜底：该需求没有注册任何候选源（异常路径），正常流程不会走到；
     # 取 GITHUB 仅用于满足 RetrievalError.source 必填约束。
     return DataSource.GITHUB
+
+
+def _pick_semantic_candidate(
+    search_results: list[SearchResult], req_type: str, req: Any
+) -> tuple[SearchResult, str | None]:
+    """检索候选语义预筛：优先选择命中需求目标实体的候选。
+
+    对启用语义匹配的类型（``SEMANTIC_REQ_TYPES``）且需求含具体实体词时，
+    对 ``search_results[:5]`` 按 title/url/description 用 ``semantic_score``
+    打分，最高分 > 0 选该候选（避免 fetch 首个无关候选）；否则维持首个候选
+    并返回诊断文本（并入 missing 审计）。非启用类型或术语为空直接返回首个
+    候选且诊断为 None。``req`` 为含 description/keywords/object_name 的对象
+    （dict 输入自动转换为命名空间对象）。
+    """
+    try:
+        req_type_enum = DataReqType(req_type)
+    except ValueError:
+        return search_results[0], None
+    if req_type_enum not in SEMANTIC_REQ_TYPES:
+        return search_results[0], None
+    req_obj = SimpleNamespace(**req) if isinstance(req, dict) else req
+    if not _extract_semantic_terms(req_obj):
+        return search_results[0], None
+    best_idx = 0
+    best_score = 0
+    for i, hit in enumerate(search_results[:5]):
+        metadata = hit.metadata or {}
+        desc = str(metadata.get("description") or metadata.get("summary") or "")
+        score = semantic_score(req_obj, hit.title, hit.url, desc)
+        if score > best_score:
+            best_score = score
+            best_idx = i
+    if best_score > 0:
+        return search_results[best_idx], None
+    first = search_results[0]
+    return first, f"{first.source.value}: 候选语义零重叠（{first.title}）"
+
+
+def _compute_source_cap(source_budget: float, deadline: float, now: float) -> float:
+    """计算本源实际可用执行上限：``min(source_budget, deadline - now)``，低于 0 夹到 0。
+
+    本源上限（source_budget）与需求级 deadline 剩余预算取小：快源释放时剩余
+    充裕则上限不被削减；慢源拖时间后剩余收紧；remaining <= 0（总预算到点）
+    返回 0，调用方跳过该源。
+    """
+    return max(0.0, min(source_budget, deadline - now))
 
 
 async def _retrieve_single_with_timeout(payload: dict[str, Any]) -> dict[str, Any]:
@@ -403,17 +455,34 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     last_source = ""
     # C2: 累积各源「清单外目标」诊断（跨 adapter 保留），用于 missing 的 error_message
     search_failures: list[str] = []
+    # 候选语义预筛的 req 视图（与 validate._extract_semantic_terms 的字段契约一致）
+    req_view = SimpleNamespace(
+        description=description,
+        keywords=keywords,
+        object_name=object_name,
+    )
 
     # E6: 每源子预算 = per_req_timeout / 候选源数。首源挂起不再占满整个
     # per_req_timeout（GitHub 慢源占满预算导致 Zenodo/HF 无执行机会），
     # 超时即记录 timeout 错误并跳过，后续候选源仍有机会执行。
     source_budget = settings.per_req_timeout / max(len(sorted_adapters), 1)
+    # spec-3/Task1: 需求级 deadline 在源循环外固定，循环内每源按剩余预算动态
+    # 收紧本源上限（min(source_budget, remaining)），总预算到点后跳过剩余源。
+    deadline = time.monotonic() + settings.per_req_timeout
 
     for idx, adapter_cls in enumerate(sorted_adapters):
         is_fallback = idx > 0
         last_source = adapter_cls.source.value
+        now = time.monotonic()
+        remaining = deadline - now
+        per_source_cap = _compute_source_cap(source_budget, deadline, now)
+        if per_source_cap <= 0:
+            search_failures.append(
+                f"{adapter_cls.source.value}: 预算耗尽：总预算已到点，跳过该源"
+            )
+            continue
         try:
-            async with asyncio.timeout(source_budget):
+            async with asyncio.timeout(per_source_cap):
                 # ponytail: type[BaseAdapter] 的 __init__ 签名包含 base_url，但各子类均为无参构造；
                 # mypy 无法推导子类重载，此处忽略构造参数检查。
                 adapter = adapter_cls()  # type: ignore[call-arg]
@@ -430,22 +499,30 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 if not search_results:
                     had_empty_search = True
                     continue
+                # C6: 检索候选语义预筛——多候选时优先选命中需求目标实体的那个，
+                # 避免 fetch 首个无关候选后由 C4 格式/装配期语义校验兜底重试；
+                # 全部零重叠时维持首个候选并记录诊断供 missing 审计。
+                candidate, semantic_diag = _pick_semantic_candidate(
+                    search_results, req_type, req_view
+                )
+                if semantic_diag:
+                    search_failures.append(semantic_diag)
                 # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
                 # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
                 fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
                 if object_name:
                     fetch_kwargs["object_name"] = object_name
                 try:
-                    raw = await adapter.fetch(search_results[0].item_id, **fetch_kwargs)
+                    raw = await adapter.fetch(candidate.item_id, **fetch_kwargs)
                 except TypeError:
                     try:
                         # 兼容旧 Adapter 的 fetch(item_id, req_type=...) 签名
                         raw = await adapter.fetch(  # type: ignore[call-arg]
-                            search_results[0].item_id, req_type=DataReqType(req_type)
+                            candidate.item_id, req_type=DataReqType(req_type)
                         )
                     except TypeError:
                         # 兼容旧 Adapter 的 fetch(item_id) 签名
-                        raw = await adapter.fetch(search_results[0].item_id)
+                        raw = await adapter.fetch(candidate.item_id)
                 # C4-pre: 检索期即校验格式白名单（与装配期 C4 同源，is_format_allowed）。
                 # GitHub 等通用源对 robot_urdf 需求常返回 markdown README，检索循环此前
                 # 视为"成功"即停止，专用源（robotiq/franka）再无机会，装配期 C4 才拦截
@@ -513,8 +590,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         except TimeoutError:
             elapsed = time.monotonic() - start
             message = (
-                f"源级检索超时（超过 {source_budget:.2f}s = per_req_timeout/"
-                f"{len(sorted_adapters)}）"
+                f"源级检索超时（本源上限 {source_budget:.2f}s / 剩余 {remaining:.2f}s）"
             )
             retrieval_errors.append(
                 RetrievalError(

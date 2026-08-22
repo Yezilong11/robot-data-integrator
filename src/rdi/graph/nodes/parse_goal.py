@@ -177,6 +177,16 @@ _STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
     DataReqType.BENCHMARK_TASK: ("benchmark", "基准测试", "基准任务"),
 }
 
+# P1-B：抓取数据内容词（用于 DATASET→GRASP 单向消歧，见 _normalize_datareq）
+_GRASP_CONTENT_WORDS: tuple[str, ...] = (
+    "抓取标签",
+    "抓取标注",
+    "抓取规划",
+    "grasp label",
+    "grasp annotation",
+    "grasp planning",
+)
+
 _WEAK_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
     DataReqType.ROBOT_URDF: ("robot", "robots", "机器人"),
     DataReqType.MESH: ("模型", "物体"),
@@ -235,6 +245,15 @@ def _normalize_datareq(req: DataReq) -> DataReq:
     """
     text = f"{req.description} {req.expected_format or ''}".lower()
     cur = req.req_type
+
+    # P1-B 单向消歧：LLM 判 DATASET 但描述明确含抓取数据内容词（标签/标注/规划）
+    # 时为 GRASP——"数据集/dataset"是容器词，数据内容词更能表达"要什么数据"
+    # （ss_graspnet_004 类解析偏移根因）。仅在 GRASP 强词循环之前处理，避免
+    # DATASET（dict 序在 GRASP 前）抢先命中；"机器人抓取数据集"无内容词不受影响。
+    if cur == DataReqType.DATASET and any(
+        _kw_in(text, k) for k in _GRASP_CONTENT_WORDS
+    ):
+        return req.model_copy(update={"req_type": DataReqType.GRASP})
 
     for typ, keywords in _STRONG_TYPE_KEYWORDS.items():
         if any(_kw_in(text, k) for k in keywords):

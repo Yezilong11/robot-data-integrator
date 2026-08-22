@@ -128,12 +128,7 @@
     "validate": {
       "errors": 7,
       "warnings": 7,
-      "runtime_check": {
-        "req_003": {
-          "status": "skipped",
-          "detail": "mujoco 未安装，仅做 XML 语法校验"
-        }
-      },
+      "runtime_check": "not_run",
       "missing_items": [
         {
           "req_id": "req_001",

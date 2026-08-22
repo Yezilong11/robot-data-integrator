@@ -35,6 +35,10 @@ class ParsedItem(BaseModel):
         default_factory=dict,
         description="引用的外部资源（相对路径 → 字节）",
     )
+    assets_missing: list[str] = Field(
+        default_factory=list,
+        description="下载/加载阶段缺失的外部资源路径（透传自 RawData.metadata.assets_missing）",
+    )
     provenance: ProvenanceEntry = Field(description="溯源信息")
     completeness_pct: float = Field(
         default=100.0,

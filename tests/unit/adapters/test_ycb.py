@@ -72,6 +72,57 @@ class TestYCBAdapter:
         assert f"仅收录 {len(_FALLBACK_OBJECTS)}" in exc_info.value.message
 
     @pytest.mark.asyncio
+    async def test_search_fallback_alias_cup_matches_mug(self) -> None:
+        """Task 3：语义别名 cup→mug——多词 query 含 cup 命中 025_mug，返回条目本身不变。"""
+        adapter = YCBAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.YCB.value
+            )
+            results = await adapter.search("YCB cup mesh")
+        assert len(results) == 1
+        assert results[0].item_id == "025_mug"
+        # 别名声仅用于命中判定：title 仍是收录条目原值，不回写为 "Cup"
+        assert results[0].title == "Mug"
+        assert results[0].source == DataSource.YCB
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_alias_cup_alone_hits_mug(self) -> None:
+        """Task 3：单词 query "cup" 经别名归一命中 025_mug。"""
+        adapter = YCBAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.YCB.value
+            )
+            results = await adapter.search("cup")
+        assert [r.item_id for r in results] == ["025_mug"]
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_unaliased_word_does_not_hit(self) -> None:
+        """Task 3：无别名词（语义相近但未配置别名）不误命中，仍抛"仅收录"。"""
+        adapter = YCBAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.YCB.value
+            )
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("saucer")
+        assert "仅收录" in exc_info.value.message
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_alias_unknown_object_raises(self) -> None:
+        """Task 3：未知物体 query 无任何别名可命中，仍抛 AdapterCatalogError（含"仅收录"）。"""
+        adapter = YCBAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.YCB.value
+            )
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("teapot")
+        assert "仅收录" in exc_info.value.message
+        assert "有源但未收录" in exc_info.value.message
+
+    @pytest.mark.asyncio
     async def test_fetch_prefers_obj(self) -> None:
         """Task 3 修订：优先拉取 .obj/.stl，format 取实际扩展名。"""
         adapter = YCBAdapter()

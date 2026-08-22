@@ -208,6 +208,58 @@ def test_validate_urdf_missing_asset_is_error() -> None:
     )
 
 
+def test_validate_urdf_assets_missing_metadata_is_error() -> None:
+    """P0-C：下载阶段 assets_missing 记录透传到 ParsedItem 后判 ERROR（即便引用核对无缺失）。"""
+    pytest.importorskip("yourdfpy")
+    urdf = b'<robot name="r"><link name="base"><visual><geometry><box size="0.1 0.1 0.1"/></geometry></visual></link></robot>'
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.ROBOT_URDF,
+        name="r1",
+        canonical_format="urdf",
+        output_path="robots/r1.urdf",
+        data=urdf,
+        raw_bytes=urdf,
+        assets={},
+        assets_missing=["meshes/gear.stl"],  # 下载阶段失败记录（URDF 文本未引用）
+        provenance=_provenance("urdf"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert any(
+        i.req_id == "r1"
+        and "meshes/gear.stl" in i.message
+        and i.severity == Severity.ERROR
+        for i in out["validation_issues"]
+    )
+
+
+def test_validate_urdf_no_raw_bytes_missing_ref_is_error() -> None:
+    """P0-C：无 raw_bytes（内联展开后的纯字节）同样执行 XML 引用核对，缺失 mesh 判 ERROR。"""
+    pytest.importorskip("yourdfpy")
+    urdf = (
+        b'<robot name="r"><link name="base"><visual><geometry>'
+        b'<mesh filename="meshes/base.stl"/>'
+        b"</geometry></visual></link></robot>"
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.ROBOT_URDF,
+        name="r1",
+        canonical_format="urdf",
+        output_path="robots/r1.urdf",
+        data=urdf,  # raw_bytes 缺省
+        assets={},  # 引用的 mesh 缺失
+        provenance=_provenance("urdf"),
+    )
+    out = node_validate({"parsed_data": {"r1": item}})
+    assert any(
+        i.req_id == "r1"
+        and "meshes/base.stl" in i.message
+        and i.severity == Severity.ERROR
+        for i in out["validation_issues"]
+    )
+
+
 def test_validate_mesh_bytes_success() -> None:
     mesh_bytes = (_SAMPLE_DIR / "mesh" / "hand.stl").read_bytes()
     state: SystemState = {

@@ -11,6 +11,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 import trimesh
@@ -530,3 +531,71 @@ class TestFormatMismatchDetection:
         reason = _format_mismatch_reason(urdf_req, "markdown")
         assert reason is not None
         assert "实际返回 markdown" in reason
+
+
+# ─── Task 2: SIM_CONFIG 兄弟路径 context 透传（场景组装接线） ───
+
+
+def _capturing_sim_skill(captured: dict[str, Any]):
+    """返回捕获 process kwargs 的假 SimConfigSkill（供 registry 透传断言）。"""
+
+    def fake_process(self, data, **kwargs):
+        captured.update(kwargs)
+        return StandardResult(
+            success=True,
+            canonical_format="mjcf",
+            output_path="sim_config/scene.xml",
+            data=b"<mujoco/>",
+        )
+
+    return type("_FakeSimSkill", (), {"process": fake_process})()
+
+
+class TestSimConfigContextPassthrough:
+    """SIM_CONFIG 的 urdf_path/mesh_path 经 context 透传给 skill.process。
+
+    兄弟 URDF/Mesh 路径由 parse_convert 节点装配进 context，registry 负责
+    透传：context 含 urdf_path/mesh_path 时 skill.process 收到对应 kwargs；
+    无 context（无兄弟需求）时不注入，行为不变。
+    """
+
+    def test_context_paths_passed_to_sim_config_skill(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured: dict[str, Any] = {}
+        monkeypatch.setattr(
+            SkillRegistry,
+            "get_skill",
+            lambda self, req_type: _capturing_sim_skill(captured),
+        )
+        raw = _make_raw("yaml", b"isaac: {}", item_id="scene")
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.SIM_CONFIG)
+
+        outcome = SkillRegistry().process_retrieval_result(
+            result,
+            req,
+            context={"urdf_path": "robots/panda.urdf", "mesh_path": "objects/cup.stl"},
+        )
+
+        assert isinstance(outcome, ParsedItem)
+        assert captured["urdf_path"] == "robots/panda.urdf"
+        assert captured["mesh_path"] == "objects/cup.stl"
+
+    def test_no_context_omits_path_kwargs(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """无 context（无兄弟需求）时 skill.process 不收到 urdf_path/mesh_path。"""
+        captured: dict[str, Any] = {}
+        monkeypatch.setattr(
+            SkillRegistry,
+            "get_skill",
+            lambda self, req_type: _capturing_sim_skill(captured),
+        )
+        raw = _make_raw("yaml", b"isaac: {}", item_id="scene")
+        result = RetrievalResult(req_id="req_001", data=raw, status="success")
+        req = _make_req(DataReqType.SIM_CONFIG)
+
+        outcome = SkillRegistry().process_retrieval_result(result, req)
+
+        assert isinstance(outcome, ParsedItem)
+        assert "urdf_path" not in captured
+        assert "mesh_path" not in captured

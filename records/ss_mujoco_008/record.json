@@ -71,12 +71,7 @@
     "validate": {
       "errors": 2,
       "warnings": 2,
-      "runtime_check": {
-        "req_000": {
-          "status": "skipped",
-          "detail": "mujoco 未安装，仅做 XML 语法校验"
-        }
-      },
+      "runtime_check": "not_run",
       "missing_items": []
     },
     "package": {

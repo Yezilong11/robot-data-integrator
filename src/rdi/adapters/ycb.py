@@ -37,6 +37,20 @@ _FALLBACK_OBJECTS: list[dict[str, str]] = [
     {"id": "052_extra_large_clamp", "title": "Extra Large Clamp", "category": "tool"},
 ]
 
+# 语义别名：查询词 → 收录词。仅在命中判定时做归一，不改变返回条目本身
+_SEMANTIC_ALIASES: dict[str, str] = {"cup": "mug"}
+
+
+def _normalize_terms(text: str) -> set[str]:
+    """分词并对命中的语义别名做双向展开（如 cup→mug），返回匹配用 term 集合。"""
+    terms = {t for t in text.lower().replace("_", " ").split() if t}
+    for t in list(terms):
+        target = _SEMANTIC_ALIASES.get(t)
+        if target:
+            terms.add(target)
+    return terms
+
+
 # MeshSkill 优先支持的格式（小体积、无额外纹理依赖）
 _PREFERRED_MESH_EXTS = (".obj", ".stl", ".ply", ".dae")
 # 兼容兜底格式
@@ -107,13 +121,12 @@ class YCBAdapter(BaseAdapter):
 
     async def _search_fallback(self, query: str) -> list[SearchResult]:
         """路径 B：硬编码列表降级回退。无匹配时抛 AdapterCatalogError（而非返回空）。"""
-        query_lower = query.lower()
+        query_terms = _normalize_terms(query)
         matched = [
             obj
             for obj in _FALLBACK_OBJECTS
-            if query_lower in obj["id"]
-            or query_lower in obj["title"].lower()
-            or query_lower in obj["category"].lower()
+            if query_terms
+            & _normalize_terms(f"{obj['id']} {obj['title']} {obj['category']}")
         ]
         if not matched:
             raise AdapterCatalogError(

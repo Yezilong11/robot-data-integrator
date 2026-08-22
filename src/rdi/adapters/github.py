@@ -7,14 +7,25 @@
 """
 
 import base64
+import json
 import re
 from typing import Any
 
 from rdi.adapters.base import BaseAdapter
+from rdi.adapters.selectors import build_download_guide, select_target_file
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
-from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.common import DataReqType, DataSource
+from rdi.models.retrieval import RawData, RawReference, SearchResult
+
+# 走「contents 文件树 → 定位 → HEAD 预检 → 下载/引用」链路的"数据类需求"；
+# CODE/PAPER 等非数据需求仍返回 README（不改变既有检索行为）。
+_DATA_REQ_TYPES = frozenset({"policy_model", "sensor_data", "grasp", "dataset"})
+# contents API 每目录一次调用（未认证 60 次/时），递归深度上限防止异常深目录
+# 耗尽速率配额（ponytail: 超深仓库视为无子目录候选，不做无限递归）。
+_MAX_TREE_DEPTH = 5
+# RawReference 引用原因（与 huggingface/graspnet 超限文案一致）
+_REF_REASON = "超过 max_fetch_bytes 自动下载上限"
 
 
 class GitHubAdapter(BaseAdapter):
@@ -80,19 +91,23 @@ class GitHubAdapter(BaseAdapter):
 
         - ROBOT_URDF 需求：从仓库文件树定位 ``.urdf`` 文件并下载（避免拿到 README
           markdown 导致类型错配）；无 URDF 时回退 README
+        - 数据类需求（POLICY_MODEL/SENSOR_DATA/GRASP/DATASET）：contents API 列仓库
+          文件树 → select_target_file 定位候选 → HEAD 预检体积：≤ max_fetch_bytes
+          真实下载落盘（downloaded=True）；超限返回 RawReference 引用（wget 提示）
         - 其他/默认：获取仓库 README 内容
 
         Args:
             repo_name: 仓库全名（如 "NVlabs/6-DOF-GraspNet"）
-            req_type: 数据需求类型字符串（如 "ROBOT_URDF"），可空
+            req_type: 数据需求类型（DataReqType 枚举或值字符串），可空
 
         Returns:
-            RawData 包含 README markdown 或 URDF 文件二进制数据
+            RawData 包含 README markdown、URDF 二进制或目标数据文件
 
         Raises:
             AdapterError: 获取失败
         """
-        if str(req_type).lower() == "robot_urdf":
+        req = str(req_type).lower()
+        if req == "robot_urdf":
             found = await self._find_urdf_file(repo_name)
             if found is not None:
                 urdf_path, ref = found
@@ -102,7 +117,7 @@ class GitHubAdapter(BaseAdapter):
                 # 'Unable to resolve filename: package://meshes/...'（ss_franka_002/003
                 # 网格缺失根因，与 FrankaAdapter 的 _fetch_* 同模式）。
                 raw_url = f"https://raw.githubusercontent.com/{repo_name}/{ref}/{urdf_path}"
-                assets = await self._download_xml_with_assets(raw_url, data_bytes)
+                assets, missing_assets = await self._download_xml_with_assets(raw_url, data_bytes)
                 # 与 franka 等源一致：剥离 package:// 前缀，使网格引用与资产键
                 # （_resolve_asset_rel 剥离后的相对路径）一致，离线可加载。
                 data_bytes = re.sub(rb"package://", b"", data_bytes)
@@ -114,7 +129,14 @@ class GitHubAdapter(BaseAdapter):
                     url=raw_url,
                     size_bytes=len(data_bytes),
                     assets=assets,
+                    metadata={"assets_missing": missing_assets} if missing_assets else {},
                 )
+        # 数据类需求走「contents 树 → 定位 → HEAD 预检 → 下载/引用」链路；
+        # 无候选/树不可用时回退 README（保持 fetch 稳定，不抛错）。
+        if req in _DATA_REQ_TYPES:
+            data_raw = await self._fetch_data_file(repo_name, req)
+            if data_raw is not None:
+                return data_raw
         data = await self._request(
             "GET",
             f"/repos/{repo_name}/readme",
@@ -128,6 +150,132 @@ class GitHubAdapter(BaseAdapter):
             data=readme_bytes,
             url=data.get("html_url", ""),
             size_bytes=len(readme_bytes),
+        )
+
+    async def _fetch_data_file(self, repo_name: str, req_type: str) -> RawData | None:
+        """数据类需求的「文件树 → 定位 → HEAD 预检 → 下载/引用」链路。
+
+        经 contents API 递归列树，select_target_file 定位目标候选；HEAD 预检
+        ≤ max_fetch_bytes 则真实下载落盘（metadata["downloaded"]=True），超限
+        返回 RawReference 引用（download_url/wget 提示，Reference 由 registry
+        透传到 ParsedItem），data 保留本库统一引用 payload 结构并注明未下载。
+
+        返回 None 表示无候选/树不可用（调用方回退 README，不抛错）。
+        """
+        try:
+            req_enum = DataReqType(req_type)
+        except ValueError:
+            return None
+        try:
+            tree = await self._list_contents_tree(repo_name)
+        except AdapterError:
+            return None
+        candidates = select_target_file(tree, req_enum)
+        if not candidates:
+            return None
+        candidate = candidates[0]
+        path = str(candidate.get("path") or candidate.get("name") or "")
+        # 优先 contents API 的 download_url；缺省时用 raw.githubusercontent 直链
+        url = str(
+            candidate.get("url")
+            or f"https://raw.githubusercontent.com/{repo_name}/HEAD/{path}"
+        )
+        contents_size = int(candidate.get("size") or 0)
+        # HEAD 预检：超限 → RawReference；HEAD 未知视为未超限 → 真实下载
+        head_size = await self._head_content_length(url)
+        if head_size is not None and head_size > settings.max_fetch_bytes:
+            return self._data_reference(
+                repo_name,
+                candidate,
+                url,
+                contents_size or head_size,
+                req_enum,
+            )
+        cache_id = f"{repo_name}/{path}"
+        data_bytes = self.load_from_cache(cache_id) if self.is_cached(cache_id) else None
+        if data_bytes is None:
+            data_bytes = await self._download_bytes(url)
+            self.save_to_cache(cache_id, data_bytes)
+        fmt = path.rsplit(".", 1)[-1].lower() if "." in path else "bin"
+        return RawData(
+            source=DataSource.GITHUB,
+            item_id=repo_name,
+            format=fmt,
+            data=data_bytes,
+            url=url,
+            size_bytes=len(data_bytes),
+            metadata={"downloaded": True},
+        )
+
+    async def _list_contents_tree(
+        self, repo_name: str, path: str = "", depth: int = 0
+    ) -> list[dict[str, Any]]:
+        """递归列出仓库文件树（GitHub contents API）。
+
+        contents API 不递归（每层目录一次调用）；条目保留 type/file|dir、name、
+        path、size，并把 download_url 映射为 ``url`` 字段，与 select_target_file /
+        build_download_guide 的输入约定一致。子目录列表失败跳过不阻断；根目录
+        失败抛 AdapterError（由调用方回退 README）。
+        """
+        entries = await self._request(
+            "GET",
+            f"/repos/{repo_name}/contents/{path}".rstrip("/"),
+            headers=self.headers,
+        )
+        if not isinstance(entries, list):
+            return []
+        tree: list[dict[str, Any]] = []
+        for item in entries:
+            if not isinstance(item, dict):
+                continue
+            tree.append({**item, "url": str(item.get("download_url") or "")})
+            if item.get("type") == "dir" and depth < _MAX_TREE_DEPTH:
+                sub_path = str(item.get("path") or "")
+                try:
+                    tree.extend(
+                        await self._list_contents_tree(repo_name, sub_path, depth + 1)
+                    )
+                except AdapterError:
+                    continue
+        return tree
+
+    def _data_reference(
+        self,
+        repo_name: str,
+        candidate: dict[str, Any],
+        url: str,
+        file_size: int,
+        req_enum: DataReqType,
+    ) -> RawData:
+        """候选文件超 max_fetch_bytes：构造 RawReference（download_url + wget 提示）。
+
+        data 保留引用 payload 结构（downloaded=False + download_guide），
+        reference 字段由 registry 无条件透传到 ParsedItem 供手动获取。
+        """
+        guide = build_download_guide({**candidate, "url": url}, _REF_REASON, req_enum)
+        path = str(candidate.get("path") or candidate.get("name") or "")
+        payload: dict[str, Any] = {
+            "repo": repo_name,
+            "file_path": path,
+            "downloaded": False,
+            "file_size": file_size,
+            "download_guide": guide,
+        }
+        content = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        return RawData(
+            source=DataSource.GITHUB,
+            item_id=repo_name,
+            format="json",
+            data=content,
+            url=f"https://github.com/{repo_name}",
+            size_bytes=len(content),
+            metadata={"downloaded": False},
+            reference=RawReference(
+                url=url,
+                download_hint=guide["method_hint"],
+                file_size=file_size,
+                reason=_REF_REASON,
+            ),
         )
 
     async def _find_urdf_file(self, repo_name: str) -> tuple[str, str] | None:

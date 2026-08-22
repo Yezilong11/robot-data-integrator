@@ -7,7 +7,7 @@
 
 import json
 import time
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
@@ -137,8 +137,14 @@ def explain_quality(
     avg_confidence: float,
     avg_completeness: float,
     manifest_summary: str,
+    undownloaded_items: list[dict[str, Any]] | None = None,
 ) -> QualityExplanation | None:
     """基于质量报告数字生成自然语言质量解释。
+
+    Args:
+        undownloaded_items: 未自动下载的文件项清单（每项含产物路径 / file_url /
+            file_size / reason / wget 命令 / download_guide），指导 LLM 在解释中
+            说明数据未自动下载的原因与获取方式；None/空列表时省略该上下文。
 
     LLM 失败返回 None，由上层省略解释或使用规则模板。
     """
@@ -149,9 +155,16 @@ def explain_quality(
         f"校验问题：{_fmt_list(validation_issues)}\n"
         f"平均置信度：{avg_confidence}\n"
         f"平均完整度：{avg_completeness}\n"
-        f"manifest 摘要：{manifest_summary}\n\n"
-        "请根据以上输入，按照 schema 输出质量解释（严格 JSON）。"
+        f"manifest 摘要：{manifest_summary}\n"
     )
+    if undownloaded_items:
+        prompt += (
+            "未下载项清单："
+            f"{json.dumps(undownloaded_items, ensure_ascii=False)}\n"
+            "以上数据项因体积超限或源不可直连未自动下载，解释中必须包含"
+            "“数据未自动下载的原因与获取方式”（含 wget 命令）。\n"
+        )
+    prompt += "\n请根据以上输入，按照 schema 输出质量解释（严格 JSON）。"
     return _call_decision(
         "explain_quality", prompt, QualityExplanation, QUALITY_EXPLANATION_SYSTEM_PROMPT
     )

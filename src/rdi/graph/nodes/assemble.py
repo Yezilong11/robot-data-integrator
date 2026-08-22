@@ -32,7 +32,10 @@ from rdi.models import (
     PackageManifest,
     Priority,
     QualityReport,
+    Severity,
+    ValIssue,
 )
+from rdi.models.parsed import MissingItem
 
 logger = get_logger(__name__)
 
@@ -243,6 +246,99 @@ def _render_rule_quality_md(report: QualityReport, issues: list[str]) -> str:
     )
 
 
+# Task 9/10：未下载数据「数据获取指引」段标题（完整性校验锚点依赖该段恒定存在）
+_DOWNLOAD_GUIDE_HEADING = "## 数据获取指引"
+
+
+def _extract_download_guide(package_dir: Path, rel_path: str) -> dict[str, Any] | None:
+    """从落盘产物（metadata JSON 代理文件）读取下载指引结构。
+
+    dataset/sensor/policy 降级产物在 data 顶层附加 ``download_guide``（结构同
+    ``build_download_guide`` 输出：status/reason/source_file_url/method_hint 等）；
+    非 JSON 或缺少该键返回 None（视为指引未随产物落盘 → 完整性校验 ERROR）。
+    """
+    try:
+        obj = json.loads((package_dir / rel_path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    guide = obj.get("download_guide") if isinstance(obj, dict) else None
+    return guide if isinstance(guide, dict) else None
+
+
+def _ensure_download_guide_section(md: str, contexts: list[dict[str, Any]]) -> str:
+    """质量解释统一出口：存在未下载项时恒 append「数据获取指引」段。
+
+    规则兜底与 LLM 成功路径均经此函数（Task 9 保证该段恒在解释里，完整性校验
+    锚点依赖此不变量）；LLM 已输出同标题段落时跳过，避免重复。
+    段内含下载列表模板：每项 wget URL -O 路径 + 未下载原因。
+    """
+    if not contexts or _DOWNLOAD_GUIDE_HEADING in md:
+        return md
+    lines = [
+        _DOWNLOAD_GUIDE_HEADING,
+        "",
+        f"数据包存在 {len(contexts)} 项未自动下载的数据（体积超限或源不可直连），"
+        "请按以下命令手动获取后再使用：",
+        "",
+    ]
+    for c in contexts:
+        url = c.get("file_url", "")
+        path = c.get("path", "")
+        reason = c.get("reason") or "未自动下载"
+        wget = c.get("wget") or (f"wget {url} -O {path}" if url else "（缺少下载 URL）")
+        lines += [
+            f"- {path}（{url}，{c.get('file_size', 0)} 字节）",
+            f"  - 原因：{reason}",
+            f"  - 命令：`{wget}`",
+            "",
+        ]
+    return md.rstrip() + "\n\n" + "\n".join(lines).rstrip() + "\n"
+
+
+def _check_download_integrity(
+    contexts: list[dict[str, Any]], quality_md: str
+) -> list[ValIssue]:
+    """完整性校验锚点：manifest 中 downloaded=false 的文件项必须有可落盘获取途径。
+
+    逐项检查：
+    - ``download_guide`` 已随产物落盘（f.path 对应 JSON 顶层含 download_guide）——缺失 ERROR；
+    - 质量解释含「数据获取指引」段（说明未下载原因与获取方式）——缺失 ERROR。
+
+    任一缺失/不满足产出完整性 ERROR（按 validate 风格：ValIssue + issue_type）；
+    全部满足返回空列表（通过）。
+    """
+    issues: list[ValIssue] = []
+    has_section = _DOWNLOAD_GUIDE_HEADING in quality_md
+    for c in contexts:
+        if c.get("download_guide") is None:
+            issues.append(
+                ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=c.get("req_id", ""),
+                    message=(
+                        f"完整性校验：未下载项 {c.get('path', '')} 缺少 download_guide，"
+                        "数据获取指引未随产物落盘"
+                    ),
+                    suggestion="在产物 data 顶层附加 download_guide（含 reason/source_file_url/method_hint）",
+                    context={"issue_type": "download_integrity", "path": c.get("path", "")},
+                )
+            )
+        elif not has_section:
+            issues.append(
+                ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=c.get("req_id", ""),
+                    message=(
+                        f"完整性校验：未下载项 {c.get('path', '')} 的质量解释缺少"
+                        "「数据获取指引」段（未说明未下载原因与获取方式）"
+                    ),
+                    suggestion="质量解释必须包含数据未自动下载的原因与手动获取方式",
+                    context={"issue_type": "download_integrity", "path": c.get("path", "")},
+                )
+            )
+    return issues
+
+
 def node_assemble(state: SystemState) -> dict[str, Any]:
     """整合打包节点：序列化解析数据落盘并生成 Manifest。
 
@@ -252,18 +348,55 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
     now = datetime.now()
     start = time.monotonic()
     parsed_data = state.get("parsed_data", {})
-    missing_items = state.get("missing_items", [])
+    missing_items = list(state.get("missing_items", []))  # 拷贝，避免节点副作用改写 state 原列表
     requirements = state.get("data_requirements", [])
     validation_issues = state.get("validation_issues", [])
+    req_by_id = {r.req_id: r for r in requirements}
+
+    # P0-B：内容有效性 ERROR 的 req 视为未满足——不入 manifest_files，转为
+    # MissingItem（附带原校验原因），使包状态如实判 partial/failed 而非 complete
+    invalid_req_ids: set[str] = {
+        i.req_id
+        for i in validation_issues
+        if i.severity == Severity.ERROR and i.context.get("issue_type") == "content_validity"
+    }
+    for rid in invalid_req_ids:
+        if any(getattr(m, "req_id", None) == rid for m in missing_items):
+            continue
+        reasons = [
+            i.message
+            for i in validation_issues
+            if i.req_id == rid
+            and i.severity == Severity.ERROR
+            and i.context.get("issue_type") == "content_validity"
+        ]
+        req = req_by_id.get(rid)
+        missing_items.append(
+            MissingItem(
+                req_id=rid,
+                req_type=(req.req_type if req is not None else DataReqType.UNKNOWN),
+                description=(req.description if req is not None else ""),
+                reason="内容有效性未通过：" + "；".join(reasons),
+            )
+        )
 
     package_id = f"package-{now.strftime('%Y%m%d-%H%M%S')}"
     package_dir = Path(settings.output_dir) / package_id
     package_dir.mkdir(parents=True, exist_ok=True)
 
     manifest_files: list[ManifestFile] = []
+    undownloaded_files: list[ManifestFile] = []  # Task 9/10：downloaded=false 主文件条目
     provenance: list[str] = []
 
     for req_id, item in parsed_data.items():
+        # P0-B：内容有效性未通过的项已被转为 MissingItem，不再落盘
+        if req_id in invalid_req_ids:
+            logger.warning(
+                "assemble.item_excluded",
+                req_id=req_id,
+                reason="内容有效性未通过（占位/语义错配）",
+            )
+            continue
         try:
             subdir = _subdir_for_req_type(item.req_type)
             # 资产文件条目暂存，主文件条目之后统一追加（保持 files[0] 为主文件）
@@ -348,8 +481,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                 written_size,
                 rel_path,
             )
-        manifest_files.append(
-            ManifestFile(
+        entry = ManifestFile(
                 req_id=req_id,
                 path=rel_path,
                 format=item.canonical_format,
@@ -366,8 +498,10 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                 local_path=local_path,
                 checksum_sha256=sha256,
             )
-        )
-        # 主文件条目之后追加资产条目，保持 manifest 中主文件在前
+        manifest_files.append(entry)
+        if not downloaded:
+            undownloaded_files.append(entry)
+        # 主文件之后追加资产条目，保持 manifest 中主文件在前
         manifest_files.extend(asset_entries)
 
     manifest_missing = [
@@ -378,6 +512,25 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         )
         for m in missing_items
     ]
+
+    # Task 9/10：downloaded=false 的未下载项上下文（每项：产物路径/file_url/file_size/
+    # reason/wget 命令/download_guide）。download_guide 从落盘 metadata JSON 代理文件
+    # 提取（dataset/sensor/policy 降级产物在 data 顶层附加），供 LLM prompt 与
+    # 完整性校验锚点共用。
+    undownloaded_contexts: list[dict[str, Any]] = []
+    for f in undownloaded_files:
+        guide = _extract_download_guide(package_dir, f.path)
+        undownloaded_contexts.append(
+            {
+                "req_id": f.req_id,
+                "path": f.path,
+                "file_url": f.file_url,
+                "file_size": f.file_size,
+                "reason": (guide or {}).get("reason", "") or "",
+                "wget": (guide or {}).get("method_hint", "") or "",
+                "download_guide": guide,
+            }
+        )
 
     total_conf = sum(f.confidence for f in manifest_files)
     total_comp = sum(f.completeness for f in manifest_files)
@@ -403,6 +556,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         avg_confidence=quality_report.avg_confidence,
         avg_completeness=quality_report.avg_completeness,
         manifest_summary=f"{len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项",
+        undownloaded_items=undownloaded_contexts,
     )
     explain_usage_entry = {
         "decision": "explain_quality",
@@ -425,6 +579,30 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             "generated:rule_explanation",
             0.5,
         )
+
+    # Task 9：统一出口保证「数据获取指引」段恒在解释里（规则兜底与 LLM 成功路径
+    # 均覆盖），完整性校验锚点（Task 10）依赖此不变量；LLM 已输出同标题段则跳过。
+    quality_md = _ensure_download_guide_section(quality_md, undownloaded_contexts)
+
+    # Task 10：完整性校验锚点 —— downloaded=false 的文件项必须已有 download_guide
+    # 随产物落盘、且解释含数据获取指引；任一缺失产出完整性 ERROR，完整则 PASS。
+    integrity_issues = _check_download_integrity(undownloaded_contexts, quality_md)
+    if integrity_issues:
+        integrity_log = (
+            f"[{now.isoformat()}] assemble_completeness_check: FAIL —— "
+            + "; ".join(f"{i.req_id}: {i.message}" for i in integrity_issues)
+        )
+        integrity_errors = [
+            f"完整性校验 ERROR ({i.req_id}): {i.message}" for i in integrity_issues
+        ]
+        for i in integrity_issues:
+            logger.warning("assemble.completeness_check", req_id=i.req_id, reason=i.message)
+    else:
+        integrity_log = (
+            f"[{now.isoformat()}] assemble_completeness_check: PASS —— "
+            f"{len(undownloaded_contexts)} 项未下载数据均有 download_guide 且解释含数据获取指引"
+        )
+        integrity_errors: list[str] = []
     quality_entry = ManifestFile(
         req_id="package",
         path="quality_explanation.md",
@@ -474,6 +652,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
             f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
             f"落盘 {len(manifest_files)} 个文件，缺失 {len(manifest_missing)} 项",
             f"[{now.isoformat()}] assemble_package: {explain_note}",
+            integrity_log,
         ],
         runtime_check=state.get("runtime_check", {}),
         revision_history=state.get("revision_history", []),
@@ -521,6 +700,7 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         f"[{now.isoformat()}] assemble_package: 生成数据包 {package_id}，"
         f"落盘 {len(manifest_files)} 个文件",
     ]
+    provenance.append(integrity_log)
 
     logger.info(
         "assemble.done",
@@ -536,6 +716,8 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
         "missing_items": missing_items,
         "provenance": provenance,
         "quality_explanation": qe,
+        # errors 为累积字段（Annotated operator.add）；完整性校验 ERROR 字符串入列
+        "errors": integrity_errors,
         # llm_usage 为累积字段（Annotated operator.add），节点只返回本次条目
         "llm_usage": [explain_usage_entry],
     }

@@ -9,8 +9,10 @@ from __future__ import annotations
 import ast
 import contextlib
 import io
+import json
 import os
 import posixpath
+import re
 import shutil
 import tempfile
 import time
@@ -59,6 +61,218 @@ def _is_dict_like(data: Any) -> bool:
     """判断对象是否支持键值访问（dict 或 npz-like）。"""
     return isinstance(data, dict) or (
         data is not None and hasattr(data, "__getitem__") and hasattr(data, "keys")
+    )
+
+
+# ─── P0-A 内容有效性校验：占位/元数据代理检测 + 目标-内容语义匹配 ───
+
+# 占位数据字节阈值：降级来源且序列化后小于该字节数视为疑似占位（仅元数据/摘要）
+_PLACEHOLDER_BYTE_THRESHOLD = 200
+
+# 内容语义匹配仅对"内容是具体物体/机器人/数据内容"的语义关键类型启用。
+# dataset / sensor_data / policy_model 依赖 LLM 提炼的 semantic_terms 提供
+# 数据内容语义（如 robot manipulation / action labels），无 semantic_terms 时
+# 沿用 object_name/keywords 轻量提取，仍无具体词则跳过（fail-open）。
+_SEMANTIC_REQ_TYPES: tuple[DataReqType, ...] = (
+    DataReqType.GRASP,
+    DataReqType.MESH,
+    DataReqType.ROBOT_URDF,
+    DataReqType.SIM_CONFIG,
+    DataReqType.DATASET,
+    DataReqType.SENSOR_DATA,
+    DataReqType.POLICY_MODEL,
+)
+
+# 公共别名：供检索候选语义预筛（retrieve_data._pick_semantic_candidate）复用
+SEMANTIC_REQ_TYPES: tuple[DataReqType, ...] = _SEMANTIC_REQ_TYPES
+
+# 需求侧中文物体名 → YCB 英文物体名映射（与 parse_goal._YCB_COMMON_OBJECT_NAMES 呼应）
+_YCB_TERM_MAP: dict[str, str] = {
+    "苹果": "apple",
+    "香蕉": "banana",
+    "马克杯": "mug",
+    "杯子": "cup",
+    "碗": "bowl",
+    "饼干盒": "cracker box",
+    "糖盒": "sugar box",
+    "番茄汤罐": "tomato soup can",
+    "主厨罐": "master chef can",
+    "芥末罐": "mustard bottle",
+    "金枪鱼罐": "tuna fish can",
+    "瓶子": "bottle",
+    "剪刀": "scissors",
+}
+
+# 不计入目标术语的泛词（避免 robot/dataset/grasp 等容器词造成误报）
+_SEMANTIC_STOPWORDS: frozenset[str] = frozenset(
+    {
+        "robot", "robots", "robotic", "robotics", "manipulator", "arm",
+        "机械臂", "机器人", "data", "dataset", "datasets", "数据", "模型",
+        "model", "models", "mesh", "meshes", "网格", "物体", "object", "objects",
+        "grasp", "grasping", "抓取", "标注", "annotation", "annotations",
+        "pose", "poses", "config", "configs", "configuration", "配置",
+        "simulation", "sim", "仿真", "policy", "策略", "环境", "environment",
+        "scene", "scenes", "场景", "file", "files", "文件", "文档", "document",
+        "paper", "论文", "code", "repository", "信息", "任务", "benchmark",
+    }
+)
+
+
+def _serialized_size(data: Any) -> int:
+    """估算数据序列化后的字节数（bytes/str 直接量长度，容器用 JSON 近似）。"""
+    if isinstance(data, bytes):
+        return len(data)
+    if isinstance(data, str):
+        return len(data.encode("utf-8"))
+    if data is None:
+        return 0
+    try:
+        return len(json.dumps(data, default=str).encode("utf-8"))
+    except Exception:  # noqa: BLE001 - 无法序列化视为非占位（有内容）
+        return _PLACEHOLDER_BYTE_THRESHOLD + 1
+
+
+def _is_metadata_proxy(item: Any) -> tuple[bool, str]:
+    """检测 ParsedItem 是否仅为元数据/占位（真实数据未获得）。
+
+    任一命中即占位：
+    1. ``reference`` 非空（大文件仅提供远端引用，未下载）；
+    2. canonical_format 为 DatasetSummary 且 data.file_tree 为空（仅摘要）；
+    3. 降级来源（is_fallback 或 data_source_quality==fallback）且序列化后
+       < ``_PLACEHOLDER_BYTE_THRESHOLD`` 字节（疑似占位）。
+
+    Returns:
+        (is_proxy, reason)：reason 为命中原因（未命中时为空串）。
+    """
+    if getattr(item, "reference", None) is not None:
+        return True, "仅提供远端引用（大文件未下载）"
+    cf = (getattr(item, "canonical_format", "") or "").lower()
+    data = getattr(item, "data", None)
+    if cf in ("datasetsummary", "dataset summary") and isinstance(data, dict):
+        if not (data.get("file_tree") or []):
+            return True, "数据集仅元数据/摘要，未含实际文件"
+    fallback_src = getattr(item, "is_fallback", False) or (
+        getattr(item, "data_source_quality", None) or ""
+    ) == "fallback"
+    if fallback_src and _serialized_size(data) < _PLACEHOLDER_BYTE_THRESHOLD:
+        return True, "降级来源且数据过小，疑似占位"
+    return False, ""
+
+
+def _extract_semantic_terms(req: Any) -> set[str]:
+    """从需求提取目标实体术语（物体/机器人/数据内容），用于目标-内容匹配。
+
+    来源：LLM 提炼的 ``semantic_terms``（优先，直接采用，仅跳过空串）+
+    ``object_name`` + ``keywords`` + description 中的 YCB 中英名单与 YCB id
+    （位于 parse_goal 语义，如 011_banana）。泛词与纯符号串被过滤
+    （semantic_terms 之外的来源）；semantic_terms 为空时行为与现状完全一致。
+    """
+    terms: set[str] = set()
+    for st in getattr(req, "semantic_terms", []) or []:
+        s = str(st).strip().lower()
+        if s:
+            terms.add(s)
+    parts: list[str] = [getattr(req, "description", "") or ""]
+    parts.extend(getattr(req, "keywords", None) or [])
+    text = " ".join(parts)
+    lower = text.lower()
+    ob = (getattr(req, "object_name", "") or "").strip().lower()
+    if ob and ob not in _SEMANTIC_STOPWORDS:
+        terms.add(ob)
+    for m in re.finditer(r"\b\d{3}_[a-z0-9_]+\b", lower):
+        terms.add(m.group(1))
+    for zh, en in _YCB_TERM_MAP.items():
+        if zh in text:
+            terms.add(en)
+        if re.search(rf"\b{re.escape(en)}\b", lower):
+            terms.add(en)
+    for kw in (getattr(req, "keywords", None) or []):
+        k = str(kw).strip().lower()
+        if k and k not in _SEMANTIC_STOPWORDS and not re.fullmatch(r"[\W_]+", k):
+            terms.add(k)
+    return terms
+
+
+def _item_identity_text(item: Any) -> str:
+    """拼装资产标识文本：name + source_url 末两段 + data title/description 前 200 字符。"""
+    parts: list[str] = [getattr(item, "name", "") or ""]
+    prov = getattr(item, "provenance", None)
+    url = getattr(prov, "source_url", "") or ""
+    if url:
+        tail = url.rstrip("/").split("/")[-2:]
+        parts.extend(tail)
+    data = getattr(item, "data", None)
+    if isinstance(data, dict):
+        payload = data.get("title") or data.get("description") or ""
+        if isinstance(payload, list):
+            payload = " ".join(str(p) for p in payload)
+        if isinstance(payload, str):
+            parts.append(payload[:200])
+    elif isinstance(data, str):
+        parts.append(data[:200])
+    return " ".join(parts).lower()
+
+
+def _term_in(text: str, term: str) -> bool:
+    """术语匹配：中文按子串包含，英文/ASCII 按整词边界（避免 cup 命中 cupboard）。
+
+    匹配前把 ``-``/``_`` 规范化为空格：资产/仓库命名惯例用下划线/连字符
+    代替空格（franka_panda ⇔ 需求词 "franka panda"），不规范化会漏匹配。
+    """
+    if any(ord(c) > 127 for c in term):
+        return term in text
+    norm_text = re.sub(r"[-_]", " ", text)
+    norm_term = re.sub(r"[-_]", " ", term)
+    return re.search(rf"\b{re.escape(norm_term)}\b", norm_text) is not None
+
+
+def semantic_score(req: Any, name: str = "", url: str = "", desc: str = "") -> int:
+    """需求目标术语在候选标识文本中的命中数（公共语义预筛打分）。
+
+    拼装与 ``_item_identity_text`` 一致（name + url 末两段 + desc 前 200 字符，
+    lowercase），按 ``_term_in`` 规则统计 ``_extract_semantic_terms`` 提取的
+    术语命中个数。检索期候选排序（retrieve_data）与装配期语义校验
+    （``_semantic_mismatch``）共用同一打分，保证两处判定同源。
+    """
+    parts: list[str] = [name or ""]
+    if url:
+        tail = url.rstrip("/").split("/")[-2:]
+        parts.extend(tail)
+    if desc:
+        parts.append(str(desc)[:200])
+    text = " ".join(parts).lower()
+    return sum(1 for t in _extract_semantic_terms(req) if _term_in(text, t))
+
+
+def _semantic_mismatch(req: Any, item: Any) -> str:
+    """目标-内容语义匹配：需求目标实体词与资产标识零重叠时返回原因。
+
+    仅对 ``_SEMANTIC_REQ_TYPES`` 启用；目标术语为空（无具体物体/机器人）跳过。
+    ponytail: 轻量规则（词表 + 整词重叠），中文泛词可能误判；升级路径为接入
+    LLM 深度语义校验替换本规则。
+    """
+    if getattr(item, "req_type", None) not in _SEMANTIC_REQ_TYPES:
+        return ""
+    terms = _extract_semantic_terms(req)
+    if not terms:
+        return ""
+    prov = getattr(item, "provenance", None)
+    url = getattr(prov, "source_url", "") or ""
+    data = getattr(item, "data", None)
+    desc = ""
+    if isinstance(data, dict):
+        payload = data.get("title") or data.get("description") or ""
+        if isinstance(payload, list):
+            payload = " ".join(str(p) for p in payload)
+        if isinstance(payload, str):
+            desc = payload
+    elif isinstance(data, str):
+        desc = data
+    if semantic_score(req, getattr(item, "name", "") or "", url, desc) > 0:
+        return ""
+    return (
+        f"内容与需求语义不符（需求目标: {'、'.join(sorted(terms))}，"
+        f"实际: {getattr(item, 'name', '')}）"
     )
 
 
@@ -132,6 +346,7 @@ def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
                     f.write(content)
             yourdfpy.URDF.load(model_path, load_meshes=True)
             missing = _missing_urdf_assets(raw_bytes, tmp)
+            missing += [m for m in (getattr(item, "assets_missing", None) or []) if m not in missing]
             if missing:
                 return ValIssue(
                     severity=Severity.ERROR,
@@ -149,11 +364,35 @@ def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
         return None
     data = item.data
     if isinstance(data, bytes):
+        # 无 raw_bytes（如 Skill 内联展开后的纯字节）：同样写入临时目录执行
+        # XML 引用核对（P0-C），并结合下载阶段 assets_missing 判内容错误；
+        # 无网格深度加载（与原有行为一致）。
+        tmp = tempfile.mkdtemp()
         try:
-            with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as tmpf:
-                tmpf.write(data)
-                tmp_path = tmpf.name
-            yourdfpy.URDF.load(tmp_path, load_meshes=False)
+            model_path = os.path.join(tmp, "model.urdf")
+            with open(model_path, "wb") as f:
+                f.write(data)
+            for rel_path, content in (getattr(item, "assets", None) or {}).items():
+                norm_rel = posixpath.normpath(rel_path)
+                while norm_rel.startswith("../"):
+                    norm_rel = norm_rel[3:]
+                if not norm_rel or norm_rel == "..":
+                    continue
+                asset_path = os.path.join(tmp, norm_rel)
+                os.makedirs(os.path.dirname(asset_path), exist_ok=True)
+                with open(asset_path, "wb") as f:
+                    f.write(content)
+            missing = _missing_urdf_assets(data, tmp)
+            missing += [
+                m for m in (getattr(item, "assets_missing", None) or []) if m not in missing
+            ]
+            if missing:
+                return ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"URDF 无法解析: 引用的外部资源缺失: {', '.join(missing)}",
+                )
+            yourdfpy.URDF.load(model_path, load_meshes=False)
         except Exception as exc:  # noqa: BLE001 - 记录加载失败而非中断
             return ValIssue(
                 severity=Severity.ERROR,
@@ -161,8 +400,7 @@ def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
                 message=f"URDF 无法解析: {exc}",
             )
         finally:
-            with contextlib.suppress(OSError):
-                os.unlink(tmp_path)
+            shutil.rmtree(tmp, ignore_errors=True)
     return None
 
 
@@ -407,6 +645,27 @@ def _validate_grasp_loadability(item: Any, req_id: str) -> ValIssue | None:
     return None
 
 
+# 降级场景诚实标记前缀（与 sim_config.DEGRADED_SCENE_NOTE 联动，Task 3）。
+# SimConfigSkill 对非 MJCF 输入（python/yaml/未知）或解析失败生成最小 MJCF
+# 占位场景时，在 warnings 中写入此前缀文本；真实 MJCF 直通与 parse_mujoco
+# 重建分支不写标记。
+_DEGRADED_SCENE_MARK = "降级场景："
+
+
+def _sim_config_degraded_scene(item: Any) -> str:
+    """返回 SIM_CONFIG 降级场景的诚实提示文本；非降级返回空串。
+
+    在装配后的 ParsedItem.warnings 中检测 ``降级场景：`` 前缀标记，命中则
+    返回该说明，供 node_validate 以独立 WARNING 呈现（不改变 passed 判定）。
+    """
+    if getattr(item, "req_type", None) != DataReqType.SIM_CONFIG:
+        return ""
+    for w in getattr(item, "warnings", None) or []:
+        if w.startswith(_DEGRADED_SCENE_MARK):
+            return w
+    return ""
+
+
 def _check_loadability(item: Any, req_id: str) -> tuple[list[ValIssue], dict[str, Any] | None]:
     """根据 req_type 分发到对应可加载性校验函数。
 
@@ -530,6 +789,45 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                 )
             )
 
+        # 降级场景诚实标记（Task 3）：SIM_CONFIG 最小 MJCF 占位场景（非真实
+        # MJCF 直通）按现有 warning 通道呈现；不影响 passed 判定。
+        degraded_note = _sim_config_degraded_scene(item)
+        if degraded_note:
+            item_issues.append(
+                ValIssue(
+                    severity=Severity.WARNING,
+                    req_id=req_id,
+                    message=degraded_note,
+                    context={"issue_type": "degraded_scene"},
+                )
+            )
+
+        # P0-A 内容有效性：占位/元数据代理检测 + 目标-内容语义匹配
+        # 对所有项生效（不受 is_fallback 豁免）：占位项判 ERROR 而非仅 WARNING，
+        # 语义错配（命中非目标资产）判 ERROR 触发重试换源或如实失败。
+        req = req_by_id.get(req_id)
+        is_proxy, proxy_reason = _is_metadata_proxy(item)
+        if is_proxy:
+            item_issues.append(
+                ValIssue(
+                    severity=Severity.ERROR,
+                    req_id=req_id,
+                    message=f"需求实际未获得真实数据（仅元数据/占位）: {proxy_reason}",
+                    context={"issue_type": "content_validity"},
+                )
+            )
+        if req is not None and not is_proxy:
+            mismatch = _semantic_mismatch(req, item)
+            if mismatch:
+                item_issues.append(
+                    ValIssue(
+                        severity=Severity.ERROR,
+                        req_id=req_id,
+                        message=mismatch,
+                        context={"issue_type": "content_validity"},
+                    )
+                )
+
         # 可加载性深度校验
         load_issues, runtime_check = _check_loadability(item, req_id)
         item_issues.extend(load_issues)
@@ -554,6 +852,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                     req_id=m.req_id,
                     message=f"必需需求缺失: {m.reason}",
                     auto_fixable=False,
+                    context={"issue_type": "retrieval_axis"},
                 )
             )
         else:
@@ -562,6 +861,7 @@ def node_validate(state: SystemState) -> dict[str, Any]:
                     severity=Severity.WARNING,
                     req_id=m.req_id,
                     message="非必需需求缺失",
+                    context={"issue_type": "retrieval_axis"},
                 )
             )
         logger.warning(

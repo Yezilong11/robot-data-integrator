@@ -177,7 +177,7 @@ class AllegroAdapter(BaseAdapter):
             urdf_url = f"{self.base_url}/allegro_hand_description/urdf/allegro_hand.urdf.xacro"
             fmt = "xacro"
         content = await self._download_bytes(urdf_url)
-        assets = await self._download_xml_with_assets(urdf_url, content)
+        assets, missing_assets = await self._download_xml_with_assets(urdf_url, content)
         return RawData(
             source=DataSource.ALLEGRO,
             item_id=item_id,
@@ -186,6 +186,7 @@ class AllegroAdapter(BaseAdapter):
             url=urdf_url,
             size_bytes=len(content),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
     def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:

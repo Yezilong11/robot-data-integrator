@@ -242,7 +242,7 @@ class TestFrankaAdapter:
                 adapter,
                 "_download_xml_with_assets",
                 new_callable=AsyncMock,
-                return_value={},
+                return_value=({}, []),
             ),
         ):
             raw_primary = await adapter._fetch_primary("panda")

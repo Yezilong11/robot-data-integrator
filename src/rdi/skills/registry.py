@@ -181,7 +181,16 @@ class SkillRegistry:
             extra["dataset_name"] = _dataset_name_from_source(src)
 
         try:
-            res = skill.process(raw.data, fmt=fmt, name=name, url=raw.url, **extra)
+            # 透传 reference（RawData.reference，未下载大文件引用），供 skill 降级产物
+            # 在存在下载候选时附加 download_guide（Task 8）
+            res = skill.process(
+                raw.data,
+                fmt=fmt,
+                name=name,
+                url=raw.url,
+                reference=raw.reference,
+                **extra,
+            )
         except Exception as exc:  # noqa: BLE001 — 防御性：Skill 应自身降级，但仍兜底
             return MissingItem(
                 req_id=result.req_id,
@@ -236,6 +245,7 @@ class SkillRegistry:
             data=res.data,
             raw_bytes=raw_bytes,
             assets=assets,
+            assets_missing=list(raw.metadata.get("assets_missing") or []),
             reference=raw.reference,  # P0-4：未下载大文件引用无条件透传（已下载为 None）
             provenance=provenance,
             completeness_pct=res.completeness_pct,

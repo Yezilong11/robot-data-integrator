@@ -202,8 +202,11 @@ class BaseAdapter(ABC):
                 continue
             data = path.read_bytes()
             assets: dict[str, bytes] = {}
+            missing_assets: list[str] = []
             if fmt in ("urdf", "xacro", "xml"):
-                assets = self._local_assets_from_xml(data, posixpath.dirname(rel_path))
+                assets, missing_assets = self._local_assets_from_xml(
+                    data, posixpath.dirname(rel_path)
+                )
             return RawData(
                 source=DataSource.LOCAL,
                 item_id=item_id,
@@ -212,18 +215,29 @@ class BaseAdapter(ABC):
                 url=f"local://{self.source.value}/{rel_path}",
                 size_bytes=len(data),
                 assets=assets,
+                metadata={"assets_missing": missing_assets} if missing_assets else {},
             )
         return None
 
-    def _local_assets_from_xml(self, xml_bytes: bytes, xml_rel_dir: str) -> dict[str, bytes]:
+    def _local_assets_from_xml(
+        self, xml_bytes: bytes, xml_rel_dir: str
+    ) -> tuple[dict[str, bytes], list[str]]:
         """从本地挂载目录读取 XML 引用的外部资产（mesh/texture/include），不发起网络。
 
         D3：本地命中主 XML 时，其引用的相对路径资产同样优先从本地读取（存在则
         读入，缺失跳过，与 ``_download_xml_with_assets`` 的降级策略一致）。include
         链递归展开（深度上限 ``_MAX_ASSET_DEPTH``、``seen`` 去重防环），assets 键为
         相对主 XML 的完整路径（与网络版一致）。
+
+        P0-C：本地缺失的资产路径随返回值透出（``missing``），供调用方写入
+        ``RawData.metadata["assets_missing"]``。
+
+        Returns:
+            (assets, missing)：assets 为 规范化相对路径 → 字节 的字典；
+            missing 为本地缺失的资源路径列表。
         """
         assets: dict[str, bytes] = {}
+        missing: set[str] = set()
 
         def _collect(root: ET.Element, base_dir: str, depth: int, seen: set[str]) -> None:
             if depth > _MAX_ASSET_DEPTH:
@@ -242,7 +256,8 @@ class BaseAdapter(ABC):
                     continue  # 同一路径已处理（去重/防环）
                 path = self._find_local_file([full_rel])
                 if path is None:
-                    continue  # 本地缺失资产跳过（与网络版单资产失败只跳过一致）
+                    missing.add(full_rel)  # 本地缺失资产显性化（原为静默跳过）
+                    continue
                 content = path.read_bytes()
                 assets[full_rel] = content
                 seen.add(full_rel)
@@ -262,9 +277,9 @@ class BaseAdapter(ABC):
         try:
             root = ET.fromstring(xml_bytes)
         except Exception:  # noqa: BLE001 — 解析失败按无资产处理（与网络版一致）
-            return assets
+            return assets, []
         _collect(root, xml_rel_dir, 0, set())
-        return assets
+        return assets, sorted(missing)
 
     def __init__(
         self,
@@ -624,7 +639,7 @@ class BaseAdapter(ABC):
         owner, repo, ref, path = parts
         return f"{self._github_mirror_base}/{owner}/{repo}@{ref}/{path}"
 
-    async def _download_xml_with_assets(self, xml_url: str, xml_bytes: bytes) -> dict[str, bytes]:
+    async def _download_xml_with_assets(self, xml_url: str, xml_bytes: bytes) -> tuple[dict[str, bytes], list[str]]:
         """解析 XML 中引用的外部资源（mesh/texture/include）并一并下载。
 
         数据包自包含（P0-3）：主 XML 下载后，把其引用的相对路径资产（URDF 的
@@ -633,7 +648,7 @@ class BaseAdapter(ABC):
         可离线完整加载。include 链递归展开：子 XML 的 mesh/texture/include 引用
         同样下载，子 XML 内的相对路径以其所在目录为基准。
 
-        降级策略：XML 解析失败返回空 dict（不抛异常，不阻塞主下载流程）；
+        降级策略：XML 解析失败返回空资产（不抛异常，不阻塞主下载流程）；
         MJCF ``<compiler meshdir/texturedir>`` 目录基准会套用到 mesh/texture 引用
         （assets 键带前缀）；model://、http(s):// 等绝对 URL、xacro 变量（$(...)）
         与绝对路径（/ 开头）不下载；package://<rest> 按相对路径解析（pybullet_robots panda 语义：
@@ -641,17 +656,22 @@ class BaseAdapter(ABC):
         于 XML 所在目录）；include 深度超过 _MAX_ASSET_DEPTH 终止展开；
         同一规范化路径只下载一次（去重防环）；单个资产下载失败只跳过该资产。
 
+        P0-C：下载失败/深度超限的资产路径随返回值透出（``missing``），供调用方
+        写入 ``RawData.metadata["assets_missing"]`` 显性化缺失（validate 判内容错误）。
+
         Returns:
-            规范化相对路径 → 字节 的字典；同一路径重复出现时只下载一次。
+            (assets, missing)：assets 为 规范化相对路径 → 字节 的字典（同一路径
+            重复出现时只下载一次）；missing 为下载失败或深度超限的资源路径列表。
         """
         assets: dict[str, bytes] = {}
+        skipped: set[str] = set()
         try:
             root = ET.fromstring(xml_bytes)
         except Exception:  # noqa: BLE001 — 解析失败按无资产处理
-            return assets
+            return assets, []
         base_dir = posixpath.dirname(xml_url)
-        await self._collect_assets(root, base_dir, 0, set(), assets, set())
-        return assets
+        await self._collect_assets(root, base_dir, 0, set(), assets, skipped)
+        return assets, sorted(skipped)
 
     async def _collect_assets(
         self,

@@ -693,3 +693,180 @@ def test_assemble_llm_usage_appends_quality_decision(output_dir: Path) -> None:
     assert entry["status"] == "fallback"
     assert isinstance(entry["elapsed"], float)
     assert out["quality_explanation"] is None
+
+
+# ─── P0-B: 内容有效性（占位/语义错配）项不入包 ───
+
+
+def _content_validity_issue(req_id: str, message: str):
+    from rdi.models.common import Severity, ValIssue
+
+    return ValIssue(
+        severity=Severity.ERROR,
+        req_id=req_id,
+        message=message,
+        context={"issue_type": "content_validity"},
+    )
+
+
+def test_assemble_content_validity_required_fails(output_dir: Path) -> None:
+    """P0-B：REQUIRED 需求占位（内容有效性 ERROR）→ 不入 manifest 且状态 failed。"""
+    req = DataReq(
+        req_id="req_ph",
+        req_type=DataReqType.MESH,
+        description="苹果网格",
+        priority=Priority.REQUIRED,
+    )
+    item = _item("req_ph", DataReqType.MESH, "stl")
+    issue = _content_validity_issue("req_ph", "需求实际未获得真实数据（仅元数据/占位）: 疑似占位")
+    state: SystemState = {
+        "parsed_data": {"req_ph": item},
+        "data_requirements": [req],
+        "missing_items": [],
+        "validation_issues": [issue],
+    }
+    out = node_assemble(state)
+    pkg = out["experiment_package"]
+
+    # 占位项被排除：manifest 只有质量解释条目，不含该 req 的文件
+    assert all(f.req_id != "req_ph" for f in pkg.files)
+    # missing 标注原始原因
+    missing = [m for m in pkg.missing_items if m.req_id == "req_ph"]
+    assert len(missing) == 1
+    assert missing[0].reason.startswith("内容有效性未通过")
+    assert "仅元数据/占位" in missing[0].reason
+    # 状态如实判 failed（REQUIRED）
+    assert pkg.package_info["status"] == "failed"
+
+
+def test_assemble_content_validity_optional_partial(output_dir: Path) -> None:
+    """P0-B：非必需需求语义错配 → 不入 manifest、包状态 partial。"""
+    req = DataReq(
+        req_id="req_mm",
+        req_type=DataReqType.MESH,
+        description="苹果物体网格",
+        priority=Priority.OPTIONAL,
+    )
+    item = _item("req_mm", DataReqType.MESH, "stl")
+    issue = _content_validity_issue("req_mm", "内容与需求语义不符（需求目标: apple，实际: req_mm）")
+    # 同时存在一个正常项，保证有多文件场景下状态推导仍正确
+    state: SystemState = {
+        "parsed_data": {
+            "req_mm": item,
+            "req_ok": _item("req_ok", DataReqType.MESH, "stl"),
+        },
+        "data_requirements": [req],
+        "missing_items": [],
+        "validation_issues": [issue],
+    }
+    out = node_assemble(state)
+    pkg = out["experiment_package"]
+
+    assert all(f.req_id != "req_mm" for f in pkg.files)
+    assert any(m.req_id == "req_mm" and m.reason.startswith("内容有效性未通过") for m in pkg.missing_items)
+    assert pkg.package_info["status"] == "partial"
+
+
+def test_assemble_content_validity_clean_unchanged(output_dir: Path) -> None:
+    """P0-B：无内容有效性 ERROR 时行为不变（complete）。"""
+    from rdi.models.common import Severity, ValIssue
+
+    state: SystemState = {
+        "parsed_data": {"req_ok": _item("req_ok", DataReqType.MESH, "stl")},
+        "validation_issues": [
+            ValIssue(
+                severity=Severity.WARNING,
+                req_id="req_ok",
+                message="置信度不足 0.9",
+            )
+        ],
+    }
+    out = node_assemble(state)
+    pkg = out["experiment_package"]
+    assert pkg.package_info["status"] == "complete"
+    assert any(f.req_id == "req_ok" for f in pkg.files)
+
+
+# ─── Task 9/10: 未下载项数据获取指引 + 完整性校验锚点 ───
+
+
+def _reference_item(req_id: str, data: bytes) -> ParsedItem:
+    """带 RawReference 的未下载大文件项（manifest 标记 downloaded=false）。"""
+    return ParsedItem(
+        req_id=req_id,
+        req_type=DataReqType.DATASET,
+        name=req_id,
+        canonical_format="json",
+        output_path="unused",
+        data=data,
+        provenance=ProvenanceEntry(
+            source=DataSource.GRASPNET,
+            source_url="https://huggingface.co/datasets/x",
+            retrieved_at=_FIXED_TIME,
+            original_format="json",
+        ),
+        reference=RawReference(
+            url="https://example.com/big.tar",
+            file_size=12345,
+            download_hint="https://mirror.example.com/big.tar",
+            reason="体积超限",
+        ),
+    )
+
+
+def _guide_json() -> bytes:
+    """落盘 data 顶层含 download_guide（结构同 build_download_guide 输出）的 JSON 字节。"""
+    guide = {
+        "status": "not_downloaded",
+        "reason": "体积超限",
+        "source_file_url": "https://example.com/big.tar",
+        "file_size_bytes": 12345,
+        "method_hint": "wget https://example.com/big.tar -O big.tar",
+        "selected_by": "size=largest",
+        "alternatives": [],
+    }
+    return json.dumps(
+        {"dataset_id": "x", "downloaded": False, "download_guide": guide}
+    ).encode("utf-8")
+
+
+def test_assemble_rule_fallback_explanation_contains_download_guide(
+    output_dir: Path,
+) -> None:
+    """Task 9：规则兜底解释（LLM 失败）恒含「数据获取指引」段（每项 wget 命令 + 原因）。"""
+    out = node_assemble(
+        {"parsed_data": {"req_big": _reference_item("req_big", _guide_json())}}
+    )
+    md = (Path(out["experiment_package"].output_dir) / "quality_explanation.md").read_text(
+        encoding="utf-8"
+    )
+    assert "## 数据获取指引" in md
+    assert "wget https://example.com/big.tar -O big.tar" in md
+    assert "体积超限" in md
+    assert "未自动下载" in md
+
+
+def test_assemble_download_integrity_missing_guide_error(output_dir: Path) -> None:
+    """Task 10：downloaded=false 但落盘 data 缺 download_guide → 完整性校验 ERROR。"""
+    out = node_assemble(
+        {"parsed_data": {"req_big": _reference_item("req_big", b'{"dataset_id": "x"}')}}
+    )
+    err_events = [e for e in out.get("errors", []) if "完整性校验" in e]
+    assert len(err_events) >= 1
+    assert "download_guide" in err_events[0]
+    assert "req_big" in err_events[0]
+    # provenance（manifest 内与节点返回）均记录校验 FAIL
+    pkg = out["experiment_package"]
+    assert any("assemble_completeness_check: FAIL" in line for line in pkg.provenance_log)
+    assert any("assemble_completeness_check: FAIL" in line for line in out["provenance"])
+
+
+def test_assemble_download_integrity_pass(output_dir: Path) -> None:
+    """Task 10：download_guide 已落盘 + 解释含数据获取指引 → 完整性校验 PASS。"""
+    out = node_assemble(
+        {"parsed_data": {"req_big": _reference_item("req_big", _guide_json())}}
+    )
+    assert out.get("errors", []) == []
+    pkg = out["experiment_package"]
+    assert any("assemble_completeness_check: PASS" in line for line in pkg.provenance_log)
+    assert any("assemble_completeness_check: PASS" in line for line in out["provenance"])

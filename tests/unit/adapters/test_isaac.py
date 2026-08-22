@@ -73,6 +73,37 @@ class TestIsaacSimAdapter:
         mock_scrape.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_search_fallback_industrial_arm_ur10(self) -> None:
+        """T4：UR 工业臂（universal_robots.py，实证仅 UR10/UR10e）查询命中回退条目。"""
+        adapter = IsaacSimAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ISAAC.value
+            )
+            results = await adapter.search("ur10")
+        ids = {r.item_id for r in results}
+        assert "universal_robots" in ids
+        # fetch URL 与取证文件一致：robots/universal_robots.py（raw 200 已实证）
+        fetch_item = IsaacSimAdapter()
+        with patch.object(
+            fetch_item, "_download_bytes", new_callable=AsyncMock, return_value=b"# cfg"
+        ):
+            raw = await fetch_item.fetch("universal_robots")
+        assert raw.url.endswith("robots/universal_robots.py")
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_kinova_arm(self) -> None:
+        """T4：kinova.py（Gen3/Jaco2，raw 200 已实证）查询命中回退条目。"""
+        adapter = IsaacSimAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ISAAC.value
+            )
+            results = await adapter.search("kinova gen3")
+        ids = {r.item_id for r in results}
+        assert "kinova" in ids
+
+    @pytest.mark.asyncio
     async def test_fetch_success(self) -> None:
         """C11 修复后：单路径 fetch 走 IsaacLab Python 资产配置。"""
         adapter = IsaacSimAdapter()

@@ -118,7 +118,7 @@ class KinovaAdapter(BaseAdapter):
         # URL = {base_url}/{ref} 可命中真实文件；2) 包内资产落盘 robots/{ref}，
         # URDF 按 robots/ 下相对路径引用可自洽加载。
         data_bytes = re.sub(rb"package://", b"", data_bytes)
-        assets = await self._download_assets(data_bytes, self.base_url)
+        assets, missing_assets = await self._download_assets(data_bytes, self.base_url)
         return RawData(
             source=DataSource.KINOVA,
             item_id=item_id,
@@ -127,15 +127,25 @@ class KinovaAdapter(BaseAdapter):
             url=url,
             size_bytes=len(data_bytes),
             assets=assets,
+            # P0-C：下载失败的 mesh/texture 引用显性化（无缺失时不写该键，
+            # 保持修复前行为不变）；本地挂载分支已在 ``_local_raw`` 写入同键。
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
-    async def _download_assets(self, urdf_bytes: bytes, repo_root_url: str) -> dict[str, bytes]:
+    async def _download_assets(
+        self, urdf_bytes: bytes, repo_root_url: str
+    ) -> tuple[dict[str, bytes], list[str]]:
         """下载 URDF 中引用的 mesh/texture 资产（仓库根相对路径，并发）。
 
         引用已剥离 package:// 前缀（如 ``kortex_description/arms/gen3/6dof/
         meshes/base_link.STL``，即仓库根相对路径），直接从仓库根 URL 下载；
-        单个资产失败只跳过该资产（不阻塞整体），与 ``_download_xml_with_assets``
-        的降级策略一致。
+        单个资产失败只跳过该资产（不阻塞整体），并把失败引用随返回值透出
+        （``missing``），供 fetch 写入 ``RawData.metadata["assets_missing"]``
+        显性化缺失（与 ``_download_xml_with_assets`` 的降级策略一致）。
+
+        Returns:
+            (assets, missing)：assets 为 引用路径 → 字节；missing 为下载失败的
+            引用路径列表（全部成功时为空列表）。
         """
         refs = set(re.findall(rb'<mesh\s+filename="([^"]+)"', urdf_bytes))
         refs |= set(re.findall(rb'<texture\s+filename="([^"]+)"', urdf_bytes))
@@ -148,8 +158,11 @@ class KinovaAdapter(BaseAdapter):
             *(self._download_bytes(f"{repo_root_url}/{ref}") for ref in refs),
             return_exceptions=True,
         )
-        return {
-            ref: content
-            for ref, content in zip(refs, contents, strict=False)
-            if not isinstance(content, BaseException)
-        }
+        assets: dict[str, bytes] = {}
+        missing: list[str] = []
+        for ref, content in zip(refs, contents, strict=False):
+            if isinstance(content, BaseException):
+                missing.append(ref)
+            else:
+                assets[ref] = content
+        return assets, sorted(missing)

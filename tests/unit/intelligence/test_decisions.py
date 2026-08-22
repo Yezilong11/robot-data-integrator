@@ -148,6 +148,54 @@ def test_explain_quality_returns_quality_explanation(
     assert schema is QualityExplanation
 
 
+def test_explain_quality_prompt_contains_undownloaded_items(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Task 9：传入未下载项清单时，prompt 包含每项路径/URL/大小/原因/wget/download_guide。"""
+    fake = _FakeLLMClient()
+    _patch_llm(monkeypatch, fake)
+    items = [
+        {
+            "path": "resources/req_big.json",
+            "file_url": "https://example.com/big.tar",
+            "file_size": 12345,
+            "reason": "体积超限",
+            "wget": "wget https://example.com/big.tar -O big.tar",
+            "download_guide": {"status": "not_downloaded", "method_hint": "wget ..."},
+        }
+    ]
+    result = decisions.explain_quality(
+        total_requirements=3,
+        fulfilled=2,
+        missing=1,
+        validation_issues=["v"],
+        avg_confidence=0.8,
+        avg_completeness=0.7,
+        manifest_summary="s",
+        undownloaded_items=items,
+    )
+    assert isinstance(result, QualityExplanation)
+    prompt, schema, _ = fake.calls[0]
+    assert "未下载项清单" in prompt
+    assert "https://example.com/big.tar" in prompt
+    assert "体积超限" in prompt
+    assert "resources/req_big.json" in prompt
+    assert schema is QualityExplanation
+    # 不传清单时 prompt 不含该上下文（行为不回归）
+    fake2 = _FakeLLMClient()
+    _patch_llm(monkeypatch, fake2)
+    decisions.explain_quality(
+        total_requirements=1,
+        fulfilled=1,
+        missing=0,
+        validation_issues=[],
+        avg_confidence=1.0,
+        avg_completeness=1.0,
+        manifest_summary="s",
+    )
+    assert "未下载项清单" not in fake2.calls[0][0]
+
+
 def test_suggest_review_returns_review_suggestions(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

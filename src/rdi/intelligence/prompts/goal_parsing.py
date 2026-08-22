@@ -39,6 +39,7 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
       "description": "数据需求描述（自然语言）",
       "priority": "优先级：required / recommended / optional",
       "keywords": ["搜索关键词"],
+      "semantic_terms": ["语义约束词（3-8 个，从本条 description 提炼，见下方规则）"],
       "fallback_sources": ["备选数据源，按优先级排序，每项必须是以下枚举值之一：arxiv / ieee / github / paperswithcode / huggingface / graspnet / dexgrasp / ycb / google_scanned / zenodo / franka / allegro / robotiq / mujoco / isaac"],
       "expected_format": "期望格式（如 URDF, STL, NPZ），可选字段"
     }
@@ -79,6 +80,13 @@ GOAL_PARSING_SYSTEM: str = """你是机器人操作与抓取领域的数据整�
   - ✅ ["MuJoCo", "仿真场景", "XML"]
   - ❌ ["弗兰卡熊猫机器人"]
   - ❌ ["黄香蕉"]
+
+# 语义约束词提炼规则
+
+- 对 `requirements` 数组中的**每一条需求**，从该条 `description` 提炼 **3-8 个语义约束词** 填入 `semantic_terms`，用于后续"需求 vs 数据内容"的语义匹配。
+- 语义约束词是能代表该数据内容关键要点的词（任务域 / 实体 / 动作 / 数据形态）。
+- 英文保留原文词（如 "robot manipulation"、"action labels"），中文使用原文短语（如 "抓取姿态"、"接触力"）。
+- 相近语义合并为一个词，避免机械重复；每个词必有实际含义，禁止空串。
 
 # Few-shot 示例
 

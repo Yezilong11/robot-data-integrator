@@ -6,11 +6,13 @@
 """
 
 import json
+from typing import Any
 
 from rdi.adapters.base import BaseAdapter
+from rdi.adapters.selectors import build_download_guide, select_target_file
 from rdi.config.settings import settings
-from rdi.models.common import DataSource
-from rdi.models.retrieval import RawData, SearchResult
+from rdi.models.common import DataReqType, DataSource
+from rdi.models.retrieval import RawData, RawReference, SearchResult
 
 
 class HuggingFaceAdapter(BaseAdapter):
@@ -63,8 +65,9 @@ class HuggingFaceAdapter(BaseAdapter):
     ) -> RawData:
         """按数据类型下载模型元数据文件。
 
-        - POLICY_MODEL: 优先拉取 ``model_info.json``（PolicyInterfaceSkill 期望的
-          数据契约）；404 时降级尝试 ``config.json``；两者均失败返回 metadata 引用
+        - POLICY_MODEL: 拉取 model_info.json/config.json 元数据后，经 HF tree API
+          （/models/{id}/tree/main）定位权重文件：≤ max_fetch_bytes 真实下载落盘，
+          超限返回 RawReference 引用
         - 其他类型（默认）: 拉取 ``config.json``
 
         Args:
@@ -92,15 +95,19 @@ class HuggingFaceAdapter(BaseAdapter):
         )
 
     async def _fetch_policy_meta(self, download_base: str, item_id: str) -> RawData:
-        """POLICY_MODEL 元数据拉取：model_info.json 优先，404 降级 config.json。
+        """POLICY_MODEL 拉取链路：meta JSON + HF tree API 定位权重。
 
-        实测部分模型仓库没有 model_info.json（HF 官方接口才有该字段）：
-        优先尝试下载，404/解析失败时降级尝试 config.json；两者均不可用
-        返回结构化的 metadata 引用 JSON（含 model_id + 下载提示），保证
-        PolicyInterfaceSkill 可消费（PASS_WITH_FALLBACK 语义）。
+        - meta：model_info.json 优先，404 降级 config.json，均不可用兜底引用 payload
+        - 权重：HF tree API（/models/{id}/tree/main）→ select_target_file 定位候选，
+          HEAD 预检 ≤ max_fetch_bytes 则真实下载落盘（metadata["downloaded"]=True）；
+          超限返回 RawReference（resolve url + wget 提示），data 保留 meta 结构并
+          注明未下载；无候选/树 API 失败维持原 metadata 引用行为（PASS_WITH_FALLBACK）。
         """
+        # 1) 元数据 JSON（结构与既有行为一致）
         candidates = ["model_info.json", "config.json"]
         last_error = ""
+        meta_payload: dict[str, Any] = {}
+        meta_url = f"https://huggingface.co/{item_id}"
         for filename in candidates:
             url = f"{download_base}/{item_id}/resolve/main/{filename}"
             try:
@@ -110,18 +117,102 @@ class HuggingFaceAdapter(BaseAdapter):
                 continue
             validated = self._validate_model_info(item_id, content, filename)
             if validated is not None:
-                return RawData(
-                    source=DataSource.HUGGINGFACE,
-                    item_id=item_id,
-                    format="json",
-                    data=validated,
-                    url=url,
-                    size_bytes=len(validated),
-                )
+                meta_payload = json.loads(validated.decode("utf-8"))
+                meta_url = url
+                break
+        if not meta_payload:
+            meta_payload = {
+                "model_id": item_id,
+                "metadata_only": True,
+                "note": f"model_info.json/config.json 均不可用，返回元数据引用: {last_error}",
+            }
+        # 2) HF tree API 定位权重候选（树失败不阻断 metadata 返回）
+        candidate = await self._select_policy_candidate(item_id)
+        if candidate is None:
+            return self._policy_meta_raw(item_id, meta_payload, meta_url)
+        path = str(candidate.get("path") or candidate.get("name") or "")
+        ref_url = f"https://huggingface.co/{item_id}/resolve/main/{path.lstrip('/')}"
+        # 3) HEAD 预检：超限 → RawReference；未知/未超限 → 真实下载落盘
+        size = await self._head_content_length(ref_url)
+        if size is not None and size > settings.max_fetch_bytes:
+            return self._policy_reference(item_id, meta_payload, candidate, ref_url, size)
+        cache_id = f"{item_id}/{path}"
+        data_bytes = self.load_from_cache(cache_id) if self.is_cached(cache_id) else None
+        if data_bytes is None:
+            data_bytes = await self._download_bytes(ref_url)
+            self.save_to_cache(cache_id, data_bytes)
+        fmt = path.rsplit(".", 1)[-1].lower()
+        return RawData(
+            source=DataSource.HUGGINGFACE,
+            item_id=item_id,
+            format=fmt,
+            data=data_bytes,
+            url=ref_url,
+            size_bytes=len(data_bytes),
+            metadata={"downloaded": True},
+        )
+
+    async def _select_policy_candidate(self, item_id: str) -> dict[str, Any] | None:
+        """HF tree API 取文件树，经 select_target_file 返回首个权重候选（无则 None）。
+
+        树请求失败或仓库无权重文件均返回 None（调用方维持 metadata 引用语义，
+        不抛错）；tree 条目补 name（由 path 派生），与 select_target_file 的
+        输入约定一致（HF tree API 只返回 path/type/size）。
+        """
+        try:
+            raw_tree = await self._request(
+                "GET",
+                f"/models/{item_id}/tree/main",
+                params={"recursive": "true"},
+            )
+        except Exception:  # noqa: BLE001 — 树 API 失败降级为无候选
+            return None
+        tree = [
+            {**entry, "name": str(entry.get("path", "")).rsplit("/", 1)[-1]}
+            for entry in raw_tree
+            if isinstance(entry, dict)
+        ]
+        candidates = select_target_file(tree, DataReqType.POLICY_MODEL)
+        return candidates[0] if candidates else None
+
+    def _policy_meta_raw(
+        self, item_id: str, meta_payload: dict[str, Any], meta_url: str
+    ) -> RawData:
+        """无权重候选：返回 meta JSON RawData（维持既有 metadata 引用行为）。"""
+        content = json.dumps(meta_payload, ensure_ascii=False).encode("utf-8")
+        return RawData(
+            source=DataSource.HUGGINGFACE,
+            item_id=item_id,
+            format="json",
+            data=content,
+            url=meta_url,
+            size_bytes=len(content),
+        )
+
+    def _policy_reference(
+        self,
+        item_id: str,
+        meta_payload: dict[str, Any],
+        candidate: dict[str, Any],
+        ref_url: str,
+        size: int,
+    ) -> RawData:
+        """权重超 max_fetch_bytes：构造 RawReference（resolve url + wget 提示）。
+
+        data 保留 meta 结构并注明未下载（downloaded=false + download_guide），
+        reference 由 registry 无条件透传到 ParsedItem 供手动获取。
+        """
+        reason = "超过 max_fetch_bytes 自动下载上限"
+        guide = build_download_guide(
+            {**candidate, "url": ref_url}, reason, DataReqType.POLICY_MODEL
+        )
+        path = str(candidate.get("path") or candidate.get("name") or "")
         payload = {
-            "model_id": item_id,
-            "metadata_only": True,
-            "note": f"model_info.json/config.json 均不可用，返回元数据引用: {last_error}",
+            **meta_payload,
+            "downloaded": False,
+            "file_path": path,
+            "file_size": size,
+            "download_guide": guide,
         }
         content = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         return RawData(
@@ -131,6 +222,13 @@ class HuggingFaceAdapter(BaseAdapter):
             data=content,
             url=f"https://huggingface.co/{item_id}",
             size_bytes=len(content),
+            metadata={"downloaded": False},
+            reference=RawReference(
+                url=ref_url,
+                download_hint=guide["method_hint"],
+                file_size=size,
+                reason=reason,
+            ),
         )
 
     @staticmethod

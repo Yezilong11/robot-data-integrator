@@ -49,6 +49,10 @@ class DataReq(BaseModel):
     description: str = Field(description="数据需求描述（自然语言）")
     priority: Priority = Field(description="优先级")
     keywords: list[str] = Field(default_factory=list, description="搜索关键词")
+    semantic_terms: list[str] = Field(
+        default_factory=list,
+        description="语义约束词（LLM 提炼，用于需求-内容语义匹配）",
+    )
     fallback_sources: list[DataSource] = Field(
         default_factory=list,
         description="备选数据源列表（按优先级排序）",

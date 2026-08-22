@@ -346,7 +346,7 @@ class RobotiqAdapter(BaseAdapter):
                 message=f"robotiq.com 返回内容非 URDF（可能为 HTML 页面）: {url}",
                 source=self.source.value,
             )
-        assets = await self._download_xml_with_assets(url, content)
+        assets, missing_assets = await self._download_xml_with_assets(url, content)
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
@@ -355,6 +355,7 @@ class RobotiqAdapter(BaseAdapter):
             url=url,
             size_bytes=len(content),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
     async def _fetch_fallback(self, item_id: str) -> RawData:
@@ -379,6 +380,7 @@ class RobotiqAdapter(BaseAdapter):
         urdf_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(urdf_url)
         fmt = "urdf" if rel_path.endswith(".urdf") else "xacro"
+        missing_assets: list[str] = []
         if fmt == "xacro":
             try:
                 expanded, assets = await self._expand_xacro_content(item_id, rel_path, content)
@@ -386,9 +388,9 @@ class RobotiqAdapter(BaseAdapter):
                 content = expanded
             except Exception:
                 # 展开失败保持 xacro 原样，URDFSkill 字符串级清理兜底
-                assets = await self._download_xml_with_assets(urdf_url, content)
+                assets, missing_assets = await self._download_xml_with_assets(urdf_url, content)
         else:
-            assets = await self._download_xml_with_assets(urdf_url, content)
+            assets, missing_assets = await self._download_xml_with_assets(urdf_url, content)
         return RawData(
             source=DataSource.ROBOTIQ,
             item_id=item_id,
@@ -397,6 +399,7 @@ class RobotiqAdapter(BaseAdapter):
             url=urdf_url,
             size_bytes=len(content),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
     async def _expand_xacro_content(

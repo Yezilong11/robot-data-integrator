@@ -12,6 +12,8 @@ def route_after_validate(state: SystemState) -> str:
     """validate 节点后的路由：校验通过则打包，否则重试。
 
     重试次数超过 3 次时强制通过，避免无限循环。
+    P1-A：全部 ERROR 均为``retrieval_axis``（数据源确实无此数据，重试拿不到
+    新结果）且无 human_review 写入的定向重试排队时，直出 pass，不再空转重试。
 
     Args:
         state: 当前全局状态
@@ -27,8 +29,15 @@ def route_after_validate(state: SystemState) -> str:
         return "pass"
 
     # 存在 ERROR 级问题才需要重试，WARNING 可通过
-    has_errors = any(issue.severity == "error" for issue in issues)
-    return "retry" if has_errors else "pass"
+    errors = [issue for issue in issues if issue.severity == "error"]
+    if not errors:
+        return "pass"
+
+    if not state.get("retry_req_ids") and all(
+        issue.context.get("issue_type") == "retrieval_axis" for issue in errors
+    ):
+        return "pass"
+    return "retry"
 
 
 def route_after_review(state: SystemState) -> str:

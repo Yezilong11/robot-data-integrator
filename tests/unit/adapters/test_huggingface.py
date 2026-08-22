@@ -1,6 +1,7 @@
 # tests/unit/adapters/test_huggingface.py
 """HuggingFaceAdapter 的单元测试。"""
 
+import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -9,6 +10,12 @@ from rdi.adapters.huggingface import HuggingFaceAdapter
 from rdi.config.settings import settings
 from rdi.exceptions import AdapterError
 from rdi.models.common import DataSource
+
+
+@pytest.fixture(autouse=True)
+def _isolate_file_cache(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """把本地文件缓存根目录指向临时目录，避免测试污染仓库 data/cache/。"""
+    monkeypatch.setattr(HuggingFaceAdapter, "cache_root", lambda self: tmp_path)
 
 
 class TestHuggingFaceAdapter:
@@ -86,7 +93,10 @@ class TestHuggingFaceAdapter:
             called_urls.append(url)
             return fake_model_info
 
-        with patch.object(adapter, "_download_bytes", side_effect=_fake_download):
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=[]),
+            patch.object(adapter, "_download_bytes", side_effect=_fake_download),
+        ):
             raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
             assert raw.format == "json"
             assert any("model_info.json" in u for u in called_urls)
@@ -125,7 +135,10 @@ class TestHuggingFaceAdapter:
                     return body
             raise RuntimeError(f"unexpected url: {url}")
 
-        with patch.object(adapter, "_download_bytes", side_effect=_fake_download):
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=[]),
+            patch.object(adapter, "_download_bytes", side_effect=_fake_download),
+        ):
             raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
             assert raw.format == "json"
             assert b"model_type" in raw.data or b"model_id" in raw.data
@@ -136,9 +149,171 @@ class TestHuggingFaceAdapter:
         from rdi.models.common import DataReqType
 
         adapter = HuggingFaceAdapter()
-        with patch.object(
-            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=RuntimeError("boom")
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=[]),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, side_effect=RuntimeError("boom")
+            ),
         ):
             raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
             assert raw.format == "json"
             assert b"model_id" in raw.data
+
+
+class TestHuggingFacePolicyModelChain:
+    """POLICY_MODEL 的「树 → 定位 → 预检 → 下载/引用」链路单测（mock 网络）。"""
+
+    @staticmethod
+    def _fake_meta(_url: str) -> bytes:
+        """meta 下载总是返回合法 model_info.json。"""
+        return json.dumps(
+            {"modelId": "lerobot/act_aloha", "tags": ["policy"]}, ensure_ascii=False
+        ).encode("utf-8")
+
+    @pytest.mark.asyncio
+    async def test_downloads_weight_within_limit(self, tmp_path) -> None:
+        """权重 ≤ max_fetch_bytes：真实下载落盘，downloaded=True，reference=None。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        fake_weight = b"\x00SAFETENSORS fake weight data"
+        mock_tree = [
+            {"type": "file", "path": "README.md", "size": 100},
+            {"type": "file", "path": "model.safetensors", "size": 1000},
+        ]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=1000
+            ),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_weight
+            ),
+        ):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+        assert raw.format == "safetensors"
+        assert raw.data == fake_weight
+        assert raw.reference is None
+        assert raw.metadata["downloaded"] is True
+        assert raw.url.endswith("/resolve/main/model.safetensors")
+        # 权重已落盘缓存（cache_id = item_id/path，斜杠清洗为下划线）
+        cache_file = tmp_path / "lerobot_act_aloha_model.safetensors"
+        assert cache_file.is_file()
+        assert cache_file.read_bytes() == fake_weight
+
+    @pytest.mark.asyncio
+    async def test_returns_reference_over_limit(self) -> None:
+        """权重超 max_fetch_bytes：RawReference（resolve url + wget），data 注明未下载。"""
+        from rdi.models.common import DataReqType
+
+        big_size = settings.max_fetch_bytes + 1
+        adapter = HuggingFaceAdapter()
+        mock_tree = [{"type": "file", "path": "policy_weights.bin", "size": big_size}]
+        called_urls: list[str] = []
+
+        async def _fake_download(url: str) -> bytes:
+            called_urls.append(url)
+            return self._fake_meta(url)
+
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=big_size
+            ),
+            patch.object(adapter, "_download_bytes", side_effect=_fake_download),
+        ):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+        assert raw.format == "json"
+        assert raw.reference is not None
+        assert (
+            raw.reference.url
+            == "https://huggingface.co/lerobot/act_aloha/resolve/main/policy_weights.bin"
+        )
+        assert raw.reference.download_hint.startswith("wget ")
+        assert raw.reference.file_size == big_size
+        assert raw.reference.reason == "超过 max_fetch_bytes 自动下载上限"
+        payload = json.loads(raw.data)
+        assert payload["downloaded"] is False
+        assert payload["file_size"] == big_size
+        assert payload["download_guide"]["method_hint"].startswith("wget ")
+        assert payload["download_guide"]["source_file_url"] == raw.reference.url
+        # 体积超限：不下载权重文件（仅 meta 下载）
+        assert not any("policy_weights.bin" in u for u in called_urls)
+
+    @pytest.mark.asyncio
+    async def test_no_weight_candidate_returns_meta(self) -> None:
+        """tree 无权重候选：维持 metadata JSON（reference=None）。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        mock_tree = [
+            {"type": "file", "path": "README.md", "size": 100},
+            {"type": "file", "path": "config.json", "size": 200},
+        ]
+        called_urls: list[str] = []
+
+        async def _fake_download(url: str) -> bytes:
+            called_urls.append(url)
+            return self._fake_meta(url)
+
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(adapter, "_download_bytes", side_effect=_fake_download),
+        ):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+        assert raw.format == "json"
+        assert raw.reference is None
+        assert b"modelId" in raw.data
+        assert not any("README.md" in u for u in called_urls)
+
+    @pytest.mark.asyncio
+    async def test_tree_api_failure_falls_back_to_meta(self) -> None:
+        """tree API 失败：降级 metadata（不抛错）。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        with (
+            patch.object(
+                adapter,
+                "_request",
+                new_callable=AsyncMock,
+                side_effect=AdapterError(message="tree down", source="huggingface"),
+            ),
+            patch.object(
+                adapter,
+                "_download_bytes",
+                new_callable=AsyncMock,
+                return_value=self._fake_meta(""),
+            ),
+        ):
+            raw = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+        assert raw.format == "json"
+        assert raw.reference is None
+        assert b"modelId" in raw.data
+
+    @pytest.mark.asyncio
+    async def test_weight_second_fetch_hits_cache(self) -> None:
+        """首次下载落盘后二次 fetch 命中缓存：权重仅下载一次。"""
+        from rdi.models.common import DataReqType
+
+        adapter = HuggingFaceAdapter()
+        fake_weight = b"fake-weight-bytes"
+        mock_tree = [{"type": "file", "path": "policy.pt", "size": 500}]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=500
+            ),
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_weight
+            ) as mock_dl,
+        ):
+            raw1 = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+            raw2 = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
+        assert raw1.data == fake_weight
+        assert raw2.data == fake_weight
+        assert raw1.format == "pt"
+        weight_calls = [
+            c for c in mock_dl.await_args_list if "resolve/main/policy.pt" in c.args[0]
+        ]
+        assert len(weight_calls) == 1
