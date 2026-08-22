@@ -1,6 +1,6 @@
 # Day 6｜F 汇总统计、复盘归因与交付收尾
 
-> 统计快照：`2026-08-19T15:11:12+08:00`
+> 统计快照：`2026-08-20T00:46:52+08:00`
 >
 > 权威来源：`records/_management/quality_report.json`（`strict_mode=true`）、`records/_management/progress.csv`、63 个 `records/<case_id>/record.json`。
 >
@@ -162,7 +162,7 @@
 - [x] `records/` 有 63 个正式 case，每个都有 `record.json`；截图引用与实际图片 489/489 匹配。
 - [x] 全部 63 条已执行、已判定、已复核；FAIL 有报错证据。
 - [x] P0 可用 11/11，记录完整率和截图合规率 100%，校验 ERROR 0。
-- [x] `_management/progress.csv`、`quality_report.json`、`statistics_summary.md` 已按 2026-08-19 严格快照刷新。
+- [x] `_management/progress.csv`、`quality_report.json`、`statistics_summary.md` 已按 2026-08-20 严格快照刷新。
 - [x] C/D/E 定稿材料已纳入本报告引用；F 的原始 case 明细见 [case_statistics.csv](case_statistics.csv)。
 - [ ] A 对本报告的改进优先级和冻结后变更完成最终签字（交付前最后人工动作）。
 

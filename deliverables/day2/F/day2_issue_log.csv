@@ -1,6 +1,6 @@
-severity,case_id,category,issue,owner,status,resolution
-ERROR,ms_004,P2_RETRIEVE,mesh 检索超时且必需资源缺失,CLOSED,C 版修复记录替换为 PWF（ycb mesh 全命中，explicit 降级）
-WARNING,ss_github_001,PORTABILITY,package 路径为执行机绝对路径,CLOSED,按工具规则降为 WARNING，待人工复核
-WARNING,ss_mujoco_001,PORTABILITY,package 路径为执行机绝对路径,CLOSED,按工具规则降为 WARNING，待人工复核
-WARNING,ss_ycb_001,PORTABILITY,package 路径为执行机绝对路径,CLOSED,按工具规则降为 WARNING，待人工复核
-INFO,ALL,REVIEW,记录未完成 reviewer/reviewed_at,CLOSED,2026-08-17 由 A 统一复核补齐（62/62）
+﻿severity,case_id,category,issue,owner,status,resolution
+ERROR,ms_004,P2_RETRIEVE,mesh 检索超时且必需资源缺失,,CLOSED,C 版修复记录已替换为 PWF（mcb mesh 命中并显式降级）
+WARNING,ss_github_001,PORTABILITY,package 路径为执行机绝对路径,,CLOSED,按工具规范降为 WARNING，待人工复核
+WARNING,ss_mujoco_001,PORTABILITY,package 路径为执行机绝对路径,,CLOSED,按工具规范降为 WARNING，待人工复核
+WARNING,ss_ycb_001,PORTABILITY,package 路径为执行机绝对路径,,CLOSED,按工具规范降为 WARNING，待人工复核
+ERROR,ms_008,P2_RETRIEVE,Franka Panda URDF 未检索到并最终判定为 FAIL,,CLOSED,真实执行已落盘，保留 FAIL / P2_RETRIEVE 作为收尾证据

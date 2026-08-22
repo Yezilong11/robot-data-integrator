@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-17T23:20:40+08:00",
-  "strict_mode": false,
+  "generated_at": "2026-08-20T00:46:52+08:00",
+  "strict_mode": true,
   "problem_set": {
     "total": 63,
     "single_source": 55,
@@ -9,24 +9,24 @@
     "p0_total": 11
   },
   "progress": {
-    "executed": 62,
-    "judged": 62,
-    "reviewed": 62,
-    "execution_rate": 0.9841,
+    "executed": 63,
+    "judged": 63,
+    "reviewed": 63,
+    "execution_rate": 1.0,
     "review_rate": 1.0
   },
   "verdicts": {
     "pass": 14,
     "pass_with_fallback": 48,
-    "fail": 0,
-    "pass_rate": 0.2258,
-    "fallback_rate": 0.7742,
-    "fail_rate": 0.0,
-    "usable_rate": 1.0
+    "fail": 1,
+    "pass_rate": 0.2222,
+    "fallback_rate": 0.7619,
+    "fail_rate": 0.0159,
+    "usable_rate": 0.9841
   },
   "quality": {
     "record_completeness_avg_pct": 100.0,
-    "records_at_least_90_pct": 62,
+    "records_at_least_90_pct": 63,
     "records_at_least_90_rate": 1.0,
     "screenshot_compliance_rate": 1.0,
     "validation_error_count": 0
@@ -41,11 +41,11 @@
     "language": {
       "EN": {
         "cases": 29,
-        "judged": 28,
+        "judged": 29,
         "pass": 1,
         "fallback": 27,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.9655
       },
       "ZH": {
         "cases": 34,
@@ -83,19 +83,19 @@
       },
       "franka": {
         "cases": 8,
-        "judged": 7,
+        "judged": 8,
         "pass": 3,
         "fallback": 4,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.875
       },
       "github": {
         "cases": 8,
-        "judged": 7,
+        "judged": 8,
         "pass": 1,
         "fallback": 6,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.875
       },
       "google_scanned": {
         "cases": 3,
@@ -139,11 +139,11 @@
       },
       "mujoco": {
         "cases": 9,
-        "judged": 8,
+        "judged": 9,
         "pass": 3,
         "fallback": 5,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.8889
       },
       "paperswithcode": {
         "cases": 3,
@@ -229,11 +229,11 @@
       },
       "robot_urdf": {
         "cases": 17,
-        "judged": 16,
+        "judged": 17,
         "pass": 9,
         "fallback": 7,
-        "fail": 0,
-        "usable_rate": 1.0
+        "fail": 1,
+        "usable_rate": 0.9412
       },
       "sensor_data": {
         "cases": 3,
@@ -253,11 +253,16 @@
       }
     },
     "llm_model": {
-      "qwen-plus": 60,
+      "qwen-plus": 61,
       "qwen3.7-plus": 2
     }
   },
-  "failure_top3": [],
+  "failure_top3": [
+    {
+      "category": "P2_RETRIEVE",
+      "count": 1
+    }
+  ],
   "issues": {
     "problem_set": [
       {
@@ -585,8 +590,8 @@
     "assignments_valid": true,
     "p0_usable_at_least_target": true,
     "record_completeness_at_least_90_pct": true,
-    "all_cases_executed": false,
-    "all_judged_records_reviewed": false,
+    "all_cases_executed": true,
+    "all_judged_records_reviewed": true,
     "no_record_validation_errors": true
   }
 }
