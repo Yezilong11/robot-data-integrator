@@ -839,9 +839,10 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
         issues.append(Issue("ERROR", case_id, "非 FAIL 记录不得填写失败分类或原因"))
 
     # 严口径（验收判定）：package.manifest_path 指向的 manifest 若含任一
-    # downloaded=false 的主文件项，数据包开箱不可用，verdict 必须为 FAIL；
-    # PASS/PASS_WITH_FALLBACK 视为误判（指引照给）。manifest 路径不存在或
-    # 读取失败时跳过，避免误伤无法核验的历史记录。
+    # downloaded=false 且无远端 URL 的主文件项，数据包开箱不可用且无下档地址，
+    # verdict 必须为 FAIL；PASS/PASS_WITH_FALLBACK 视为误判。
+    # 注：downloaded=false 但带 file_url（引用交付：大文件未下载，给了 URL + 指引）
+    #     视为完整交付，不触发严口径。manifest 路径不存在或读取失败时跳过。
     manifest_undownloaded = False
     resolved_manifest = _resolve_manifest_path(case_dir, package.get("manifest_path"))
     if resolved_manifest is not None:
@@ -853,12 +854,14 @@ def validate_record(record: dict[str, Any], problem: dict[str, Any], case_dir: P
             manifest_files = manifest_data.get("files")
             if isinstance(manifest_files, list):
                 manifest_undownloaded = any(
-                    isinstance(item, dict) and item.get("downloaded") is False
+                    isinstance(item, dict)
+                    and item.get("downloaded") is False
+                    and not item.get("file_url")
                     for item in manifest_files
                 )
     if manifest_undownloaded and verdict in {"PASS", "PASS_WITH_FALLBACK"}:
         issues.append(
-            Issue("ERROR", case_id, "严口径：含未下载文件项必须判 FAIL，指引照给")
+            Issue("ERROR", case_id, "严口径：含未下载且无远端 URL 的文件项必须判 FAIL，指引照给")
         )
 
     reviewer = record.get("reviewer")

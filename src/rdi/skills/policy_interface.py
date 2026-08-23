@@ -167,6 +167,9 @@ class PolicyInterfaceSkill(BaseSkill):
         weight_files = self._normalize_weight_meta(weight_files_meta)
         input_spec, output_spec = self._specs_from_config(config)
         guide = extract_download_guide(raw_data, kwargs)
+        # 权重已自动下载（adapter 成功下载分支在 data 顶层标 downloaded=true，
+        # 与超限引用分支同构）：交付真实状态——标已下载、不按 fallback 判定
+        downloaded = bool(isinstance(model_info, dict) and model_info.get("downloaded") is True)
         doc = PolicyInterfaceDoc(
             framework=framework,
             input_spec=input_spec,
@@ -177,6 +180,14 @@ class PolicyInterfaceSkill(BaseSkill):
             tags=tags,
             download_guide=guide,
         )
+        if downloaded:
+            return self._ok(
+                doc,
+                _INSPECT_FAILED_COMPLETENESS,
+                ["权重已自动下载，接口由 model_info 推断（未解析权重结构）"],
+                kwargs,
+                confidence=0.9,
+            )
         # 仅元数据（权重未本地化）→ 标记 is_fallback（fetch 降级消费契约）
         return self._ok(
             doc,

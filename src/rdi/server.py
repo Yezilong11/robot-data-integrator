@@ -156,8 +156,9 @@ def _run_task(task_id: str, req: RunRequest) -> None:
         task["error"] = str(exc)
     finally:
         task["done"] = True
-        # 完成后 10 分钟清理，避免 _TASKS 无限累积内存（保留窗口期供前端回查结果）
-        threading.Timer(600, _TASKS.pop, args=(task_id, None)).start()
+        # 完成后 30 分钟清理，避免 _TASKS 无限累积内存（保留窗口期供前端回查结果，
+        # 慢源任务（dexgrasp 等 4-8 分钟/题、端到端更长）跑完后用户仍需时间查看）
+        threading.Timer(1800, _TASKS.pop, args=(task_id, None)).start()
 
 
 @app.post("/api/run")

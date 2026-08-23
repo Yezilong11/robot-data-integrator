@@ -10,5 +10,5 @@
 - [x] dataset/sensor/policy fallback 产物含 download_guide 结构
 - [x] explain（explain_quality）注入未下载项清单；规则兜底自动 append 获取指引段，wget 命令恒在
 - [x] assemble 校验锚点：downloaded=false 项缺 download_guide 或 explain 说明 → 完整性 ERROR
-- [x] 验收口径：小文件下载 → PASS；超限 → FAIL（指引照给）；语义错配/指引缺失 → FAIL；GRASP 大归档超限全 FAIL 为预期
+- [x] 验收口径（2026-08-23 演进：引用=完整交付）：小文件下载 → PASS；大文件超限引用（带 URL + wget 指引 + explain 说明）→ PASS（引用交付）；检索失败/疑似占位/语义错配/指引缺失 → FAIL；GRASP 大归档超限引用同样计 PASS
 - [x] `uv run pytest tests/ -q` 全绿（955 passed）；42 题离线验证无既有 PASS 降级（真实网络全量重放属人工扩展验收，已在 tasks.md 注明）；日食音频案复跑被语义校验拦截

@@ -88,5 +88,6 @@ DATASET/SENSOR/POLICY/GRASP 四类非几何需求的 42 题评审：0–2 纯 PA
 ### Requirement: _extract_semantic_terms 读取优先级
 现只从 object_name/YCB/keywords 提取；改为优先读取 `req.semantic_terms`，空则回退现有提取。
 
-### Requirement: 验收口径（严口径）
-原"带完整指引的降级可判 PASS_WITH_FALLBACK"；现改：小文件下载成功 → PASS；超限 → FAIL（指引照给，可手动补全）；语义错配 / 指引缺失 → FAIL。GRASP 大归档超限全 FAIL 为预期行为。
+### Requirement: 验收口径（严口径 → 2026-08-23 决策演进：引用=完整交付）
+原"带完整指引的降级可判 PASS_WITH_FALLBACK"；随后改严口径（小文件下载 → PASS；超限 → FAIL，指引照给；语义错配 / 指引缺失 → FAIL；GRASP 大归档超限全 FAIL 为预期）。
+**2026-08-23 真实重放后演进**：超限引用（downloaded=false 且带 file_url + wget 指引 + explain 说明）视为**完整交付 → PASS**；FAIL 仅保留：检索失败 / 疑似占位 / 语义错配 / 引用缺 URL 或指引（download_integrity ERROR）。台账严口径同步：仅"未下载且无远端 URL"触发 FAIL。

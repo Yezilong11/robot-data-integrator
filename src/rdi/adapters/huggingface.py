@@ -141,14 +141,30 @@ class HuggingFaceAdapter(BaseAdapter):
         if data_bytes is None:
             data_bytes = await self._download_bytes(ref_url)
             self.save_to_cache(cache_id, data_bytes)
-        fmt = path.rsplit(".", 1)[-1].lower()
+        # 与超限分支（_policy_reference）同构：data 返回 meta JSON 并注明已下载 +
+        # download_guide（含 resolve url/wget 命令，供手动复现），避免裸权重字节
+        # 传入下游 PolicyInterfaceSkill 时 json.loads 失败而降级为空壳文档、
+        # 权重本身被丢弃（审查问题 1）。
+        guide = build_download_guide(
+            {**candidate, "url": ref_url},
+            "权重已自动下载（≤ max_fetch_bytes），指引供手动复现",
+            DataReqType.POLICY_MODEL,
+        )
+        payload = {
+            **meta_payload,
+            "downloaded": True,
+            "file_path": path,
+            "file_size": size or len(data_bytes),
+            "download_guide": guide,
+        }
+        content = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         return RawData(
             source=DataSource.HUGGINGFACE,
             item_id=item_id,
-            format=fmt,
-            data=data_bytes,
-            url=ref_url,
-            size_bytes=len(data_bytes),
+            format="json",
+            data=content,
+            url=f"https://huggingface.co/{item_id}",
+            size_bytes=len(content),
             metadata={"downloaded": True},
         )
 
@@ -159,13 +175,22 @@ class HuggingFaceAdapter(BaseAdapter):
         不抛错）；tree 条目补 name（由 path 派生），与 select_target_file 的
         输入约定一致（HF tree API 只返回 path/type/size）。
         """
-        try:
-            raw_tree = await self._request(
-                "GET",
-                f"/models/{item_id}/tree/main",
-                params={"recursive": "true"},
-            )
-        except Exception:  # noqa: BLE001 — 树 API 失败降级为无候选
+        # 分支回退 main → master（默认分支非 main 的仓库定位失败不算降级，
+        # 参照 github._find_urdf_file 的 main→master 回退，审查问题 4）；
+        # 两分支均失败返回 None（调用方维持 metadata 引用语义，不抛错）。
+        raw_tree: list[dict[str, Any]] | None = None
+        for ref in ("main", "master"):
+            try:
+                raw_tree = await self._request(
+                    "GET",
+                    f"/models/{item_id}/tree/{ref}",
+                    params={"recursive": "true"},
+                )
+            except Exception:  # noqa: BLE001 — 分支失败继续尝试下一分支
+                raw_tree = None
+            if raw_tree:
+                break
+        if not raw_tree:
             return None
         tree = [
             {**entry, "name": str(entry.get("path", "")).rsplit("/", 1)[-1]}

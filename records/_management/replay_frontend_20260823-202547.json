@@ -1,0 +1,326 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-23T20:25:47",
+    "elapsed_total_sec": 224.5,
+    "summary": {
+      "total": 17,
+      "pass": 17,
+      "pass_with_fallback": 0,
+      "fail": 0,
+      "run_failed": 0,
+      "strict_pass_rate_pct": 100.0,
+      "usable_rate_pct": 100.0
+    }
+  },
+  "results": {
+    "ss_huggingface_004": {
+      "case_id": "ss_huggingface_004",
+      "target": "检索 robot manipulation 数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_dexgrasp_001": {
+      "case_id": "ss_dexgrasp_001",
+      "target": "获取 banana 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_dexgrasp_002": {
+      "case_id": "ss_dexgrasp_002",
+      "target": "获取 apple 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_dexgrasp_003": {
+      "case_id": "ss_dexgrasp_003",
+      "target": "获取 mug 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_dexgrasp_004": {
+      "case_id": "ss_dexgrasp_004",
+      "target": "获取 bottle 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_dexgrasp_005": {
+      "case_id": "ss_dexgrasp_005",
+      "target": "获取 scissors 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_huggingface_006": {
+      "case_id": "ss_huggingface_006",
+      "target": "帮我找 Hugging Face 上的机器人操作数据集（中文描述）",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_zenodo_006": {
+      "case_id": "ss_zenodo_006",
+      "target": "帮我找 Zenodo 上机器人抓取数据集（中文描述）",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.3
+    },
+    "ss_dexgrasp_006": {
+      "case_id": "ss_dexgrasp_006",
+      "target": "帮我找 DexGraspNet 数据集的抓取标注（中文描述）",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_grasp_dexgrasp_002": {
+      "case_id": "ss_grasp_dexgrasp_002",
+      "target": "获取 DexGraspNet 中 bowl 的抓取文件（中文）",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_001": {
+      "case_id": "ms_001",
+      "target": "Franka Panda grasps YCB banana in MuJoCo",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.3
+    },
+    "ms_002": {
+      "case_id": "ms_002",
+      "target": "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_004": {
+      "case_id": "ms_004",
+      "target": "UR5 with Robotiq 2F-85 grasps YCB apple",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_006": {
+      "case_id": "ms_006",
+      "target": "用 Franka 在 MuJoCo 里抓取香蕉（无 YCB 关键词）",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_009": {
+      "case_id": "ms_009",
+      "target": "Kinova Gen3 grasps YCB bottle in MuJoCo",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_010": {
+      "case_id": "ms_010",
+      "target": "用 Franka Panda 抓取 YCB 马克杯（无仿真器指定）",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_013": {
+      "case_id": "ms_013",
+      "target": "用 Franka Panda 在 MuJoCo 里执行抓取，并加载一个策略模型权重",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "sim_config",
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.3
+    }
+  }
+}

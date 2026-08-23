@@ -125,6 +125,18 @@ def test_semantic_terms_skip_empty_strings() -> None:
     assert _extract_semantic_terms(req) == {"policy weight", "action labels"}
 
 
+def test_semantic_terms_stopwords_and_symbols_filtered() -> None:
+    """审查问题 3：语义约束词中的容器词与纯符号串被过滤，防止钝化语义校验。"""
+    req = _req(
+        "r1",
+        DataReqType.DATASET,
+        description="robot manipulation dataset with action labels",
+        semantic_terms=["robot", "data", "模型", "!!!", "robot manipulation", "action labels"],
+    )
+    # "robot"/"data"/"模型" 容器词与 "!!!" 纯符号串被剔除；短语保留
+    assert _extract_semantic_terms(req) == {"robot manipulation", "action labels"}
+
+
 @pytest.mark.parametrize(
     "req_type",
     [DataReqType.DATASET, DataReqType.SENSOR_DATA, DataReqType.POLICY_MODEL],

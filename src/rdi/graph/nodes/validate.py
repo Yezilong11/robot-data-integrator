@@ -170,7 +170,9 @@ def _extract_semantic_terms(req: Any) -> set[str]:
     terms: set[str] = set()
     for st in getattr(req, "semantic_terms", []) or []:
         s = str(st).strip().lower()
-        if s:
+        # 与 keywords/object_name 同规则：过滤容器词（robot/data/模型 等）与纯
+        # 符号串，避免 LLM 提炼的宽松词钝化检索预筛与装配期语义校验（审查问题 3）
+        if s and s not in _SEMANTIC_STOPWORDS and not re.fullmatch(r"[\W_]+", s):
             terms.add(s)
     parts: list[str] = [getattr(req, "description", "") or ""]
     parts.extend(getattr(req, "keywords", None) or [])

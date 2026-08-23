@@ -53,11 +53,18 @@ def _dataset_name_from_source(source: DataSource) -> str:
 # - SIM_CONFIG: mujoco xml、isaac python（IsaacLab 资产为 Python 配置）、
 #   isaac yaml（Isaac Sim 场景 YAML 配置）；SimConfigSkill 对非 MJCF 格式
 #   （python/yaml/py 等）生成最小 MJCF，故这些均为合法输入
+# - POLICY_MODEL: adapter 元数据/引用/成功下载均产 json（审查问题 1 统一后
+#   不再出现裸权重格式）；语义上不允许 csv 等非策略数据混入
+# - SENSOR_DATA/DATASET: csv/json 为真实时序/元数据形态；markdown 系为
+#   github 数据链路"无候选回退 README"的显式降级形态（skill 有对应分支）
 _REQ_EXPECTED_FORMATS: dict[DataReqType, tuple[str, ...]] = {
     DataReqType.GRASP: ("npz", "pkl", "npy", "mat", "json", "h5", "hdf5"),
     DataReqType.ROBOT_URDF: ("urdf", "xacro", "zip", "json"),
     DataReqType.MESH: ("obj", "stl", "ply", "dae", "glb", "gltf", "zip", "json"),
     DataReqType.SIM_CONFIG: ("xml", "mjcf", "mujoco", "json", "py", "python", "yaml"),
+    DataReqType.POLICY_MODEL: ("json",),
+    DataReqType.SENSOR_DATA: ("csv", "json", "markdown", "md", "txt", "readme", "bag"),
+    DataReqType.DATASET: ("json", "zip", "tar", "tar.gz", "tgz", "md", "markdown", "txt"),
 }
 
 # C4: 期望格式的语义描述（供 MissingItem.reason 呈现）
@@ -66,6 +73,9 @@ _REQ_EXPECTED_LABELS: dict[DataReqType, str] = {
     DataReqType.ROBOT_URDF: "CanonicalRobot（URDF/xacro）",
     DataReqType.MESH: "mesh（obj/stl/ply/dae/glb/gltf）",
     DataReqType.SIM_CONFIG: "XML（MJCF 场景 xml/mjcf）",
+    DataReqType.POLICY_MODEL: "策略元数据（model_info/config json）",
+    DataReqType.SENSOR_DATA: "传感器时序（csv/json）",
+    DataReqType.DATASET: "数据集（json/zip/tar）",
 }
 
 

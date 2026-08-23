@@ -170,6 +170,39 @@ def test_manifest_bytes_path() -> None:
     assert any("权重未本地化" in w for w in result.warnings)
 
 
+def test_manifest_bytes_downloaded_flag_not_fallback() -> None:
+    """审查问题 1：data 含 downloaded=true（adapter 成功下载分支）→ 非 fallback、保留 meta。
+
+    成功下载的权重经 adapter 同构为 meta JSON（downloaded=true + download_guide），
+    skill 不得再按"权重未本地化"降级，防止已交付数据被标为降级。
+    """
+    data = json.dumps(
+        {
+            "modelId": "foo/bar",
+            "tags": ["policy"],
+            "downloaded": True,
+            "file_path": "model.safetensors",
+            "file_size": 4096,
+            "download_guide": {
+                "status": "not_downloaded",
+                "reason": "权重已自动下载",
+                "source_file_url": "https://huggingface.co/foo/bar/resolve/main/model.safetensors",
+                "method_hint": "wget https://huggingface.co/foo/bar/resolve/main/model.safetensors -O model.safetensors",
+                "file_size_bytes": 4096,
+            },
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+    result = PolicyInterfaceSkill().process(data)
+    assert result.success is True
+    assert result.is_fallback is False
+    assert result.data_source_quality != "fallback"
+    doc: PolicyInterfaceDoc = result.data
+    assert doc.model_id == "foo/bar"
+    assert doc.download_guide is not None
+    assert any("已自动下载" in w for w in result.warnings)
+
+
 # ─── output_path 通过 name kwarg 生成 ───
 
 
