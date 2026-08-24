@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-24T05:50:14",
+    "elapsed_total_sec": 138.5
+  },
+  "results": {
+    "ss_sensor_zenodo_001": {
+      "case_id": "ss_sensor_zenodo_001",
+      "target": "帮我找 Zenodo 上的 IMU 传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 138.3
+    }
+  }
+}

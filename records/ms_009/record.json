@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_009",
+  "input": "Kinova Gen3 grasps YCB bottle in MuJoCo",
+  "executor": "D",
+  "executed_at": "2026-08-21T11:58:22+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "4 类需求全部解析出（URDF/物体 mesh/grasp/仿真场景），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "elapsed": null,
+        "format": "urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "data_url": "https://raw.githubusercontent.com/deebuls/pybullet_kinova_gen3/main/robots/GEN3_URDF_V12.urdf",
+        "note": "命中第三方仓库 pybullet_kinova_gen3 的 GEN3 URDF（未走 kinova 适配器）。8 个 STL 外部网格路径（kortex_description/arms/gen3/meshes/*.STL）未随包落盘，URDF 依赖缺失"
+      },
+      {
+        "req_id": "req_001",
+        "type": "mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed": null,
+        "format": "stl",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Marc_Anthony_Strictly_Curls_Curl_Envy_Perfect_Curl_Cream_6_fl_oz_bottle/tip/files/meshes/model.obj",
+        "note": "YCB bottle 未命中 ycb 源，显式降级 google_scanned（fuel.gazebosim）获得洗发水瓶 mesh，obj 转 stl 241KB 落盘 objects/req_001.stl。内容近似可用的瓶子模型"
+      },
+      {
+        "req_id": "req_002",
+        "type": "grasp",
+        "source": "graspnet",
+        "status": "missing",
+        "elapsed": null,
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "note": "grasp 数据来自 GraspNet-1Billion HF 数据集条目，但 downloaded=false、file_size=0、local_path 为空——仅生成清单条目，实际内容未下载落盘，grasp 需求实质上未满足"
+      },
+      {
+        "req_id": "req_003",
+        "type": "sim_config",
+        "source": "mujoco",
+        "status": "success",
+        "elapsed": null,
+        "format": "xml",
+        "quality": "real",
+        "is_fallback": false,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+        "note": "命中 mujoco_menagerie 的 agility_cassie/cassie.xml（双足机器人 Cassie）+ 15 个 mesh/纹理资产，与目标 Kinova 机械臂无关——sim_config 内容错配，非 Kinova 抓取场景"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 3,
+      "runtime_check": "failed",
+      "notes": "validation_issues=4：req_000 1 个 error（URDF 外部资源缺失，8 个 STL 网格路径失效，模型不可用）；req_002 3 个 warning（完整度 60%/置信度 0.6/输出路径为空）。runtime_check 仅 req_003 通过（MuJoCo 加载与一步仿真成功，但内容为 Cassie 非 Kinova）；req_000 URDF 因网格缺失无法解析"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-120220",
+      "manifest_path": "data/output_packages/package-20260821-120220/manifest.json",
+      "status": "complete",
+      "file_count": 19,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing，但存在 4 个校验问题：req_000 URDF 网格缺失、req_002 grasp 空文件、req_003 sim_config 内容错配。19 个文件条目中 1 个（grasps/req_002.json）为 0 字节未下载"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "多源端到端任务 4 个必需需求 3 个异常：req_000 URDF 依赖 8 个 STL 网格未落盘导致模型不可用；req_002 grasp 数据 downloaded=false 0 字节空文件（grasp 需求未真正满足）；req_003 sim_config 命中 mujoco_menagerie Cassie 双足机器人而非 Kinova，内容错配",
+  "notes": "首轮已验证的 kinova/grasp 检索薄弱在此题放大：URDF 走了第三方 github 仓库且网格不齐，grasp 降级 GraspNet HF 后仅生成空清单条目，sim_config 无 Kinova 场景导致 LLM 抓取 Cassie 充数。虽包 status=complete 且 0 missing（清单层面），实际内容可用性差，判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

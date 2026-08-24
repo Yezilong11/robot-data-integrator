@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_graspnet_004",
+  "input": "我要做抓取规划，帮我找 GraspNet 数据集的抓取标签",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:40:43+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "mismatch",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['grasp']，判定 mismatch"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "github",
+        "status": "success",
+        "format": "markdown",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": null,
+        "note": "真实流程命中 github（markdown，quality=real），url=https://github.com/graspnet/graspnet-baseline/blob/main/README.md"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=1（1 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-192224",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-192224\\manifest.json",
+      "status": "missing",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "file_info": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 0,
+        "missing": 1,
+        "validation_issues": 1,
+        "avg_confidence": 0.0,
+        "avg_completeness": 0.0
+      },
+      "notes": "包状态 failed，落盘 0 个文件，缺失 1 项（已同步前端运行包 package-20260821-192224）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content-fail-错误说明（无主数据文件，FAIL）"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P1_PARSE",
+  "failure_reason": "目标解析未命中核心需求：req_list=['dataset'], expected=['grasp']",
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=我要做抓取规划，帮我找 GraspNet 数据集的抓取标签，verdict=FAIL，retrieve=['req_000:success']，run_id=rerun-20260821-104022-5b32e9a2；截图已按新口径重采集并登记 screenshots[]（4 张）；该包无主数据文件（FAIL），未生成 03_req_file.png；package 已同步前端运行包 package-20260821-192224",
+  "reviewer": null,
+  "reviewed_at": null
+}

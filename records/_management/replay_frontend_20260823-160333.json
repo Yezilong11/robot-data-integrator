@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-23T16:16:56",
+    "elapsed_total_sec": 802.7
+  },
+  "results": {
+    "ss_github_003": {
+      "case_id": "ss_github_003",
+      "target": "检索 YCB 抓取数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 2 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 2,
+      "validation_error_count": 2,
+      "run_status": "运行完成",
+      "elapsed_sec": 272.6
+    },
+    "ss_github_004": {
+      "case_id": "ss_github_004",
+      "target": "检索抓取策略权重仓库",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 211.5
+    },
+    "ss_github_005": {
+      "case_id": "ss_github_005",
+      "target": "检索机械臂关节数据集",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 170.5
+    },
+    "ss_huggingface_001": {
+      "case_id": "ss_huggingface_001",
+      "target": "检索 robot grasp dataset",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 147.9
+    }
+  }
+}

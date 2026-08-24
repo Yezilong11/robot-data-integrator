@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robot Data Integrator · LLM 智能决策工作区</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--bg-sidebar:#010409;--border:#30363d;--text:#e6edf3;
+  --text-dim:#8b949e;--text-faint:#6e7681;--accent:#f78166;
+  --font-ui:"IBM Plex Sans","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font-ui);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#root{flex:1;min-height:0}
+#root .placeholder{
+  height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--text-faint);gap:14px;font-size:14px;
+}
+#root .placeholder .logo{
+  width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#f78166,#d29922);
+  display:grid;place-items:center;color:#0d1117;font-size:26px;font-weight:700;
+}
+.goalbar{
+  display:flex;align-items:center;gap:12px;padding:14px 28px;
+  border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;
+}
+.goal-add{
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text-dim);font-size:20px;line-height:1;
+  cursor:pointer;flex-shrink:0;display:grid;place-items:center;transition:.15s;
+}
+.goal-add:hover{border-color:var(--accent);color:var(--accent)}
+.goal-add.has-file{color:var(--accent);border-color:var(--accent)}
+.goal-input{
+  flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:11px 14px;font-family:var(--font-ui);font-size:14px;color:var(--text);
+  outline:none;transition:.15s;
+}
+.goal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(247,129,102,.12)}
+.goal-input::placeholder{color:var(--text-faint)}
+.goal-run{
+  background:var(--accent);color:#0d1117;border:none;padding:11px 22px;border-radius:10px;
+  font-family:var(--font-ui);font-size:14px;font-weight:600;cursor:pointer;transition:.15s;flex-shrink:0;
+}
+.goal-run:hover{filter:brightness(1.08)}
+.goal-run:disabled{opacity:.55;cursor:not-allowed}
+.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(13,17,23,.35);border-top-color:#0d1117;border-radius:50%;animation:btnSpin .8s linear infinite;margin-right:8px;vertical-align:-2px}
+@keyframes btnSpin{to{transform:rotate(360deg)}}
+.pdf-name{font-size:12px;color:var(--accent);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.pdf-name:hover{border-color:var(--accent)}
+.rdi-stage-text{color:var(--accent);font-weight:600}
+.controls{background:var(--bg-sidebar);border-top:1px solid var(--border);padding:0 28px;flex-shrink:0}
+.controls summary{cursor:pointer;color:var(--text-dim);font-size:12px;padding:10px 0;user-select:none}
+.controls .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:14px}
+.controls .field{display:flex;flex-direction:column;gap:5px}
+.controls .field.full{grid-column:1 / -1}
+.controls label{font-size:12px;color:var(--text-faint)}
+.controls select,.controls textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:8px 10px;font-size:13px;font-family:var(--font-ui);outline:none;
+}
+.controls textarea{resize:vertical;min-height:52px}
+</style>
+</head>
+<body>
+
+<div id="root">
+  <div class="placeholder">
+    <div class="logo">R</div>
+    <div>Robot Data Integrator — LLM 智能决策工作区</div>
+    <div>在下方输入实验目标，点击「▶ 运行」开始</div>
+  </div>
+</div>
+
+<div class="goalbar" id="goalbar">
+  <button class="goal-add" id="pdfBtn" title="上传论文 PDF">＋</button>
+  <span class="pdf-name" id="pdfName" style="display:none" title=""></span>
+  <input class="goal-input" id="goalInput" placeholder="描述你的实验目标，如：整合 DexGrasp 抓取数据与灵巧手 URDF…">
+  <button class="goal-run" id="runBtn">▶ 运行</button>
+</div>
+<input type="file" id="pdfFile" accept=".pdf" hidden>
+
+<details class="controls" id="controls">
+  <summary>审查与设置</summary>
+  <div class="grid">
+    <div class="field">
+      <label>运行模式</label>
+      <select id="modeSel">
+        <option value="真实流程" selected>真实流程</option>
+        <option value="演示流程">演示流程</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>审查决定</label>
+      <select id="reviewSel">
+        <option value="satisfied" selected>satisfied（满意）</option>
+        <option value="revised">revised（修订）</option>
+        <option value="unsatisfied">unsatisfied（不满意）</option>
+      </select>
+    </div>
+    <div class="field full">
+      <label>反馈</label>
+      <textarea id="feedback" placeholder="审查反馈（可选）"></textarea>
+    </div>
+    <div class="field full">
+      <label>本地文件注入（JSON：{"req_id": "路径"}）</label>
+      <textarea id="localFiles" placeholder='{"req_id": "C:/path/to/file"}'></textarea>
+    </div>
+  </div>
+</details>
+
+<script>
+const root = document.getElementById('root');
+const runBtn = document.getElementById('runBtn');
+const goalInput = document.getElementById('goalInput');
+const pdfBtn = document.getElementById('pdfBtn');
+const pdfFile = document.getElementById('pdfFile');
+const pdfName = document.getElementById('pdfName');
+const modeSel = document.getElementById('modeSel');
+const reviewSel = document.getElementById('reviewSel');
+const feedback = document.getElementById('feedback');
+const localFiles = document.getElementById('localFiles');
+
+let pdfBase64 = null;
+let pdfFileName = '';
+let running = false;
+
+const PANEL_TITLES = {explorer:'资源管理器', retrieve:'数据检索', decision:'决策', review:'审查', log:'日志', settings:'设置'};
+const STAGE_TO_NODE = {retrieve_data:0, parse_and_convert:1, validate:2, assemble_package:3, human_review:4};
+const STAGE_LABELS = {parse_goal:'目标解析', retrieve_data:'数据检索', parse_and_convert:'解析转换', validate:'质量校验', assemble_package:'整合打包', human_review:'人工审查'};
+const STAGE_ORDER = ['parse_goal','retrieve_data','parse_and_convert','validate','assemble_package','human_review'];
+
+// 活动栏 / 检查器切换（事件委托，内容被 innerHTML 替换后仍生效）
+document.addEventListener('click', (e) => {
+  const action = e.target.closest('[data-action]');
+  if (action && root.contains(action)) {
+    const kind = action.getAttribute('data-action');
+    if (kind === 'refresh') refreshExplorer();
+    else if (kind === 'expand') setExplorerExpanded(true);
+    else if (kind === 'collapse') setExplorerExpanded(false);
+    else if (kind === 'new-session') startNewSession();
+  }
+  const act = e.target.closest('.rdi-act');
+  if (act && root.contains(act)) {
+    root.querySelectorAll('.rdi-act').forEach(x => x.classList.remove('active'));
+    act.classList.add('active');
+    const p = act.getAttribute('data-panel');
+    root.querySelectorAll('.rdi-sidebar .rdi-pane').forEach(n => {
+      n.style.display = (n.getAttribute('data-panel') === p) ? '' : 'none';
+    });
+    const titleEl = root.querySelector('#rdi-panel-title');
+    if (titleEl) titleEl.textContent = PANEL_TITLES[p] || '';
+  }
+  const tab = e.target.closest('.rdi-tab');
+  if (tab && root.contains(tab)) {
+    root.querySelectorAll('.rdi-tab').forEach(x => x.classList.remove('active'));
+    tab.classList.add('active');
+    const k = tab.getAttribute('data-tab');
+    root.querySelectorAll('.rdi-insp-pane').forEach(n => {
+      n.style.display = (n.getAttribute('data-tab') === k) ? '' : 'none';
+    });
+  }
+  const group = e.target.closest('.rdi-group');
+  if (group && root.contains(group)) {
+    const gchildren = group.nextElementSibling;
+    if (gchildren) {
+      const gchev = group.querySelector('.rdi-tree-chev');
+      if (gchildren.style.display === 'none') {
+        gchildren.style.display = 'block';
+        if (gchev) gchev.textContent = '▾';
+      } else {
+        gchildren.style.display = 'none';
+        if (gchev) gchev.textContent = '▸';
+      }
+    }
+  }
+  const pkg = e.target.closest('.rdi-pkg');
+  if (pkg && root.contains(pkg)) {
+    const children = pkg.nextElementSibling;
+    if (!children) return;
+    const chev = pkg.querySelector('.rdi-tree-chev');
+    if (children.style.display === 'none') {
+      children.style.display = 'block';
+      if (chev) chev.textContent = '▾';
+      if (!children.dataset.loaded) {
+        children.dataset.loaded = '1';
+        loadPackageTree(pkg.getAttribute('data-group'), pkg.getAttribute('data-package'), children);
+      }
+    } else {
+      children.style.display = 'none';
+      if (chev) chev.textContent = '▸';
+    }
+  }
+});
+
+async function loadPackageTree(group, packageId, container) {
+  try {
+    const resp = await fetch(`/api/package/tree?group=${encodeURIComponent(group)}&package_id=${encodeURIComponent(packageId)}`);
+    const data = await resp.json();
+    container.innerHTML = data.error ? '加载失败' : data.html;
+  } catch (err) {
+    container.innerHTML = '加载失败';
+  }
+}
+
+function setExplorerExpanded(expand) {
+  const pane = root.querySelector('.rdi-pane[data-panel="explorer"]');
+  if (!pane) return;
+  pane.querySelectorAll('.rdi-group').forEach((group) => {
+    const children = group.nextElementSibling;
+    if (!children) return;
+    const chev = group.querySelector('.rdi-tree-chev');
+    if (expand) {
+      children.style.display = 'block';
+      if (chev) chev.textContent = '▾';
+    } else {
+      children.style.display = 'none';
+      if (chev) chev.textContent = '▸';
+    }
+  });
+  pane.querySelectorAll('.rdi-pkg').forEach((pkg) => {
+    const children = pkg.nextElementSibling;
+    if (!children) return;
+    const chev = pkg.querySelector('.rdi-tree-chev');
+    if (expand) {
+      children.style.display = 'block';
+      if (chev) chev.textContent = '▾';
+      if (!children.dataset.loaded) {
+        children.dataset.loaded = '1';
+        loadPackageTree(pkg.getAttribute('data-group'), pkg.getAttribute('data-package'), children);
+      }
+    } else {
+      children.style.display = 'none';
+      if (chev) chev.textContent = '▸';
+    }
+  });
+}
+
+async function refreshExplorer() {
+  const pane = root.querySelector('.rdi-pane[data-panel="explorer"]');
+  if (!pane) return;
+  try {
+    const resp = await fetch('/api/workspace');
+    const data = await resp.json();
+    const doc = new DOMParser().parseFromString(data.html, 'text/html');
+    const fresh = doc.querySelector('.rdi-pane[data-panel="explorer"]');
+    if (fresh) pane.innerHTML = fresh.innerHTML;
+  } catch (err) {
+    // 刷新失败时保持现状
+  }
+}
+
+const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10MB，覆盖一般论文（十几页）PDF
+
+function clearPdf() {
+  pdfBase64 = null;
+  pdfFileName = '';
+  pdfBtn.textContent = '＋';
+  pdfBtn.classList.remove('has-file');
+  pdfBtn.title = '上传论文 PDF';
+  pdfName.textContent = '';
+  pdfName.title = '';
+  pdfName.style.display = 'none';
+  pdfFile.value = '';
+}
+
+pdfBtn.addEventListener('click', () => {
+  if (pdfBase64) {
+    if (confirm('清除已上传的论文 PDF？')) clearPdf();
+  } else {
+    pdfFile.click();
+  }
+});
+pdfName.addEventListener('click', () => {
+  if (pdfBase64 && confirm('清除已上传的论文 PDF？')) clearPdf();
+});
+pdfFile.addEventListener('change', async () => {
+  const f = pdfFile.files[0];
+  if (!f) return;
+  if (f.size > MAX_PDF_BYTES) {
+    alert('PDF 过大（超过 10MB），请压缩后重试');
+    pdfFile.value = '';
+    return;
+  }
+  pdfBase64 = await fileToBase64(f);
+  pdfFileName = f.name;
+  pdfBtn.textContent = '📎';
+  pdfBtn.title = '已上传：' + f.name + '（点击清除）';
+  pdfBtn.classList.add('has-file');
+  pdfName.textContent = f.name;
+  pdfName.title = f.name + '（点击清除）';
+  pdfName.style.display = '';
+});
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+runBtn.addEventListener('click', () => {
+  if (running) return;
+  running = true;
+  if (runBtn.textContent.includes('继续运行')) resume();
+  else run();
+});
+
+async function run() {
+  const goal = goalInput.value.trim();
+  if (!goal) { alert('请输入实验目标'); running = false; return; }
+  runBtn.textContent = '运行中…';
+  runBtn.disabled = true;
+  try {
+    const resp = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: modeSel.value,
+        goal: goal,
+        paper_pdf: pdfBase64,
+        local_files: localFiles.value,
+      }),
+    });
+    const data = await resp.json();
+    const taskId = data.task_id;
+    await pollUntilDone(taskId);
+  } finally {
+    running = false;
+    runBtn.disabled = false;
+  }
+}
+
+async function pollUntilDone(taskId) {
+  const deadline = Date.now() + 30 * 60 * 1000; // 30 分钟超时，覆盖真实流程 LLM 慢调用
+  while (true) {
+    if (Date.now() > deadline) {
+      alert('运行超时（超过 30 分钟），请检查后端日志');
+      return;
+    }
+    const stResp = await fetch(`/api/status/${taskId}`);
+    const st = await stResp.json();
+    if (st.error) { alert(st.error); return; }
+    if (st.done) break;
+    updateRunningStage(st.stage_progress || []);
+    await sleep(500);
+  }
+  const resResp = await fetch(`/api/result/${taskId}`);
+  const res = await resResp.json();
+  if (res.error) { alert(res.error); return; }
+  const result = res.result;
+  // 演示流程无逐节点进度，跑完后用动画点亮；真实流程运行期间已点亮，直接显示最终状态
+  renderBoard(result[10], modeSel.value === '演示流程');
+  runBtn.textContent = res.interrupted ? '▶ 继续运行' : '▶ 运行';
+}
+
+async function resume() {
+  runBtn.innerHTML = '<span class="btn-spinner"></span>继续运行中…';
+  runBtn.disabled = true;
+  try {
+    const resp = await fetch('/api/resume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ review_decision: reviewSel.value, feedback: feedback.value }),
+    });
+    const data = await resp.json();
+    const result = data.result;
+    renderBoard(result[10], false);
+    runBtn.textContent = '▶ 运行';
+  } catch (e) {
+    alert('继续运行失败：' + e.message);
+    runBtn.textContent = '▶ 继续运行';
+  } finally {
+    running = false;
+    runBtn.disabled = false;
+  }
+}
+
+function currentStageLabel(stageProgress) {
+  const done = new Set(stageProgress || []);
+  for (const s of STAGE_ORDER) {
+    if (!done.has(s)) return STAGE_LABELS[s] || s;
+  }
+  return '运行完成';
+}
+
+function updateRunningStage(stageProgress) {
+  // 运行期间保留工作区，只更新灯带节点点亮状态
+  const stops = root.querySelectorAll('.rdi-wf-stop');
+  if (stops.length === 0) return;
+  let maxDone = -1;
+  (stageProgress || []).forEach(s => {
+    const idx = STAGE_TO_NODE[s];
+    if (idx !== undefined && idx > maxDone) maxDone = idx;
+  });
+  const current = maxDone + 1;
+  stops.forEach((s, i) => {
+    s.classList.remove('rdi-wf-current', 'rdi-wf-done');
+    if (i <= maxDone) s.classList.add('rdi-wf-done');
+    else if (i === current) s.classList.add('rdi-wf-current');
+  });
+  const stageText = root.querySelector('#rdi-stage-text');
+  if (stageText) stageText.textContent = '当前阶段：' + currentStageLabel(stageProgress);
+}
+
+function renderBoard(html, animate = true) {
+  // innerHTML 重建会销毁已移入 root 的目标输入条/审查面板，先摘出再放回（元素对象与事件监听保留）
+  const goalbar = document.getElementById('goalbar');
+  const controls = document.getElementById('controls');
+  const bars = [goalbar, controls].filter(Boolean);
+  bars.forEach(el => el.remove());
+  root.innerHTML = html;
+  bars.forEach(el => document.body.appendChild(el));
+  if (animate) animateWorkflow();
+  moveBottomBar();
+}
+
+// 设计稿布局：目标输入条与「审查与设置」位于中栏（.rdi-main）底部，三栏从标题栏到状态栏完整贯通
+function moveBottomBar() {
+  const main = root.querySelector('.rdi-main');
+  if (!main) return;
+  const goalbar = document.getElementById('goalbar');
+  const controls = document.getElementById('controls');
+  if (controls && controls.parentElement !== main) main.appendChild(controls);
+  if (goalbar && goalbar.parentElement !== main) main.appendChild(goalbar);
+}
+
+function animateWorkflow() {
+  const stops = root.querySelectorAll('.rdi-wf-stop');
+  if (stops.length === 0) return;
+  // 逐个点亮到全部完成（用于演示流程的模拟推进）
+  const total = stops.length;
+  for (let i = 0; i < total; i++) {
+    setTimeout(() => {
+      stops.forEach((s, j) => {
+        s.classList.remove('rdi-wf-current', 'rdi-wf-done');
+        if (j <= i) s.classList.add('rdi-wf-done');
+      });
+    }, i * 220);
+  }
+}
+
+// 三栏拖拽调宽（事件委托，内容被替换后仍生效）
+document.addEventListener('mousedown', (e) => {
+  const resizer = e.target.closest('.rdi-resizer');
+  if (!resizer || !root.contains(resizer)) return;
+  const target = resizer.getAttribute('data-target');
+  const panel = root.querySelector(target === 'sidebar' ? '.rdi-sidebar' : '.rdi-inspector');
+  if (!panel) return;
+  const dir = resizer.getAttribute('data-dir');
+  const startX = e.clientX;
+  const startW = panel.offsetWidth;
+  const min = parseInt(panel.getAttribute('data-min') || '180', 10);
+  const max = parseInt(panel.getAttribute('data-max') || '520', 10);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  const onMove = (ev) => {
+    const dx = ev.clientX - startX;
+    const w = dir === 'right' ? startW + dx : startW - dx;
+    panel.style.width = Math.min(Math.max(w, min), max) + 'px';
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  e.preventDefault();
+});
+
+async function loadInitialWorkspace() {
+  try {
+    const resp = await fetch('/api/workspace');
+    const data = await resp.json();
+    renderBoard(data.html, false);
+  } catch (e) {
+    // 初始加载失败时保留占位
+  }
+}
+
+// 新会话：清空输入/PDF/审查设置，重置工作区到待输入态
+function startNewSession() {
+  if (running) return; // 运行中忽略，避免打断进行中的流程
+  goalInput.value = '';
+  clearPdf();
+  feedback.value = '';
+  localFiles.value = '';
+  reviewSel.value = 'satisfied';
+  runBtn.textContent = '▶ 运行';
+  runBtn.disabled = false;
+  loadInitialWorkspace();
+}
+loadInitialWorkspace();
+</script>
+</body>
+</html>

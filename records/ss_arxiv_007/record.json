@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_arxiv_007",
+  "input": "检索 robot learning manipulation 领域的 arXiv 最新论文 2 篇",
+  "executor": "E",
+  "executed_at": "2026-08-21T08:58:38+08:00",
+  "completed_at": "2026-08-21T08:58:56+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "paper",
+  "priority": "P2",
+  "variant": "多篇检索",
+  "expected": {
+    "req_types": [
+      "paper"
+    ],
+    "sources": [
+      "arxiv"
+    ],
+    "formats": [
+      "json",
+      "pdf"
+    ],
+    "min_files": 2,
+    "notes": "题目明确要求 arXiv 最新论文 2 篇。"
+  },
+  "source_package": {
+    "package_id": "package-20260821-085856",
+    "run_id": "20260821-085838-369995e4",
+    "manifest_path": "data/output_packages/package-20260821-085856/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-085856",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "partial",
+      "req_list": [
+        "paper"
+      ],
+      "vs_expected": "partial",
+      "notes": "LLM/流程只形成 1 条 paper 需求，未体现“最新论文 2 篇”的数量约束；expected.req_types 类型匹配，但数量约束未满足。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "paper",
+        "description": "robot learning manipulation 领域 arXiv 论文",
+        "source": "arxiv",
+        "status": "success",
+        "elapsed": null,
+        "format": "json",
+        "quality": "unknown",
+        "is_fallback": true,
+        "data_url": "https://arxiv.org/pdf/1711.10137v2.pdf",
+        "output_path": "resources/req_000.json",
+        "file_size": 3473075,
+        "downloaded": false,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "checksum_sha256": "5c1e0ea13292a9418a4ff5fa74b645fe6fbc70617cf8cc6d4e6cf1fb44bd08b9",
+        "metadata": {
+          "arxiv_id": "1711.10137v2",
+          "title": "One-Shot Reinforcement Learning for Robot Navigation with Interactive Replay",
+          "abstract": "Recently, model-free reinforcement learning algorithms have been shown to solve challenging problems by learning from extensive interaction with the environment. A significant issue with transferring this success to the robotics domain is that interaction with the real world is costly, but training on limited experience is prone to overfitting. We present a method for learning to navigate, to a fixed goal and in a known environment, on a mobile robot. The robot leverages an interactive world model built from a single traversal of the environment, a pre-trained visual feature encoder, and stochastic environmental augmentation, to demonstrate successful zero-shot transfer under real-world environmental variations without fine-tuning.",
+          "note": "PDF unavailable or exceeds max_fetch_bytes; returning metadata only"
+        },
+        "notes": "只返回 1 篇论文的 metadata JSON；PDF 未下载，且题目要求 2 篇最新论文，数量不足。该论文主题更偏 robot navigation / reinforcement learning，不是严格 manipulation 最新论文。"
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 3,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目要求最新论文 2 篇，但实际只产出 1 个 paper JSON，未满足 min_files=2。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "PDF 未下载，req_000.json 中 note 为 PDF unavailable or exceeds max_fetch_bytes; returning metadata only。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均置信度仅 0.6，低于推荐阈值。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均完整度仅 60.0%，未达最低可用基准。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest local_path 为空，下游可能无法直接加载。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据基本可用，但存在完整性与置信度不足的风险。",
+        "manifest_validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-085856",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-085856\\manifest.json",
+      "package_id": "package-20260821-085856",
+      "run_id": "20260821-085838-369995e4",
+      "status": "complete",
+      "file_count": 2,
+      "requirement_file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "resources/req_000.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      },
+      "notes": "manifest 自身显示 complete，但二轮人工验收需按题设 expected.min_files=2 校验；当前只有 1 个需求产物，不满足多篇检索要求。"
+    },
+    "provenance": [
+      "2026-08-21T08:58:56.127587 assemble_package: 生成数据包 package-20260821-085856，落盘 1 个文件，缺失 0 项",
+      "2026-08-21T08:58:56.127587 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260821-085856 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260821-085856 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "题目要求 arXiv 最新论文 2 篇且 min_files=2，但本次只检索并落盘 1 个 metadata-only JSON，PDF 未下载，数量和完整度均不满足要求。",
+  "notes": "本 record 根据 package-20260821-085856 的 manifest、resources/req_000.json、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。虽然 manifest package_info.status=complete 且 missing_items=0，但人工按 problem_set 的 min_files=2 与“最新论文 2 篇”要求复核后不达标，因此记录为 FAIL/P2_RETRIEVE。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

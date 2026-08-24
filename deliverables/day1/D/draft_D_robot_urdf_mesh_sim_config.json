@@ -1,0 +1,558 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "name": "v3 问题集 - 角色 D 草案（格式/仿真类）",
+    "created_at": "2026-08-12",
+    "draft_by": "D（机器人工程师）",
+    "status": "待 A 评审",
+    "quota_ref": "问题集规模与源配额.md",
+    "quota_note": "本草案覆盖 D 领域 9 源配额共 31 题（franka 3 + robotiq 3 + allegro 3 + ycb 5 + google_scanned 3 + mujoco 5 + isaac 2 + dexgrasp 5 + graspnet 2）。其中 dexgrasp/graspnet/ycb 的 GRASP、DATASET 题主设计归 C，D 提供格式侧验收；若 C 草案已含同 case 则以 C 为准，避免重复。其余 6 源（arxiv/github/huggingface/zenodo/paperswithcode/ieee）由 C/E 草案出题。"
+  },
+  "problems": [
+    {
+      "case_id": "ss_franka_001",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["franka"],
+      "target": "获取 Franka Panda 机器人的 URDF 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "直接"
+    },
+    {
+      "case_id": "ss_franka_002",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["franka"],
+      "target": "我需要 Franka Panda 的完整 URDF 模型，包含碰撞网格与视觉网格",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（完整/碰撞+视觉）"
+    },
+    {
+      "case_id": "ss_franka_003",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["franka"],
+      "target": "我要用 Franka Panda 做抓取仿真，先把它的模型文件给我",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_robotiq_001",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["robotiq"],
+      "target": "获取 Robotiq 2F-85 夹爪的 URDF 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "直接"
+    },
+    {
+      "case_id": "ss_robotiq_002",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["robotiq"],
+      "target": "获取 Robotiq 2F-85 夹爪 URDF，并确认其手指开合参数",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（模型+参数）"
+    },
+    {
+      "case_id": "ss_robotiq_003",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["robotiq"],
+      "target": "抓取实验要装 Robotiq 夹爪，我需要它的模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_allegro_001",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["allegro"],
+      "target": "获取 Allegro Hand 灵巧手的 URDF 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "直接"
+    },
+    {
+      "case_id": "ss_allegro_002",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["allegro"],
+      "target": "获取 Allegro Hand 的 URDF，需要包含 4 指 16 关节定义",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "组合需求（关节数校验）"
+    },
+    {
+      "case_id": "ss_allegro_003",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": ["allegro"],
+      "target": "灵巧手做抓取，帮我找 Allegro 手的模型文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["robot_urdf"],
+        "quality": ["real", "fallback"],
+        "format": ["urdf"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_ycb_001",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": ["ycb"],
+      "target": "获取 YCB 数据集中的香蕉（banana）mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["mesh"],
+        "quality": ["real", "fallback"],
+        "format": ["obj", "stl", "ply"],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "物体 A（banana）"
+    },
+    {
+      "case_id": "ss_ycb_002",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": ["ycb"],
+      "target": "获取 YCB 数据集中的苹果（apple）mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["mesh"],
+        "quality": ["real", "fallback"],
+        "format": ["obj", "stl", "ply"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "物体 B（apple）"
+    },
+    {
+      "case_id": "ss_ycb_003",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": ["ycb"],
+      "target": "获取 YCB 数据集中的马克杯（mug）mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["mesh"],
+        "quality": ["real", "fallback"],
+        "format": ["obj", "stl", "ply"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "物体 C（mug）"
+    },
+    {
+      "case_id": "ss_ycb_004",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": ["ycb"],
+      "target": "获取 YCB 数据集中的香蕉物体完整数据集（含 mesh 与标注）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["dataset"],
+        "quality": ["real", "fallback"],
+        "format": ["tar", "zip"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "owner_note": "主设计归 C；D 提供数据包结构核验（robots/objects/ 目录与 manifest 一致）"
+    },
+    {
+      "case_id": "ss_ycb_005",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["ycb"],
+      "target": "获取 YCB 香蕉（banana）的单个 grasp 姿态文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["real", "fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "owner_note": "主设计归 C；D 提供格式侧验收（translations+rotations 或 grasps 字段）"
+    },
+    {
+      "case_id": "ss_google_scanned_001",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": ["google_scanned"],
+      "target": "获取 Google Scanned Objects 数据集中的任意一个物体 mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["mesh"],
+        "quality": ["real", "fallback"],
+        "format": ["glb", "obj", "ply"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "直接"
+    },
+    {
+      "case_id": "ss_google_scanned_002",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": ["google_scanned"],
+      "target": "获取 Google Scanned Objects 中的水壶（kettle）mesh 模型",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["mesh"],
+        "quality": ["real", "fallback"],
+        "format": ["glb", "obj", "ply"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "指定物体"
+    },
+    {
+      "case_id": "ss_google_scanned_003",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": ["google_scanned"],
+      "target": "获取 Google Scanned Objects 中大体积物体的 mesh（验证下载超时/失败降级路径）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["mesh"],
+        "quality": ["fallback", "unknown"],
+        "format": ["glb", "obj", "ply"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "下载风险降级路径"
+    },
+    {
+      "case_id": "ss_mujoco_001",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["mujoco"],
+      "target": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["real"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "机器人 A × 桌面场景"
+    },
+    {
+      "case_id": "ss_mujoco_002",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["mujoco"],
+      "target": "获取 mujoco_menagerie 中 Franka Panda 的抓取操作场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["real"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "机器人 A × 操作/抓取场景"
+    },
+    {
+      "case_id": "ss_mujoco_003",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["mujoco"],
+      "target": "获取 mujoco_menagerie 中 UR5e 机器人的 MuJoCo 场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["real"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "机器人 B（UR5e）"
+    },
+    {
+      "case_id": "ss_mujoco_004",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["mujoco"],
+      "target": "获取 mujoco_menagerie 中的厨房（Kitchen）场景配置",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["real"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "特定环境场景"
+    },
+    {
+      "case_id": "ss_mujoco_005",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["mujoco"],
+      "target": "我要在 MuJoCo 里搭 Franka 的仿真环境，帮我找场景配置文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["real"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述"
+    },
+    {
+      "case_id": "ss_isaac_001",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["isaac"],
+      "target": "获取 Isaac Sim 中 Franka Panda 的仿真场景配置（允许最小 MJCF fallback）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["fallback"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "fallback 显式标记"
+    },
+    {
+      "case_id": "ss_isaac_002",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": ["isaac"],
+      "target": "获取 Isaac Sim 场景配置（验证无真实场景时的失败可追溯性）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["sim_config"],
+        "quality": ["fallback"],
+        "format": ["mjcf", "xml"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "失败可追溯"
+    },
+    {
+      "case_id": "ss_dexgrasp_001",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["dexgrasp"],
+      "target": "获取 DEX-GRASP 数据集中香蕉（banana）的抓取姿态文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["real", "fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "物体 A（banana）",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    },
+    {
+      "case_id": "ss_dexgrasp_002",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["dexgrasp"],
+      "target": "获取 DEX-GRASP 数据集中苹果（apple）的抓取姿态文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["real", "fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "物体 B（apple）",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    },
+    {
+      "case_id": "ss_dexgrasp_003",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["dexgrasp"],
+      "target": "获取 DEX-GRASP 数据集中马克杯（mug）的抓取姿态文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["real", "fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "物体 C（mug）",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    },
+    {
+      "case_id": "ss_dexgrasp_004",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["dexgrasp"],
+      "target": "获取 DEX-GRASP 数据集中多个物体的批量抓取姿态文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["real", "fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "多物体批量",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    },
+    {
+      "case_id": "ss_dexgrasp_005",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["dexgrasp"],
+      "target": "帮我在 DEX-GRASP 里找一个杯子能抓的姿态数据",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["real", "fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P2",
+      "variant": "中文口语化表述",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    },
+    {
+      "case_id": "ss_graspnet_001",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["graspnet"],
+      "target": "获取 GraspNet 数据集中香蕉（banana）的 grasp 姿态文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["fallback"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P0",
+      "variant": "降级显式（tar 死路径 → dexgrasp 兜底）",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    },
+    {
+      "case_id": "ss_graspnet_002",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": ["graspnet"],
+      "target": "获取 GraspNet 数据集的 grasp 文件（验证 tar 无法单文件获取时的失败可追溯性）",
+      "lang": "ZH",
+      "expected": {
+        "req_types": ["grasp"],
+        "quality": ["fallback", "unknown"],
+        "format": ["npz", "pkl", "json"],
+        "min_files": 1
+      },
+      "priority": "P1",
+      "variant": "失败可追溯",
+      "owner_note": "主设计归 C；D 提供格式侧验收"
+    }
+  ],
+  "multi_source_notes": [
+    {
+      "case_id": "ms_001",
+      "target": "Franka Panda grasps YCB banana in MuJoCo",
+      "d_side_expected": "机器人侧含 robot_urdf（franka，可加载）、mesh（ycb banana，面片>0）、sim_config（mujoco，mjcf 可 mj_step）；min_files 建议 ≥3"
+    },
+    {
+      "case_id": "ms_002",
+      "target": "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉",
+      "d_side_expected": "同 ms_001；中文解析鲁棒性，req_types 建议含 robot_urdf+mesh+sim_config"
+    },
+    {
+      "case_id": "ms_003",
+      "target": "Kinova Gen3 picks up EGAD mug in Isaac Sim",
+      "d_side_expected": "robot_urdf（kinova 暂无内置 adapter，预计 missing 或 github 兜底）+ mesh（egad）+ sim_config（isaac，python/yaml 场景仅做语法校验）"
+    },
+    {
+      "case_id": "ms_004",
+      "target": "UR5 with Robotiq 2F-85 grasps YCB apple",
+      "d_side_expected": "robot_urdf（ur5 无内置 adapter + robotiq）+ mesh（ycb apple）"
+    },
+    {
+      "case_id": "ms_005",
+      "target": "Franka Panda stacks YCB blocks in PyBullet",
+      "d_side_expected": "robot_urdf（franka）+ mesh（ycb blocks）；PyBullet 场景无内置 adapter，sim_config 侧预计缺省"
+    },
+    {
+      "case_id": "ms_006",
+      "target": "用 Franka 在 MuJoCo 里抓取香蕉（无 YCB 关键词）",
+      "d_side_expected": "解析鲁棒性：mesh 类型应从语义推断为 YCB 香蕉，检验 req_types 完整性"
+    },
+    {
+      "case_id": "ms_007",
+      "target": "抓取 YCB 香蕉（未指定仿真器）",
+      "d_side_expected": "缺省场景处理：sim_config 缺省时是否降级/跳过，判定口径需 A 裁定"
+    },
+    {
+      "case_id": "ms_008",
+      "target": "只要 Franka Panda 的 URDF",
+      "d_side_expected": "单需求路径：仅 robot_urdf，验证不误加 mesh/sim_config"
+    }
+  ]
+}

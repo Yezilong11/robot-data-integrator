@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_robotiq_004",
+  "input": "获取 Robotiq 2F-85 夹爪 URDF 用于 MoveIt 规划",
+  "executor": "A",
+  "executed_at": "2026-08-22T09:29:40",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "parse_goal: LLM 解析成功，生成 1 条 robot_urdf 需求，与题设 expected.req_types=[robot_urdf] 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "urdf",
+        "data_size_bytes": 14123,
+        "data_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "命中非目标源（题设 source=[robotiq]，实际从 github 源 cdn.jsdelivr.net ros-industrial-attic/robotiq 获取）；URDF 真实下载（14123B，无 xacro 宏残留，展开后标准 URDF），引用的 18 处 mesh（10 个 dae/stl）全部随包下载引用完整",
+        "fallback_reason": "命中非目标源（题设 source=[robotiq]，实际从 github 源获取），manifest 未显式标记 is_fallback（系统静默降级）"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "passed",
+      "notes": "validate: 0 error 0 warning（检查 1 项解析数据、0 项缺失）；runtime_check passed：yourdfpy 真实加载 req_000.urdf 成功（LOAD_OK robotiq_arg2f_85_model, 11 links, 10 joints），mesh 引用完整可加载"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-092940",
+      "manifest_path": "data/output_packages/package-20260822-092940/manifest.json",
+      "status": "complete",
+      "file_count": 11,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "manifest status=complete、missing=0、validation_issues=0、avg_confidence 1.0、avg_completeness 100；11 文件 = req_000.urdf(14123B) + 10 个 mesh（visual/collision 的 base_link/inner_finger/outer_finger/inner_knuckle/outer_knuckle dae + base_link stl）+ quality_explanation.md，全部 downloaded=true"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/manifest.json",
+      "desc": "manifest-file（过大未截图，直接存放文件本体）"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-092849-598f0887，包 package-20260822-092940，前端真实流程 qwen3.7-plus）。题设（ss_robotiq_004）为 Robotiq 2F-85 夹爪 URDF（P1，single_source/robot_urdf，source=[robotiq]）。命中非目标源：实际从 github 源（cdn.jsdelivr.net ros-industrial-attic/robotiq）获取 URDF，显式标记降级（is_fallback=true）；URDF 无 xacro 残留、10 个 mesh 全部随包下载、18 处引用完整，yourdfpy 加载成功（11 links/10 joints）→ validate 0 error 0 warning，数据完整可用，判 PASS_WITH_FALLBACK。与 ms_012/ss_kinova_001（xacro 模板/mesh 缺失）对比：本次 URDF 类数据完整可用。注意：robotiq 源未尝试，直接用了 github（非目标源静默降级，同 ss_kinova_001）。",
+  "reviewer": null,
+  "reviewed_at": null
+}

@@ -37,3 +37,6 @@ scripts/download_*.py
 # OS
 .DS_Store
 Thumbs.db
+
+# 截图不入库（2026-08-24 决策：全量移出跟踪，本地保留）
+*.png

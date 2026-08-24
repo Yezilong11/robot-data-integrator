@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mesh_gso_001",
+  "input": "获取 Google Scanned Objects 中一个香蕉 mesh 模型（中文）",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:37:01+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['mesh']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "ycb",
+        "status": "success",
+        "format": "obj",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 mesh 命中非题设源 ycb，经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 ycb（obj，quality=fallback，is_fallback=true），url=https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-193656",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-193656\\manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "objects/req_000.stl",
+          "format": "stl",
+          "source_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj",
+          "is_fallback": true,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 819284
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项（已同步前端运行包 package-20260821-193656）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=获取 Google Scanned Objects 中一个香蕉 mesh 模型（中文），verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260821-103605-37b1df9b；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-193656",
+  "reviewer": null,
+  "reviewed_at": null
+}

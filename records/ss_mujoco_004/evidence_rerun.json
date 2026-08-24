@@ -1,0 +1,66 @@
+{
+  "case_id": "ss_mujoco_004",
+  "input": "获取 mujoco_menagerie 中的厨房（Kitchen）场景配置",
+  "executed_at": "2026-08-15T20:12:33",
+  "steps": {
+    "interrupt_reached": true,
+    "interrupt_status": "已生成中间结果，请到「数据包审查」选择审查决定并点击「继续运行」",
+    "final_status": "运行完成",
+    "manifest": {
+      "package_info": {
+        "goal": "获取 mujoco_menagerie 中的厨房（Kitchen）场景配置",
+        "created_at": "2026-08-15T20:12:51.128159",
+        "iteration": 0,
+        "package_id": "package-20260815-201251",
+        "run_id": "20260815-201235-2ceb5e60",
+        "pipeline_version": "1.0.0",
+        "demo": "false",
+        "license": "",
+        "citation": "",
+        "status": "complete"
+      },
+      "files": [
+        {
+          "req_id": "req_000",
+          "path": "sim_config/req_000.xml",
+          "format": "mjcf",
+          "source_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+          "retrieved_at": "2026-08-15T20:12:50.840311",
+          "transformations": [
+            "written_to:sim_config/req_000.xml"
+          ],
+          "confidence": 0.8,
+          "completeness": 80.0,
+          "data_source_quality": "fallback",
+          "is_fallback": true,
+          "file_size": 1772,
+          "downloaded": true,
+          "local_path": "sim_config/req_000.xml",
+          "file_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+          "checksum_sha256": "3c8b4b28f2675e8aebb019a64e8cae7aa62c5090f81434a0d408395e0609c9aa"
+        }
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      },
+      "provenance_log": [
+        "[2026-08-15T20:12:51.128159] assemble_package: 生成数据包 package-20260815-201251，落盘 1 个文件，缺失 0 项"
+      ],
+      "runtime_check": {
+        "req_000": {
+          "status": "passed",
+          "detail": "MuJoCo 加载与一步仿真成功"
+        }
+      },
+      "revision_history": [],
+      "output_dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201251"
+    }
+  },
+  "elapsed_s": 23
+}

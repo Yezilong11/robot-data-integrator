@@ -1,0 +1,47 @@
+{
+  "probe_date": "2026-08-12",
+  "evidence_file": "records/probe/probe_20260812.json",
+  "executor": "C",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "github_token": "configured",
+    "ieee_api_key": "not_configured",
+    "hf_endpoint": "https://hf-mirror.com",
+    "mode": "real"
+  },
+  "total_sources": 15,
+  "status_summary": {
+    "ok": 5,
+    "degraded": 8,
+    "blocked_by_user": 1,
+    "search_blocked": 1
+  },
+  "sources": [
+    { "source": "arxiv", "construct": "OK", "search": "OK", "fetch": "OK", "status": "OK", "root_cause": null, "note": "XML API, no key; fetch 17s/6MB" },
+    { "source": "github", "construct": "OK", "search": "OK", "fetch": "OK", "status": "OK", "root_cause": null, "note": "GITHUB_TOKEN 已配置生效; fetch 0.79s/14KB" },
+    { "source": "zenodo", "construct": "OK", "search": "OK", "fetch": "OK", "status": "OK", "root_cause": null, "note": "JSON API, no key; fetch 1.17s/8.5KB" },
+    { "source": "paperswithcode", "construct": "OK", "search": "OK", "fetch": "OK", "status": "OK", "root_cause": null, "note": "REST API（C12 已跳过网页抓取）; search 12.65s 偏慢" },
+    { "source": "google_scanned", "construct": "OK", "search": "OK", "fetch": "OK", "status": "OK", "root_cause": null, "note": "Gazebo Fuel API; 唯一完整实现了 local_dataset_root() 的本地挂载适配器" },
+    { "source": "huggingface", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "P3_SOURCE: 下载失败 https://hf-mirror.com/Bbyaz/robotics-deep-rl-grasp（仓库 404 或镜像路径不可达，需二次确认）", "note": "search 正常(3 结果); 单仓库 fetch 失败，需换 item 或验证 repo 存在性" },
+    { "source": "dexgrasp", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 local_dataset_root()（AttributeError），本地挂载分支先于网络路径执行", "note": "同 graspnet/ycb，D3 本地挂载功能仅部分实现" },
+    { "source": "graspnet", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 local_dataset_root()（AttributeError）", "note": "GRASP 专项探测同样 FAIL，真实 grasp 文件源 0/3" },
+    { "source": "ycb", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 local_dataset_root()（AttributeError）", "note": "GRASP 专项探测 FAIL" },
+    { "source": "franka", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 _local_raw()（AttributeError）", "note": "同 mujoco/isaac/robotiq/allegro；_local_candidates 已定义但 _local_raw 缺失" },
+    { "source": "allegro", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 _local_raw()（AttributeError）", "note": null },
+    { "source": "robotiq", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 _local_raw()（AttributeError）", "note": null },
+    { "source": "mujoco", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 _local_raw()（AttributeError）", "note": "ss_mujoco_001 直接受影响" },
+    { "source": "isaac", "construct": "OK", "search": "OK", "fetch": "FAIL", "status": "DEGRADED", "root_cause": "代码缺陷: fetch 调用未定义的 _local_raw()（AttributeError）", "note": "ss_isaac_001 直接受影响" },
+    { "source": "ieee", "construct": "OK", "search": "FAIL", "fetch": "FAIL", "status": "BLOCKED_BY_USER", "root_cause": "IEEE_API_KEY 未配置，按策略 §5.5 P7_ENV 标记 blocked-by-user", "note": "search/fetch 均跳过；ss_ieee_001 已从草案剔除" }
+  ],
+  "grasp_probe": {
+    "real_grasp_sources": "0/3",
+    "detail": "graspnet/dexgrasp/ycb 的 GRASP 专项探测全部 FAIL（同一 AttributeError 根因）"
+  },
+  "action_items": [
+    "阻塞项 P0: 修复 8 个适配器缺失方法（_local_raw / local_dataset_root），否则 ss_graspnet_001/002、ss_dexgrasp_001、ss_ycb_001、ss_mujoco_001、ss_isaac_001 无法产出真实数据包",
+    "验证项: 确认 huggingface 失败仓库 Bbyaz/robotics-deep-rl-grasp 是否存在/是否镜像路径问题",
+    "同步给 F: 15 源状态汇总用于统计口径",
+    "同步给 A: fetch 大面积 FAIL 影响问题集 quality 期望，需评审时裁定"
+  ]
+}

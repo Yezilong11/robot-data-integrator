@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "owner": "D",
+  "date": "2026-08-14",
+  "branch": "feat/arch-langgraph",
+  "execution": "Day2-D 格式/仿真类单源题第一批（ycb mesh / mujoco sim_config 各 1 题），真实流程 run_graph + resume_workflow",
+  "purpose": "每题记录（解析结果 / 命中源 / data_source_quality / 可加载性验证 / 目录一致性 / 错误类型）汇总",
+  "cases": [
+    {
+      "case_id": "ss_ycb_001",
+      "input": "获取 YCB 数据集中的香蕉（banana）mesh 模型",
+      "parse_result": { "req_list": ["mesh"], "vs_expected": "match" },
+      "hit_source": "ycb",
+      "data_source_quality": "unknown",
+      "data_source_quality_note": "manifest 标记 unknown（YCB adapter 未标注真实度），实际为 YCB 真实 mesh；expected.quality 允许 real/fallback",
+      "loadability": { "mesh": "passed", "detail": "trimesh faces=16384, vertices=8194" },
+      "structure_consistency": true,
+      "error_type": null,
+      "error_type_note": "无错误",
+      "verdict": "PASS",
+      "failure_category": null
+    },
+    {
+      "case_id": "ss_mujoco_001",
+      "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+      "parse_result": { "req_list": ["robot_urdf", "sim_config"], "vs_expected": "mismatch" },
+      "parse_result_note": "LLM 额外解析出 robot_urdf（scene 转换所需），核心 sim_config 命中，多需求路径可接受",
+      "hit_source": "franka + mujoco",
+      "data_source_quality": "real (req_001 sim_config) / unknown (req_000 urdf)",
+      "data_source_quality_note": "sim_config 为 mujoco_menagerie 真实场景（quality=real）；robot_urdf 由 franka 源（pybullet_robots）补足，quality 未标注",
+      "loadability": {
+        "urdf": "passed (yourdfpy 12 joints/13 links)",
+        "mesh": "passed (trimesh faces=362)",
+        "mjcf": "passed (mujoco.mj_step nq=9/nu=8)"
+      },
+      "structure_consistency": true,
+      "error_type": "timeout",
+      "error_type_note": "首次默认 60s 预算：MuJoCo fetch 68 个资产(~42s) 与 franka 并行超时 FAIL（P2_RETRIEVE）；PER_REQ_TIMEOUT=180s 重跑成功 PASS。失败为网络/超时预算类，非格式问题",
+      "verdict": "PASS",
+      "failure_category": null
+    }
+  ],
+  "notes": "2 题均 PASS。ycb：mesh 单需求，命中 011_banana 真实 mesh，STL 落包可加载。mujoco：双需求路径，MJCF 场景 quality=real，三类可加载性验证（URDF/Mesh/MJCF）全部通过；首次 60s 超时属 P2_RETRIEVE 预算类，重跑 180s 成功。两包目录结构均与 manifest 一致（robots/objects/sim_config 分类齐全）。另修复前端真实 bug：app.py to_plain 对二进制 bytes 的 pydantic mode=json 序列化崩溃（UnicodeDecodeError），已加 fallback。"
+}

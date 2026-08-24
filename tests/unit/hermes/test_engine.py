@@ -54,6 +54,7 @@ def test_record_experience_calls_store_and_update_and_evolve(engine: HermesEngin
     called_sources = {call.args[0] for call in engine.db.update_source_stats.call_args_list}
     assert called_sources == {"github", "arxiv"}
     for call in engine.db.update_source_stats.call_args_list:
+        assert call.kwargs["req_type"] == "code"
         assert call.kwargs["success"] is True
         assert call.kwargs["elapsed_seconds"] == 2.0
     engine.evolver.maybe_evolve.assert_called_once()

@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_sensor_zenodo_002",
+  "input": "Find a force-torque sensor dataset for a robotic gripper on Zenodo",
+  "executor": "F",
+  "executed_at": "2026-08-22T19:09:26+08:00",
+  "completed_at": "2026-08-22T19:09:34.918912",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "sensor",
+  "priority": "P2",
+  "variant": "英文（力/力矩）",
+  "expected": {
+    "req_types": [
+      "sensor_data"
+    ],
+    "sources": [
+      "zenodo"
+    ],
+    "formats": [
+      "csv",
+      "json"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：Find a force-torque sensor dataset for a robotic gripper on Zenodo"
+  },
+  "source_package": {
+    "package_id": "package-20260822-190934",
+    "run_id": "20260822-190926-7e40852c",
+    "manifest_path": "data/output_packages/package-20260822-190934/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-190934",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sensor_data"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "source": "zenodo",
+        "status": "success_with_fallback",
+        "format": "SensorDataset",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60,
+        "downloaded": true,
+        "file_count": 1,
+        "output_paths": [
+          "resources/req_000.json"
+        ],
+        "data_url": "https://zenodo.org/records/22056737",
+        "notes": null
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 2,
+      "runtime_check": "not_recorded",
+      "missing_items": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-190934",
+      "manifest_path": "data/output_packages/package-20260822-190934/manifest.json",
+      "package_id": "package-20260822-190934",
+      "run_id": "20260822-190926-7e40852c",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "resources/req_000.json"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T19:09:34.918912] assemble_package: 生成数据包 package-20260822-190934，落盘 1 个文件，缺失 0 项",
+      "[2026-08-22T19:09:34.918912] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-190934 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-190934 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": "Zenodo 命中传感器数据摘要 JSON；manifest 标记 fallback，置信度 0.60、完整度 60%，需人工复核。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:09:34.918912，run_id=20260822-190926-7e40852c，包 package-20260822-190934）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 Zenodo 命中传感器数据摘要 JSON；manifest 标记 fallback，置信度 0.60、完整度 60%，需人工复核。",
+  "reviewer": null,
+  "reviewed_at": null
+}

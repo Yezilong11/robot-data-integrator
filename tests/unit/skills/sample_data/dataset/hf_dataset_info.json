@@ -1,0 +1,11 @@
+{
+  "id": "Yeb Havinga/grasp",
+  "description": "Grasp detection dataset for robotic manipulation.",
+  "license": "apache-2.0",
+  "download_url": "https://huggingface.co/datasets/Yeb%20Havinga/grasp",
+  "siblings": [
+    {"rfilename": "README.md"},
+    {"rfilename": "data/train.parquet"},
+    {"rfilename": "data/test.parquet"}
+  ]
+}

@@ -1,0 +1,379 @@
+{
+  "package_info": {
+    "goal": "我要在仿真里用 Allegro 手抓物体，帮我找它的 URDF 模型",
+    "created_at": "2026-08-22T07:51:52.165831",
+    "iteration": 0,
+    "package_id": "package-20260822-075152",
+    "run_id": "20260822-075010-b9255885",
+    "pipeline_version": "1.0.0",
+    "demo": "false",
+    "license": "",
+    "citation": "",
+    "status": "complete"
+  },
+  "files": [
+    {
+      "req_id": "req_000",
+      "path": "robots/req_000.urdf",
+      "format": "CanonicalRobot",
+      "source_url": "https://raw.githubusercontent.com/simlabrobotics/allegro_hand_model_v4/main/src/allegro_hand_model/urdf/allegro_hand_r.urdf",
+      "retrieved_at": "2026-08-22T07:51:51.861561",
+      "transformations": [
+        "written_to:robots/req_000.urdf"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": true,
+      "file_size": 20566,
+      "downloaded": true,
+      "local_path": "robots/req_000.urdf",
+      "file_url": "https://raw.githubusercontent.com/simlabrobotics/allegro_hand_model_v4/main/src/allegro_hand_model/urdf/allegro_hand_r.urdf",
+      "checksum_sha256": "ef8b634419133bbe146ceafba36282522607c7d2e48ea9e34368d4271eafa374"
+    },
+    {
+      "req_id": "req_001",
+      "path": "grasps/req_001.json",
+      "format": "CanonicalGrasp",
+      "source_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+      "retrieved_at": "2026-08-22T07:51:46.542436",
+      "transformations": [
+        "written_to:grasps/req_001.json"
+      ],
+      "confidence": 0.6,
+      "completeness": 60.0,
+      "data_source_quality": "fallback",
+      "is_fallback": true,
+      "file_size": 0,
+      "downloaded": false,
+      "local_path": "",
+      "file_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+      "checksum_sha256": "e0adf344e562fadaa70cdea908b9af206c0fc3f6a4482b665158058810578545"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/req_002.xml",
+      "format": "xml",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/req_002.xml"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 18468,
+      "downloaded": true,
+      "local_path": "sim_config/req_002.xml",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "92ec84d23a0f62a848b4d646fc9197cad3b0c518bb6cb1aafe241b3db88dd885"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/cassie-texture.png",
+      "format": "texture",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/cassie-texture.png"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 4863,
+      "downloaded": true,
+      "local_path": "sim_config/assets/cassie-texture.png",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "2a4f2c50ff2891fb4408d41fbb1c168a88d1f0b5dd30e2afd2fa6e7ba3565e73"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/pelvis.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/pelvis.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 1687073,
+      "downloaded": true,
+      "local_path": "sim_config/assets/pelvis.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "ddb1dac51a06931562482f13d87c8906f4c682175b2f435350e5c40cf8fab8ab"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/hip-roll.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/hip-roll.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 290364,
+      "downloaded": true,
+      "local_path": "sim_config/assets/hip-roll.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "d1d33d949bdae781cf15406cdec8ebc7318729d2410ce87030ae986cd9c8011c"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/hip-yaw.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/hip-yaw.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 142199,
+      "downloaded": true,
+      "local_path": "sim_config/assets/hip-yaw.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "cd8f0fb370f8f5cf271e96438a00b1d4aed81bf31b075295ca299e0ad7ae1d2f"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/hip-pitch.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/hip-pitch.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 577928,
+      "downloaded": true,
+      "local_path": "sim_config/assets/hip-pitch.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "19bec989a3f966843708496e0670b64d44e3b3811ced179444d5e5e3f7d06f21"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/achilles-rod.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/achilles-rod.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 200516,
+      "downloaded": true,
+      "local_path": "sim_config/assets/achilles-rod.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "8bbf95148db0a3b0df1ca9014f7ef2aa800a2947d44601a56c50632da4df39bb"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/knee.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/knee.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 133899,
+      "downloaded": true,
+      "local_path": "sim_config/assets/knee.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "286d950322265b0e79e70d2e59df735d45272990dfd91138b3672f890cdda707"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/knee-spring.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/knee-spring.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 168934,
+      "downloaded": true,
+      "local_path": "sim_config/assets/knee-spring.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "918d42bfc6991982a9de9c41748bb1cdb4c153a4f354b8f4a2bc527f72e6af55"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/shin.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/shin.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 714864,
+      "downloaded": true,
+      "local_path": "sim_config/assets/shin.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "b896cab8f5606b16ceec2ae949a5aafb4514e3eba545981241746ccf430de27f"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/tarsus.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/tarsus.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 800668,
+      "downloaded": true,
+      "local_path": "sim_config/assets/tarsus.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "97fdde6c725cdee595dd6dc4bc224b27b62a190c8ba5def2fdecb37f113d6cf9"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/heel-spring.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/heel-spring.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 95513,
+      "downloaded": true,
+      "local_path": "sim_config/assets/heel-spring.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "d9d30ee356544d9ace1cb57e84d0971c6a82f6d441607a9f053c7ab649e51e85"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/foot-crank.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/foot-crank.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 64649,
+      "downloaded": true,
+      "local_path": "sim_config/assets/foot-crank.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "21588e4ea034c26e7eb69df2824cb5007dfa6d36cebbed4df9fea8ea56d0a03f"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/plantar-rod.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/plantar-rod.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 151242,
+      "downloaded": true,
+      "local_path": "sim_config/assets/plantar-rod.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "c2d5c15c1c1232ab15554fcdfd8e0d8f4682f83f6f42789db4748fab1b3c70af"
+    },
+    {
+      "req_id": "req_002",
+      "path": "sim_config/assets/foot.obj",
+      "format": "mesh",
+      "source_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "retrieved_at": "2026-08-22T07:51:49.906831",
+      "transformations": [
+        "written_to:sim_config/assets/foot.obj"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "real",
+      "is_fallback": false,
+      "file_size": 119021,
+      "downloaded": true,
+      "local_path": "sim_config/assets/foot.obj",
+      "file_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/agility_cassie/cassie.xml",
+      "checksum_sha256": "a8df9e6ff35de70a94fa9942cb76729b0e6d6ab7c7f2273ceac092f812b8a010"
+    },
+    {
+      "req_id": "package",
+      "path": "quality_explanation.md",
+      "format": "md",
+      "source_url": "",
+      "retrieved_at": "2026-08-22T07:51:52.165831",
+      "transformations": [
+        "generated:llm_explanation"
+      ],
+      "confidence": 0.85,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 1406,
+      "downloaded": true,
+      "local_path": "quality_explanation.md",
+      "file_url": "",
+      "checksum_sha256": "4df120f75e8f2c9b9d922136a86db231ec9667b7f1f22b44fb802f5d81b79040"
+    }
+  ],
+  "missing_items": [],
+  "quality_report": {
+    "total_requirements": 3,
+    "fulfilled": 17,
+    "missing": 0,
+    "validation_issues": 3,
+    "avg_confidence": 0.9764705882352942,
+    "avg_completeness": 97.6470588235294
+  },
+  "provenance_log": [
+    "[2026-08-22T07:51:52.165831] assemble_package: 生成数据包 package-20260822-075152，落盘 17 个文件，缺失 0 项",
+    "[2026-08-22T07:51:52.165831] assemble_package: 质量解释已生成（LLM 生成）"
+  ],
+  "runtime_check": {
+    "req_002": {
+      "status": "skipped",
+      "detail": "mujoco 未安装，仅做 XML 语法校验"
+    }
+  },
+  "revision_history": [],
+  "output_dir": "D:\\GitProjects\\robot-data-integrator\\data\\output_packages\\package-20260822-075152"
+}

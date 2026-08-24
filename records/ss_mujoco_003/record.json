@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mujoco_003",
+  "input": "获取 mujoco_menagerie 中 UR5e 机器人的 MuJoCo 场景配置",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:17:30",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "sim_config"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 UR5e 的 MuJoCo 场景配置文件",
+          "priority": "required",
+          "expected_format": "XML"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "elapsed_seconds": 26.4,
+        "format": "mjcf",
+        "data_size_bytes": 1772,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "严重内容错误：目标为 mujoco_menagerie 中 UR5e，但 isaac 降级适配器返回的是 IsaacLab robots/ant.py（蚂蚁机器人），与 UR5e 完全无关；mujoco 源未报错（retrieval_errors 为空）却被 isaac 兜底，且兜底命中与目标机器人不匹配的资产",
+        "fallback_reason": "mujoco 源未命中 UR5e（无检索错误但无有效结果），isaac 兜底返回默认 ant.py，内容与目标不符"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%",
+        "req_000: 置信度不足 0.80"
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-161730",
+      "manifest_path": "data/output_packages/package-20260820-161730/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": true,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P4",
+  "failure_reason": "内容正确性隐患：目标为 mujoco_menagerie 中 UR5e 场景配置，实际交付为 IsaacLab ant.py（蚂蚁机器人），与 UR5e 完全无关；mujoco 源未命中但无错误记录，isaac 兜底未校验目标机器人匹配性，直接返回默认资产 ant.py。",
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-161653-0924f6d0，包 package-20260820-161730）。UR5e 场景请求降级后命中 ant.py，内容与目标完全不符：isaac 适配器无目标语义匹配（目标对象为 UR5e 而非其默认的 Franka/ant 资产），导致交付错误模型。0 缺失、0 error、runtime_check 通过但验证的是错误模型。此为该轮测试发现的首个『降级兜底内容错误』（P4 类），建议 isaac 兜底前校验目标对象名与兜底资产匹配性，不匹配应判 FAIL 而非降级交付。判定 FAIL。",
+  "reviewer": null,
+  "reviewed_at": null
+}

@@ -28,16 +28,17 @@ class TestGraspSkillGraspNet:
     """GraspNet npz 解析路径测试。"""
 
     def test_parse_graspnet_npz_success(self) -> None:
-        """正常情况：解析真实 GraspNet npz 样本为非空 CanonicalGrasp 列表。"""
+        """正常情况：解析真实 GraspNet npz 样本为 JSON 可序列化的 grasp 列表。"""
         skill = GraspSkill()
         data = _load_sample_bytes()
         result = skill.process(data, dataset_name="graspnet", max_points=5)
 
         assert result.success
         assert result.canonical_format == "CanonicalGrasp"
-        assert isinstance(result.data, list)
-        assert len(result.data) > 0
-        assert all(isinstance(g, CanonicalGrasp) for g in result.data)
+        assert isinstance(result.data, dict)
+        grasps = result.data["grasps"]
+        assert len(grasps) > 0
+        assert all(isinstance(g, dict) for g in grasps)
         # graspnetAPI 不可用 → 近似重建，completeness 降为 70.0 且 warnings 非空
         assert result.completeness_pct == 70.0
         assert result.confidence_score < 1.0
@@ -46,19 +47,20 @@ class TestGraspSkillGraspNet:
         # 校准：GraspNet grasp_labels 实测为米制，position 直接取 points 不做 /1000
         raw = np.load(BytesIO(data), allow_pickle=True)
         raw_point0 = np.asarray(raw["points"][0], dtype=np.float64)
-        assert np.allclose(result.data[0].position, raw_point0)
+        assert np.allclose(np.asarray(grasps[0]["position"]), raw_point0)
         # 米制范围合理（< 1.0m，真实物体表面点 ~0.1m 量级）
-        for g in result.data:
-            assert bool(np.all(np.abs(g.position) < 1.0))
+        for g in grasps:
+            assert bool(np.all(np.abs(np.asarray(g["position"])) < 1.0))
 
     def test_quaternion_order_xyzw(self) -> None:
         """正常情况：每个 orientation 为 shape (4,) 的单位四元数（scipy [x,y,z,w]）。"""
         skill = GraspSkill()
         result = skill.process(_load_sample_bytes(), dataset_name="graspnet", max_points=5)
         assert result.success
-        for g in result.data:
-            assert g.orientation.shape == (4,)
-            assert np.allclose(np.linalg.norm(g.orientation), 1.0, atol=1e-5)
+        for g in result.data["grasps"]:
+            orientation = np.asarray(g["orientation"])
+            assert orientation.shape == (4,)
+            assert np.allclose(np.linalg.norm(orientation), 1.0, atol=1e-5)
 
 
 class TestGraspSkillStandardize:
@@ -102,12 +104,11 @@ class TestGraspSkillDegradation:
     """降级与校验路径测试。"""
 
     def test_dexgraspnet_pkl_degrades(self) -> None:
-        """异常情况：graspnetAPI 不可用时 DexGraspNet pkl 降级，不抛异常。"""
+        """异常情况：DexGraspNet pkl 反序列化失败 → 失败语义（数据损坏不消费）。"""
         skill = GraspSkill()
         result = skill.process(b"not a pkl", dataset_name="dexgraspnet")
         assert not result.success
-        assert any("graspnetAPI" in e for e in result.errors)
-        assert result.data is None
+        assert any("反序列化失败" in e for e in result.errors)
 
     def test_unknown_dataset_name(self) -> None:
         """异常情况：未知 dataset_name 返回 success=False，不猜测约定。"""

@@ -1,0 +1,210 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_mujoco_007",
+  "input": "获取 MuJoCo 中 UR5 机械臂搭配物体抓取的任务场景配置",
+  "executor": "E",
+  "executed_at": "2026-08-22T10:16:57+08:00",
+  "completed_at": "2026-08-22T10:17:33+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "sim_config",
+  "priority": "P1",
+  "variant": "组合需求（机械臂+物体）",
+  "expected": {
+    "req_types": [
+      "sim_config"
+    ],
+    "sources": [
+      "mujoco"
+    ],
+    "formats": [
+      "xml",
+      "mjcf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求获取 MuJoCo 中 UR5 机械臂搭配物体抓取的任务场景配置，至少应产出 1 个 xml/mjcf 场景配置文件。"
+  },
+  "source_package": {
+    "package_id": "package-20260822-101733",
+    "run_id": "20260822-101657-c977086c",
+    "manifest_path": "data/output_packages/package-20260822-101733/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-101733",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "type_match",
+      "notes": "最新运行已经不再是空包，manifest quality_report.total_requirements=1，类型上形成了 sim_config 需求。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sim_config",
+        "description": "MuJoCo 中 UR5 机械臂搭配物体抓取的任务场景配置",
+        "source": "isaac",
+        "requested_source": "mujoco",
+        "status": "wrong_source_and_wrong_asset",
+        "elapsed": null,
+        "format": "python",
+        "manifest_format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "fallback_reason": "MuJoCo/UR5/object grasp scene 未命中，系统返回 IsaacLab Ant robot Python config 作为 fallback。",
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+        "output_path": "sim_config/req_000.py",
+        "file_size": 1772,
+        "downloaded": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "checksum_sha256": "3c8b4b28f2675e8aebb019a64e8cae7aa62c5090f81434a0d408395e0609c9aa",
+        "metadata": {
+          "file_header": "Configuration for the Mujoco Ant robot.",
+          "config_object": "ANT_CFG",
+          "imports": [
+            "isaaclab.sim",
+            "isaaclab.actuators",
+            "isaaclab.assets.ArticulationCfg"
+          ],
+          "asset_path": "Robots/IsaacSim/Ant/ant_instanceable.usd"
+        },
+        "notes": "实际产物为 IsaacLab 的 Ant 机器人配置，不包含 UR5、object、grasp task、MuJoCo XML/MJCF scene 等题目要求要素。"
+      }
+    ],
+    "validate": {
+      "errors": 3,
+      "warnings": 3,
+      "runtime_check": "not_run",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目 source 限定为 mujoco，但实际 source_url 指向 isaac-sim/IsaacLab。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目要求 UR5 机械臂搭配物体抓取任务场景，实际产物是 Ant robot 配置，不含 UR5、物体或抓取任务。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目期望 xml/mjcf，实际落盘文件为 Python 配置 sim_config/req_000.py。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest 中 format 标记为 mjcf，但实际文件扩展名和内容均为 Python。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均置信度为 0.8，低于推荐阈值 0.85。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均完整度为 80.0%，处于边缘值，且语义相关性人工复核不通过。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "quality_explanation.md 只提示完整度和置信度偏低，但没有捕获 source、robot、task、format 与题目要求的错配。",
+        "manifest_validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-101733",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-101733\\manifest.json",
+      "package_id": "package-20260822-101733",
+      "run_id": "20260822-101657-c977086c",
+      "status": "complete",
+      "manifest_file_entries": 2,
+      "requirement_file_count": 1,
+      "actual_package_file_count": 6,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "sim_config/req_000.py",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "",
+          "coordinate_frame": "",
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，且不再是空包；但人工验收按 problem_set 复核后，source、机器人对象、任务场景和文件格式均不满足 ss_mujoco_007。"
+    },
+    "retry_history": [
+      {
+        "package_id": "package-20260821-102921",
+        "run_id": "20260821-102910-9a8f99b3",
+        "status": "failed",
+        "result": "同题早期运行为空包：total_requirements=0，落盘 0 个有效文件。"
+      },
+      {
+        "package_id": "package-20260821-103140",
+        "run_id": "20260821-103129-5aa93faf",
+        "status": "failed",
+        "result": "同题重跑仍为空包：total_requirements=0，落盘 0 个有效文件。"
+      },
+      {
+        "package_id": "package-20260822-101733",
+        "run_id": "20260822-101657-c977086c",
+        "status": "complete",
+        "result": "最新运行生成了 sim_config/req_000.py，但内容为 IsaacLab Ant robot config，不满足 MuJoCo UR5+object grasp scene 要求。"
+      }
+    ],
+    "provenance": [
+      "2026-08-22T10:17:33.407919 assemble_package: 生成数据包 package-20260822-101733，落盘 1 个文件，缺失 0 项",
+      "2026-08-22T10:17:33.407919 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260822-101733 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260822-101733 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    },
+    {
+      "file": "screenshots/final/04_error.png",
+      "desc": "失败补充证据：前端或文件内容显示 req_000.py 为 IsaacLab Ant 配置、非 MuJoCo UR5 抓取场景的截图（待补）"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "最新包 package-20260822-101733 虽然 complete 且落盘 1 个 sim_config 文件，但实际来源为 IsaacLab，内容是 Ant robot Python 配置；题目要求的是 MuJoCo 中 UR5 机械臂搭配物体抓取的 xml/mjcf 任务场景配置，source、机器人对象、任务内容和格式均不匹配。",
+  "notes": "本 record 已根据最新包 package-20260822-101733 覆盖旧空包记录。旧记录的 P1_PARSE 问题已缓解，因为最新运行生成了 1 条 sim_config 需求和 1 个落盘文件；但人工验收发现结果为 wrong source / wrong asset / wrong format，因此更新为 FAIL/P3_SOURCE。若后续重跑能生成 MuJoCo UR5+object grasp 的 xml/mjcf 场景文件，应以新 package 再次覆盖本记录。",
+  "reviewer": null,
+  "reviewed_at": null
+}

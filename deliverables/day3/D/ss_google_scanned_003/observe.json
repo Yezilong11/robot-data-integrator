@@ -1,0 +1,92 @@
+{
+  "case_id": "ss_google_scanned_003",
+  "input": "获取 Google Scanned Objects 中大体积物体的 mesh（验证下载超时/失败降级路径）",
+  "executed_at": "2026-08-17T08:32:52",
+  "thread_id": "20260817-083237-b1d834f3",
+  "run_id": "20260817-083237-b1d834f3",
+  "package_id": "package-20260817-083252",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "MESH"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "description": "Google Scanned Objects 中大体积物体的 3D 网格模型",
+          "expected_format": "obj",
+          "object_name": ""
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "google_scanned",
+        "elapsed_seconds": 9.4,
+        "data_format": "stl",
+        "data_size": 1501784,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Black_Decker_CM2035B_12Cup_Thermal_Coffeemaker/tip/files/meshes/model.obj"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-083252",
+      "package_id": "package-20260817-083252",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "files": [
+        {
+          "path": "objects/req_000.stl",
+          "format": "stl",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        }
+      ],
+      "runtime_check": {}
+    },
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260817-083252\n- checksums.txt\n- manifest.json\n- objects\n  - req_000.stl\n- provenance.log\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-083252",
+    "checks": {
+      "urdf": {
+        "status": "not_applicable"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "1/1 trimesh 可加载（is_watertight=true，14997 verts/30034 faces）"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "objects/req_000.stl",
+      "provenance.log",
+      "units.json"
+    ]
+  }
+}

@@ -1,0 +1,597 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-20T00:46:52+08:00",
+  "strict_mode": true,
+  "problem_set": {
+    "total": 63,
+    "single_source": 55,
+    "multi_source": 8,
+    "p0_total": 11
+  },
+  "progress": {
+    "executed": 63,
+    "judged": 63,
+    "reviewed": 63,
+    "execution_rate": 1.0,
+    "review_rate": 1.0
+  },
+  "verdicts": {
+    "pass": 14,
+    "pass_with_fallback": 48,
+    "fail": 1,
+    "pass_rate": 0.2222,
+    "fallback_rate": 0.7619,
+    "fail_rate": 0.0159,
+    "usable_rate": 0.9841
+  },
+  "quality": {
+    "record_completeness_avg_pct": 100.0,
+    "records_at_least_90_pct": 63,
+    "records_at_least_90_rate": 1.0,
+    "screenshot_compliance_rate": 1.0,
+    "validation_error_count": 0
+  },
+  "p0_acceptance": {
+    "usable": 11,
+    "total": 11,
+    "target": 8,
+    "passed": true
+  },
+  "dimensions": {
+    "language": {
+      "EN": {
+        "cases": 29,
+        "judged": 29,
+        "pass": 1,
+        "fallback": 27,
+        "fail": 1,
+        "usable_rate": 0.9655
+      },
+      "ZH": {
+        "cases": 34,
+        "judged": 34,
+        "pass": 13,
+        "fallback": 21,
+        "fail": 0,
+        "usable_rate": 1.0
+      }
+    },
+    "source": {
+      "allegro": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 3,
+        "fallback": 0,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "arxiv": {
+        "cases": 5,
+        "judged": 5,
+        "pass": 0,
+        "fallback": 5,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "dexgrasp": {
+        "cases": 6,
+        "judged": 6,
+        "pass": 0,
+        "fallback": 6,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "franka": {
+        "cases": 8,
+        "judged": 8,
+        "pass": 3,
+        "fallback": 4,
+        "fail": 1,
+        "usable_rate": 0.875
+      },
+      "github": {
+        "cases": 8,
+        "judged": 8,
+        "pass": 1,
+        "fallback": 6,
+        "fail": 1,
+        "usable_rate": 0.875
+      },
+      "google_scanned": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "graspnet": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "huggingface": {
+        "cases": 5,
+        "judged": 5,
+        "pass": 0,
+        "fallback": 5,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "ieee": {
+        "cases": 1,
+        "judged": 1,
+        "pass": 0,
+        "fallback": 1,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "isaac": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "mujoco": {
+        "cases": 9,
+        "judged": 9,
+        "pass": 3,
+        "fallback": 5,
+        "fail": 1,
+        "usable_rate": 0.8889
+      },
+      "paperswithcode": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "robotiq": {
+        "cases": 4,
+        "judged": 4,
+        "pass": 3,
+        "fallback": 1,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "ycb": {
+        "cases": 11,
+        "judged": 11,
+        "pass": 1,
+        "fallback": 10,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "zenodo": {
+        "cases": 5,
+        "judged": 5,
+        "pass": 0,
+        "fallback": 5,
+        "fail": 0,
+        "usable_rate": 1.0
+      }
+    },
+    "req_type": {
+      "code": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 1,
+        "fallback": 2,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "dataset": {
+        "cases": 7,
+        "judged": 7,
+        "pass": 0,
+        "fallback": 7,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "grasp": {
+        "cases": 13,
+        "judged": 13,
+        "pass": 0,
+        "fallback": 13,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "mesh": {
+        "cases": 13,
+        "judged": 13,
+        "pass": 1,
+        "fallback": 12,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "paper": {
+        "cases": 9,
+        "judged": 9,
+        "pass": 0,
+        "fallback": 9,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "policy_model": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "robot_urdf": {
+        "cases": 17,
+        "judged": 17,
+        "pass": 9,
+        "fallback": 7,
+        "fail": 1,
+        "usable_rate": 0.9412
+      },
+      "sensor_data": {
+        "cases": 3,
+        "judged": 3,
+        "pass": 0,
+        "fallback": 3,
+        "fail": 0,
+        "usable_rate": 1.0
+      },
+      "sim_config": {
+        "cases": 11,
+        "judged": 11,
+        "pass": 3,
+        "fallback": 8,
+        "fail": 0,
+        "usable_rate": 1.0
+      }
+    },
+    "llm_model": {
+      "qwen-plus": 61,
+      "qwen3.7-plus": 2
+    }
+  },
+  "failure_top3": [
+    {
+      "category": "P2_RETRIEVE",
+      "count": 1
+    }
+  ],
+  "issues": {
+    "problem_set": [
+      {
+        "severity": "WARNING",
+        "location": "problems",
+        "message": "未覆盖 DataSource: kinova（已注册源暂无对应题目）"
+      }
+    ],
+    "assignments": [],
+    "records": {
+      "ms_001": [
+        {
+          "severity": "WARNING",
+          "location": "ms_001.retrieve[1]",
+          "message": "format obj 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ms_002": [
+        {
+          "severity": "WARNING",
+          "location": "ms_002.retrieve[1]",
+          "message": "format obj 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ms_003": [
+        {
+          "severity": "WARNING",
+          "location": "ms_003.retrieve[1]",
+          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_003.retrieve[2]",
+          "message": "出现题设外补充需求: grasp"
+        }
+      ],
+      "ms_004": [
+        {
+          "severity": "WARNING",
+          "location": "ms_004.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_004.retrieve[1]",
+          "message": "format trimesh.Trimesh 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_004.retrieve[2]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ms_005": [
+        {
+          "severity": "WARNING",
+          "location": "ms_005.retrieve[2]",
+          "message": "出现题设外补充需求: sim_config"
+        }
+      ],
+      "ms_006": [
+        {
+          "severity": "WARNING",
+          "location": "ms_006.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_006.retrieve[1]",
+          "message": "format trimesh.Trimesh 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_006.retrieve[2]",
+          "message": "format CanonicalGrasp 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ms_006.retrieve[3]",
+          "message": "format mjcf 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_allegro_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_allegro_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_allegro_003": [
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_003",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_allegro_003",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_franka_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_franka_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_franka_003": [
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_003",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_franka_003",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_github_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_github_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_github_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_google_scanned_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_google_scanned_001.retrieve[0]",
+          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_google_scanned_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_google_scanned_002.retrieve[0]",
+          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_google_scanned_003": [
+        {
+          "severity": "WARNING",
+          "location": "ss_google_scanned_003.retrieve[0]",
+          "message": "quality real 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_google_scanned_003.retrieve[0]",
+          "message": "format stl 不在预期格式中，但已显式降级（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_huggingface_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[0]",
+          "message": "出现题设外补充需求: dataset"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[0]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[1]",
+          "message": "出现题设外补充需求: code"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[1]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[2]",
+          "message": "出现题设外补充需求: dataset"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_huggingface_002.retrieve[2]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_mujoco_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_001.retrieve[0]",
+          "message": "出现题设外补充需求: robot_urdf"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_mujoco_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_mujoco_005": [
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_005",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_mujoco_005",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_paperswithcode_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_paperswithcode_002.retrieve[1]",
+          "message": "quality unknown 不在允许范围，但已显式降级并记录 fallback_reason（纪要 §2.4 放行）"
+        }
+      ],
+      "ss_robotiq_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_robotiq_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_robotiq_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_robotiq_002": [
+        {
+          "severity": "WARNING",
+          "location": "ss_robotiq_002",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_robotiq_002",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_robotiq_003": [
+        {
+          "severity": "WARNING",
+          "location": "ss_robotiq_003",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_robotiq_003",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ],
+      "ss_ycb_001": [
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_001",
+          "message": "package.dir 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        },
+        {
+          "severity": "WARNING",
+          "location": "ss_ycb_001",
+          "message": "package.manifest_path 指向的路径在当前环境不存在（数据包在各执行机本地，需人工复核）"
+        }
+      ]
+    }
+  },
+  "acceptance_checks": {
+    "problem_set_valid": true,
+    "assignments_valid": true,
+    "p0_usable_at_least_target": true,
+    "record_completeness_at_least_90_pct": true,
+    "all_cases_executed": true,
+    "all_judged_records_reviewed": true,
+    "no_record_validation_errors": true
+  }
+}

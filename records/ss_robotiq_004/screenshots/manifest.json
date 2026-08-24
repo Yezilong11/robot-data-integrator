@@ -1,0 +1,260 @@
+{
+  "package_info": {
+    "goal": "获取 Robotiq 2F-85 夹爪 URDF 用于 MoveIt 规划",
+    "created_at": "2026-08-22T09:29:40.841623",
+    "iteration": 0,
+    "package_id": "package-20260822-092940",
+    "run_id": "20260822-092849-598f0887",
+    "pipeline_version": "1.0.0",
+    "demo": "false",
+    "license": "",
+    "citation": "",
+    "status": "complete"
+  },
+  "files": [
+    {
+      "req_id": "req_000",
+      "path": "robots/req_000.urdf",
+      "format": "CanonicalRobot",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/req_000.urdf"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 14123,
+      "downloaded": true,
+      "local_path": "robots/req_000.urdf",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "7de6efeb1190c4516cde97dcec1ac75f8f4bbcf041673c5ad874feb8af28b39d"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/collision/robotiq_arg2f_85_outer_knuckle.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/collision/robotiq_arg2f_85_outer_knuckle.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 25969,
+      "downloaded": true,
+      "local_path": "robots/meshes/collision/robotiq_arg2f_85_outer_knuckle.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "8c7ce8ee42044149f9a956d55f33f06e6b75e5e35080ee4bf1e8cb381535aeb7"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/visual/robotiq_arg2f_85_inner_knuckle.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/visual/robotiq_arg2f_85_inner_knuckle.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 117207,
+      "downloaded": true,
+      "local_path": "robots/meshes/visual/robotiq_arg2f_85_inner_knuckle.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "19b12510eec739a1a4655ff633ce3f02ad3c2eda2cb8f451df900ddfa76c8f14"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/visual/robotiq_arg2f_85_base_link.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/visual/robotiq_arg2f_85_base_link.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 2523721,
+      "downloaded": true,
+      "local_path": "robots/meshes/visual/robotiq_arg2f_85_base_link.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "d03d6e7395b0aa11ae7954b2f04a0a650448547d5d4f367238098ccd848b3eb5"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/visual/robotiq_arg2f_85_inner_finger.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/visual/robotiq_arg2f_85_inner_finger.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 154078,
+      "downloaded": true,
+      "local_path": "robots/meshes/visual/robotiq_arg2f_85_inner_finger.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "3172e8fe000fda75b9b29b48cd8cad4011d184a6df23eb2c3adb6c1f5a4eae93"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/collision/robotiq_arg2f_85_inner_finger.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/collision/robotiq_arg2f_85_inner_finger.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 21799,
+      "downloaded": true,
+      "local_path": "robots/meshes/collision/robotiq_arg2f_85_inner_finger.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "807aff52c5a12ca5429cfb2eb19cc88dfaf0083bac6b69e24d49f6beb29aa2c8"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/collision/robotiq_arg2f_85_inner_knuckle.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/collision/robotiq_arg2f_85_inner_knuckle.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 18425,
+      "downloaded": true,
+      "local_path": "robots/meshes/collision/robotiq_arg2f_85_inner_knuckle.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "a8e6bb0b3b5ef6ea1323aa698a16dc1ec1a878ed2c2bcd43547750a18e72d9b4"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/collision/robotiq_arg2f_base_link.stl",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/collision/robotiq_arg2f_base_link.stl"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 86384,
+      "downloaded": true,
+      "local_path": "robots/meshes/collision/robotiq_arg2f_base_link.stl",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "111e37f13a664989dd54226f80f521b32ea0b71c975282a16696b14be7cc9249"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/visual/robotiq_arg2f_85_outer_finger.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/visual/robotiq_arg2f_85_outer_finger.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 120496,
+      "downloaded": true,
+      "local_path": "robots/meshes/visual/robotiq_arg2f_85_outer_finger.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "32d842e51e0ddd25b3354af212131befa191c183cf4cdb61f82ecbe5c5276323"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/visual/robotiq_arg2f_85_outer_knuckle.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/visual/robotiq_arg2f_85_outer_knuckle.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 69464,
+      "downloaded": true,
+      "local_path": "robots/meshes/visual/robotiq_arg2f_85_outer_knuckle.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "f1cc5198c9f3b06979af07d2944034b32acbb6130df5396dc2c7253cb656f587"
+    },
+    {
+      "req_id": "req_000",
+      "path": "robots/meshes/collision/robotiq_arg2f_85_outer_finger.dae",
+      "format": "mesh",
+      "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "retrieved_at": "2026-08-22T09:29:40.171353",
+      "transformations": [
+        "written_to:robots/meshes/collision/robotiq_arg2f_85_outer_finger.dae"
+      ],
+      "confidence": 1.0,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 21252,
+      "downloaded": true,
+      "local_path": "robots/meshes/collision/robotiq_arg2f_85_outer_finger.dae",
+      "file_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+      "checksum_sha256": "5e45e7773260cc4b04bbae626af94bfdd49c38b3c69fc248cf0708e5fa65a39f"
+    },
+    {
+      "req_id": "package",
+      "path": "quality_explanation.md",
+      "format": "md",
+      "source_url": "",
+      "retrieved_at": "2026-08-22T09:29:40.841623",
+      "transformations": [
+        "generated:llm_explanation"
+      ],
+      "confidence": 0.98,
+      "completeness": 100.0,
+      "data_source_quality": "unknown",
+      "is_fallback": false,
+      "file_size": 1006,
+      "downloaded": true,
+      "local_path": "quality_explanation.md",
+      "file_url": "",
+      "checksum_sha256": "8457ae37814d9408132583dbc5f067f584e40fed3323d386c4c60718cfbe82c3"
+    }
+  ],
+  "missing_items": [],
+  "quality_report": {
+    "total_requirements": 1,
+    "fulfilled": 11,
+    "missing": 0,
+    "validation_issues": 0,
+    "avg_confidence": 1.0,
+    "avg_completeness": 100.0
+  },
+  "provenance_log": [
+    "[2026-08-22T09:29:40.841623] assemble_package: 生成数据包 package-20260822-092940，落盘 11 个文件，缺失 0 项",
+    "[2026-08-22T09:29:40.841623] assemble_package: 质量解释已生成（LLM 生成）"
+  ],
+  "runtime_check": {},
+  "revision_history": [],
+  "output_dir": "D:\\GitProjects\\robot-data-integrator\\data\\output_packages\\package-20260822-092940"
+}

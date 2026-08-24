@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_zenodo_005",
+  "input": "检索抓取姿态标注数据集",
+  "executor": "C",
+  "executed_at": "2026-08-20T15:38:59+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['dataset']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "dexgrasp",
+        "status": "success",
+        "format": "DatasetSummary",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "非首选源/元数据降级回退（is_fallback=true）",
+        "note": "真实流程命中 dexgrasp（DatasetSummary，quality=fallback，is_fallback=true），url=https://huggingface.co/datasets/lhrlhr/DexGraspNet2.0"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=2（0 error, 2 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-153850",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-153850/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "DatasetSummary",
+          "source_url": "https://huggingface.co/datasets/lhrlhr/DexGraspNet2.0",
+          "is_fallback": true,
+          "completeness": 75.0,
+          "downloaded": true,
+          "size_bytes": 100
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.85,
+        "avg_completeness": 75.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项"
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=检索抓取姿态标注数据集，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260820-153828-821ade4f；按要求未截图，screenshots 置空",
+  "reviewer": null,
+  "reviewed_at": null
+}

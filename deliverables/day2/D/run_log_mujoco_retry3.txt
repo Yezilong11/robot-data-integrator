@@ -1,0 +1,102 @@
+﻿
+===== ss_mujoco_001: 获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置 =====
+.venv\Scripts\python.exe : HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/
+1.1 200 OK"
+At line:15 char:5408
++ ... EOUT="180"; .venv\Scripts\python.exe deliverables\day2\D\run_day2_d_c ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (HTTP Request: P...TTP/1.1 200 OK":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+{"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:36:54.059402"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:36:56.606845"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "status": "success", "source": "franka", "is_fallback": false, "elapsed
+_seconds": 80.64, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:38:17.200315"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "status": "success", "source": "mujoco", "is_fallback": false, "elapsed
+_seconds": 83.894, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:38:21.817499"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "success", "elapsed_seconds": 0.411, "event"
+: "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:38:23.174319"}
+{"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "success", "elapsed_seconds": 0.001, "
+event": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:38:23.175969"}
+{"parsed": 2, "missing": 0, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:3
+8:23.176302"}
+Unable to resolve filename: package://meshes/collision/link0.obj
+Can't find package://meshes/collision/link0.obj
+Unable to resolve filename: package://meshes/visual/link1.obj
+Can't find package://meshes/visual/link1.obj
+Unable to resolve filename: package://meshes/visual/link2.obj
+Can't find package://meshes/visual/link2.obj
+Unable to resolve filename: package://meshes/visual/link3.obj
+Can't find package://meshes/visual/link3.obj
+Unable to resolve filename: package://meshes/visual/link4.obj
+Can't find package://meshes/visual/link4.obj
+Unable to resolve filename: package://meshes/visual/link5.obj
+Can't find package://meshes/visual/link5.obj
+Unable to resolve filename: package://meshes/visual/link6.obj
+Can't find package://meshes/visual/link6.obj
+Unable to resolve filename: package://meshes/collision/link7.obj
+Can't find package://meshes/collision/link7.obj
+Unable to resolve filename: package://meshes/visual/hand.obj
+Can't find package://meshes/visual/hand.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+{"req_id": "req_000", "req_type": "robot_urdf", "status": "issues", "issue_count": 2, "error_count": 0, "event": "valid
+ate.item", "level": "info", "timestamp": "2026-08-14T15:38:23.862804"}
+{"req_id": "req_001", "req_type": "sim_config", "status": "pass", "issue_count": 0, "error_count": 0, "event": "validat
+e.item", "level": "info", "timestamp": "2026-08-14T15:38:25.267845"}
+{"parsed": 2, "missing": 0, "issues": 2, "errors": 0, "iteration": 1, "elapsed_seconds": 2.09, "event": "validate.done"
+, "level": "info", "timestamp": "2026-08-14T15:38:25.268396"}
+{"package_id": "package-20260814-153825", "files": 88, "missing": 0, "status": "complete", "elapsed_seconds": 0.71, "ev
+ent": "assemble.done", "level": "info", "timestamp": "2026-08-14T15:38:25.982824"}
+Deserializing unregistered type rdi.models.goal.GoalSpec from checkpoint. This will be blocked in a future version. Set
+ LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal'
+, 'GoalSpec')]
+Deserializing unregistered type rdi.models.common.DataReqType from checkpoint. This will be blocked in a future version
+. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.
+common', 'DataReqType')]
+Deserializing unregistered type rdi.models.common.Priority from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Priority')]
+Deserializing unregistered type rdi.models.common.DataSource from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.c
+ommon', 'DataSource')]
+Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set
+LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal',
+ 'DataReq')]
+Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future
+version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.
+models.retrieval', 'RetrievalResult')]
+Deserializing unregistered type rdi.models.parsed.ParsedItem from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.p
+arsed', 'ParsedItem')]
+Deserializing unregistered type rdi.models.common.Severity from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Severity')]
+Deserializing unregistered type rdi.models.common.ValIssue from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'ValIssue')]
+Deserializing unregistered type rdi.models.manifest.PackageManifest from checkpoint. This will be blocked in a future v
+ersion. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.m
+odels.manifest', 'PackageManifest')]
+interrupted: True
+{"decision": "satisfied", "iteration": 0, "forced": false, "feedback_count": 0, "event": "human_review.decision", "leve
+l": "info", "timestamp": "2026-08-14T15:38:26.387389"}
+Traceback (most recent call last):
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 305, in <module>
+    main()
+    ~~~~^^
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 283, in main
+    loadability = loadability_check(package_dir) if package_dir else {"error": "no package dir"}
+                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\robot-data-integrator-latest\deliverables\day2\D\run_day2_d_cases.py", line 152, in loadability_check
+    tmp_model = tmp / "model.urdf"
+                ~~~~^~~~~~~~~~~~~~
+TypeError: unsupported operand type(s) for /: 'str' and 'str'

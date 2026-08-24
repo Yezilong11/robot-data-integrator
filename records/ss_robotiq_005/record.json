@@ -1,0 +1,202 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_robotiq_005",
+  "input": "帮我获取 Robotiq 2F-85 夹爪模型文件并转换为 URDF",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:34:37+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['robot_urdf']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "robotiq",
+        "status": "success",
+        "format": "urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": null,
+        "note": "真实流程命中 robotiq（urdf，quality=real），url=https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-194101",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-194101\\manifest.json",
+      "status": "complete",
+      "file_count": 11,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "CanonicalRobot",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 14123
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/robotiq_arg2f_85_inner_finger.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 21799
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/robotiq_arg2f_85_base_link.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 2523721
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/robotiq_arg2f_85_outer_knuckle.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 69464
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/robotiq_arg2f_85_inner_finger.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 154078
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/robotiq_arg2f_base_link.stl",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 86384
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/robotiq_arg2f_85_outer_finger.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 21252
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/robotiq_arg2f_85_outer_finger.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 120496
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/visual/robotiq_arg2f_85_inner_knuckle.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 117207
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/robotiq_arg2f_85_outer_knuckle.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 25969
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/meshes/collision/robotiq_arg2f_85_inner_knuckle.dae",
+          "format": "mesh",
+          "source_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 18425
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 11,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "notes": "包状态 complete，落盘 11 个文件，缺失 0 项（已同步前端运行包 package-20260821-194101）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=帮我获取 Robotiq 2F-85 夹爪模型文件并转换为 URDF，verdict=PASS，retrieve=['req_000:success']，run_id=rerun-20260821-103422-df29d8f6；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-194101",
+  "reviewer": null,
+  "reviewed_at": null
+}

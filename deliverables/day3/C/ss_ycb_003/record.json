@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_ycb_003",
+  "input": "获取 YCB 数据集中的马克杯（mug）mesh 模型",
+  "executor": "C",
+  "executed_at": "2026-08-15T20:10:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "ycb",
+        "quality": "unknown",
+        "error": "YCB 官方 mesh 经降级获取（quality=unknown），显式标记",
+        "error_type": "none",
+        "format": "stl",
+        "is_fallback": true,
+        "req_type": "mesh",
+        "status": "error",
+        "fallback_reason": "YCB 官方 mesh 经降级获取（quality=unknown），显式标记"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-201032",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "manifest_path": "manifest.json"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "F 审计对齐重跑（官方题设 target 原文）：input 与 problem_set.target 一致；pkg=complete、missing=0。需求 1 条满足 1（文件 1），validation_issues=0。verdict=PASS_WITH_FALLBACK。\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）\n（A 2026-08-15 合规化：补 status/req_type/fallback_reason/runtime_check/package 字段，fallback_reason 为 A 按记录推断，待 C 复核）"
+}

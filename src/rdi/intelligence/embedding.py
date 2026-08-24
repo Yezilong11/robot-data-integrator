@@ -6,6 +6,8 @@
 ``LLMUnavailableError``，不做重试（调用方按需自行处理）。
 """
 
+import hashlib
+
 from openai import OpenAI, OpenAIError
 
 from rdi.config import settings
@@ -29,6 +31,18 @@ class EmbeddingClient:
         self._api_key = api_key if api_key is not None else settings.llm_api_key
         self._base_url = base_url if base_url is not None else settings.llm_base_url
         self._model = model if model is not None else settings.llm_embedding_model
+        self._local = self._model.lower() in {"local", "local-hash", "deterministic"}
+        if self._local:
+            self._api_key = "local"
+            self._base_url = ""
+            self._client = None
+            return
+        if not self._api_key:
+            raise LLMUnavailableError(
+                "LLM API Key 未配置（settings.llm_api_key 为空，请检查 .env 的 LLM_API_KEY）",
+                model=self._model,
+                retry_count=0,
+            )
         self._client = OpenAI(
             api_key=self._api_key,
             base_url=self._base_url,
@@ -41,12 +55,18 @@ class EmbeddingClient:
         任何 ``OpenAIError`` 子类视为不可用，抛 ``LLMUnavailableError``（含
         model 名），不重试。
         """
+        if self._local:
+            # DeepSeek exposes chat completions but no embeddings endpoint. A
+            # deterministic local vector keeps Hermes usable without claiming
+            # semantic quality from a remote model.
+            digest = hashlib.sha256(text.encode("utf-8")).digest()
+            return [((byte / 255.0) * 2.0) - 1.0 for byte in digest]
         try:
             response = self._client.embeddings.create(
                 model=self._model,
                 input=text,
             )
-            return response.data[0].embedding  # type: ignore[no-any-return]
+            return list(response.data[0].embedding)
         except OpenAIError as e:
             raise LLMUnavailableError(
                 f"Embedding 调用失败: {e}",

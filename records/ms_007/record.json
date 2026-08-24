@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_007",
+  "input": "抓取 YCB 香蕉（未指定仿真器）",
+  "executor": "E",
+  "executed_at": "2026-08-14T17:00:50+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "E 执行环境（commit 未提供）"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "mesh",
+        "grasp"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析成功，生成 mesh 与 grasp 两条数据需求；未指定仿真器时未强制生成 sim_config，符合该 case 预期。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "ycb",
+        "quality": "real",
+        "status": "success",
+        "format": "stl",
+        "is_fallback": false,
+        "error": null
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "quality": "fallback",
+        "status": "error",
+        "is_fallback": true,
+        "error": "GraspNet 返回元数据 JSON，未找到真实 npz；原始数据缺失。",
+        "fallback_reason": "GraspNet 真实 npz 不可得（已知风险 R1），显式降级返回元数据 JSON，参考源见 missing_items.alternatives"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_001",
+          "message": "必需需求缺失: GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference"
+        }
+      ]
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260814-170029",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260814-170029\\manifest.json",
+      "package_id": "package-20260814-170029",
+      "status": "partial",
+      "file_count": 1,
+      "missing_items_count": 1,
+      "fallback_explicit": true,
+      "files": [
+        "objects/req_000.stl"
+      ],
+      "missing_items": [
+        {
+          "req_id": "req_001",
+          "req_type": "grasp",
+          "description": "YCB banana 的抓取姿态数据",
+          "reason": "GraspNet 返回元数据 JSON（未找到真实 npz）；原始数据缺失，合成占位仅作参考，真实数据见 reference",
+          "alternatives": [
+            "参考数据源（未自动下载，供手动获取）: https://huggingface.co/datasets/DravenALG/GraspNet-1Billion"
+          ]
+        }
+      ]
+    },
+    "stage_progress": {
+      "目标解析": "完成",
+      "数据检索": "完成",
+      "解析转换": "完成",
+      "质量校验": "完成",
+      "整合打包": "完成"
+    },
+    "human_review": {
+      "status": "completed",
+      "decision": "satisfied"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_input.png",
+      "desc": "目标输入页，包含真实流程模式和输入目标"
+    },
+    {
+      "file": "screenshots/02_progress.png",
+      "desc": "进度展示页，包含阶段进度、数据需求状态和 provenance"
+    },
+    {
+      "file": "screenshots/03_package.png",
+      "desc": "数据包审查页，包含 package-20260814-170029、目录树和 manifest"
+    },
+    {
+      "file": "screenshots/04_validation.png",
+      "desc": "校验与缺失项页，包含 validation_issues 和 missing_items"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "mesh 从 YCB 官方源真实获取（stl 1 文件）；grasp 因 GraspNet 真实 npz 不可得（已知风险 R1）显式降级为元数据 JSON（missing_items 含 reason + alternatives，可追溯）。按判定口径纪要 §6 显式降级口径判 PASS_WITH_FALLBACK。前端流程全阶段可展示，未发现 P6_FRONTEND；该 case 未指定仿真器，系统未强制生成 sim_config，符合预期。",
+  "reviewer": "A",
+  "reviewed_at": "2026-08-17T23:17:17+08:00"
+}

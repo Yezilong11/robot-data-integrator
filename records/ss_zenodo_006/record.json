@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_zenodo_006",
+  "input": "帮我找 Zenodo 上机器人抓取数据集（中文描述）",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:34:45+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['dataset']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "zenodo",
+        "status": "success",
+        "format": "json",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": null,
+        "note": "真实流程命中 zenodo（json，quality=real），url=https://zenodo.org/records/22036612"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-195535",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-195535\\manifest.json",
+      "status": "missing",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": false,
+      "file_info": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 0,
+        "missing": 1,
+        "validation_issues": 1,
+        "avg_confidence": 0.0,
+        "avg_completeness": 0.0
+      },
+      "notes": "包状态 failed，落盘 0 个文件，缺失 1 项（已同步前端运行包 package-20260821-195535）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content-fail-错误说明（无主数据文件，FAIL）"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "检索命中 github README（markdown），DatasetSkill 不支持该格式，核心需求 dataset 未产出（8/8 复现；原 PASS 为 qwen-turbo 命中 zenodo json 22036612）",
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=帮我找 Zenodo 上机器人抓取数据集（中文描述），verdict=PASS，retrieve=['req_000:success']，run_id=rerun-20260821-103437-f5ea4e96；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-195535；2026-08-21 前端真实流程重跑（qwen-plus）持续命中 markdown 格式，记录由 PASS 改为 FAIL 以与截图一致（问题总结 A2 同类，待组长修复）",
+  "reviewer": null,
+  "reviewed_at": null
+}

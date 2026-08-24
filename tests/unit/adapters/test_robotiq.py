@@ -1,11 +1,27 @@
-# tests/unit/adapters/test_robotiq.py
 """RobotiqAdapter 的单元测试。"""
 
-import pytest
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
-from rdi.adapters.robotiq import RobotiqAdapter
-from rdi.exceptions import AdapterError
+import pytest
+import yourdfpy
+
+from rdi.adapters.robotiq import _FALLBACK_MODELS, RobotiqAdapter
+from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
+
+
+def _assert_urdf_parseable(data: bytes) -> None:
+    """使用 yourdfpy 解析 URDF 字节并断言至少含一个 link。"""
+    with tempfile.NamedTemporaryFile(suffix=".urdf", delete=False) as f:
+        f.write(data)
+        tmp_path = f.name
+    try:
+        robot = yourdfpy.URDF.load(tmp_path, load_meshes=False)
+        assert robot.link_map
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
 
 
 class TestRobotiqAdapter:
@@ -17,9 +33,12 @@ class TestRobotiqAdapter:
         assert adapter.source == DataSource.ROBOTIQ
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确。"""
+        """D3 修复：base_url 默认走 jsdelivr 镜像（raw.githubusercontent 主链本环境偶发挂起）。"""
         adapter = RobotiqAdapter()
-        assert adapter.base_url == "https://robotiq.com"
+        assert (
+            adapter.base_url
+            == "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892"
+        )
 
     def test_adapter_rate_limit(self) -> None:
         """正常情况：速率限制为 5。"""
@@ -27,11 +46,114 @@ class TestRobotiqAdapter:
         assert adapter.semaphore._value == 5
 
     @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_search_retries_on_failure(self) -> None:
-        """异常情况：请求失败时抛出 AdapterError。"""
+    async def test_search_fallback_returns_results(self) -> None:
+        """路径 A 失败时降级到路径 B，返回硬编码匹配结果。
+
+        mock _scrape_html 抛 AdapterError 模拟路径 A 失败，验证降级到 fallback。
+        """
         adapter = RobotiqAdapter()
-        adapter.max_retry = 1
-        with pytest.raises(AdapterError) as exc_info:
-            await adapter.search("2f-85")
-        assert exc_info.value.source == "robotiq"
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ROBOTIQ.value
+            )
+            results = await adapter.search("2f-85")
+        assert len(results) > 0
+        assert results[0].source == DataSource.ROBOTIQ
+        mock_scrape.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_no_match_raises_catalog_error(self) -> None:
+        """路径 B 无匹配时抛 AdapterCatalogError（有源但未收录，不静默空）。"""
+        adapter = RobotiqAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ROBOTIQ.value
+            )
+            with pytest.raises(AdapterCatalogError) as exc_info:
+                await adapter.search("zzznomatchxyz")
+        assert "仅收录" in exc_info.value.message
+        assert "有源但未收录" in exc_info.value.message
+        assert f"仅收录 {len(_FALLBACK_MODELS)}" in exc_info.value.message
+
+    @pytest.mark.asyncio
+    async def test_fetch_primary_success(self) -> None:
+        """路径 A 成功：mock _download_bytes 返回数据，format 为 urdf。"""
+        adapter = RobotiqAdapter()
+        fake_urdf = b'<robot name="robotiq_2f_85"/>'
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
+        ):
+            raw = await adapter.fetch("robotiq_2f_85")
+        assert raw.source == DataSource.ROBOTIQ
+        assert raw.format == "urdf"
+        assert raw.data == fake_urdf
+        assert raw.size_bytes == len(fake_urdf)
+        assert raw.size_bytes > 0
+
+    @pytest.mark.asyncio
+    async def test_fetch_fallback_3f_plain_urdf(self) -> None:
+        """C2 修复：robotiq_3f_gripper 返回已展开纯 URDF，可被 yourdfpy 解析。"""
+        adapter = RobotiqAdapter()
+        fake_urdf = b"""<?xml version="1.0"?>
+<robot name="robotiq_3f">
+  <link name="base"/>
+  <joint name="j1" type="revolute">
+    <parent link="base"/>
+    <child link="finger"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" lower="-1" upper="1" velocity="1"/>
+  </joint>
+  <link name="finger"/>
+</robot>
+"""
+        with (
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_urdf
+            ) as mock_dl,
+            patch.object(adapter, "_fetch_primary", new_callable=AsyncMock) as mock_primary,
+        ):
+            mock_primary.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ROBOTIQ.value
+            )
+            raw = await adapter.fetch("robotiq_3f_gripper")
+        assert raw.source == DataSource.ROBOTIQ
+        assert raw.format == "urdf"
+        assert raw.url.endswith(".urdf")
+        _assert_urdf_parseable(raw.data)
+        mock_primary.assert_awaited_once()
+        mock_dl.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_fallback_2f_xacro_format(self) -> None:
+        """D3 修复：robotiq_2f_85 的 xacro 在 adapter 层内联展开为纯 URDF，format 标记为 urdf。"""
+        adapter = RobotiqAdapter()
+        fake_xacro = b'<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotiq_2f_85"/>'
+        with (
+            patch.object(
+                adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_xacro
+            ) as mock_dl,
+            patch.object(adapter, "_fetch_primary", new_callable=AsyncMock) as mock_primary,
+        ):
+            mock_primary.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ROBOTIQ.value
+            )
+            raw = await adapter.fetch("robotiq_2f_85")
+        assert raw.source == DataSource.ROBOTIQ
+        assert raw.format == "urdf"
+        assert raw.url.endswith(".xacro")
+        assert isinstance(raw.data, bytes) and b"robotiq_2f_85" in raw.data
+        mock_primary.assert_awaited_once()
+        assert mock_dl.await_count >= 2  # 本体 + xacro include 展开下载
+
+    @pytest.mark.asyncio
+    async def test_fetch_both_paths_fail_raises(self) -> None:
+        """路径 A 和路径 B 都失败时抛 AdapterError，确认尝试两次下载。"""
+        adapter = RobotiqAdapter()
+        with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
+            mock_dl.side_effect = AdapterError(
+                message="download failed", source=DataSource.ROBOTIQ.value
+            )
+            with pytest.raises(AdapterError):
+                await adapter.fetch("robotiq_2f_85")
+        # 路径 A + 路径 B 各一次下载尝试
+        assert mock_dl.await_count == 2

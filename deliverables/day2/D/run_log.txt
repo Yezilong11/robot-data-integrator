@@ -1,0 +1,376 @@
+﻿
+===== ss_ycb_001: 获取 YCB 数据集中的香蕉（banana）mesh 模型 =====
+.venv\Scripts\python.exe : HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/
+1.1 200 OK"
+At line:15 char:5380
++ ... pgrep\bin'; .venv\Scripts\python.exe deliverables\day2\D\run_day2_d_c ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (HTTP Request: P...TTP/1.1 200 OK":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+{"req_id": "req_000", "req_type": "mesh", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15:22:18
+.254422"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "mesh", "status": "success", "source": "ycb", "is_fallback": false, "elapsed_seconds"
+: 38.432, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:22:58.779853"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "mesh", "skill": "mesh", "status": "success", "elapsed_seconds": 0.186, "event": "par
+se_convert.item", "level": "info", "timestamp": "2026-08-14T15:23:02.310366"}
+{"parsed": 1, "missing": 0, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:2
+3:02.310644"}
+{"req_id": "req_000", "req_type": "mesh", "status": "pass", "issue_count": 0, "error_count": 0, "event": "validate.item
+", "level": "info", "timestamp": "2026-08-14T15:23:02.347815"}
+{"parsed": 1, "missing": 0, "issues": 0, "errors": 0, "iteration": 1, "elapsed_seconds": 0.036, "event": "validate.done
+", "level": "info", "timestamp": "2026-08-14T15:23:02.348039"}
+{"package_id": "package-20260814-152302", "files": 1, "missing": 0, "status": "complete", "elapsed_seconds": 0.047, "ev
+ent": "assemble.done", "level": "info", "timestamp": "2026-08-14T15:23:02.396869"}
+Deserializing unregistered type rdi.models.goal.GoalSpec from checkpoint. This will be blocked in a future version. Set
+ LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal'
+, 'GoalSpec')]
+Deserializing unregistered type rdi.models.common.DataReqType from checkpoint. This will be blocked in a future version
+. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.
+common', 'DataReqType')]
+Deserializing unregistered type rdi.models.common.Priority from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Priority')]
+Deserializing unregistered type rdi.models.common.DataSource from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.c
+ommon', 'DataSource')]
+Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set
+LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal',
+ 'DataReq')]
+Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future
+version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.
+models.retrieval', 'RetrievalResult')]
+Deserializing unregistered type rdi.models.parsed.ParsedItem from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.p
+arsed', 'ParsedItem')]
+Deserializing unregistered type rdi.models.manifest.PackageManifest from checkpoint. This will be blocked in a future v
+ersion. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.m
+odels.manifest', 'PackageManifest')]
+interrupted: True
+{"decision": "satisfied", "iteration": 0, "forced": false, "feedback_count": 0, "event": "human_review.decision", "leve
+l": "info", "timestamp": "2026-08-14T15:23:02.423544"}
+{
+  "case_id": "ss_ycb_001",
+  "input": "获取 YCB 数据集中的香蕉（banana）mesh 模型",
+  "executed_at": "2026-08-14T15:23:02",
+  "thread_id": "751192f4-3644-4c26-97e4-afd9d1662a69",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "description": "YCB banana 的 3D 网格模型",
+          "expected_format": "STL",
+          "object_name": "banana"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "ycb",
+        "elapsed_seconds": 38.43,
+        "data_format": "obj",
+        "data_size": 1431169,
+        "data_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152302",
+      "package_id": "package-20260814-152302",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "files": [
+        {
+          "path": "objects/req_000.stl",
+          "format": "stl",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        }
+      ],
+      "runtime_check": {}
+    },
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260814-152302\n- checksums.txt\n- manifest.json\n- objects\n  - req_000.stl\n- provenance.log\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152302",
+    "checks": {
+      "mesh": {
+        "file": "objects\\req_000.stl",
+        "status": "passed",
+        "faces": 16384,
+        "vertices": 8194
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "objects/req_000.stl",
+      "provenance.log",
+      "units.json"
+    ]
+  }
+}
+[ok] ss_ycb_001 observe.json saved
+
+===== ss_mujoco_001: 获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置 =====
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:23:12.859998"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:23:14.347750"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.017, "event": "retrieve.timeout", "level": "warning",
+"timestamp": "2026-08-14T15:24:12.877139"}
+{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.027, "event": "retrieve.timeout", "level": "warning",
+"timestamp": "2026-08-14T15:24:14.375291"}
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event":
+"parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:24:14.385767"}
+{"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "missing", "elapsed_seconds": 0.0, "ev
+ent": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:24:14.386484"}
+{"parsed": 0, "missing": 2, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:2
+4:14.386589"}
+{"req_id": "req_000", "priority": "required", "event": "validate.missing", "level": "warning", "timestamp": "2026-08-14
+T15:24:14.387299"}
+{"req_id": "req_001", "priority": "required", "event": "validate.missing", "level": "warning", "timestamp": "2026-08-14
+T15:24:14.387695"}
+{"parsed": 0, "missing": 2, "issues": 2, "errors": 2, "iteration": 1, "elapsed_seconds": 0.001, "event": "validate.done
+", "level": "info", "timestamp": "2026-08-14T15:24:14.387844"}
+{"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:24:14.390802"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:24:19.086494"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.032, "event": "retrieve.timeout", "level": "warning",
+"timestamp": "2026-08-14T15:25:14.423979"}
+{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.059, "event": "retrieve.timeout", "level": "warning",
+"timestamp": "2026-08-14T15:25:19.146675"}
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event":
+"parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:25:19.170570"}
+{"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "missing", "elapsed_seconds": 0.0, "ev
+ent": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:25:19.171890"}
+{"parsed": 0, "missing": 2, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:2
+5:19.172335"}
+{"req_id": "req_000", "priority": "required", "event": "validate.missing", "level": "warning", "timestamp": "2026-08-14
+T15:25:19.174097"}
+{"req_id": "req_001", "priority": "required", "event": "validate.missing", "level": "warning", "timestamp": "2026-08-14
+T15:25:19.174372"}
+{"parsed": 0, "missing": 2, "issues": 2, "errors": 2, "iteration": 2, "elapsed_seconds": 0.001, "event": "validate.done
+", "level": "info", "timestamp": "2026-08-14T15:25:19.174585"}
+{"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:25:19.180807"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:25:24.716068"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "status": "timeout", "elapsed_seconds": 60.024, "event": "retrieve.timeout", "level": "warning",
+"timestamp": "2026-08-14T15:26:19.205694"}
+{"req_id": "req_001", "status": "timeout", "elapsed_seconds": 60.049, "event": "retrieve.timeout", "level": "warning",
+"timestamp": "2026-08-14T15:26:24.765970"}
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "missing", "elapsed_seconds": 0.0, "event":
+"parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:26:24.789797"}
+{"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "missing", "elapsed_seconds": 0.0, "ev
+ent": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:26:24.791331"}
+{"parsed": 0, "missing": 2, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:2
+6:24.791633"}
+{"req_id": "req_000", "priority": "required", "event": "validate.missing", "level": "warning", "timestamp": "2026-08-14
+T15:26:24.793605"}
+{"req_id": "req_001", "priority": "required", "event": "validate.missing", "level": "warning", "timestamp": "2026-08-14
+T15:26:24.794876"}
+{"parsed": 0, "missing": 2, "issues": 2, "errors": 2, "iteration": 3, "elapsed_seconds": 0.002, "event": "validate.done
+", "level": "info", "timestamp": "2026-08-14T15:26:24.795154"}
+{"package_id": "package-20260814-152624", "files": 0, "missing": 2, "status": "failed", "elapsed_seconds": 0.024, "even
+t": "assemble.done", "level": "info", "timestamp": "2026-08-14T15:26:24.821674"}
+Deserializing unregistered type rdi.models.retrieval.RetrievalError from checkpoint. This will be blocked in a future v
+ersion. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.m
+odels.retrieval', 'RetrievalError')]
+Deserializing unregistered type rdi.models.parsed.MissingItem from checkpoint. This will be blocked in a future version
+. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.
+parsed', 'MissingItem')]
+Deserializing unregistered type rdi.models.common.Severity from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Severity')]
+Deserializing unregistered type rdi.models.common.ValIssue from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'ValIssue')]
+interrupted: True
+{"decision": "satisfied", "iteration": 0, "forced": false, "feedback_count": 0, "event": "human_review.decision", "leve
+l": "info", "timestamp": "2026-08-14T15:26:24.844455"}
+{
+  "case_id": "ss_mujoco_001",
+  "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+  "executed_at": "2026-08-14T15:26:24",
+  "thread_id": "6d7c9de0-331d-42ce-8642-3f412b42a429",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "sim_config"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 机器人 URDF 描述文件（用于 mujoco_menagerie 转换）",
+          "expected_format": "URDF",
+          "object_name": ""
+        },
+        {
+          "req_id": "req_001",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo XML 场景配置",
+          "expected_format": "XML",
+          "object_name": ""
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "error",
+        "error_message": "检索超时（超过 per_req_timeout 秒）",
+        "elapsed_seconds": 60.02
+      },
+      {
+        "req_id": "req_001",
+        "status": "error",
+        "error_message": "检索超时（超过 per_req_timeout 秒）",
+        "elapsed_seconds": 60.05
+      },
+      {
+        "req_id": "req_000",
+        "source": "franka",
+        "error_type": "timeout",
+        "error_message": "检索超时（超过 per_req_timeout 秒）"
+      },
+      {
+        "req_id": "req_001",
+        "source": "mujoco",
+        "error_type": "timeout",
+        "error_message": "检索超时（超过 per_req_timeout 秒）"
+      }
+    ],
+    "validation_issues": [
+      {
+        "severity": "error",
+        "req_id": "req_000",
+        "message": "必需需求缺失: 检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "suggestion": "",
+        "auto_fixable": false,
+        "context": {}
+      },
+      {
+        "severity": "error",
+        "req_id": "req_001",
+        "message": "必需需求缺失: 检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "suggestion": "",
+        "auto_fixable": false,
+        "context": {}
+      }
+    ],
+    "runtime_check": {},
+    "missing_items": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人 URDF 描述文件（用于 mujoco_menagerie 转换）",
+        "reason": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "alternatives": [],
+        "fallback_sources": []
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "sim_config",
+        "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo XML 场景配置",
+        "reason": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "alternatives": [],
+        "fallback_sources": []
+      }
+    ],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-152624",
+      "package_id": "package-20260814-152624",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items": [
+        {
+          "req_id": "req_000",
+          "reason": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+          "alternatives": []
+        },
+        {
+          "req_id": "req_001",
+          "reason": "检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+          "alternatives": []
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 2,
+        "fulfilled": 0,
+        "missing": 2,
+        "validation_issues": 2,
+        "avg_confidence": 0.0,
+        "avg_completeness": 0.0
+      },
+      "files": [],
+      "runtime_check": {}
+    },
+    "validation_issues": [
+      {
+        "severity": "error",
+        "req_id": "req_000",
+        "message": "必需需求缺失: 检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "suggestion": "",
+        "auto_fixable": false,
+        "context": {}
+      },
+      {
+        "severity": "error",
+        "req_id": "req_001",
+        "message": "必需需求缺失: 检索失败[error]: 检索超时（超过 per_req_timeout 秒）",
+        "suggestion": "",
+        "auto_fixable": false,
+        "context": {}
+      }
+    ],
+    "runtime_check": {},
+    "missing_items": [
+      {
+        "req_id": "req_000",
+        "re
+[ok] ss_mujoco_001 observe.json saved

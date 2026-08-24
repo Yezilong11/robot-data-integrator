@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "case_id": "<case_id>",
+  "input": "<实际输入前端的问题原文>",
+  "executor": "<A/C/D/E/F>",
+  "executed_at": null,
+  "env": {
+    "llm_model": "<模型名>",
+    "llm_base_url": "<OpenAI 兼容接口地址，不得填写 API Key>",
+    "mode": "real",
+    "git_branch": "<执行时分支>",
+    "git_commit": "<执行时提交哈希>",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [],
+      "vs_expected": "<match/partial/mismatch>",
+      "notes": ""
+    },
+    "retrieve": [],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "<passed/failed/not_applicable/not_run>",
+      "notes": ""
+    },
+    "package": {
+      "dir": "",
+      "manifest_path": "",
+      "status": "<complete/partial/missing/error>",
+      "file_count": 0,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "notes": ""
+    }
+  },
+  "screenshots": [],
+  "verdict": null,
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "",
+  "reviewer": null,
+  "reviewed_at": null
+}

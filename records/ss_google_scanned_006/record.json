@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_google_scanned_006",
+  "input": "Retrieve any object mesh from Google Scanned Objects for MuJoCo tabletop",
+  "executor": "D",
+  "executed_at": "2026-08-21T17:05:59+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh",
+        "sim_config"
+      ],
+      "vs_expected": "partial",
+      "notes": "题设 expected 仅 1 类 mesh，系统多解析出 sim_config（over-parse，共 2 类需求）。mesh 为必需，sim_config 为多余解析项"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed": null,
+        "format": "stl",
+        "quality": "real",
+        "is_fallback": false,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Black_Decker_CM2035B/tip/files/meshes/model.obj",
+        "note": "命中 Google Scanned Objects Black_Decker CM2035B 咖啡机 mesh，obj 转 stl 1.5MB 落盘 objects/req_000.stl，置信度 1.0、完整度 100%。核心需求完全满足"
+      },
+      {
+        "req_id": "req_001",
+        "type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "elapsed": null,
+        "format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+        "note": "额外解析出的 sim_config 走 isaac 兜底命中 IsaacLab ant.py（蚂蚁机器人），与 tabletop 场景目标无关（延续 mujoco_003/004 观察到的 ant.py 默认兜底问题）。runtime_check passed（MuJoCo 一步仿真成功），但内容错配"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "notes": "validation_issues=2 全为 warning：req_001 完整度 80.0% 与置信度 0.80 恰好压在推荐基准临界（<0.8/80% 即告警）。runtime_check 仅对 req_001 执行 MuJoCo 一步仿真通过（ant 可加载，但非 tabletop 语义）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-170625",
+      "manifest_path": "data/output_packages/package-20260821-170625/manifest.json",
+      "status": "complete",
+      "file_count": 3,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing。3 文件：objects/req_000.stl（mesh 主交付）、sim_config/req_001.py + sim_config/objects/req_000.stl（ant 场景）。sim_config 为显式降级"
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "核心需求 mesh 完全满足（real，咖啡机 1.5MB，置信度 1.0）。两处隐患记入观察：① over-parse 多解析 sim_config（题设仅要求 mesh），降级 isaac 返回 ant.py 蚂蚁机器人充当 tabletop 场景，内容错配（P4，与 mujoco_003/004 同类问题）；② isaac 兜底默认资产固定 ant.py，无目标语义映射。判定 PASS_WITH_FALLBACK",
+  "reviewer": null,
+  "reviewed_at": null
+}

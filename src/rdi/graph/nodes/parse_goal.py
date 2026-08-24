@@ -6,6 +6,8 @@
 继续运行而非崩溃。
 """
 
+import logging
+import re
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +19,9 @@ from rdi.exceptions import LLMParseError, LLMUnavailableError
 from rdi.graph.state import SystemState
 from rdi.intelligence import LLMClient
 from rdi.intelligence.prompts import build_goal_parsing_prompt
-from rdi.models import DataReq, GoalSpec
+from rdi.models import DataReq, DataReqType, GoalSpec
+
+_logger = logging.getLogger(__name__)
 
 # ponytail: 临时用 PyMuPDF 直接抽取 PDF 文本，等 D 工程师的 PDFParseSkill 就绪后替换
 _PDF_TEXT_MAX_CHARS = 8000
@@ -70,6 +74,252 @@ def _extract_paper_text(paper_pdf: bytes | None) -> str | None:
     return text
 
 
+# 强制映射关键词表（不区分大小写）。命中即覆盖 LLM 输出的 req_type。
+# 强关键词（格式后缀 / 专有名词）精确匹配，对任何 req_type 都生效；
+# 弱关键词（通用词）仅在 req_type 为非具体类型（code / dataset / unknown）时兜底，
+# 避免误伤已正确分类的具体需求（如 grasp 需求的描述里出现 "robot"）。
+_STRONG_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
+    # F 审计：策略权重/关节数据类词必须优先于 CODE 的"仓库"与 DATASET 的"数据集"，
+    # 否则 "检索抓取策略权重仓库" 被 "仓库" 吸到 CODE、"检索机械臂关节数据集" 被
+    # "数据集" 吸到 DATASET（ss_github_004/005 核心需求解析偏移根因）。
+    DataReqType.POLICY_MODEL: (
+        "策略权重",
+        "权重仓库",
+        "模型权重",
+        "权重文件",
+        "policy weight",
+        "checkpoint",
+    ),
+    DataReqType.SENSOR_DATA: (
+        "关节数据",
+        "关节角度",
+        "关节位置",
+        "关节力矩",
+        "力觉",
+        "传感器数据",
+        "joint data",
+        "torque",
+    ),
+    # 检索容器类目标最优先：描述含仓库/数据集专词时先判 CODE/DATASET。
+    # Day2 回归：LLM 把 "retrieve robot grasp dataset" 判为 GRASP 且配 expected_format=npz 时，
+    # GRASP 强词 npz 会抢先命中；把 CODE 提到最前，容器专词优先于数据格式词。
+    # D3 修复：MESH 强词提前至 DATASET 之前（见 MESH 条目注释）。
+    DataReqType.CODE: (
+        "开源仓库",
+        "代码仓库",
+        "源代码",
+        "开源代码",
+        "github",
+        "codebase",
+        "repository",
+        "repo",
+    ),
+    # D3 修复：SIM_CONFIG 提前至 ROBOT_URDF 之前——"PyBullet 仿真场景配置"这类描述
+    # 同时含"仿真场景"（SIM_CONFIG 强词）与 expected_format=urdf（ROBOT_URDF 强词），
+    # 此前 ROBOT_URDF 先命中把场景误判为第二条 robot_urdf 需求（ms_005 多解析 + 放大
+    # 缺失面）。仿真引擎/场景词（mujoco/pybullet/仿真场景等）比 urdf 格式后缀更能
+    # 表达"要什么"；纯 URDF 需求描述不含仿真场景词，不受影响。
+    DataReqType.SIM_CONFIG: (
+        "mujoco",
+        "pybullet",
+        "gazebo",
+        "isaac",
+        "mjcf",
+        "xml",
+        "simulation scene",
+        "sim config",
+        "仿真场景",
+        "仿真配置",
+    ),
+    DataReqType.ROBOT_URDF: ("urdf", "xacro"),
+    # D3 修复：MESH 强词（mesh/3d model/obj/stl 等格式后缀）优先于 DATASET 的
+    # "数据集/dataset"。目标如 "获取 GSO 数据集中的任意一个物体 mesh 模型" 含
+    # "数据集" 但明确要 mesh，此前被 DATASET 抢先误判（P1_PARSE）。mesh 词同时
+    # 是格式后缀（obj/stl/ply/dae/glb），精确性高于 "数据集" 容器词；而
+    # "retrieve robot grasp dataset" 类目标不含 mesh 词，仍会落到 DATASET。
+    DataReqType.MESH: ("mesh", "3d model", "obj", "stl", "ply", "dae", "glb"),
+    DataReqType.DATASET: ("dataset", "数据集"),
+    DataReqType.GRASP: (
+        "grasp pose",
+        "grasping pose",
+        "grasp data",
+        "grasp_label",
+        "npz",
+        "pkl",
+        "抓取姿态",
+    ),
+    # D2: 新增四类强关键词。中文用具体词避开泛词误伤：
+    # "配置" 会命中 SIM_CONFIG 的"仿真场景配置"，故 ROBOT_CONFIG 只收英文具体词。
+    DataReqType.CAMERA_CALIB: (
+        "camera calibration",
+        "calibration",
+        "calib",
+        "intrinsics",
+        "extrinsics",
+        "标定",
+        "内参",
+        "外参",
+    ),
+    DataReqType.TEACHING_TRAJECTORY: (
+        "teaching trajectory",
+        "teaching",
+        "demonstration",
+        "示教轨迹",
+        "示教",
+    ),
+    DataReqType.ROBOT_CONFIG: (
+        "robot config",
+        "robot_config",
+        "robot-config",
+        "config.yaml",
+        "yaml config",
+    ),
+    DataReqType.BENCHMARK_TASK: ("benchmark", "基准测试", "基准任务"),
+}
+
+# P1-B：抓取数据内容词（用于 DATASET→GRASP 单向消歧，见 _normalize_datareq）
+_GRASP_CONTENT_WORDS: tuple[str, ...] = (
+    "抓取标签",
+    "抓取标注",
+    "抓取规划",
+    "grasp label",
+    "grasp annotation",
+    "grasp planning",
+)
+
+_WEAK_TYPE_KEYWORDS: dict[DataReqType, tuple[str, ...]] = {
+    DataReqType.ROBOT_URDF: ("robot", "robots", "机器人"),
+    DataReqType.MESH: ("模型", "物体"),
+    DataReqType.GRASP: ("grasp", "grasping", "抓取"),
+    DataReqType.SIM_CONFIG: ("simulation", "仿真"),
+}
+
+# 仅这几种"非具体"类型允许用弱关键词兜底；paper / policy_model / sensor_data 等
+# 具体类型描述里常出现 robot / 抓取 等通用词，不应被强转。
+_WEAK_ELIGIBLE_TYPES: frozenset[DataReqType] = frozenset(
+    {DataReqType.CODE, DataReqType.DATASET, DataReqType.UNKNOWN}
+)
+
+# C1: 中文抓取语境物体名提取模式（先"X 的抓取标注"语序，再"抓取标注：X"语序）
+_OBJECT_NAME_PATTERNS: tuple[str, ...] = (
+    r"([\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_-]*)\s*的\s*抓取(?:标注|姿态|数据)?",
+    r"抓取(?:标注|姿态|数据)?\s*[:：]?\s*([\u4e00-\u9fa5a-zA-Z][\u4e00-\u9fa5a-zA-Z0-9_-]*)",
+)
+# 语序二可能误捕获的泛化词（如"抓取数据"中的"数据"不是物体名）
+_OBJECT_NAME_STOPWORDS: frozenset[str] = frozenset(
+    {"数据", "文件", "标注", "姿态", "模型", "网格", "物体", "场景", "配置", "任务", "信息"}
+)
+# C1: YCB 常见物体英文名小列表（覆盖测试场景，不做全表）
+_YCB_COMMON_OBJECT_NAMES: tuple[str, ...] = (
+    "banana",
+    "apple",
+    "mug",
+    "bowl",
+    "cracker box",
+    "sugar box",
+    "tomato soup can",
+    "master chef can",
+    "mustard bottle",
+    "tuna fish can",
+)
+
+
+def _kw_in(text: str, keyword: str) -> bool:
+    """不区分大小写的关键词匹配：中文按子串，英文按整词边界。
+
+    ``robot`` 只匹配独立单词，避免把 "Robotiq" / "robotics" 误判为 ROBOT_URDF；
+    ``obj`` 只匹配扩展名，避免命中 "objects"。
+    """
+    if any(ord(c) > 127 for c in keyword):
+        return keyword in text
+    return re.search(rf"\b{re.escape(keyword)}\b", text) is not None
+
+
+def _normalize_datareq(req: DataReq) -> DataReq:
+    """基于 expected_format 与 description 关键词修正误分类的 req_type。
+
+    LLM 容易把真实机器人数据识别为通用的 code/dataset，或给出错误的具体类型；
+    强关键词（格式后缀 / 专有名词）命中时无条件覆盖，弱关键词（通用词）仅在
+    req_type 为 code / dataset / unknown 时兜底，保证正常场景不误伤。
+    完全无法识别时标记 ``DataReqType.UNKNOWN`` 并记录 warning。
+    """
+    text = f"{req.description} {req.expected_format or ''}".lower()
+    cur = req.req_type
+
+    # P1-B 单向消歧：LLM 判 DATASET 但描述明确含抓取数据内容词（标签/标注/规划）
+    # 时为 GRASP——"数据集/dataset"是容器词，数据内容词更能表达"要什么数据"
+    # （ss_graspnet_004 类解析偏移根因）。仅在 GRASP 强词循环之前处理，避免
+    # DATASET（dict 序在 GRASP 前）抢先命中；"机器人抓取数据集"无内容词不受影响。
+    if cur == DataReqType.DATASET and any(_kw_in(text, k) for k in _GRASP_CONTENT_WORDS):
+        return req.model_copy(update={"req_type": DataReqType.GRASP})
+
+    for typ, keywords in _STRONG_TYPE_KEYWORDS.items():
+        if any(_kw_in(text, k) for k in keywords):
+            return req.model_copy(update={"req_type": typ})
+
+    if cur in _WEAK_ELIGIBLE_TYPES:
+        for typ, keywords in _WEAK_TYPE_KEYWORDS.items():
+            if any(_kw_in(text, k) for k in keywords):
+                return req.model_copy(update={"req_type": typ})
+        if cur == DataReqType.UNKNOWN:
+            _logger.warning(
+                "parse_goal: 无法识别数据需求类型，req_id=%s 标记为 UNKNOWN", req.req_id
+            )
+
+    return req
+
+
+def _extract_object_name_from_text(text: str) -> str:
+    """从描述文本提取目标物体名；未识别返回空串。
+
+    规则（按优先级）：
+    1. YCB 风格物体 id（如 ``011_banana``）；
+    2. 中文抓取语境名词（"banana 的抓取标注" / "抓取标注：banana"），
+       排除"数据/文件"等泛化词；
+    3. 英文 grasp 语境（如 "grasp pose of banana"）；
+    4. YCB 常见物体英文名小列表。
+    """
+    m = re.search(r"\b(\d{3}_[a-z0-9_]+)\b", text)
+    if m:
+        return m.group(1)
+    for pattern in _OBJECT_NAME_PATTERNS:
+        m = re.search(pattern, text)
+        if m and m.group(1).lower() not in _OBJECT_NAME_STOPWORDS:
+            return m.group(1)
+    m = re.search(
+        r"grasp(?:ing)? (?:pose|data|annotation)?(?:s)? (?:of|for|on)?\s*([a-z0-9_-]+)",
+        text,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1)
+    lower = text.lower()
+    for name in _YCB_COMMON_OBJECT_NAMES:
+        if re.search(rf"\b{re.escape(name)}\b", lower):
+            return name
+    return ""
+
+
+def _dedupe_requirements(requirements: list[DataReq]) -> list[DataReq]:
+    """同一目标内相同 (req_type, object_name) 的重复需求合并，仅保留第一条。
+
+    LLM 偶发对同一目标重复生成同类型需求（如 ms_005 对 Franka 生成两个
+    ROBOT_URDF），重复需求会在检索/装配阶段产生多余的缺失项（类型错配），
+    导致整包 status=failed。去重仅合并"完全等价"需求（同类型 + 同物体名），
+    不同物体的同类型需求（如 banana 与 apple 的 GRASP）仍各自保留，不丢失信息。
+    去重后重编号 req_id，保证 req_000..req_N 连续。
+    """
+    seen: set[tuple[DataReqType, str]] = set()
+    unique: list[DataReq] = []
+    for req in requirements:
+        key = (req.req_type, (req.object_name or "").strip().lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(req)
+    return [req.model_copy(update={"req_id": f"req_{i:03d}"}) for i, req in enumerate(unique)]
+
+
 def node_parse_goal(state: SystemState) -> dict[str, Any]:
     """目标解析节点：调用 LLM 把 user_goal + paper_pdf 转换为结构化数据需求。
 
@@ -114,6 +364,29 @@ def node_parse_goal(state: SystemState) -> dict[str, Any]:
         req.model_copy(update={"req_id": f"req_{i:03d}"})
         for i, req in enumerate(result.requirements)
     ]
+
+    # 后处理：根据 expected_format / description 关键词修正误分类
+    requirements = [_normalize_datareq(req) for req in requirements]
+
+    # C1: 对 GRASP/MESH 需求从描述文本补充 object_name（先 normalize 再填充，
+    # 保证 req_type 已修正为 GRASP/MESH 后才会触发；LLM 已填的 object_name 不覆盖）
+    requirements = [
+        req.model_copy(
+            update={
+                "object_name": _extract_object_name_from_text(
+                    f"{req.description} {req.expected_format or ''}"
+                )
+            }
+        )
+        if req.req_type in (DataReqType.GRASP, DataReqType.MESH)
+        and not (getattr(req, "object_name", "") or "").strip()
+        else req
+        for req in requirements
+    ]
+
+    # D4: 同一目标内相同 (req_type, object_name) 的重复需求合并（LLM 偶发重复生成，
+    # 如 ms_005 对 Franka 生成两个 ROBOT_URDF），避免重复需求导致整包 failed
+    requirements = _dedupe_requirements(requirements)
 
     return {
         "parsed_goal": result.goal,

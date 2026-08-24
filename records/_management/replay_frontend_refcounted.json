@@ -1,0 +1,514 @@
+{
+  "ss_github_003": {
+    "case_id": "ss_github_003",
+    "target": "检索 YCB 抓取数据集",
+    "package": "package-20260823-160644",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：2 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 2
+  },
+  "ss_github_004": {
+    "case_id": "ss_github_004",
+    "target": "检索抓取策略权重仓库",
+    "package": "package-20260823-161031",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 检索失败[error]: 所有候选源均失败: github:format_mismatch; huggingface:unknown"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_github_005": {
+    "case_id": "ss_github_005",
+    "target": "检索机械臂关节数据集",
+    "package": "package-20260823-161324",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：需求实际未获得真实数据（仅元数据/占位）: 降级来源且数据过小，疑似占位"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_huggingface_001": {
+    "case_id": "ss_huggingface_001",
+    "target": "检索 robot grasp dataset",
+    "package": "package-20260823-163526",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_huggingface_002": {
+    "case_id": "ss_huggingface_002",
+    "target": "检索 ACT 机器人操作策略",
+    "package": "package-20260823-162533",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 检索失败[error]: 所有候选源均失败: github:format_mismatch; huggingface:unknown"
+    ],
+    "file_count": 3,
+    "missing_count": 1
+  },
+  "ss_huggingface_004": {
+    "case_id": "ss_huggingface_004",
+    "target": "检索 robot manipulation 数据集",
+    "package": "package-20260823-192422",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_huggingface_005": {
+    "case_id": "ss_huggingface_005",
+    "target": "检索灵巧操作策略权重",
+    "package": "package-20260823-163234",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 检索失败[error]: 所有候选源均失败: github:format_mismatch; huggingface:unknown"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_zenodo_001": {
+    "case_id": "ss_zenodo_001",
+    "target": "检索 robot grasp dataset",
+    "package": "package-20260823-163526",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_zenodo_002": {
+    "case_id": "ss_zenodo_002",
+    "target": "检索机械臂关节数据",
+    "package": "package-20260823-163826",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：内容与需求语义不符（需求目标: joint angles、joint data、joint torques、robot arm、sensor、"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_zenodo_003": {
+    "case_id": "ss_zenodo_003",
+    "target": "检索机器人操作仿真数据集",
+    "package": "package-20260823-164253",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: zenodo: 候选语义零重叠（Supplemental dataset for \"Barotropic vorticity development due t"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_zenodo_004": {
+    "case_id": "ss_zenodo_004",
+    "target": "检索机械臂力觉传感器数据",
+    "package": "package-20260823-164526",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：内容与需求语义不符（需求目标: force torque sensor、force/torque、sensor、力觉传感器、时序数据，实际: "
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_zenodo_005": {
+    "case_id": "ss_zenodo_005",
+    "target": "检索抓取姿态标注数据集",
+    "package": "package-20260823-164806",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_dexgrasp_001": {
+    "case_id": "ss_dexgrasp_001",
+    "target": "获取 banana 的 DexGrasp 抓取文件",
+    "package": "package-20260823-192859",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_dexgrasp_002": {
+    "case_id": "ss_dexgrasp_002",
+    "target": "获取 apple 的 DexGrasp 抓取文件",
+    "package": "package-20260823-200559",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_dexgrasp_003": {
+    "case_id": "ss_dexgrasp_003",
+    "target": "获取 mug 的 DexGrasp 抓取文件",
+    "package": "package-20260823-193503",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ss_dexgrasp_004": {
+    "case_id": "ss_dexgrasp_004",
+    "target": "获取 bottle 的 DexGrasp 抓取文件",
+    "package": "package-20260823-193541",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ss_dexgrasp_005": {
+    "case_id": "ss_dexgrasp_005",
+    "target": "获取 scissors 的 DexGrasp 抓取文件",
+    "package": "package-20260823-193554",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ss_graspnet_001": {
+    "case_id": "ss_graspnet_001",
+    "target": "检索 GraspNet 数据集",
+    "package": "package-20260823-171538",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_graspnet_002": {
+    "case_id": "ss_graspnet_002",
+    "target": "获取 banana 的单个 grasp 文件",
+    "package": "package-20260823-171942",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 2,
+    "missing_count": 1
+  },
+  "ss_ycb_004": {
+    "case_id": "ss_ycb_004",
+    "target": "获取 banana 的 grasp 数据",
+    "package": "package-20260823-172228",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_ycb_005": {
+    "case_id": "ss_ycb_005",
+    "target": "获取 mug 的 grasp 数据",
+    "package": "package-20260823-172633",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 2,
+    "missing_count": 1
+  },
+  "ss_graspnet_003": {
+    "case_id": "ss_graspnet_003",
+    "target": "获取 GraspNet-1Billion 中物体 camera_0 的抓取数据",
+    "package": "package-20260823-172927",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_graspnet_004": {
+    "case_id": "ss_graspnet_004",
+    "target": "我要做抓取规划，帮我找 GraspNet 数据集的抓取标签",
+    "package": "package-20260823-173322",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：2 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 2
+  },
+  "ss_graspnet_005": {
+    "case_id": "ss_graspnet_005",
+    "target": "获取 GraspNet-1Billion 数据集的说明和目录结构",
+    "package": "package-20260823-173626",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_huggingface_006": {
+    "case_id": "ss_huggingface_006",
+    "target": "帮我找 Hugging Face 上的机器人操作数据集（中文描述）",
+    "package": "package-20260823-193931",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_zenodo_006": {
+    "case_id": "ss_zenodo_006",
+    "target": "帮我找 Zenodo 上机器人抓取数据集（中文描述）",
+    "package": "package-20260823-194155",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_dexgrasp_006": {
+    "case_id": "ss_dexgrasp_006",
+    "target": "帮我找 DexGraspNet 数据集的抓取标注（中文描述）",
+    "package": "package-20260823-194235",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ss_zenodo_007": {
+    "case_id": "ss_zenodo_007",
+    "target": "Find a robotic arm joint sensor dataset on Zenodo",
+    "package": "package-20260823-175408",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：内容与需求语义不符（需求目标: joint sensor、robotic arm、sensor data、time series、zenodo"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_sensor_github_001": {
+    "case_id": "ss_sensor_github_001",
+    "target": "帮我找 GitHub 上的机械臂关节力矩传感器数据",
+    "package": "package-20260823-175656",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：需求实际未获得真实数据（仅元数据/占位）: 降级来源且数据过小，疑似占位"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_sensor_github_002": {
+    "case_id": "ss_sensor_github_002",
+    "target": "Find joint position/velocity sensor log data on GitHub",
+    "package": "package-20260823-175927",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：需求实际未获得真实数据（仅元数据/占位）: 降级来源且数据过小，疑似占位"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_sensor_zenodo_001": {
+    "case_id": "ss_sensor_zenodo_001",
+    "target": "帮我找 Zenodo 上的 IMU 传感器数据",
+    "package": "package-20260823-180211",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：需求实际未获得真实数据（仅元数据/占位）: 降级来源且数据过小，疑似占位"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_sensor_zenodo_002": {
+    "case_id": "ss_sensor_zenodo_002",
+    "target": "Find a force-torque sensor dataset for a robotic gripper on Zenodo",
+    "package": "package-20260823-180437",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 内容有效性未通过：需求实际未获得真实数据（仅元数据/占位）: 降级来源且数据过小，疑似占位"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_policy_hf_001": {
+    "case_id": "ss_policy_hf_001",
+    "target": "获取一个 Hugging Face 上的机械臂抓取策略模型权重",
+    "package": "package-20260823-180852",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 检索失败[error]: 所有候选源均失败: huggingface:unknown; github:format_mismatch"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_policy_github_001": {
+    "case_id": "ss_policy_github_001",
+    "target": "Find a GitHub repo releasing a learned manipulation policy checkpoint",
+    "package": "package-20260823-181237",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 检索失败[error]: 所有候选源均失败: github:format_mismatch; huggingface:unknown"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ss_grasp_ycb_001": {
+    "case_id": "ss_grasp_ycb_001",
+    "target": "获取 YCB 数据集中马克杯的抓取标注",
+    "package": "package-20260823-181633",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 2,
+    "missing_count": 1
+  },
+  "ss_grasp_dexgrasp_002": {
+    "case_id": "ss_grasp_dexgrasp_002",
+    "target": "获取 DexGraspNet 中 bowl 的抓取文件（中文）",
+    "package": "package-20260823-194757",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 2,
+    "missing_count": 1
+  },
+  "ss_dataset_hf_002": {
+    "case_id": "ss_dataset_hf_002",
+    "target": "Find a robot manipulation dataset with action labels on Hugging Face",
+    "package": "package-20260823-200124",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ss_dataset_graspnet_001": {
+    "case_id": "ss_dataset_graspnet_001",
+    "target": "获取 GraspNet 数据集中某个物体的点云与标注（中文）",
+    "package": "package-20260823-182840",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 1,
+    "missing_count": 1
+  },
+  "ms_001": {
+    "case_id": "ms_001",
+    "target": "Franka Panda grasps YCB banana in MuJoCo",
+    "package": "package-20260823-194811",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ms_002": {
+    "case_id": "ms_002",
+    "target": "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉",
+    "package": "package-20260823-195134",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 91,
+    "missing_count": 1
+  },
+  "ms_004": {
+    "case_id": "ms_004",
+    "target": "UR5 with Robotiq 2F-85 grasps YCB apple",
+    "package": "package-20260823-195148",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ms_006": {
+    "case_id": "ms_006",
+    "target": "用 Franka 在 MuJoCo 里抓取香蕉（无 YCB 关键词）",
+    "package": "package-20260823-195407",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 91,
+    "missing_count": 1
+  },
+  "ms_007": {
+    "case_id": "ms_007",
+    "target": "抓取 YCB 香蕉（未指定仿真器）",
+    "package": "package-20260823-185248",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 2,
+    "missing_count": 1
+  },
+  "ms_009": {
+    "case_id": "ms_009",
+    "target": "Kinova Gen3 grasps YCB bottle in MuJoCo",
+    "package": "package-20260823-195822",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 26,
+    "missing_count": 1
+  },
+  "ms_010": {
+    "case_id": "ms_010",
+    "target": "用 Franka Panda 抓取 YCB 马克杯（无仿真器指定）",
+    "package": "package-20260823-195953",
+    "verdict": "PASS",
+    "reasons": [
+      "引用交付：1 项大文件未下载，已给 URL + 指引"
+    ],
+    "file_count": 21,
+    "missing_count": 1
+  },
+  "ms_013": {
+    "case_id": "ms_013",
+    "target": "用 Franka Panda 在 MuJoCo 里执行抓取，并加载一个策略模型权重",
+    "package": "package-20260823-200008",
+    "verdict": "PASS",
+    "reasons": [],
+    "file_count": 1,
+    "missing_count": 0
+  },
+  "ms_014": {
+    "case_id": "ms_014",
+    "target": "找一个机械臂抓取策略的开源代码并加载其 Hugging Face 权重",
+    "package": "package-20260823-191220",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 1 项: 检索失败[error]: 所有候选源均失败: huggingface:unknown; github:format_mismatch"
+    ],
+    "file_count": 2,
+    "missing_count": 1
+  },
+  "ms_015": {
+    "case_id": "ms_015",
+    "target": "结合 Zenodo 传感器数据与 GitHub 代码做机械臂力控",
+    "package": "package-20260823-191708",
+    "verdict": "FAIL",
+    "reasons": [
+      "非引用型缺失 2 项: 内容有效性未通过：需求实际未获得真实数据（仅元数据/占位）: 降级来源且数据过小，疑似占位"
+    ],
+    "file_count": 1,
+    "missing_count": 2
+  }
+}

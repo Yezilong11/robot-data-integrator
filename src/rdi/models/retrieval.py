@@ -28,6 +28,18 @@ class SearchResult(BaseModel):
     )
 
 
+class RawReference(BaseModel):
+    """未下载的大文件引用记录（因体积超限或网络不可用）。"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str = Field(default="", description="文件原始 URL（大文件所在位置）")
+    local_path: str = Field(default="", description="本地路径（未下载则为空字符串）")
+    file_size: int = Field(default=0, description="文件大小（字节），未知为 0")
+    download_hint: str = Field(default="", description="下载提示（如镜像 URL、zip 下载地址）")
+    reason: str = Field(default="", description="为何未下载（如体积超过阈值）")
+
+
 class RawData(BaseModel):
     """从数据源获取的原始数据。"""
 
@@ -40,6 +52,18 @@ class RawData(BaseModel):
     url: str = Field(default="", description="获取来源 URL")
     retrieved_at: datetime = Field(default_factory=datetime.now, description="获取时间")
     size_bytes: int = Field(default=0, description="数据大小（字节）")
+    reference: RawReference | None = Field(
+        default=None,
+        description="未下载大文件的引用记录（已下载文件为 None）",
+    )
+    assets: dict[str, bytes] = Field(
+        default_factory=dict,
+        description="引用的外部资源（相对路径 → 字节），如 URDF 的 mesh/texture",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="额外元数据（如 is_real_grasp、grasp_annotation_available）",
+    )
 
 
 class RetrievalResult(BaseModel):
@@ -51,7 +75,7 @@ class RetrievalResult(BaseModel):
     data: RawData | None = Field(default=None, description="获取到的原始数据")
     status: str = Field(
         default="success",
-        description="success / missing / fallback / error",
+        description="success / missing / error（error 必须附带 error_message 说明原因）",
     )
     source: DataSource | None = Field(default=None, description="实际使用的数据源")
     is_fallback: bool = Field(default=False, description="是否使用了备选源")

@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_franka_003",
+  "input": "我要用 Franka Panda 做抓取仿真，先把它的模型文件给我",
+  "executor": "D",
+  "executed_at": "2026-08-17T12:09:21",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "522cd9595d5b15290a998a53bdf4117804b0f162 D day4修复问题"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "robot_urdf"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 抓取仿真用模型（URDF 及网格）"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "franka",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "urdf",
+        "data_size_bytes": 11043,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "franka 适配器直连 pybullet_robots panda.urdf（jsdelivr CDN），随包抓齐视觉 9 + 碰撞 9 共 18 个 OBJ 网格（link0-link7、hand、finger），满足抓取仿真模型需求"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%（completeness_pct=80）",
+        "req_000: 置信度不足 0.80（confidence_score=0.8）"
+      ],
+      "runtime_check_detail": "yourdfpy.URDF.load(load_meshes=True) LOAD_OK：13 links/12 joints，mesh 引用全部随相对路径 meshes/... 解析；trimesh OBJ 18/18 全部可加载"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260817-120921",
+      "manifest_path": "data/output_packages/package-20260817-120921/manifest.json",
+      "status": "complete",
+      "file_count": 19,
+      "missing_items": 0,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
+    },
+    "loadability": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，13 links/12 joints，mesh 引用全部随相对路径解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "18/18 mesh 可加载（robots/meshes/visual|collision，link0-link7 + hand + finger）"
+      }
+    },
+    "structure_consistency": {
+      "verified": true,
+      "note": "manifest.files(19) 与磁盘一致（robots/req_000.urdf + robots/meshes/ 18 obj）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-检索进度（完整长图 2064x2606，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项（完整长图 2064x1940，3 段拼接）"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查（human_review 中断，完整长图 2064x1792，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入与解析（完整长图 2064x2452，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-检索进度（完整长图 2064x2606，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项（0 error/2 warning，完整长图 2064x1940，3 段拼接）"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查（完整长图 2064x1792，3 段拼接）"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "重测覆盖（2026-08-17，前端真实流程 run_graph+resume，human_review satisfied，run_id=20260817-120856-65c55ff4）。旧记录为 PASS_WITH_FALLBACK（deoxys_control fallback 仅 URDF 无网格）：本次 franka 源 primary 路径直连 pybullet_robots（jsdelivr CDN），1 URDF + 18 OBJ（视觉+碰撞）全量落盘、missing=0 → PASS。仅 validation_issues=2（置信度 0.8 / 完整度 80%）为 warn 级。\n（A 2026-08-17 合规化：req_type 大写转小写；ms_003 vs_expected→partial、source isaac_lab→isaac、补 fallback_reason，待 D 复核）"
+}

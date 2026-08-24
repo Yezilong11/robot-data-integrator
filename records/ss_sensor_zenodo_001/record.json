@@ -1,0 +1,192 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_sensor_zenodo_001",
+  "input": "帮我找 Zenodo 上的 IMU 传感器数据",
+  "executor": "E",
+  "executed_at": "2026-08-22T10:25:38+08:00",
+  "completed_at": "2026-08-22T10:25:53+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "sensor",
+  "priority": "P1",
+  "variant": "中文（IMU）",
+  "expected": {
+    "req_types": [
+      "sensor_data"
+    ],
+    "sources": [
+      "zenodo"
+    ],
+    "formats": [
+      "csv",
+      "json"
+    ],
+    "min_files": 1,
+    "notes": "题目要求找到 Zenodo 上的 IMU 传感器数据，至少应包含可用的传感器信号字段、时间信息或单位/坐标系等基本元数据。"
+  },
+  "source_package": {
+    "package_id": "package-20260822-102553",
+    "run_id": "20260822-102538-ec96bc07",
+    "manifest_path": "data/output_packages/package-20260822-102553/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-102553",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sensor_data"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 SensorDataset / sensor_data 需求，与 ss_sensor_zenodo_001 expected.req_types 匹配。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "description": "Zenodo 上的 IMU 传感器数据",
+        "source": "zenodo",
+        "status": "format_invalid_metadata_only",
+        "elapsed": null,
+        "format": "json",
+        "manifest_format": "SensorDataset",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://zenodo.org/records/22052212",
+        "output_path": "resources/req_000.json",
+        "file_size": 68,
+        "downloaded": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "checksum_sha256": "0e54266842d7b2ae260c5c50de68d52b5db62be3b17434c943d51d4b6b3222d1",
+        "metadata": {
+          "resource_content": {
+            "metadata": {
+              "reason": "JSON dict 缺少 signals 键"
+            }
+          },
+          "semantic_map": {
+            "units": "",
+            "coordinate_frame": "",
+            "timestamp_epoch": null,
+            "is_llm": false
+          }
+        },
+        "notes": "manifest 指向 Zenodo record，且 resources/req_000.json 已落盘；但文件内容只有缺少 signals 键的原因说明，没有 IMU signal 数组、采样时间、单位或坐标系，不能作为可用传感器数据交付。"
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 4,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目要求 IMU 传感器数据，但 resources/req_000.json 不包含 signals 字段。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "semantic_map 中 units、coordinate_frame 为空，timestamp_epoch 为 null，缺少传感器数据基本语义信息。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest 标记为 fallback，置信度仅 0.6。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest 完整度仅 60.0%，低于推荐阈值。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "quality_explanation.md 仅提示完整度/置信度风险，没有捕获 signals 缺失这一核心格式问题。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "包状态为 complete，但人工复核发现产物不是可直接使用的 IMU 数据。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据基本可用但存在完整度和置信度偏低风险；人工复核补充发现 req_000.json 缺少 signals 字段。",
+        "manifest_validation_issues": 2,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-102553",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260822-102553\\manifest.json",
+      "package_id": "package-20260822-102553",
+      "run_id": "20260822-102538-ec96bc07",
+      "status": "complete",
+      "manifest_file_entries": 2,
+      "requirement_file_count": 1,
+      "actual_package_file_count": 6,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "resources/req_000.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "",
+          "coordinate_frame": "",
+          "timestamp_epoch": null,
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，且满足 min_files=1；但按题目 expected 复核，实际资源 JSON 只记录格式缺陷原因，不包含可用 IMU 数据。"
+    },
+    "provenance": [
+      "2026-08-22T10:25:53.278829 assemble_package: 生成数据包 package-20260822-102553，落盘 1 个文件，缺失 0 项",
+      "2026-08-22T10:25:53.278829 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260822-102553 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260822-102553 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板展示 assemble_package/provenance 的截图（待补）"
+    },
+    {
+      "file": "screenshots/final/04_error.png",
+      "desc": "失败补充证据：展示 resources/req_000.json 中缺少 signals 键、semantic_map 单位/坐标系为空的截图（待补）"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "题目要求 Zenodo 上的 IMU 传感器数据，虽然 package 状态为 complete 且落盘 resources/req_000.json，但该文件只包含 metadata.reason=JSON dict 缺少 signals 键，没有实际 IMU signals、采样时间、单位或坐标系信息，不能作为可用传感器数据交付。",
+  "notes": "本 record 根据 package-20260822-102553 的 manifest、resources/req_000.json、semantic_map.json、provenance.log、quality_explanation.md 和文件树生成。若后续重跑能得到含 signals/时间戳/单位信息的 Zenodo 传感器数据文件，可用新 package 覆盖本记录；当前按格式不合格判 FAIL/P4_FORMAT。",
+  "reviewer": null,
+  "reviewed_at": null
+}

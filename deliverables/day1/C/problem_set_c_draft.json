@@ -1,0 +1,1065 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "name": "v3 问题集（C 数据源类草案 v0.2）",
+    "created_at": "2026-08-12",
+    "architecture": {
+      "single_source": {
+        "ratio": 0.7,
+        "note": "单源测试（主导）"
+      },
+      "multi_source": {
+        "ratio": 0.3,
+        "note": "多源混合测试"
+      }
+    }
+  },
+  "problems": [
+    {
+      "case_id": "ss_arxiv_001",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索 robot grasping 的论文",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "ss_arxiv_002",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索 dexterous manipulation 灵巧操作的论文",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_arxiv_003",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索 robot grasping 仿真的论文",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_arxiv_004",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索机器人触觉感知抓取论文",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_arxiv_005",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "target": "检索 robot grasping 综述论文",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "pdf"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_github_001",
+      "layer": "single_source",
+      "category": "code",
+      "source": [
+        "github"
+      ],
+      "target": "检索 Franka 抓取开源仓库",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "CODE"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "ss_github_002",
+      "layer": "single_source",
+      "category": "robot_urdf",
+      "source": [
+        "github"
+      ],
+      "target": "检索 GitHub 上的 Franka Panda URDF 模型",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "ROBOT_URDF"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_github_003",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "github"
+      ],
+      "target": "检索 YCB 抓取数据集",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_github_004",
+      "layer": "single_source",
+      "category": "policy",
+      "source": [
+        "github"
+      ],
+      "target": "检索抓取策略权重仓库",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "POLICY_MODEL"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_github_005",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "github"
+      ],
+      "target": "检索机械臂关节数据集",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SENSOR_DATA"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "markdown"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_huggingface_001",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "huggingface"
+      ],
+      "target": "检索 robot grasp dataset",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "ss_huggingface_002",
+      "layer": "single_source",
+      "category": "policy",
+      "source": [
+        "huggingface"
+      ],
+      "target": "检索 ACT 机器人操作策略",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "POLICY_MODEL"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "safetensors",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "ss_huggingface_003",
+      "layer": "single_source",
+      "category": "code",
+      "source": [
+        "huggingface"
+      ],
+      "target": "检索机器人操作代码仓库",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "CODE"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_huggingface_004",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "huggingface"
+      ],
+      "target": "检索 robot manipulation 数据集",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_huggingface_005",
+      "layer": "single_source",
+      "category": "policy",
+      "source": [
+        "huggingface"
+      ],
+      "target": "检索灵巧操作策略权重",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "POLICY_MODEL"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "safetensors",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_zenodo_001",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "zenodo"
+      ],
+      "target": "检索 robot grasp dataset",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_zenodo_002",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "zenodo"
+      ],
+      "target": "检索机械臂关节数据",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "SENSOR_DATA"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "csv"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_zenodo_003",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "zenodo"
+      ],
+      "target": "检索机器人操作仿真数据集",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_zenodo_004",
+      "layer": "single_source",
+      "category": "sensor",
+      "source": [
+        "zenodo"
+      ],
+      "target": "检索机械臂力觉传感器数据",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SENSOR_DATA"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json",
+          "csv"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_zenodo_005",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "zenodo"
+      ],
+      "target": "检索抓取姿态标注数据集",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_ycb_001",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 banana 的 grasp 数据",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "mat"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_ycb_002",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 mug 的 grasp 数据",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "mat"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_ycb_003",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "ycb"
+      ],
+      "target": "检索 YCB 数据集",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "zip"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_ycb_004",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 banana 的 mesh 模型",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "MESH"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "obj",
+          "stl"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_ycb_005",
+      "layer": "single_source",
+      "category": "mesh",
+      "source": [
+        "ycb"
+      ],
+      "target": "获取 mug 的 mesh 模型",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "MESH"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "obj",
+          "stl"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_dexgrasp_001",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "获取 banana 的 DexGrasp 抓取文件",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npy",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_dexgrasp_002",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "获取 apple 的 DexGrasp 抓取文件",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npy",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_dexgrasp_003",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "获取 mug 的 DexGrasp 抓取文件",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npy",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_dexgrasp_004",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "获取 bottle 的 DexGrasp 抓取文件",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npy",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_dexgrasp_005",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "dexgrasp"
+      ],
+      "target": "获取 scissors 的 DexGrasp 抓取文件",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "npy",
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_mujoco_001",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "检索 mujoco_menagerie 中 franka 的真实场景",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real"
+        ],
+        "format": [
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "ss_mujoco_002",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "检索 mujoco_menagerie 中 aloha 的真实场景",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_mujoco_003",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "检索 mujoco_menagerie 中 ur5 的真实场景",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_mujoco_004",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "检索 mujoco_menagerie 中 robotiq 夹爪场景",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_mujoco_005",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "mujoco"
+      ],
+      "target": "检索 mujoco_menagerie 中 shadow hand 场景",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "xml"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_paperswithcode_001",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "paperswithcode"
+      ],
+      "target": "检索 grasp detection 相关论文",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_paperswithcode_002",
+      "layer": "single_source",
+      "category": "end_to_end",
+      "source": [
+        "paperswithcode"
+      ],
+      "target": "检索 grasp detection 论文及其代码",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER",
+          "CODE"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_paperswithcode_003",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "paperswithcode"
+      ],
+      "target": "检索机器人抓取论文",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_ieee_001",
+      "layer": "single_source",
+      "category": "paper",
+      "source": [
+        "ieee"
+      ],
+      "target": "检索 robot grasping 的论文",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "PAPER"
+        ],
+        "quality": [
+          "real"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    },
+    {
+      "case_id": "ss_graspnet_001",
+      "layer": "single_source",
+      "category": "dataset",
+      "source": [
+        "graspnet"
+      ],
+      "target": "检索 GraspNet 数据集",
+      "lang": "ZH",
+      "expected": {
+        "req_types": [
+          "DATASET"
+        ],
+        "quality": [
+          "real"
+        ],
+        "format": [
+          "json"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_graspnet_002",
+      "layer": "single_source",
+      "category": "grasp",
+      "source": [
+        "graspnet"
+      ],
+      "target": "获取 banana 的单个 grasp 文件",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "GRASP"
+        ],
+        "quality": [
+          "real"
+        ],
+        "format": [
+          "json",
+          "npz"
+        ],
+        "min_files": 1
+      },
+      "priority": "P0"
+    },
+    {
+      "case_id": "ss_isaac_001",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "isaac"
+      ],
+      "target": "获取 Franka 的 Isaac Sim 场景配置",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "python"
+        ],
+        "min_files": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "case_id": "ss_isaac_002",
+      "layer": "single_source",
+      "category": "sim_config",
+      "source": [
+        "isaac"
+      ],
+      "target": "获取 UR5 的 Isaac Sim 场景配置",
+      "lang": "EN",
+      "expected": {
+        "req_types": [
+          "SIM_CONFIG"
+        ],
+        "quality": [
+          "real",
+          "fallback"
+        ],
+        "format": [
+          "python"
+        ],
+        "min_files": 1
+      },
+      "priority": "P2"
+    }
+  ]
+}

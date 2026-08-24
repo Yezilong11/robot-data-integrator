@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_allegro_001",
+  "input": "获取 Allegro Hand 灵巧手的 URDF 模型",
+  "executor": "D",
+  "executed_at": "2026-08-20T15:35:16",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "robot_urdf"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Allegro Hand 灵巧手的 URDF 描述文件",
+          "priority": "required",
+          "expected_format": "URDF"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "allegro",
+        "status": "success",
+        "elapsed_seconds": 21.0,
+        "format": "urdf",
+        "data_size_bytes": 16826,
+        "data_url": "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900/robots/hands/allegro_hand/allegro_hand_right.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "allegro 适配器直连 dexsuite/dex-urdf，命中 allegro_hand_right.urdf，并随包抓齐 12 个 OBJ mesh（base_link/link_0.0~link_3.0/link_12~15.0_right/link_tip 等 visual+collision）；URDF 含 4 指 16 关节完整定义",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_required",
+      "errors_detail": [],
+      "warnings_detail": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-153516",
+      "manifest_path": "data/output_packages/package-20260820-153516/manifest.json",
+      "status": "complete",
+      "file_count": 12,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-153442-ca29efac，包 package-20260820-153516）。allegro 适配器命中 dex-urdf 仓库 allegro_hand_right.urdf + 12 OBJ mesh 全量落盘，无降级、0 缺失、0 校验问题，quality_report avg_confidence=1.0/avg_completeness=100，判定 PASS。",
+  "reviewer": null,
+  "reviewed_at": null
+}

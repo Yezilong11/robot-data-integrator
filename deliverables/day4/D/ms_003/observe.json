@@ -1,0 +1,140 @@
+{
+  "case_id": "ms_003",
+  "input": "Kinova Gen3 picks up EGAD mug in Isaac Sim",
+  "executed_at": "2026-08-17T12:28:45",
+  "thread_id": "20260817-122727-1d9310e4",
+  "run_id": "20260817-122727-1d9310e4",
+  "package_id": "package-20260817-122845",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF",
+        "MESH",
+        "GRASP",
+        "SIM_CONFIG"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Kinova Gen3 机械臂 URDF"
+        },
+        {
+          "req_id": "req_001",
+          "req_type": "mesh",
+          "description": "EGAD mug 网格"
+        },
+        {
+          "req_id": "req_002",
+          "req_type": "grasp",
+          "description": "抓取姿态数据"
+        },
+        {
+          "req_id": "req_003",
+          "req_type": "sim_config",
+          "description": "Isaac Sim 仿真场景配置"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "kinova",
+        "data_format": "urdf",
+        "data_size": 8089,
+        "data_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/robots/gen3_6dof.urdf"
+      },
+      {
+        "req_id": "req_001",
+        "status": "success",
+        "source": "google_scanned",
+        "data_format": "stl",
+        "data_size": 561284,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/ACE_Coffee_Mug_Kristen_16_oz_cup/tip/files/meshes/model.obj"
+      },
+      {
+        "req_id": "req_002",
+        "status": "success",
+        "source": "graspnet",
+        "data_format": "json",
+        "data_size": 0,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion"
+      },
+      {
+        "req_id": "req_003",
+        "status": "success",
+        "source": "isaac_lab",
+        "data_format": "mjcf",
+        "data_size": 5243,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/kinova/gen3.scene.xml"
+      }
+    ],
+    "validation_issues": [
+      "req_000: 完整度不足 90.0%（completeness_pct=90）",
+      "req_000: 置信度不足 0.90（confidence_score=0.9）",
+      "req_002: 完整度不足 60.0%（completeness_pct=60）",
+      "req_002: 置信度不足 0.60（confidence_score=0.6）",
+      "req_002: 抓取姿态为近似值（in-plane r*π/2 量化）",
+      "req_003: 完整度不足 80.0%（completeness_pct=80）",
+      "req_003: 置信度不足 0.80（confidence_score=0.8）"
+    ],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-122845",
+      "package_id": "package-20260817-122845",
+      "status": "complete",
+      "file_count": 12,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 4,
+        "fulfilled": 12,
+        "missing": 0,
+        "validation_issues": 7,
+        "avg_confidence": 0.8666666666666667,
+        "avg_completeness": 86.66666666666667
+      },
+      "runtime_check": {}
+    },
+    "validation_issues": [
+      "req_000: 完整度不足 90.0%（completeness_pct=90）",
+      "req_000: 置信度不足 0.90（confidence_score=0.9）",
+      "req_002: 完整度不足 60.0%（completeness_pct=60）",
+      "req_002: 置信度不足 0.60（confidence_score=0.6）",
+      "req_002: 抓取姿态为近似值（in-plane r*π/2 量化）",
+      "req_003: 完整度不足 80.0%（completeness_pct=80）",
+      "req_003: 置信度不足 0.80（confidence_score=0.8）"
+    ],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260817-122845 (12 files)\n- checksums.txt\n- manifest.json\n- provenance.log\n- units.json\n- grasps\n  - req_002.json\n- objects\n  - req_001.stl\n- robots\n  - req_000.urdf\n  - kortex_description/arms/gen3/6dof/meshes (7 stl)\n- sim_config\n  - req_003.py\n  - objects\n    - req_001.stl"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-122845",
+    "checks": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，11 links/10 joints，7 处 mesh 引用随相对路径 kortex_description/... 解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "9/9 mesh 可加载（robots/kortex_description 7 STL + objects/req_001.stl + sim_config/objects/req_001.stl）"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "grasps/req_002.json",
+      "manifest.json",
+      "objects/req_001.stl",
+      "provenance.log",
+      "robots/req_000.urdf",
+      "sim_config/req_003.py",
+      "units.json"
+    ]
+  }
+}

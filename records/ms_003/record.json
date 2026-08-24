@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_003",
+  "input": "Kinova Gen3 picks up EGAD mug in Isaac Sim",
+  "executor": "D",
+  "executed_at": "2026-08-20T15:31:09",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "robot_urdf",
+    "mesh",
+    "sim_config"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "vs_expected": "partial",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Kinova Gen3 机器人 URDF 描述文件",
+          "priority": "required",
+          "expected_format": "URDF"
+        },
+        {
+          "req_id": "req_001",
+          "req_type": "mesh",
+          "description": "EGAD mug 的 3D 网格模型",
+          "priority": "required",
+          "expected_format": "STL",
+          "object_name": "mug"
+        },
+        {
+          "req_id": "req_002",
+          "req_type": "grasp",
+          "description": "EGAD mug 的抓取姿态数据",
+          "priority": "required",
+          "expected_format": "NPZ",
+          "object_name": "mug"
+        },
+        {
+          "req_id": "req_003",
+          "req_type": "sim_config",
+          "description": "Isaac Sim 仿真场景配置",
+          "priority": "required",
+          "expected_format": "USD"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "kinova",
+        "status": "success",
+        "elapsed_seconds": 64.4,
+        "format": "urdf",
+        "data_size_bytes": 8089,
+        "data_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+        "quality": "real",
+        "is_fallback": true,
+        "confidence": 0.9,
+        "completeness": 90.0,
+        "error": null,
+        "error_type": null,
+        "note": "kinova 适配器命中 ros_kortex GEN3-6DOF_VISION URDF，随包抓齐 7 个 STL（base/shoulder/bicep/forearm/spherical_wrist_1/2/bracelet_with_vision）；github primary 源源级超时（36s）后走 kinova 专用源",
+        "fallback_reason": "题设源 github 源级超时，走 kinova 专用适配器（显式降级，is_fallback=true）"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "source": "google_scanned, ycb, graspnet",
+        "status": "missing",
+        "elapsed_seconds": 60.0,
+        "format": null,
+        "data_size_bytes": 0,
+        "data_url": null,
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.0,
+        "completeness": 0.0,
+        "error": "google_scanned 源级超时（60s）；ycb 仅收录 20 个已知目标，未收录 'EGAD mug'；graspnet 仅收录 2 个已知目标，未收录 'EGAD mug'",
+        "error_type": "timeout",
+        "note": "必需需求缺失：EGAD mug 网格在所有候选源均不可得（google_scanned 超时 + ycb/graspnet 未收录）"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "json",
+        "data_size_bytes": 0,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "error": null,
+        "error_type": null,
+        "note": "grasp 命中 GraspNet-1Billion 元数据 reference 条目（downloaded=false、data_size=0），姿态为近似值（in-plane 量化），completeness 60",
+        "fallback_reason": "grasp 为 LLM 补充需求（题设外），GraspNet 命中元数据/近似姿态，显式降级"
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "python",
+        "data_size_bytes": 5243,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "IsaacLab 场景配置命中 robots/franka.py（目标为 Kinova Gen3，内容与目标机器人不匹配，P4 内容正确性隐患）；runtime_check：MuJoCo 加载与一步仿真成功",
+        "fallback_reason": "Isaac 场景配置经 IsaacLab 仓库 python 资产获取（源外回退），显式降级"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 7,
+      "runtime_check": "passed",
+      "errors_detail": [
+        "error: req_001 必需需求缺失: ycb 未收录 'EGAD mug'、graspnet 未收录 'EGAD mug'、google_scanned 超时"
+      ],
+      "warnings_detail": [
+        "req_000: 完整度不足 90.0%",
+        "req_000: 置信度不足 0.90",
+        "req_002: 完整度不足 60.0%",
+        "req_002: 置信度不足 0.60",
+        "req_002: 输出路径为空（reference 条目）",
+        "req_003: 完整度不足 80.0%",
+        "req_003: 置信度不足 0.80"
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-153109",
+      "manifest_path": "data/output_packages/package-20260820-153109/manifest.json",
+      "status": "failed",
+      "file_count": 10,
+      "missing_items_count": 1,
+      "validation_issues_error": 1,
+      "fallback_explicit": true,
+      "avg_confidence": 0.86,
+      "avg_completeness": 86.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "必需需求 req_001（EGAD mug mesh）检索失败：google_scanned 源级超时（60s）、ycb/graspnet 未收录 EGAD 对象，missing 且为 required 优先级 → 包状态 failed；另 req_003 sim_config 命中 IsaacLab franka.py 而非 Kinova 场景（内容不匹配，P4 隐患）。",
+  "notes": "前端真实流程测试（2026-08-20，目标输入→运行→human_review 中断→继续运行 satisfied，run_id=20260820-152332-ac3eca3a，包 package-20260820-153109）。req_000 URDF+7 STL 全量落盘、req_002 grasp 元数据、req_003 sim_config py 均成功；但 req_001 必需 mesh 缺失（google_scanned 60s 超时 + ycb/graspnet 未收录）→ manifest status=failed、validation 1 error/7 warning，按判定口径记为 FAIL。与 day4 记录对比：EGAD mug 此前由 google_scanned 直连命中，本次同一目标检索超时，暴露 google_scanned 对任意物体检索的不稳定（P3_SOURCE 波动）。",
+  "reviewer": null,
+  "reviewed_at": null,
+  "error": "google_scanned 源级超时（60s）；ycb 仅收录 20 个已知目标，未收录 'EGAD mug'；graspnet 仅收录 2 个已知目标，未收录 'EGAD mug'"
+}
