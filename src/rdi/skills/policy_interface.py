@@ -220,7 +220,9 @@ class PolicyInterfaceSkill(BaseSkill):
             )
         weight_files_meta = self._parse_kwarg_json(kwargs, "weight_files_json")
         config = self._parse_kwarg_json(kwargs, "config_json")
-        return self._build_metadata_only(model_info, weight_files_meta, config, kwargs, raw_data=data)
+        return self._build_metadata_only(
+            model_info, weight_files_meta, config, kwargs, raw_data=data
+        )
 
     def _inspect_weight(self, path: Path, framework: str) -> _InspectResult:
         if framework == "safetensors":

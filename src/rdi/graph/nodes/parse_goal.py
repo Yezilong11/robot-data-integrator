@@ -250,9 +250,7 @@ def _normalize_datareq(req: DataReq) -> DataReq:
     # 时为 GRASP——"数据集/dataset"是容器词，数据内容词更能表达"要什么数据"
     # （ss_graspnet_004 类解析偏移根因）。仅在 GRASP 强词循环之前处理，避免
     # DATASET（dict 序在 GRASP 前）抢先命中；"机器人抓取数据集"无内容词不受影响。
-    if cur == DataReqType.DATASET and any(
-        _kw_in(text, k) for k in _GRASP_CONTENT_WORDS
-    ):
+    if cur == DataReqType.DATASET and any(_kw_in(text, k) for k in _GRASP_CONTENT_WORDS):
         return req.model_copy(update={"req_type": DataReqType.GRASP})
 
     for typ, keywords in _STRONG_TYPE_KEYWORDS.items():

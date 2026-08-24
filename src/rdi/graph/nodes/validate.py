@@ -112,23 +112,74 @@ _YCB_TERM_MAP: dict[str, str] = {
 # 才作为锚词（其出现通常伴随明确实体上下文）。
 _SEMANTIC_ANCHOR_WORDS: frozenset[str] = frozenset(
     {
-        "robot", "robots", "robotic", "robotics", "manipulator",
+        "robot",
+        "robots",
+        "robotic",
+        "robotics",
+        "manipulator",
     }
 )
 _SEMANTIC_STOPWORDS: frozenset[str] = frozenset(
     {
-        "data", "dataset", "datasets", "数据", "模型", "arm",
-        "机械臂", "机器人",
-        "model", "models", "mesh", "meshes", "网格", "物体", "object", "objects",
-        "grasp", "grasping", "抓取", "标注", "annotation", "annotations",
-        "pose", "poses", "config", "configs", "configuration", "配置",
-        "simulation", "sim", "仿真", "policy", "策略", "环境", "environment",
-        "scene", "scenes", "场景", "file", "files", "文件", "文档", "document",
-        "paper", "论文", "code", "repository", "信息", "任务", "benchmark",
+        "data",
+        "dataset",
+        "datasets",
+        "数据",
+        "模型",
+        "arm",
+        "机械臂",
+        "机器人",
+        "model",
+        "models",
+        "mesh",
+        "meshes",
+        "网格",
+        "物体",
+        "object",
+        "objects",
+        "grasp",
+        "grasping",
+        "抓取",
+        "标注",
+        "annotation",
+        "annotations",
+        "pose",
+        "poses",
+        "config",
+        "configs",
+        "configuration",
+        "配置",
+        "simulation",
+        "sim",
+        "仿真",
+        "policy",
+        "策略",
+        "环境",
+        "environment",
+        "scene",
+        "scenes",
+        "场景",
+        "file",
+        "files",
+        "文件",
+        "文档",
+        "document",
+        "paper",
+        "论文",
+        "code",
+        "repository",
+        "信息",
+        "任务",
+        "benchmark",
         # fix4: 传感器类泛词——不携带具体物理量/实体，易靠子串兜底误放行无关
         # 记录（如 "US Robotic Sensors Market" 仅凭 sensor 命中机械臂力矩需求被
         # 放行）。滤除后校验仍需 force torque/关节位置 等实义词命中。
-        "sensor", "sensors", "传感器", "传感器数据", "sensor data", "sensor dataset",
+        "sensor",
+        "sensors",
+        "传感器",
+        "传感器数据",
+        "sensor data",
+        "sensor dataset",
     }
 )
 
@@ -163,12 +214,16 @@ def _is_metadata_proxy(item: Any) -> tuple[bool, str]:
         return True, "仅提供远端引用（大文件未下载）"
     cf = (getattr(item, "canonical_format", "") or "").lower()
     data = getattr(item, "data", None)
-    if cf in ("datasetsummary", "dataset summary") and isinstance(data, dict):
-        if not (data.get("file_tree") or []):
-            return True, "数据集仅元数据/摘要，未含实际文件"
-    fallback_src = getattr(item, "is_fallback", False) or (
-        getattr(item, "data_source_quality", None) or ""
-    ) == "fallback"
+    if (
+        cf in ("datasetsummary", "dataset summary")
+        and isinstance(data, dict)
+        and not (data.get("file_tree") or [])
+    ):
+        return True, "数据集仅元数据/摘要，未含实际文件"
+    fallback_src = (
+        getattr(item, "is_fallback", False)
+        or (getattr(item, "data_source_quality", None) or "") == "fallback"
+    )
     if fallback_src and _serialized_size(data) < _PLACEHOLDER_BYTE_THRESHOLD:
         return True, "降级来源且数据过小，疑似占位"
     return False, ""
@@ -203,7 +258,7 @@ def _extract_semantic_terms(req: Any) -> set[str]:
             terms.add(en)
         if re.search(rf"\b{re.escape(en)}\b", lower):
             terms.add(en)
-    for kw in (getattr(req, "keywords", None) or []):
+    for kw in getattr(req, "keywords", None) or []:
         k = str(kw).strip().lower()
         if k and k not in _SEMANTIC_STOPWORDS and not re.fullmatch(r"[\W_]+", k):
             terms.add(k)
@@ -333,9 +388,7 @@ def _semantic_mismatch(req: Any, item: Any) -> str:
     # fix4b: 来源描述与标题同参打分（无锚词时走 score≥1，缺失会误判
     # Boxing punch data 这类"标题无关但描述含 IMU"的真实命中记录）
     sd = getattr(item, "source_description", "") or ""
-    score = semantic_score(
-        req, getattr(item, "name", "") or "", url, f"{desc} {st} {sd}".strip()
-    )
+    score = semantic_score(req, getattr(item, "name", "") or "", url, f"{desc} {st} {sd}".strip())
     text = _item_identity_text(item)
     anchor_terms = {t for t in terms if _is_anchor_term(t)}
     anchor_hit = any(
@@ -343,13 +396,8 @@ def _semantic_mismatch(req: Any, item: Any) -> str:
         for t in anchor_terms
         for w in re.sub(r"[-_]", " ", t).lower().split()
     )
-    substantive_hit = any(
-        t not in anchor_terms and _term_in(text, t) for t in terms
-    )
-    if anchor_terms:
-        ok = anchor_hit and substantive_hit
-    else:
-        ok = score >= 1
+    substantive_hit = any(t not in anchor_terms and _term_in(text, t) for t in terms)
+    ok = anchor_hit and substantive_hit if anchor_terms else score >= 1
     if ok:
         return ""
     return (
@@ -447,7 +495,9 @@ def _validate_urdf_loadability(item: Any, req_id: str) -> ValIssue | None:
                     f.write(content)
             yourdfpy.URDF.load(model_path, load_meshes=True)
             missing = _missing_urdf_assets(raw_bytes, tmp)
-            missing += [m for m in (getattr(item, "assets_missing", None) or []) if m not in missing]
+            missing += [
+                m for m in (getattr(item, "assets_missing", None) or []) if m not in missing
+            ]
             if missing:
                 return ValIssue(
                     severity=Severity.ERROR,

@@ -125,8 +125,7 @@ class YCBAdapter(BaseAdapter):
         matched = [
             obj
             for obj in _FALLBACK_OBJECTS
-            if query_terms
-            & _normalize_terms(f"{obj['id']} {obj['title']} {obj['category']}")
+            if query_terms & _normalize_terms(f"{obj['id']} {obj['title']} {obj['category']}")
         ]
         if not matched:
             raise AdapterCatalogError(

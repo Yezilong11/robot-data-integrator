@@ -4,7 +4,7 @@
 >
 > 权威来源：`records/_management/quality_report.json`（`strict_mode=true`）、`records/_management/progress.csv`、63 个 `records/<case_id>/record.json`。
 >
-> 本文件执行 Day6 计划中 F 的统计、质量核查、归因汇总和交付核对；Day7/Day8 已按 `Day6_汇总统计.md` 压缩合并，不再另建正式的 day7/day8 结论。
+> 本文件执行 Day6 计划中 F 的统计、质量核查、归因汇总和交付核对；Day7/Day8 已按 `docs/process/Day6_汇总统计.md` 压缩合并，不再另建正式的 day7/day8 结论。
 
 ## 1. 结论先行
 

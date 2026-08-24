@@ -92,11 +92,7 @@ def test_real_mjcf_passthrough_has_no_mark() -> None:
 def test_rebuilt_mjcf_has_no_mark() -> None:
     """parse_mujoco → to_mjcf 重建分支（非完整 MJCF 的 XML）不产生降级标记。"""
     # 可被 parse_mujoco 解析、但非完整 MJCF（缺 <mujoco> 根/<worldbody>）→ 重建分支
-    rebuilt_input = (
-        b'<scene>'
-        b'<geom name="box" type="box" size="0.1 0.1 0.1" pos="0 0 0.5"/>'
-        b"</scene>"
-    )
+    rebuilt_input = b'<scene><geom name="box" type="box" size="0.1 0.1 0.1" pos="0 0 0.5"/></scene>'
     result = SimConfigSkill().process(rebuilt_input, fmt="xml")
     assert result.success is True
     assert result.canonical_format == "xml"
@@ -173,6 +169,4 @@ def test_validate_no_warning_for_real_mjcf() -> None:
     res = SimConfigSkill().process(_MJCF, fmt="mjcf")
     item = _item_from_result("r1", res, "mjcf")
     out = node_validate({"parsed_data": {"r1": item}})
-    assert not any(
-        i.message.startswith(_DEGRADED_MARK) for i in out["validation_issues"]
-    )
+    assert not any(i.message.startswith(_DEGRADED_MARK) for i in out["validation_issues"])

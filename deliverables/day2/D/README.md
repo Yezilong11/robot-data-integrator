@@ -2,7 +2,7 @@
 
 > 分支：`feat/arch-langgraph`
 > 执行日期：2026-08-14
-> 依据：`Day2_单源执行启动.md`（D 任务）+ `问题集构建策略.md`（record 模板/截图规范/判定 P1-P8）+ `deliverables/day1/D/数据包可加载性验证.md`
+> 依据：`docs/process/Day2_单源执行启动.md`（D 任务）+ `docs/process/问题集构建策略.md`（record 模板/截图规范/判定 P1-P8）+ `deliverables/day1/D/数据包可加载性验证.md`
 > 问题集：`problem_set/problem_set.json`（63 题；D 负责格式/仿真类：robot\_urdf / mesh / sim\_config）
 
 ## 执行范围（Day2 第一批）

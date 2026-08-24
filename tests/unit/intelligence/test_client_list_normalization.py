@@ -5,7 +5,7 @@ import json
 from unittest.mock import patch
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from rdi.exceptions import LLMParseError
 from rdi.intelligence.client import LLMClient
@@ -66,9 +66,7 @@ def test_call_structured_normalizes_and_returns_instance() -> None:
     """端到端：LLM 返回逗号字符串时 call_structured 归一化后成功返回模型实例。"""
     client = _client()
     raw = json.dumps({"keywords": "apple,banana", "name": "banana"})
-    with patch.object(
-        client, "_invoke_with_retry", return_value=raw
-    ) as mock_call:
+    with patch.object(client, "_invoke_with_retry", return_value=raw) as mock_call:
         out = client.call_structured("测试", _HasList)
     mock_call.assert_called_once()
     assert out.name == "banana"
@@ -79,6 +77,5 @@ def test_unfixable_fields_still_raise_llm_parse_error() -> None:
     """归一化后仍不符合 schema（缺 name 字段）→ 原降级 LLMParseError。"""
     client = _client()
     raw = json.dumps({"keywords": "apple,banana"})  # 缺 name
-    with patch.object(client, "_invoke_with_retry", return_value=raw):
-        with pytest.raises(LLMParseError):
-            client.call_structured("测试", _HasList)
+    with patch.object(client, "_invoke_with_retry", return_value=raw), pytest.raises(LLMParseError):
+        client.call_structured("测试", _HasList)

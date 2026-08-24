@@ -87,17 +87,21 @@ class TestDatasetFallbackDownloadGuide:
 
     def test_fallback_with_reference_dict(self) -> None:
         """reference 为等价 dict → download_guide 由引用构造。"""
-        data = DatasetSkill().process(
-            _SAMPLE,
-            fmt="markdown",
-            name="ycb",
-            reference={
-                "url": "https://example.com/data.zip",
-                "local_path": "data.zip",
-                "file_size": 777,
-                "reason": "过大",
-            },
-        ).data
+        data = (
+            DatasetSkill()
+            .process(
+                _SAMPLE,
+                fmt="markdown",
+                name="ycb",
+                reference={
+                    "url": "https://example.com/data.zip",
+                    "local_path": "data.zip",
+                    "file_size": 777,
+                    "reason": "过大",
+                },
+            )
+            .data
+        )
         guide = data["download_guide"]
         assert guide["source_file_url"] == "https://example.com/data.zip"
         assert guide["file_size_bytes"] == 777

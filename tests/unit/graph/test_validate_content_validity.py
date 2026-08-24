@@ -66,8 +66,7 @@ def _req(
 
 def _errors(out: dict, req_id: str) -> list:
     return [
-        i for i in out["validation_issues"]
-        if i.req_id == req_id and i.severity == Severity.ERROR
+        i for i in out["validation_issues"] if i.req_id == req_id and i.severity == Severity.ERROR
     ]
 
 

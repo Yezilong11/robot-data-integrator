@@ -492,9 +492,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         remaining = deadline - now
         per_source_cap = _compute_source_cap(source_budget, deadline, now)
         if per_source_cap <= 0:
-            search_failures.append(
-                f"{adapter_cls.source.value}: 预算耗尽：总预算已到点，跳过该源"
-            )
+            search_failures.append(f"{adapter_cls.source.value}: 预算耗尽：总预算已到点，跳过该源")
             continue
         try:
             async with asyncio.timeout(per_source_cap):
@@ -510,13 +508,8 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                         # 追加 filetype 过滤；其余保持单参调用。用 `is True`
                         # 探测：Mock 自动属性恒非 True（测试不误触发），真实
                         # 类属性为 True（与 fetch 的 kwargs 降级互补）。
-                        if (
-                            getattr(adapter_cls, "accepts_req_type_search", False)
-                            is True
-                        ):
-                            hits = await adapter.search(
-                                q, req_type=DataReqType(req_type)
-                            )
+                        if getattr(adapter_cls, "accepts_req_type_search", False) is True:
+                            hits = await adapter.search(q, req_type=DataReqType(req_type))
                         else:
                             hits = await adapter.search(q)
                     except AdapterCatalogError as exc:
@@ -529,8 +522,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                         # 后续 query 可能成功）；全部 query 均失败时源才整体判失败
                         # （候选为空走 missing 分支，错误明细可定位）。
                         search_failures.append(
-                            f"{adapter_cls.source.value}: 搜索 {q[:40]!r} 失败: "
-                            f"{str(exc)[:120]}"
+                            f"{adapter_cls.source.value}: 搜索 {q[:40]!r} 失败: {str(exc)[:120]}"
                         )
                         continue
                     if not hits:
@@ -540,9 +532,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                     # （如 IMU/UR5 关节数据）机会；并对所有 query 的结果做语义
                     # argmax——弱泛词命中（"Web robot detection"）不再压过后续
                     # query 才出现的强命中（"UR5 robot dataset ... joint angles"）。
-                    picked, semantic_diag = _pick_semantic_candidate(
-                        hits, req_type, req_view
-                    )
+                    picked, semantic_diag = _pick_semantic_candidate(hits, req_type, req_view)
                     if picked is None:
                         if semantic_diag:
                             search_failures.append(semantic_diag)
@@ -589,9 +579,8 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 # Zenodo 才有机会用 filetype 过滤命中真实 csv。带真实文件引用的
                 # _file_reference（downloaded=False + reference）不标记 degraded，
                 # 保持"引用=完整交付"口径不受影响。
-                if (
-                    DataReqType(req_type) == DataReqType.SENSOR_DATA
-                    and raw.metadata.get("degraded")
+                if DataReqType(req_type) == DataReqType.SENSOR_DATA and raw.metadata.get(
+                    "degraded"
                 ):
                     elapsed = time.monotonic() - start
                     message = (
@@ -685,9 +674,7 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 }
         except TimeoutError:
             elapsed = time.monotonic() - start
-            message = (
-                f"源级检索超时（本源上限 {source_budget:.2f}s / 剩余 {remaining:.2f}s）"
-            )
+            message = f"源级检索超时（本源上限 {source_budget:.2f}s / 剩余 {remaining:.2f}s）"
             retrieval_errors.append(
                 RetrievalError(
                     req_id=req_id,
@@ -715,10 +702,13 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         status = "error"
         # 诊断：error_message 透出各源 AdapterError 明细（截断防超长），
         # 缺失原因可直接定位是 5xx/404/网络还是降级交付。
-        error_message = "所有候选源均失败: " + "; ".join(
-            f"{e.source.value}:{e.error_type}:{str(e.error_message)[:100]}"
-            for e in retrieval_errors
-        )[:400]
+        error_message = (
+            "所有候选源均失败: "
+            + "; ".join(
+                f"{e.source.value}:{e.error_type}:{str(e.error_message)[:100]}"
+                for e in retrieval_errors
+            )[:400]
+        )
     if status == "missing":
         logger.warning(
             "retrieve.missing",

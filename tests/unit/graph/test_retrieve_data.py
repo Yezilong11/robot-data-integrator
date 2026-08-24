@@ -1284,9 +1284,7 @@ async def test_retrieve_single_sensor_degraded_delivery_continues_next_source(
     assert retrieval.status == "success"
     assert retrieval.source == DataSource.ZENODO
     # GitHub README 降级交付被如实记录为 degraded_delivery，而非当作成功停止
-    degraded_errors = [
-        e for e in result["retrieval_errors"] if e.error_type == "degraded_delivery"
-    ]
+    degraded_errors = [e for e in result["retrieval_errors"] if e.error_type == "degraded_delivery"]
     assert len(degraded_errors) == 1
     assert degraded_errors[0].source == DataSource.GITHUB
     assert "README" in degraded_errors[0].error_message
@@ -1316,6 +1314,4 @@ async def test_retrieve_single_sensor_with_real_json_delivery_not_gated(
     retrieval = result["retrieval_results"]["req_sj"]
     assert retrieval.status == "success"
     assert retrieval.source == DataSource.GITHUB
-    assert not any(
-        e.error_type == "degraded_delivery" for e in result["retrieval_errors"]
-    )
+    assert not any(e.error_type == "degraded_delivery" for e in result["retrieval_errors"])

@@ -2,7 +2,7 @@
 
 - 复核人：D（Day3）
 - 复核日期：2026-08-15
-- 依据：《Day3_执行中段与多源交叉.md》任务 3「逐个确认 sim_config 类记录的 runtime_check（mj_step 通过/失败）和 fallback 标记」
+- 依据：《docs/process/Day3_执行中段与多源交叉.md》任务 3「逐个确认 sim_config 类记录的 runtime_check（mj_step 通过/失败）和 fallback 标记」
 - 复核对象：C 团队 `deliverables/day3/C` 下全部 SIM_CONFIG 类记录（ss_mujoco_001~005、ss_isaac_001~002）
 
 ## 1. 复核结论摘要

@@ -178,7 +178,9 @@ class TestSensorFallbackDownloadGuide:
             "alternatives": [],
         }
         payload = {"dataset_id": "zenodo-1", "downloaded": False, "download_guide": guide}
-        result = SensorDataSkill().process(json.dumps(payload).encode("utf-8"), fmt="json", name="j")
+        result = SensorDataSkill().process(
+            json.dumps(payload).encode("utf-8"), fmt="json", name="j"
+        )
         assert result.is_fallback is True
         assert result.data["download_guide"] == guide
         assert "reason" in result.data["metadata"]

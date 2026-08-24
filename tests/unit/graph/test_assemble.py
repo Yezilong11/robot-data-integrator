@@ -763,7 +763,9 @@ def test_assemble_content_validity_optional_partial(output_dir: Path) -> None:
     pkg = out["experiment_package"]
 
     assert all(f.req_id != "req_mm" for f in pkg.files)
-    assert any(m.req_id == "req_mm" and m.reason.startswith("内容有效性未通过") for m in pkg.missing_items)
+    assert any(
+        m.req_id == "req_mm" and m.reason.startswith("内容有效性未通过") for m in pkg.missing_items
+    )
     assert pkg.package_info["status"] == "partial"
 
 
@@ -825,18 +827,16 @@ def _guide_json() -> bytes:
         "selected_by": "size=largest",
         "alternatives": [],
     }
-    return json.dumps(
-        {"dataset_id": "x", "downloaded": False, "download_guide": guide}
-    ).encode("utf-8")
+    return json.dumps({"dataset_id": "x", "downloaded": False, "download_guide": guide}).encode(
+        "utf-8"
+    )
 
 
 def test_assemble_rule_fallback_explanation_contains_download_guide(
     output_dir: Path,
 ) -> None:
     """Task 9：规则兜底解释（LLM 失败）恒含「数据获取指引」段（每项 wget 命令 + 原因）。"""
-    out = node_assemble(
-        {"parsed_data": {"req_big": _reference_item("req_big", _guide_json())}}
-    )
+    out = node_assemble({"parsed_data": {"req_big": _reference_item("req_big", _guide_json())}})
     md = (Path(out["experiment_package"].output_dir) / "quality_explanation.md").read_text(
         encoding="utf-8"
     )
@@ -863,9 +863,7 @@ def test_assemble_download_integrity_missing_guide_error(output_dir: Path) -> No
 
 def test_assemble_download_integrity_pass(output_dir: Path) -> None:
     """Task 10：download_guide 已落盘 + 解释含数据获取指引 → 完整性校验 PASS。"""
-    out = node_assemble(
-        {"parsed_data": {"req_big": _reference_item("req_big", _guide_json())}}
-    )
+    out = node_assemble({"parsed_data": {"req_big": _reference_item("req_big", _guide_json())}})
     assert out.get("errors", []) == []
     pkg = out["experiment_package"]
     assert any("assemble_completeness_check: PASS" in line for line in pkg.provenance_log)

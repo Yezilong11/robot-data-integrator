@@ -33,7 +33,7 @@ def test_dataset_with_english_grasp_annotation_rewrites_to_grasp() -> None:
 
 
 def test_dataset_without_content_word_stays_dataset() -> None:
-    """"机器人抓取数据集"无内容强词，仍为 DATASET，不受消歧影响。"""
+    """ "机器人抓取数据集"无内容强词，仍为 DATASET，不受消歧影响。"""
     out = _normalize_datareq(_req("机器人抓取数据集"))
     assert out.req_type == DataReqType.DATASET
 

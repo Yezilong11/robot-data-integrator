@@ -10,6 +10,7 @@ Robot Data Integrator (RDI) 是一个基于 LLM 驱动的智能工作流系统�
 
 ## 项目进展
 
+- **第四轮整改收官（2026-08-24）**：48 题口径 2 全局验收 **39 PASS / 9 FAIL（81.3%）**（引用交付 25 + 纯下载 14）；7 题传感器类场景真实前端全链路重放 **7/7 PASS**（分类总况：sensor 6 PASS / 1 FAIL）；修复 Zenodo 检索语义误判（fix4c：≥3 词短语全词命中，消除数据集 keywords 对无关记录的高分误选）。
 - **第三次联调已完成（2026-08-13）**：前端三栏工作区落地完成——活动栏、可折叠文件树、灯带工作流、LLM 决策分析、目标输出、检查器与状态栏均与设计稿对齐，支持三栏拖拽调宽、新会话、PDF 上传、运行/继续运行；Gradio 旧前端已移除。
 - **第二次联调已完成（2026-08-08）**：系统已能根据中文自然语言目标端到端生成包含 URDF、mesh、MuJoCo MJCF XML 与 grasp JSON 的实验数据包。
 - **示例目标**：「我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉，并测试抓取姿态的稳定性。」
@@ -18,7 +19,7 @@ Robot Data Integrator (RDI) 是一个基于 LLM 驱动的智能工作流系统�
   - `files/req_001.stl` — YCB 香蕉 mesh
   - `files/req_002.xml` — MuJoCo MJCF 场景
   - `files/req_003.json` — grasp 元数据 / synthetic grasp
-- **当前测试状态**：766 passed / 1 skipped / 7 deselected。
+- **当前测试状态**：976 passed / 1 skipped / 14 deselected（2026-08-24；integration 组需真实 LLM 默认跳过）。
 
 ## 核心特性
 

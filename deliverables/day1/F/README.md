@@ -3,7 +3,7 @@
 > 分支：`feat/problem-set`（Day1 问题集定稿与执行体系搭建）
 > 提交：`59f2cde`（A 代提交入库）
 > 日期：2026-08-12
-> 依据：`问题集构建策略.md`（ACDEF 分工）、`Day1_问题集定稿与环境准备.md`
+> 依据：`docs/process/问题集构建策略.md`（ACDEF 分工）、`docs/process/Day1_问题集定稿与环境准备.md`
 
 ## 交付内容
 
@@ -21,4 +21,4 @@ F 的 Day1 产出为**执行记录管理工具**（代码交付，随 `59f2cde` 
 
 ## 后续演进
 
-- Day2 起脚本持续迭代：降级放行口径（§6）、多需求补充源口径（§7）、跨机路径 WARNING 等，见 `判定口径纪要_C数据源类.md` 与 `git log -- scripts/manage_test_records.py`
+- Day2 起脚本持续迭代：降级放行口径（§6）、多需求补充源口径（§7）、跨机路径 WARNING 等，见 `docs/process/判定口径纪要_C数据源类.md` 与 `git log -- scripts/manage_test_records.py`

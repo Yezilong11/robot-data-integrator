@@ -184,8 +184,7 @@ class GitHubAdapter(BaseAdapter):
         path = str(candidate.get("path") or candidate.get("name") or "")
         # 优先 contents API 的 download_url；缺省时用 raw.githubusercontent 直链
         url = str(
-            candidate.get("url")
-            or f"https://raw.githubusercontent.com/{repo_name}/HEAD/{path}"
+            candidate.get("url") or f"https://raw.githubusercontent.com/{repo_name}/HEAD/{path}"
         )
         contents_size = int(candidate.get("size") or 0)
         # HEAD 预检：超限 → RawReference；HEAD 未知视为未超限 → 真实下载
@@ -267,9 +266,7 @@ class GitHubAdapter(BaseAdapter):
             if item.get("type") == "dir" and depth < _MAX_TREE_DEPTH:
                 sub_path = str(item.get("path") or "")
                 try:
-                    tree.extend(
-                        await self._list_contents_tree(repo_name, sub_path, depth + 1)
-                    )
+                    tree.extend(await self._list_contents_tree(repo_name, sub_path, depth + 1))
                 except AdapterError:
                     continue
         return tree

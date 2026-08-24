@@ -107,7 +107,7 @@ PASS_WITH_FALLBACK
 
 口径依据：
 
-A 已按《判定口径纪要_C数据源类.md》§6 确认：GraspNet 仅返回元数据 JSON 属显式降级，若 `missing_items` 中有 reason 与 alternatives，且降级可追溯，则判 `PASS_WITH_FALLBACK`。
+A 已按《docs/process/判定口径纪要_C数据源类.md》§6 确认：GraspNet 仅返回元数据 JSON 属显式降级，若 `missing_items` 中有 reason 与 alternatives，且降级可追溯，则判 `PASS_WITH_FALLBACK`。
 
 主要原因：
 

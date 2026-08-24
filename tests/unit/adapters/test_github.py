@@ -286,22 +286,15 @@ class TestGitHubDataChain:
         from rdi.models.common import DataReqType
 
         adapter = GitHubAdapter()
-        dl_url = (
-            "https://raw.githubusercontent.com/acme/robot_control/main/"
-            "checkpoints/policy.pt"
-        )
+        dl_url = "https://raw.githubusercontent.com/acme/robot_control/main/checkpoints/policy.pt"
         contents = [
             self._contents_entry("README.md", "README.md", 100),
-            self._contents_entry(
-                "policy.pt", "checkpoints/policy.pt", 512, download_url=dl_url
-            ),
+            self._contents_entry("policy.pt", "checkpoints/policy.pt", 512, download_url=dl_url),
         ]
         fake_bytes = b"\x00\x00FakePolicy"
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=contents),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=512
-            ),
+            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=512),
             patch.object(
                 adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_bytes
             ),
@@ -329,21 +322,14 @@ class TestGitHubDataChain:
 
         big = settings.max_fetch_bytes + 1
         adapter = GitHubAdapter()
-        dl_url = (
-            "https://raw.githubusercontent.com/acme/robot_control/main/"
-            "data/train_data.csv"
-        )
+        dl_url = "https://raw.githubusercontent.com/acme/robot_control/main/data/train_data.csv"
         contents = [
             self._contents_entry("README.md", "README.md", 100),
-            self._contents_entry(
-                "train_data.csv", "data/train_data.csv", big, download_url=dl_url
-            ),
+            self._contents_entry("train_data.csv", "data/train_data.csv", big, download_url=dl_url),
         ]
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=contents),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=big
-            ),
+            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=big),
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
         ):
             raw = await adapter.fetch("acme/robot_control", req_type=DataReqType.SENSOR_DATA)
@@ -461,14 +447,18 @@ class TestGitHubDataChain:
         adapter = GitHubAdapter()
         contents = [
             self._contents_entry(
-                "grasp_label_test.npz", "grasp/grasp_label_test.npz", 300,
+                "grasp_label_test.npz",
+                "grasp/grasp_label_test.npz",
+                300,
                 download_url="https://raw.githubusercontent.com/acme/grasp/main/grasp/grasp_label_test.npz",
             ),
         ]
         fake_bytes = b"npz-bytes"
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=contents),
-            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=None),
+            patch.object(
+                adapter, "_head_content_length", new_callable=AsyncMock, return_value=None
+            ),
             patch.object(
                 adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_bytes
             ),

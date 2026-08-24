@@ -268,9 +268,7 @@ def test_three_word_phrase_requires_all_words_retrieve_candidate() -> None:
     # RBO：2 词短语 "robotic gripper" 可命中 robotics 中的 robotic，但
     # "force torque sensor" 因缺 sensor 不再命中 → 总分不高于真实记录
     rbo_score = semantic_score(req, rbo_desc, "https://zenodo.org/records/1036660", "")
-    real_score = semantic_score(
-        req, real_desc, "https://zenodo.org/records/11096791", ""
-    )
+    real_score = semantic_score(req, real_desc, "https://zenodo.org/records/11096791", "")
     # 真实记录必须严格高于（或至少不低于）RBO，避免预筛继续选错
     assert real_score > rbo_score or (real_score == rbo_score and real_score >= 1)
 

@@ -89,9 +89,7 @@ class ZenodoAdapter(BaseAdapter):
             )
         return results
 
-    async def fetch(
-        self, item_id: str, req_type: str | DataReqType | None = None
-    ) -> RawData:
+    async def fetch(self, item_id: str, req_type: str | DataReqType | None = None) -> RawData:
         """获取记录元数据 JSON，并按需求类型定位可下载文件。
 
         ``record["files"]``（key/link/size/checksum）构造文件树 → ``select_target_file``

@@ -226,9 +226,7 @@ def test_validate_urdf_assets_missing_metadata_is_error() -> None:
     )
     out = node_validate({"parsed_data": {"r1": item}})
     assert any(
-        i.req_id == "r1"
-        and "meshes/gear.stl" in i.message
-        and i.severity == Severity.ERROR
+        i.req_id == "r1" and "meshes/gear.stl" in i.message and i.severity == Severity.ERROR
         for i in out["validation_issues"]
     )
 
@@ -253,9 +251,7 @@ def test_validate_urdf_no_raw_bytes_missing_ref_is_error() -> None:
     )
     out = node_validate({"parsed_data": {"r1": item}})
     assert any(
-        i.req_id == "r1"
-        and "meshes/base.stl" in i.message
-        and i.severity == Severity.ERROR
+        i.req_id == "r1" and "meshes/base.stl" in i.message and i.severity == Severity.ERROR
         for i in out["validation_issues"]
     )
 

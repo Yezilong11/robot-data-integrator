@@ -264,9 +264,7 @@ class TestPolicyFallbackDownloadGuide:
             file_size=1234,
             reason="超过自动下载上限",
         )
-        result = PolicyInterfaceSkill().process(
-            b"", model_dir=str(_MINIMAL_META), reference=ref
-        )
+        result = PolicyInterfaceSkill().process(b"", model_dir=str(_MINIMAL_META), reference=ref)
         assert result.is_fallback is True
         doc = result.data
         assert doc.download_guide is not None

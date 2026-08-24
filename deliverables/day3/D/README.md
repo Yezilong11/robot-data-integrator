@@ -2,7 +2,7 @@
 
 > 分支：`feat/arch-langgraph`
 > 执行日期：2026-08-15
-> 依据：`Day3_执行中段与多源交叉.md`（D 任务）+ `问题集构建策略.md`（record 模板/截图规范/判定 P1-P8）
+> 依据：`docs/process/Day3_执行中段与多源交叉.md`（D 任务）+ `docs/process/问题集构建策略.md`（record 模板/截图规范/判定 P1-P8）
 > 问题集：`problem_set/problem_set.json`
 > 交付目录：`deliverables/day3/D/`
 

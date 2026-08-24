@@ -102,9 +102,7 @@ class TestZenodoAdapter:
         mock_response = {"hits": {"hits": []}}
         with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_req:
             mock_req.return_value = mock_response
-            await adapter.search(
-                "joint position sensor", req_type=DataReqType.SENSOR_DATA
-            )
+            await adapter.search("joint position sensor", req_type=DataReqType.SENSOR_DATA)
         _, kwargs = mock_req.call_args
         assert kwargs["params"]["q"] == 'joint position sensor AND filetype:"csv"'
         assert kwargs["params"]["sort"] == "bestmatch"
@@ -249,9 +247,7 @@ class TestZenodoFetchFileChain:
         )
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=record),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=big
-            ),
+            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=big),
             patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl,
         ):
             raw = await adapter.fetch("12345", req_type=DataReqType.POLICY_MODEL)
@@ -323,9 +319,7 @@ class TestZenodoFetchFileChain:
         fake_bytes = b"time,torque\n0,1.0\n"
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=record),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=512
-            ),
+            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=512),
             patch.object(
                 adapter, "_download_bytes", new_callable=AsyncMock, return_value=fake_bytes
             ),

@@ -49,9 +49,7 @@ def test_picks_beyond_top5_when_front_zero_overlap() -> None:
     ss_sensor_zenodo_001 的 "Lower-body Inertial Sensor..."）被丢弃，
     转而 fetch 首个无关候选（Boxing punch data）被装配期语义校验拦截成 FAIL。
     """
-    results = [
-        _result(f"noise-{i}", f"Unrelated {i}", desc="foo bar baz") for i in range(5)
-    ]
+    results = [_result(f"noise-{i}", f"Unrelated {i}", desc="foo bar baz") for i in range(5)]
     results.append(_result("imu-1", "Lower-body Inertial Sensor Record", desc="imu inertial data"))
     req = _req(description="惯性测量单元数据", keywords=["inertial measurement unit"])
 

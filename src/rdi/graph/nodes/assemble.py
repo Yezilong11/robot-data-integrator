@@ -295,9 +295,7 @@ def _ensure_download_guide_section(md: str, contexts: list[dict[str, Any]]) -> s
     return md.rstrip() + "\n\n" + "\n".join(lines).rstrip() + "\n"
 
 
-def _check_download_integrity(
-    contexts: list[dict[str, Any]], quality_md: str
-) -> list[ValIssue]:
+def _check_download_integrity(contexts: list[dict[str, Any]], quality_md: str) -> list[ValIssue]:
     """完整性校验锚点：manifest 中 downloaded=false 的文件项必须有可落盘获取途径。
 
     逐项检查：
@@ -482,22 +480,22 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
                 rel_path,
             )
         entry = ManifestFile(
-                req_id=req_id,
-                path=rel_path,
-                format=item.canonical_format,
-                source_url=item.provenance.source_url,
-                retrieved_at=item.provenance.retrieved_at,
-                transformations=[*item.provenance.transformations, f"written_to:{rel_path}"],
-                confidence=item.confidence_score,
-                completeness=item.completeness_pct,
-                data_source_quality=item.data_source_quality or "unknown",
-                is_fallback=item.is_fallback,
-                downloaded=downloaded,
-                file_url=file_url,
-                file_size=file_size,
-                local_path=local_path,
-                checksum_sha256=sha256,
-            )
+            req_id=req_id,
+            path=rel_path,
+            format=item.canonical_format,
+            source_url=item.provenance.source_url,
+            retrieved_at=item.provenance.retrieved_at,
+            transformations=[*item.provenance.transformations, f"written_to:{rel_path}"],
+            confidence=item.confidence_score,
+            completeness=item.completeness_pct,
+            data_source_quality=item.data_source_quality or "unknown",
+            is_fallback=item.is_fallback,
+            downloaded=downloaded,
+            file_url=file_url,
+            file_size=file_size,
+            local_path=local_path,
+            checksum_sha256=sha256,
+        )
         manifest_files.append(entry)
         if not downloaded:
             undownloaded_files.append(entry)
@@ -588,13 +586,10 @@ def node_assemble(state: SystemState) -> dict[str, Any]:
     # 随产物落盘、且解释含数据获取指引；任一缺失产出完整性 ERROR，完整则 PASS。
     integrity_issues = _check_download_integrity(undownloaded_contexts, quality_md)
     if integrity_issues:
-        integrity_log = (
-            f"[{now.isoformat()}] assemble_completeness_check: FAIL —— "
-            + "; ".join(f"{i.req_id}: {i.message}" for i in integrity_issues)
+        integrity_log = f"[{now.isoformat()}] assemble_completeness_check: FAIL —— " + "; ".join(
+            f"{i.req_id}: {i.message}" for i in integrity_issues
         )
-        integrity_errors = [
-            f"完整性校验 ERROR ({i.req_id}): {i.message}" for i in integrity_issues
-        ]
+        integrity_errors = [f"完整性校验 ERROR ({i.req_id}): {i.message}" for i in integrity_issues]
         for i in integrity_issues:
             logger.warning("assemble.completeness_check", req_id=i.req_id, reason=i.message)
     else:

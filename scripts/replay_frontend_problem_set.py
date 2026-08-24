@@ -1,6 +1,7 @@
 """问题集（口径 2，48 题）真实前端 API 批量重放与成功率记录。
 
-前置：已启动 `uv run python src/rdi/server.py`（http://127.0.0.1:8000）。
+前置：已启动 `uv run python -m rdi.server`（http://127.0.0.1:8000；需 `PYTHONPATH=src`，勿用
+`python src/rdi/server.py`——脚本目录会遮蔽标准库 logging）。
 逐题走真实前端链路：POST /api/run → 轮询 /api/status → 若中断 POST /api/resume
 (satisfied) → 取 /api/result / resume 返回值，从 14 元组提取 manifest 判定。
 

@@ -329,9 +329,7 @@ class TestHuggingFacePolicyModelChain:
 
         with (
             patch.object(adapter, "_request", new_callable=AsyncMock, return_value=mock_tree),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=500
-            ),
+            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=500),
             patch.object(adapter, "_download_bytes", side_effect=_fake_download) as mock_dl,
         ):
             raw1 = await adapter.fetch("lerobot/act_aloha", req_type=DataReqType.POLICY_MODEL)
@@ -341,9 +339,7 @@ class TestHuggingFacePolicyModelChain:
         payload1 = json.loads(raw1.data)
         assert payload1["downloaded"] is True
         assert payload1["file_path"] == "policy.pt"
-        weight_calls = [
-            c for c in mock_dl.await_args_list if "resolve/main/policy.pt" in c.args[0]
-        ]
+        weight_calls = [c for c in mock_dl.await_args_list if "resolve/main/policy.pt" in c.args[0]]
         assert len(weight_calls) == 1
 
     @pytest.mark.asyncio
@@ -366,9 +362,7 @@ class TestHuggingFacePolicyModelChain:
 
         with (
             patch.object(adapter, "_request", side_effect=_fake_request),
-            patch.object(
-                adapter, "_head_content_length", new_callable=AsyncMock, return_value=500
-            ),
+            patch.object(adapter, "_head_content_length", new_callable=AsyncMock, return_value=500),
             patch.object(adapter, "_download_bytes", side_effect=_fake_download),
         ):
             raw = await adapter.fetch("foo/bar", req_type=DataReqType.POLICY_MODEL)

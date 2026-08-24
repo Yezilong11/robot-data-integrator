@@ -72,9 +72,7 @@ def _matched_signals(name: str, signals: tuple[str, ...]) -> list[str]:
     return [s for s in signals if s in name]
 
 
-def select_target_file(
-    tree: list[dict[str, Any]], req_type: DataReqType
-) -> list[dict[str, Any]]:
+def select_target_file(tree: list[dict[str, Any]], req_type: DataReqType) -> list[dict[str, Any]]:
     """在源文件树中按需求类型定位目标数据文件。
 
     Args:
@@ -93,9 +91,7 @@ def select_target_file(
     if rule.exts is not None:
         files = [e for e in files if Path(_entry_name(e)).suffix in rule.exts]
     if rule.skip_keywords:
-        files = [
-            e for e in files if not any(k in _entry_name(e) for k in rule.skip_keywords)
-        ]
+        files = [e for e in files if not any(k in _entry_name(e) for k in rule.skip_keywords)]
     if not files:
         return []
     return sorted(

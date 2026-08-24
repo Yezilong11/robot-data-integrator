@@ -60,7 +60,12 @@ def make_record_and_files(case_dir: Path, verdict: str) -> dict[str, Any]:
     """
     screenshots = case_dir / "screenshots"
     screenshots.mkdir(parents=True, exist_ok=True)
-    descs = ["parse-goal", "retrieve", "package", "validation-error" if verdict == "FAIL" else "validation"]
+    descs = [
+        "parse-goal",
+        "retrieve",
+        "package",
+        "validation-error" if verdict == "FAIL" else "validation",
+    ]
     shots = []
     for index, desc in enumerate(descs, start=1):
         (screenshots / f"{index:02d}.png").write_bytes(b"fake")

@@ -1,14 +1,14 @@
 # Day6 C 角色详细执行计划（数据工程师）
 
 > 角色：C｜日期：2026-08-19
-> 依据：`Day6_汇总统计.md` §C 任务 1–4 + 与 A/F 对接点 + 当日出口标准
+> 依据：`docs/process/Day6_汇总统计.md` §C 任务 1–4 + 与 A/F 对接点 + 当日出口标准
 > 红线：不超出 Day6 文档 C 职责；`records/` 已冻结（Day5 起改动需 A 批准），C 全程只读 records，仅新增 `deliverables/day6/C/` 产物
 > 最终统计口径以 `records/_management/quality_report.json`（快照 2026-08-18 21:36，A 复核后）为准
 
 ## 0. 执行前确认（前置事实）
 
 1. **冻结记录基线**：63 case，PASS 14 / PWF 48 / FAIL 1（仅 `records/ms_008/record.json`，`P2_RETRIEVE`）。
-2. **口径冲突待提示 F/A**：`deliverables/day6/F/day6_statistics.md`（14:52 快照）把 ms_008 记为 P7_ENV；但 20:00 前端真实流程重跑后 `records/_management/progress.csv` / quality_report（21:36）已更新为 **P2_RETRIEVE**（record.json 与 `问题集执行_已知风险.md` R4 一致）。C 归因以 record.json 为准，并在复盘会提示 F 刷新统计叙述。
+2. **口径冲突待提示 F/A**：`deliverables/day6/F/day6_statistics.md`（14:52 快照）把 ms_008 记为 P7_ENV；但 20:00 前端真实流程重跑后 `records/_management/progress.csv` / quality_report（21:36）已更新为 **P2_RETRIEVE**（record.json 与 `docs/process/问题集执行_已知风险.md` R4 一致）。C 归因以 record.json 为准，并在复盘会提示 F 刷新统计叙述。
 3. **C 数据源类 11 源**（Day3 口径，mujoco/isaac 计入 C）：arxiv / github / huggingface / zenodo / paperswithcode / graspnet / dexgrasp / ieee / ycb / mujoco / isaac；franka/robotiq/allegro/google_scanned 属 D 格式/仿真类，不在 C 表范围。
 4. **底稿**：`deliverables/day5/C/data_source_availability.md` 已是 Day3 口径近定稿，本次做"冻结记录核对 + 定稿"。
 
@@ -36,7 +36,7 @@
 
 | # | case_id | 分类码 | 现状 | 根因指向 | 证据 |
 |---|---|---|---|---|---|
-| 1 | ms_008 | P2_RETRIEVE | **不属数据源类，C 不归因** | 根因在 `src/rdi/graph/nodes/parse_goal.py` fallback_sources 选源随机性（**目标解析域**，R4），非数据源问题；归因清单中仅作 §1 边界说明 | ms_008/record.json + `问题集执行_已知风险.md` R4 |
+| 1 | ms_008 | P2_RETRIEVE | **不属数据源类，C 不归因** | 根因在 `src/rdi/graph/nodes/parse_goal.py` fallback_sources 选源随机性（**目标解析域**，R4），非数据源问题；归因清单中仅作 §1 边界说明 | ms_008/record.json + `docs/process/问题集执行_已知风险.md` R4 |
 | 2 | ms_005 | P2→PWF | 已解决 | franka 源检索超时（per_req 预算）+ 通用 GitHub 返回 markdown 类型错配被 C4 拦截 → `src/rdi/adapters/github.py` 缺格式预检（已修） | ms_005/record.json notes |
 | 3 | ms_003 | P2→PWF | 已解决 | Kinova 无适配器 → 新增 `src/rdi/adapters/kinova.py`（已修） | ms_003/record.json notes |
 | 4 | ss_huggingface_001 | P2→PWF | **残余待核** | github 首源超时→源级子预算生效；**命中源偏移**（题设 huggingface 实际命中 zenodo）+ **相关性存疑**（zenodo 返回 deepfakes 数据集）→ retriever 源优先级/注入 + zenodo 检索相关性 | ss_huggingface_001/record.json notes |

@@ -1,8 +1,6 @@
 # tests/unit/adapters/test_selectors.py
 """文件树目标文件选择器（rdi.adapters.selectors）的单元测试。"""
 
-import pytest
-
 from rdi.adapters.selectors import build_download_guide, select_target_file
 from rdi.models.common import DataReqType
 
@@ -166,13 +164,11 @@ class TestBuildDownloadGuide:
         assert guide["status"] == "not_downloaded"
         assert guide["reason"] == "weights unavailable"
         assert (
-            guide["source_file_url"]
-            == "https://example.com/checkpoints/policy_model.safetensors"
+            guide["source_file_url"] == "https://example.com/checkpoints/policy_model.safetensors"
         )
         assert guide["file_size_bytes"] == 123456
         assert (
-            guide["method_hint"]
-            == "wget https://example.com/checkpoints/policy_model.safetensors "
+            guide["method_hint"] == "wget https://example.com/checkpoints/policy_model.safetensors "
             "-O checkpoints/policy_model.safetensors"
         )
         assert guide["selected_by"] == "ext=.safetensors; signals=policy,model"

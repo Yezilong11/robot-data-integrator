@@ -2,7 +2,7 @@
 
 > 分支：`feat/arch-langgraph`
 > 执行日期：2026-08-14（Day2-C 计划重跑，ad2581f 优化后第五轮）
-> 依据：`Day2-C单源执行启动计划.md` + `problem_set_c_draft.json` + `判定口径纪要_C数据源类.md`
+> 依据：`Day2-C单源执行启动计划.md` + `problem_set_c_draft.json` + `docs/process/判定口径纪要_C数据源类.md`
 
 ## 目录结构
 

@@ -639,7 +639,9 @@ class BaseAdapter(ABC):
         owner, repo, ref, path = parts
         return f"{self._github_mirror_base}/{owner}/{repo}@{ref}/{path}"
 
-    async def _download_xml_with_assets(self, xml_url: str, xml_bytes: bytes) -> tuple[dict[str, bytes], list[str]]:
+    async def _download_xml_with_assets(
+        self, xml_url: str, xml_bytes: bytes
+    ) -> tuple[dict[str, bytes], list[str]]:
         """解析 XML 中引用的外部资源（mesh/texture/include）并一并下载。
 
         数据包自包含（P0-3）：主 XML 下载后，把其引用的相对路径资产（URDF 的
