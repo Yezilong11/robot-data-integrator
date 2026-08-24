@@ -42,8 +42,27 @@ def test_picks_candidate_matching_semantic_term() -> None:
     assert diag is None
 
 
-def test_zero_overlap_keeps_first_with_diagnostic() -> None:
-    """全部候选零重叠 → 仍选索引 0，且诊断含「语义零重叠」。"""
+def test_picks_beyond_top5_when_front_zero_overlap() -> None:
+    """fix4：前 5 个候选零重叠、第 6 个命中需求词 → 不再维持首个，选命中候选。
+
+    此前仅扫描 search_results[:5]，真实排名靠后的 IMU/关节记录（如
+    ss_sensor_zenodo_001 的 "Lower-body Inertial Sensor..."）被丢弃，
+    转而 fetch 首个无关候选（Boxing punch data）被装配期语义校验拦截成 FAIL。
+    """
+    results = [
+        _result(f"noise-{i}", f"Unrelated {i}", desc="foo bar baz") for i in range(5)
+    ]
+    results.append(_result("imu-1", "Lower-body Inertial Sensor Record", desc="imu inertial data"))
+    req = _req(description="惯性测量单元数据", keywords=["inertial measurement unit"])
+
+    picked, diag = _pick_semantic_candidate(results, "sensor_data", req)
+
+    assert picked is results[5]
+    assert diag is None
+
+
+def test_zero_overlap_skips_with_diagnostic() -> None:
+    """全部候选零重叠 → 返回 None（调用方跳过本源），诊断含「语义零重叠」。"""
     results = [
         _result("a-1", "Alpha", desc="foo bar"),
         _result("b-1", "Beta", desc="baz qux"),
@@ -52,7 +71,7 @@ def test_zero_overlap_keeps_first_with_diagnostic() -> None:
 
     picked, diag = _pick_semantic_candidate(results, "grasp", req)
 
-    assert picked is results[0]
+    assert picked is None
     assert diag is not None
     assert "语义零重叠" in diag
     assert results[0].title in diag

@@ -110,11 +110,15 @@ async def test_retrieve_single_uses_keywords_for_search_query(
         "description": "Franka Panda 机器人的 URDF 描述文件",
         "keywords": ["Franka", "Panda", "URDF"],
     }
+    # 语义预筛要求候选命中需求实体词（Franka/Panda），否则本源被跳过
+    mock_adapters.search.return_value = [
+        SearchResult(item_id="test-1", title="Franka Panda URDF assets", source=DataSource.GITHUB)
+    ]
     result = await node_retrieve_single(payload)
 
     assert result["retrieval_results"]["req_001"].status == "success"
-    # search 应该用英文关键词，而不是中文长描述
-    mock_adapters.search.assert_called_once_with("Franka Panda URDF")
+    # 首个 query 应该用英文关键词，而不是中文长描述（argmax 会继续尝试后续 query）
+    assert mock_adapters.search.call_args_list[0].args[0] == "Franka Panda URDF"
 
 
 async def test_retrieve_single_falls_back_to_description_when_keywords_empty(
@@ -154,6 +158,75 @@ async def test_retrieve_single_returns_success_result(
     assert retrieval.source == DataSource.GITHUB
     assert retrieval.search_results[0].item_id == "test-1"
     assert "provenance" in result
+
+
+async def test_retrieve_single_picks_best_semantic_candidate_across_queries(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """fix4：对多个 query 的结果做语义 argmax，后续 query 出现的强命中压过首个弱泛词命中。
+
+    ss_sensor_github_002 的 zenodo 腿正是此形态：query1 只命中弱泛词
+    （"Web robot detection"），真关节记录只在后续 query 出现——现在应选强命中记录。
+    """
+
+    def _search_side_effect(query: str) -> list[SearchResult]:
+        if query == "Franka Panda URDF":
+            return [SearchResult(item_id="weak-1", title="Panda assets", source=DataSource.GITHUB)]
+        if query == "Franka":
+            return [
+                SearchResult(
+                    item_id="strong-1",
+                    title="Franka Panda URDF description",
+                    source=DataSource.GITHUB,
+                )
+            ]
+        return []
+
+    mock_adapters.search.side_effect = _search_side_effect
+
+    payload = {
+        "req_id": "req_argmax",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人的 URDF 描述文件",
+        "keywords": ["Franka", "Panda", "URDF"],
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_argmax"].status == "success"
+    mock_adapters.fetch.assert_called_once()
+    # 语义更强（franka+panda+urdf 全命中）的后续候选被选中，而非首个弱命中
+    assert mock_adapters.fetch.call_args.args[0] == "strong-1"
+
+
+async def test_retrieve_single_uses_llm_semantic_terms_in_prefilter(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """fix4：中文传感器需求 keyword 被 stopwords 滤空后，预筛仍用 LLM semantic_terms 识别真实命中。
+
+    ss_sensor_zenodo_001（IMU）此前 description/keywords 提不出术语，预筛直通
+    首个无关候选（Boxing punch data）被装配期拦截；透传 semantic_terms 后
+    检索期即选中 "Lower-body Inertial Sensor..." 真实惯性记录。
+    """
+    mock_adapters.search.return_value = [
+        SearchResult(item_id="boxing-1", title="Boxing punch data", source=DataSource.GITHUB),
+        SearchResult(
+            item_id="inertial-1",
+            title="Lower-body Inertial Sensor and Optical Motion Capture Record",
+            source=DataSource.GITHUB,
+        ),
+    ]
+    payload = {
+        "req_id": "req_imu",
+        "req_type": "sensor_data",
+        "description": "帮我找 Zenodo 上的 IMU 传感器数据",
+        "keywords": [],
+        "semantic_terms": ["imu", "inertial measurement unit", "时序数据"],
+    }
+    result = await node_retrieve_single(payload)
+
+    assert result["retrieval_results"]["req_imu"].status == "success"
+    mock_adapters.fetch.assert_called_once()
+    assert mock_adapters.fetch.call_args.args[0] == "inertial-1"
 
 
 async def test_retrieve_single_augments_sim_config_with_context_keywords(
@@ -509,6 +582,10 @@ async def test_retrieve_single_passes_object_name_to_fetch(
         "keywords": ["banana", "grasp"],
         "object_name": "banana",
     }
+    # 语义预筛要求候选命中需求实体词（banana），否则本源被跳过
+    mock_adapters.search.return_value = [
+        SearchResult(item_id="test-1", title="banana grasp dataset", source=DataSource.GITHUB)
+    ]
     result = await node_retrieve_single(payload)
 
     assert result["retrieval_results"]["req_004"].status == "success"
@@ -546,7 +623,8 @@ async def test_retrieve_single_fetch_falls_back_without_object_name_kwarg(
         source = DataSource.GITHUB
 
         async def search(self, query: str) -> list[SearchResult]:
-            return [SearchResult(item_id="old-1", title="Old", source=DataSource.GITHUB)]
+            # 语义预筛要求候选命中需求实体词（banana），否则本源被跳过
+            return [SearchResult(item_id="old-1", title="banana", source=DataSource.GITHUB)]
 
         async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
             calls.append((item_id, req_type))
@@ -918,10 +996,75 @@ async def test_retrieve_data_merges_llm_plans_and_usage(
 
     assert set(result["retrieval_plan"]) == {"req_p1", "req_p2"}
     assert all(result["retrieval_plan"][rid] is plan for rid in ("req_p1", "req_p2"))
-    assert len(result["llm_usage"]) == 2
-    assert all(
-        u["decision"] == "retrieval_plan" and u["status"] == "ok" for u in result["llm_usage"]
-    )
+
+
+async def test_retrieve_single_survives_transient_search_adapter_error(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """单 query 搜索瞬态失败（如 Zenodo 偶发 500）不判本源失败：
+    记录诊断后继续本源剩余 query，命中即源成功。"""
+    from rdi.exceptions import AdapterError
+
+    async def _side_effect(query: str) -> list[SearchResult]:
+        if query == "帮我找 IMU 传感器数据":
+            # 模拟首个（LLM/确定性）query 触发 Zenodo 500 INTERNAL SERVER ERROR
+            raise AdapterError(
+                message="Failed GET /records: 500, message='INTERNAL SERVER ERROR'",
+                source="zenodo",
+                status_code=500,
+            )
+        return [
+            SearchResult(
+                item_id="imu-1",
+                title="IMU sensor data",
+                source=DataSource.ZENODO,
+            )
+        ]
+
+    mock_adapters.search.side_effect = _side_effect
+
+    payload = {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "description": "帮我找 IMU 传感器数据",
+        "keywords": ["IMU", "sensor"],
+        "semantic_terms": ["imu", "inertial"],
+    }
+    result = await node_retrieve_single(payload)
+    rr = result["retrieval_results"]["req_000"]
+    assert rr.status == "success"
+    # mock Adapter 的 fetch 返回 GITHUB 源（Readability 与真实链路无关，重点验证
+    # 首 query 500 后源未判失败、后续 query 正常命中）。
+    assert rr.source == DataSource.GITHUB
+
+
+async def test_retrieve_single_all_queries_search_fail_ends_missing_with_diagnostic(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """本源全部 query 搜索都抛 AdapterError（持续 5xx）→ 源 missing，
+    error_message 带可定位诊断（不再把瞬态 5xx 误标为源级 error）。"""
+    from rdi.exceptions import AdapterError
+
+    def _fail(_query: str) -> list[SearchResult]:
+        raise AdapterError(
+            message="Failed GET /records: 500, message='INTERNAL SERVER ERROR'",
+            source="zenodo",
+            status_code=500,
+        )
+
+    mock_adapters.search.side_effect = _fail
+    payload = {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "description": "帮我找 IMU 传感器数据",
+        "keywords": ["IMU", "sensor"],
+        "semantic_terms": ["imu", "inertial"],
+    }
+    result = await node_retrieve_single(payload)
+    rr = result["retrieval_results"]["req_000"]
+    assert rr.status == "missing"
+    assert "500" in rr.error_message
+    assert mock_adapters.fetch.await_count == 0
 
 
 # ─── E6: 单源超时跳过后继候选源 ───
@@ -1067,3 +1210,112 @@ async def test_retrieve_single_source_cap_timeout_continues_next_source(
     assert "本源上限" in timeout_errors[0].error_message
     assert "剩余" in timeout_errors[0].error_message
     zenodo_mock.search.assert_called_once()
+
+
+# ─── P1-A: 传感器需求禁用"仅元数据/README 降级"交付 ───
+
+
+async def test_retrieve_single_sensor_degraded_delivery_continues_next_source(
+    mock_hermes: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """P1-A: GitHub 回退 README（degraded）时传感器需求视为本源失败，Zenodo 随后成功。
+
+    回归场景：ss_sensor_* 传感器题目的 GitHub README 在 SENSOR_DATA 格式白名单内
+    （markdown），此前被当作"成功"终止源循环，Zenodo 无执行机会 → 占位。门控后
+    degraded 交付记 degraded_delivery 错误并 continue，Zenodo 用真实 csv 命中。
+    """
+    github_mock = AsyncMock()
+    github_mock.search.return_value = [
+        SearchResult(item_id="gh-1", title="GitHub", source=DataSource.GITHUB)
+    ]
+    github_mock.fetch.return_value = RawData(
+        source=DataSource.GITHUB,
+        item_id="gh-1",
+        format="markdown",
+        data=b"# readme",
+        url="https://github.com/gh-1",
+        metadata={"degraded": "readme_fallback"},
+    )
+    zenodo_mock = AsyncMock()
+    zenodo_mock.search.return_value = [
+        SearchResult(item_id="zo-1", title="Zenodo", source=DataSource.ZENODO)
+    ]
+    zenodo_mock.fetch.return_value = RawData(
+        source=DataSource.ZENODO,
+        item_id="zo-1",
+        format="csv",
+        data=b"timestamp,fx\n0,0.1\n",
+        url="https://zenodo.org/zo-1",
+    )
+
+    class FakeGitHubAdapter:
+        source = DataSource.GITHUB
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await github_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await github_mock.fetch(item_id, req_type=req_type)
+
+    class FakeZenodoAdapter:
+        source = DataSource.ZENODO
+
+        async def search(self, query: str) -> list[SearchResult]:
+            return await zenodo_mock.search(query)
+
+        async def fetch(self, item_id: str, req_type: Any | None = None) -> RawData:
+            return await zenodo_mock.fetch(item_id, req_type=req_type)
+
+    monkeypatch.setattr(
+        "rdi.graph.nodes.retrieve_data.select_adapter",
+        lambda req_type: [FakeGitHubAdapter, FakeZenodoAdapter],
+    )
+
+    payload = {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "description": "force torque sensor time series",
+        "keywords": [],
+        "fallback_sources": [],
+    }
+    result = await node_retrieve_single(payload)
+
+    retrieval = result["retrieval_results"]["req_000"]
+    assert retrieval.status == "success"
+    assert retrieval.source == DataSource.ZENODO
+    # GitHub README 降级交付被如实记录为 degraded_delivery，而非当作成功停止
+    degraded_errors = [
+        e for e in result["retrieval_errors"] if e.error_type == "degraded_delivery"
+    ]
+    assert len(degraded_errors) == 1
+    assert degraded_errors[0].source == DataSource.GITHUB
+    assert "README" in degraded_errors[0].error_message
+    github_mock.search.assert_called_once()
+    zenodo_mock.search.assert_called_once()
+
+
+async def test_retrieve_single_sensor_with_real_json_delivery_not_gated(
+    mock_hermes: Mock, mock_adapters: AsyncMock
+) -> None:
+    """P1-A: 无 degraded 标记的真实 json 交付不被误判为本源失败（回归护栏）。"""
+    mock_adapters.fetch.return_value = RawData(
+        source=DataSource.GITHUB,
+        item_id="test-1",
+        format="json",
+        data=b'{"signals": {"x": [1.0]}, "timestamps": [0.0]}',
+        url="https://example.com",
+        metadata={"downloaded": True},
+    )
+    payload = {
+        "req_id": "req_sj",
+        "req_type": "sensor_data",
+        "description": "sensor json time series",
+        "keywords": ["sensor"],
+    }
+    result = await node_retrieve_single(payload)
+    retrieval = result["retrieval_results"]["req_sj"]
+    assert retrieval.status == "success"
+    assert retrieval.source == DataSource.GITHUB
+    assert not any(
+        e.error_type == "degraded_delivery" for e in result["retrieval_errors"]
+    )

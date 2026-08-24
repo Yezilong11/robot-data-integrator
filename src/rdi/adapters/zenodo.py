@@ -20,33 +20,61 @@ class ZenodoAdapter(BaseAdapter):
 
     source = DataSource.ZENODO
 
+    # P1-A: search 接受可选 req_type（按需求类型追加 filetype 过滤）。调用方以
+    # `is True` 探测该能力（Mock 自动属性恒非 True，测试 fixture 不误触发）。
+    accepts_req_type_search = True
+
     def __init__(self) -> None:
         super().__init__(
             base_url=settings.zenodo_api_url,
             rate_limit=10,
         )
 
-    async def search(self, query: str) -> list[SearchResult]:
+    async def search(
+        self, query: str, req_type: str | DataReqType | None = None
+    ) -> list[SearchResult]:
         """搜索 Zenodo 记录。
+
+        2026-08-24 P1-A：Zenodo 仅服务 DATASET/SENSOR_DATA（registry 注册表），
+        bestmatch 首命中常为 PDF 论文记录（无 csv/json 候选 → 占位）。按需求
+        类型在 query 追加 filetype 过滤把真实数据文件记录浮出：sensor → csv 单
+        格式（zip 命中会因 select_target_file 无候选再次占位，故只用 csv）；
+        dataset → csv OR zip（Zenodo 结构化数据以 csv 为主，json 几乎无命中）。
 
         Args:
             query: 搜索词（如 "robot grasp dataset"）
+            req_type: 需求类型（DataReqType 或小写字符串），None 不加过滤
 
         Returns:
             SearchResult 列表，metadata 含 doi、size、created
         """
+        req = self._coerce_req_type(req_type)
+        q = query
+        if req is DataReqType.SENSOR_DATA:
+            q = f'{query} AND filetype:"csv"'
+        elif req is DataReqType.DATASET:
+            q = f'{query} AND (filetype:"csv" OR filetype:"zip")'
         data = await self._request(
             "GET",
             "/records",
-            params={"q": query, "sort": "mostrecent"},
+            params={"q": q, "sort": "bestmatch"},
         )
         results: list[SearchResult] = []
         for item in data.get("hits", {}).get("hits", []):
             item_id = str(item.get("id", ""))
+            md = item.get("metadata") or {}
+            title = str(md.get("title") or item.get("title") or "")
+            keywords = " ".join(str(k) for k in (md.get("keywords") or []))
+            summary = str(md.get("description") or "")[:200]
+            # fix4: description = 标题 + 关键词 + 描述摘要，供检索期语义预筛
+            # （retrieve_data._pick_semantic_candidate 读 metadata.description）
+            # 在 title 不含需求词但关键词/描述含词时（如 IMU 记录标题缺 'IMU'）
+            # 仍能按语义打分选对候选。
+            search_desc = " ".join(x for x in (title, keywords, summary) if x)
             results.append(
                 SearchResult(
                     item_id=item_id,
-                    title=item.get("title", ""),
+                    title=title,
                     source=DataSource.ZENODO,
                     url=item.get("links", {}).get("self_html", ""),
                     metadata={
@@ -55,6 +83,7 @@ class ZenodoAdapter(BaseAdapter):
                         if item.get("files")
                         else 0,
                         "created": item.get("created", ""),
+                        "description": search_desc,
                     },
                 )
             )
@@ -102,8 +131,20 @@ class ZenodoAdapter(BaseAdapter):
             data=data_bytes,
             url=ref_url,
             size_bytes=len(data_bytes),
-            metadata={"downloaded": True},
+            # fix4: title 供装配期语义校验匹配来源标题（registry 透传 source_title）
+            # fix4b: description 供装配期语义校验匹配来源描述（registry 透传 source_description）
+            metadata={
+                "downloaded": True,
+                "title": self._record_title(record),
+                "description": self._record_description(record),
+            },
         )
+
+    @staticmethod
+    def _record_description(record: dict[str, Any]) -> str:
+        """提取 record 描述摘要（metadata.description，最长 200 字符）。"""
+        md = record.get("metadata") or {}
+        return str(md.get("description") or "")[:200]
 
     def _select_file_candidate(
         self, record: dict[str, Any], req: DataReqType | None
@@ -141,13 +182,25 @@ class ZenodoAdapter(BaseAdapter):
             return None
 
     @staticmethod
+    def _record_title(record: dict[str, Any]) -> str:
+        """提取 record 标题（metadata.title 优先，回退顶层 title）。"""
+        md = record.get("metadata") or {}
+        return str(md.get("title") or record.get("title") or "")
+
+    @staticmethod
     def _file_url(item_id: str, candidate: dict[str, Any], path: str) -> str:
         """候选下载 URL：优先 files 的 link，缺失时兜底官方下载 URL。"""
         url = str(candidate.get("url") or "")
         return url or f"https://zenodo.org/records/{item_id}/files/{path}?download=1"
 
     def _metadata_raw(self, item_id: str, record: dict[str, Any]) -> RawData:
-        """无 files/无候选：维持原行为，返回 record metadata JSON。"""
+        """无 files/无候选：返回 record metadata JSON，并标记 degraded。
+
+        ``metadata.degraded`` 供 retrieve_data 识别"仅元数据/README 降级"交付
+        （P1-A）：传感器/数据集需求下此类交付必然被 SensorDataSkill/DatasetSkill
+        消费成 <200B 占位，视为本源失败、继续下一候选源更有价值。带真实文件
+        引用的 ``_file_reference``（downloaded=False + reference）不在此列。
+        """
         content = json.dumps(record, ensure_ascii=False).encode("utf-8")
         return RawData(
             source=DataSource.ZENODO,
@@ -156,6 +209,11 @@ class ZenodoAdapter(BaseAdapter):
             data=content,
             url=f"https://zenodo.org/records/{item_id}",
             size_bytes=len(content),
+            metadata={
+                "degraded": "no_file_candidate",
+                "title": self._record_title(record),
+                "description": self._record_description(record),
+            },
         )
 
     def _file_reference(
@@ -191,7 +249,11 @@ class ZenodoAdapter(BaseAdapter):
             data=content,
             url=f"https://zenodo.org/records/{item_id}",
             size_bytes=len(content),
-            metadata={"downloaded": False},
+            metadata={
+                "downloaded": False,
+                "title": self._record_title(record),
+                "description": self._record_description(record),
+            },
             reference=RawReference(
                 url=ref_url,
                 download_hint=guide["method_hint"],

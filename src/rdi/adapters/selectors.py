@@ -23,6 +23,10 @@ _POLICY_SIGNALS = ("policy", "checkpoint", "actuator", "model")
 
 _SENSOR_EXTS = frozenset({".csv", ".json"})
 _SENSOR_SIGNALS = ("sensor", "torque", "force", "joint", "time")
+# 2026-08-23 真实重放：zenodo/github 传感器记录的 files[] 常含 metadata.json
+# （68B 元数据占位），SENSOR 规则无 skip 时按 size 优先可能压过真实 csv/json，
+# 导致"降级来源且数据过小，疑似占位"（ss_sensor_zenodo_001/002 系列根因）。
+_SENSOR_SKIP = ("metadata", "readme", "license")
 
 _GRASP_EXTS = frozenset({".npz"})
 _GRASP_SIGNALS = ("grasp_label",)
@@ -42,7 +46,9 @@ class _Rule:
 
 _RULES: dict[DataReqType, _Rule] = {
     DataReqType.POLICY_MODEL: _Rule(exts=_POLICY_EXTS, signals=_POLICY_SIGNALS),
-    DataReqType.SENSOR_DATA: _Rule(exts=_SENSOR_EXTS, signals=_SENSOR_SIGNALS),
+    DataReqType.SENSOR_DATA: _Rule(
+        exts=_SENSOR_EXTS, signals=_SENSOR_SIGNALS, skip_keywords=_SENSOR_SKIP
+    ),
     DataReqType.GRASP: _Rule(exts=_GRASP_EXTS, signals=_GRASP_SIGNALS),
 }
 _FALLBACK_RULE = _Rule(skip_keywords=_METADATA_KEYWORDS)

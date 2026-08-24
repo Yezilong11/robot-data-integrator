@@ -87,5 +87,6 @@
   "failure_reason": "检索失败：req_000:missing",
   "notes": "2026-08-20 C 角色二轮题真实流程执行：input=获取 Google Scanned Objects 中一个杯子的 mesh 模型用于仿真，verdict=FAIL，retrieve=['req_000:missing']，run_id=rerun-20260821-104105-11a71030；截图已按新口径重采集并登记 screenshots[]（4 张）；该包无主数据文件（FAIL），未生成 03_req_file.png；package 已同步前端运行包 package-20260821-191800",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects cup mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects 杯子 3D 网格模型'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'Google Scanned Objects cup 3D mesh'（有源但未收…"
 }

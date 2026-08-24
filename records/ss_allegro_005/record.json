@@ -121,5 +121,6 @@
   "failure_reason": "核心需求 robot_urdf 检索到真实 Allegro 手 URDF（降级源，quality unknown），但 URDF 引用的 16 个 mesh 文件未随包下载，数据包开箱不可加载；另解析出题设外需求 grasp（0 字节占位）与 sim_config（内容错配为 Cassie 双足机器人）",
   "notes": "二轮新题执行（2026-08-22，run_id=20260822-075010-b9255885，包 package-20260822-075152，前端真实流程 qwen3.7-plus）。核心 URDF 本体真实可用但缺 mesh 依赖（P2_RETRIEVE）；grasp 题设外占位（0B）；sim_config 题设外且错配 Cassie。LLM 自评（quality_explanation.md）仅指出 req_001 问题，未发现 URDF mesh 缺失与 sim_config 错配，自评不完整。建议组长 B：URDF 类数据需随包抓取其引用的 mesh 资产并纳入 manifest 校验。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "未下载到实际文件，输出路径为空（file_size=0）"
 }

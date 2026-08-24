@@ -102,5 +102,6 @@
   "failure_reason": "核心需求 grasp 未检索到 GraspNet-1Billion camera_0 真实抓取数据（expected.format=[npz,json]），降级产出 116B 元数据占位 json（无抓取姿态）；另多解析出 dataset 需求产出 106B 空摘要占位",
   "notes": "二轮新题执行（2026-08-22，run_id=20260822-085548-ea5bf835，包 package-20260822-085700，前端真实流程 qwen3.7-plus）。题设（ss_graspnet_003）为 GraspNet-1Billion camera_0 抓取数据（single_source/grasp，source=[graspnet]，expected.req_types=[grasp]、format=[npz,json]）。parse_goal 多解析出 dataset（题设外，vs_expected=partial）；grasp 检索失败降级 116B 元数据占位（is_fallback=true），dataset 空摘要占位 → P2_RETRIEVE。validate 5 warning。历史经验含 graspnet success（1.3-56s）但本次未产出真实数据。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "空摘要占位（title/description 全空，download_url=null，file_tree=[]），106B 无实际内容；未找到真实 npz，返回元数据占位 JSON"
 }

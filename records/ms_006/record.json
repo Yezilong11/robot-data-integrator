@@ -131,5 +131,6 @@
   "failure_reason": "香蕉 mesh 与抓取姿态数据均检索失败：ycb/graspnet 未收录 banana mesh、grasp 检索超时，包 status=failed、缺失 2 项必要需求",
   "notes": "一轮复测（2026-08-21，run_id=20260821-225457-baf1e164，包 package-20260821-230436，前端真实流程 qwen3.7-plus）。一轮由 E 执行（2026-08-16，PASS_WITH_FALLBACK）；本轮 A 复测：URDF 降级 github、mujoco 真实命中 sim_config，mesh 与 grasp 均缺失，降级为 FAIL。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "香蕉 mesh 检索未命中：ycb/graspnet 未收录 banana mesh；检索超时（超过 per_req_timeout 秒）"
 }

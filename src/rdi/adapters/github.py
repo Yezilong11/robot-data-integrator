@@ -150,6 +150,13 @@ class GitHubAdapter(BaseAdapter):
             data=readme_bytes,
             url=data.get("html_url", ""),
             size_bytes=len(readme_bytes),
+            # P1-A：明确标记"无数据候选回退 README"（CODE/PAPER 等非数据需求
+            # 的 README 交付不受影响），供 retrieve_data 对 SENSOR_DATA 判定
+            # 本源失败、继续下一候选源（如 Zenodo），避免消费成 <200B 占位。
+            metadata={
+                "degraded": "readme_fallback",
+                "title": repo_name,
+            },
         )
 
     async def _fetch_data_file(self, repo_name: str, req_type: str) -> RawData | None:
@@ -196,6 +203,34 @@ class GitHubAdapter(BaseAdapter):
         if data_bytes is None:
             data_bytes = await self._download_bytes(url)
             self.save_to_cache(cache_id, data_bytes)
+        # POLICY_MODEL：与 HF success 分支同构，data 返回 meta JSON（含
+        # download_guide + downloaded=true），不传裸权重字节——权重内容按产品
+        # 原则不在本地解析（policy_interface 对无法 json 解析的字节会降级为空壳）。
+        # 其余数据类需求保持原始字节交付（csv/npz 等需 skill 解析内容）。
+        if req_enum == DataReqType.POLICY_MODEL:
+            guide = build_download_guide(
+                {**candidate, "url": url},
+                "权重已自动下载（≤ max_fetch_bytes），指引供手动复现",
+                req_enum,
+            )
+            payload: dict[str, Any] = {
+                "model_id": repo_name,
+                "repo": repo_name,
+                "file_path": path,
+                "downloaded": True,
+                "file_size": len(data_bytes),
+                "download_guide": guide,
+            }
+            content = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            return RawData(
+                source=DataSource.GITHUB,
+                item_id=repo_name,
+                format="json",
+                data=content,
+                url=url,
+                size_bytes=len(content),
+                metadata={"downloaded": True, "title": repo_name},
+            )
         fmt = path.rsplit(".", 1)[-1].lower() if "." in path else "bin"
         return RawData(
             source=DataSource.GITHUB,
@@ -204,7 +239,7 @@ class GitHubAdapter(BaseAdapter):
             data=data_bytes,
             url=url,
             size_bytes=len(data_bytes),
-            metadata={"downloaded": True},
+            metadata={"downloaded": True, "title": repo_name},
         )
 
     async def _list_contents_tree(
@@ -269,7 +304,7 @@ class GitHubAdapter(BaseAdapter):
             data=content,
             url=f"https://github.com/{repo_name}",
             size_bytes=len(content),
-            metadata={"downloaded": False},
+            metadata={"downloaded": False, "title": repo_name},
             reference=RawReference(
                 url=url,
                 download_hint=guide["method_hint"],

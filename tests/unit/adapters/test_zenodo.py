@@ -76,6 +76,87 @@ class TestZenodoAdapter:
             assert results[0].title == "Robot Grasp Dataset"
 
     @pytest.mark.asyncio
+    async def test_zenodo_search_uses_bestmatch_sort(self) -> None:
+        """2026-08-23 真实重放修复：搜索必须用 bestmatch（relevance）而非 mostrecent。
+
+        mostrecent 对通用传感器查询返回无关记录（YOLO/选集/daily-build），
+        导致 ss_zenodo_002/004/007 语义不符拦截；bestmatch 命中真实关节/力觉
+        传感器记录（Zenodo API 实测验证）。
+        """
+        adapter = ZenodoAdapter()
+        mock_response = {"hits": {"hits": []}}
+        with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_req:
+            mock_req.return_value = mock_response
+            await adapter.search("joint position sensor")
+        _, kwargs = mock_req.call_args
+        assert kwargs["params"]["sort"] == "bestmatch"
+
+    @pytest.mark.asyncio
+    async def test_zenodo_search_appends_filetype_filter_by_req_type(self) -> None:
+        """P1-A：按需求类型追加 filetype 过滤——sensor → csv 单格式；dataset → csv OR zip。
+
+        bestmatch 对传感器查询首命中常为 PDF 论文记录（无 csv/json 候选 →
+        占位）；filetype 过滤把真实数据文件记录浮出（Zenodo API 实测有效）。
+        """
+        adapter = ZenodoAdapter()
+        mock_response = {"hits": {"hits": []}}
+        with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_req:
+            mock_req.return_value = mock_response
+            await adapter.search(
+                "joint position sensor", req_type=DataReqType.SENSOR_DATA
+            )
+        _, kwargs = mock_req.call_args
+        assert kwargs["params"]["q"] == 'joint position sensor AND filetype:"csv"'
+        assert kwargs["params"]["sort"] == "bestmatch"
+
+        with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_req2:
+            mock_req2.return_value = mock_response
+            await adapter.search("grasp dataset", req_type="dataset")
+        _, kwargs2 = mock_req2.call_args
+        assert kwargs2["params"]["q"] == 'grasp dataset AND (filetype:"csv" OR filetype:"zip")'
+
+    @pytest.mark.asyncio
+    async def test_zenodo_search_no_filter_without_req_type(self) -> None:
+        """未传 req_type（如旧调用方）：不加 filetype 过滤，query 原样透传。"""
+        adapter = ZenodoAdapter()
+        mock_response = {"hits": {"hits": []}}
+        with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_req:
+            mock_req.return_value = mock_response
+            await adapter.search("robot grasp dataset")
+        _, kwargs = mock_req.call_args
+        assert kwargs["params"]["q"] == "robot grasp dataset"
+
+    @pytest.mark.asyncio
+    async def test_zenodo_search_metadata_description_contains_title_and_keywords(self) -> None:
+        """fix4：SearchResult.metadata.description 含标题+关键词+描述摘要，供检索期
+        语义预筛在标题缺需求词但关键词含词时仍能打分选对候选（如 IMU 记录）。"""
+        adapter = ZenodoAdapter()
+        mock_response = {
+            "hits": {
+                "hits": [
+                    {
+                        "id": 16894241,
+                        "title": "Inertial data of daily living tasks",
+                        "links": {"self_html": "https://zenodo.org/records/16894241"},
+                        "created": "2024-01-01",
+                        "metadata": {
+                            "title": "Inertial data of daily living tasks",
+                            "keywords": ["vestibulopathy", "inertial sensor", "IMU"],
+                            "description": "Steps and turns of patients",
+                        },
+                    }
+                ]
+            }
+        }
+        with patch.object(adapter, "_request", new_callable=AsyncMock) as mock_req:
+            mock_req.return_value = mock_response
+            results = await adapter.search("imu sensor data", req_type=DataReqType.SENSOR_DATA)
+        desc = results[0].metadata["description"]
+        assert "IMU" in desc
+        assert "inertial sensor" in desc
+        assert results[0].title == "Inertial data of daily living tasks"
+
+    @pytest.mark.asyncio
     async def test_zenodo_fetch_with_mock(self) -> None:
         """Mock 驱动：fetch 返回 RawData 且字段正确。"""
         adapter = ZenodoAdapter()
@@ -136,7 +217,12 @@ class TestZenodoFetchFileChain:
             raw = await adapter.fetch("12345", req_type=DataReqType.GRASP)
         assert raw.format == "npz"
         assert raw.data == fake_bytes
-        assert raw.metadata == {"downloaded": True}
+        # fix4/fix4b: metadata 透出来源标题与描述（供装配期语义校验）
+        assert raw.metadata == {
+            "downloaded": True,
+            "title": "Robot Grasp Dataset",
+            "description": "grasp labels",
+        }
         assert raw.reference is None
         assert raw.url == (
             "https://zenodo.org/api/records/12345/files/annotations/grasp_labels.npz?download=1"
@@ -170,7 +256,12 @@ class TestZenodoFetchFileChain:
         ):
             raw = await adapter.fetch("12345", req_type=DataReqType.POLICY_MODEL)
         assert raw.format == "json"
-        assert raw.metadata == {"downloaded": False}
+        # fix4/fix4b: metadata 透出来源标题与描述（供装配期语义校验）
+        assert raw.metadata == {
+            "downloaded": False,
+            "title": "Robot Grasp Dataset",
+            "description": "grasp labels",
+        }
         assert raw.reference is not None
         assert raw.reference.url == (
             "https://zenodo.org/api/records/12345/files/data/policy_model.safetensors?download=1"
@@ -206,7 +297,12 @@ class TestZenodoFetchFileChain:
         expected = "https://zenodo.org/records/12345/files/data/robot_urdf.urdf?download=1"
         assert raw.url == expected
         assert raw.format == "urdf"
-        assert raw.metadata == {"downloaded": True}
+        # fix4/fix4b: metadata 透出来源标题与描述（供装配期语义校验）
+        assert raw.metadata == {
+            "downloaded": True,
+            "title": "Robot Grasp Dataset",
+            "description": "grasp labels",
+        }
         mock_dl.assert_awaited_once_with(expected)
 
     @pytest.mark.asyncio
@@ -237,7 +333,12 @@ class TestZenodoFetchFileChain:
             raw = await adapter.fetch("12345", req_type="sensor_data")
         assert raw.format == "csv"
         assert raw.data == fake_bytes
-        assert raw.metadata == {"downloaded": True}
+        # fix4: metadata 透出来源标题（供装配期语义校验）
+        assert raw.metadata == {
+            "downloaded": True,
+            "title": "Robot Grasp Dataset",
+            "description": "grasp labels",
+        }
 
     @pytest.mark.asyncio
     async def test_fetch_metadata_when_no_files(self) -> None:
@@ -250,6 +351,10 @@ class TestZenodoFetchFileChain:
         assert raw.reference is None
         assert json.loads(raw.data)["id"] == 12345
         assert raw.url == "https://zenodo.org/records/12345"
+        # P1-A：无文件候选显式标记 degraded，供 retrieve_data 判定本源失败
+        assert raw.metadata.get("degraded") == "no_file_candidate"
+        # fix4: 无候选时仍透出来源标题
+        assert raw.metadata.get("title") == "Robot Grasp Dataset"
 
     @pytest.mark.asyncio
     async def test_fetch_metadata_when_no_candidate(self) -> None:
@@ -266,3 +371,6 @@ class TestZenodoFetchFileChain:
         assert raw.format == "json"
         assert raw.reference is None
         assert json.loads(raw.data)["id"] == 12345
+        # P1-A：README/LICENSE 非候选 → 同样标记 degraded（无数据文件可交付）
+        assert raw.metadata.get("degraded") == "no_file_candidate"
+        assert raw.metadata.get("title") == "Robot Grasp Dataset"

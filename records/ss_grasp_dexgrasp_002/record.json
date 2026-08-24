@@ -83,5 +83,6 @@
   "failure_reason": "未检索到 DexGraspNet bowl 真实抓取数据（expected.format=[pkl,npy]），降级产出 114B 元数据占位 json（仅 source/reason 字段，无抓取姿态），数据不可用",
   "notes": "二轮新题执行（2026-08-22，run_id=20260822-084846-365054f1，包 package-20260822-084943，前端真实流程 qwen3.7-plus）。题设（ss_grasp_dexgrasp_002）为 DexGraspNet bowl 抓取文件（中文，single_source/grasp，source=[dexgrasp]，expected.req_types=[grasp]、format=[pkl,npy]）。parse_goal 成功，检索降级为 HF lhrlhr/DexGraspNet2.0 元数据占位（114B json，is_fallback=true），无真实抓取姿态 → P2_RETRIEVE。validate 3 warning。历史经验含 dexgrasp success（127-141s）但本次未产出真实数据。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "未找到真实 pkl，返回元数据占位 JSON"
 }

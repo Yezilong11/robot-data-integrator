@@ -168,5 +168,6 @@
   "failure_reason": "必需需求 req_001（EGAD mug mesh）检索失败：google_scanned 源级超时（60s）、ycb/graspnet 未收录 EGAD 对象，missing 且为 required 优先级 → 包状态 failed；另 req_003 sim_config 命中 IsaacLab franka.py 而非 Kinova 场景（内容不匹配，P4 隐患）。",
   "notes": "前端真实流程测试（2026-08-20，目标输入→运行→human_review 中断→继续运行 satisfied，run_id=20260820-152332-ac3eca3a，包 package-20260820-153109）。req_000 URDF+7 STL 全量落盘、req_002 grasp 元数据、req_003 sim_config py 均成功；但 req_001 必需 mesh 缺失（google_scanned 60s 超时 + ycb/graspnet 未收录）→ manifest status=failed、validation 1 error/7 warning，按判定口径记为 FAIL。与 day4 记录对比：EGAD mug 此前由 google_scanned 直连命中，本次同一目标检索超时，暴露 google_scanned 对任意物体检索的不稳定（P3_SOURCE 波动）。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "google_scanned 源级超时（60s）；ycb 仅收录 20 个已知目标，未收录 'EGAD mug'；graspnet 仅收录 2 个已知目标，未收录 'EGAD mug'"
 }

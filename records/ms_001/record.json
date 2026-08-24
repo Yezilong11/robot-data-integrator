@@ -131,5 +131,6 @@
   "failure_reason": "YCB banana mesh 与抓取姿态数据均检索失败：ycb/graspnet 未收录 banana（google_scanned 404）、dexgrasp pkl 反序列化失败（unpickling stack underflow），包 status=failed、缺失 2 项必要需求",
   "notes": "一轮复测（2026-08-21，run_id=20260821-223404-4c1099f1，包 package-20260821-224303，前端真实流程 qwen3.7-plus）。对比一轮（2026-08-17，PASS_WITH_FALLBACK）：本轮 franka 源超时降级 github 拿到 URDF（fallback）、mujoco 真实命中 sim_config，但 mesh 与 grasp 均缺失，降级为 FAIL。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "YCB banana mesh 检索未命中：ycb 未收录（google_scanned 404、graspnet 未收录）；DexGraspNet pkl 反序列化失败: unpickling stack underflow"
 }

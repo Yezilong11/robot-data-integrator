@@ -136,8 +136,12 @@ class Settings(BaseSettings):
 
     # ─── 数据源 URL 配置 ───
     huggingface_api_url: str = Field(
-        default="https://huggingface.co/api",
-        description="HuggingFace API 基础 URL（用于 search）",
+        default="https://hf-mirror.com/api",
+        description=(
+            "HuggingFace API 基础 URL（用于 search）。2026-08-23 真实重放确认 "
+            "huggingface.co/api 在国内直连超时（8 题 huggingface:unknown 根因），"
+            "默认改走 hf-mirror.com/api 镜像；海外可改回 https://huggingface.co/api"
+        ),
     )
     huggingface_download_base_url: str = Field(
         default="https://hf-mirror.com",

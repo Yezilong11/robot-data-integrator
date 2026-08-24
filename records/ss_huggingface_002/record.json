@@ -115,5 +115,6 @@
   "failure_reason": "检索失败：req_000:missing",
   "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=检索 ACT 机器人操作策略，verdict=FAIL，retrieve=['req_000:missing', 'req_001:success', 'req_002:success']，run_id=rerun-20260820-160240-835223ff；按要求未截图，screenshots 置空",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "franka: 该源仅收录 3 个已知目标，未收录 'ACT Action Chunking with Transformers robot manipulation GitHub official implementation'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'ACT robot policy model weights checkpoint PyTorch…"
 }

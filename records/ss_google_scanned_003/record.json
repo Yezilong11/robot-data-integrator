@@ -95,5 +95,6 @@
   "failure_reason": "大体积物体（furniture/appliance）检索触发下载超时/失败降级路径：google_scanned 连续 3 轮 60s 源级超时、ycb 3 轮 60s 超时，且无任何成功降级源 → 必需需求缺失、0 文件落盘、包 status=failed。",
   "notes": "前端真实流程测试（2026-08-20，run_id=20260820-155516-e7e46342，包 package-20260820-160153，前端耗时约 6.5 分钟）。该题专门验证大体积物体下载超时/失败降级路径：超时机制正常触发（google_scanned/ycb 各 3 轮 60s 源级超时），但降级路径无成功结果（0 文件、1 缺失、1 error）。历史经验库中同类任务曾以 google_scanned 6-8s 成功，本次 3 轮迭代全部失败，与 ss_google_scanned_001（tip/files 404）共同说明 google_scanned 源在真实网络下不稳定（P3_SOURCE）；同时暴露迭代重试无快速失败、单题耗时过长（P5_ROBUSTNESS）。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "google_scanned 源级检索超时（60s）—— 连续 3 轮迭代均超时；ycb 源级检索超时（60s）；graspnet 未收录该类目标"
 }

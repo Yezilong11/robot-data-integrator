@@ -103,17 +103,32 @@ _YCB_TERM_MAP: dict[str, str] = {
     "剪刀": "scissors",
 }
 
-# 不计入目标术语的泛词（避免 robot/dataset/grasp 等容器词造成误报）
+# 不计入目标术语的泛词（避免 dataset/grasp 等容器词造成误报）。
+# 锚词约束（fix4）：需求含 robot 系英文锚词（robot/robot arm/robotic gripper…）
+# 时，要求匹配文本出现对应锚词（robot 词族带变体 \brobot\w*\b）+ 至少一个非锚
+# 实义词命中；无语义锚词时维持 score≥1。robot 系因此从泛词移入锚词集。中文的
+# "机器人/机械臂" 留作停用词：数据源标题/标识几乎全英文，中文锚词会永久误拦
+# ROBOT_URDF 类中文需求（"获取机器人模型文件" keywords=[机器人]）。英文 robot
+# 才作为锚词（其出现通常伴随明确实体上下文）。
+_SEMANTIC_ANCHOR_WORDS: frozenset[str] = frozenset(
+    {
+        "robot", "robots", "robotic", "robotics", "manipulator",
+    }
+)
 _SEMANTIC_STOPWORDS: frozenset[str] = frozenset(
     {
-        "robot", "robots", "robotic", "robotics", "manipulator", "arm",
-        "机械臂", "机器人", "data", "dataset", "datasets", "数据", "模型",
+        "data", "dataset", "datasets", "数据", "模型", "arm",
+        "机械臂", "机器人",
         "model", "models", "mesh", "meshes", "网格", "物体", "object", "objects",
         "grasp", "grasping", "抓取", "标注", "annotation", "annotations",
         "pose", "poses", "config", "configs", "configuration", "配置",
         "simulation", "sim", "仿真", "policy", "策略", "环境", "environment",
         "scene", "scenes", "场景", "file", "files", "文件", "文档", "document",
         "paper", "论文", "code", "repository", "信息", "任务", "benchmark",
+        # fix4: 传感器类泛词——不携带具体物理量/实体，易靠子串兜底误放行无关
+        # 记录（如 "US Robotic Sensors Market" 仅凭 sensor 命中机械臂力矩需求被
+        # 放行）。滤除后校验仍需 force torque/关节位置 等实义词命中。
+        "sensor", "sensors", "传感器", "传感器数据", "sensor data", "sensor dataset",
     }
 )
 
@@ -196,8 +211,19 @@ def _extract_semantic_terms(req: Any) -> set[str]:
 
 
 def _item_identity_text(item: Any) -> str:
-    """拼装资产标识文本：name + source_url 末两段 + data title/description 前 200 字符。"""
+    """拼装资产标识文本：name + source_url 末两段 + source_title + data title/description 前 200 字符。"""
     parts: list[str] = [getattr(item, "name", "") or ""]
+    # fix4: 来源标题（record/repo 标题）常含需求实义词（Force/Torque Sensor、
+    # Robot Joint Torque），此前 Skill 产物无标题导致语义匹配文本缺失。
+    st = getattr(item, "source_title", "") or ""
+    if st:
+        parts.append(st)
+    # fix4b: 来源描述（record description）— 标题不含需求词但描述含词
+    # （Boxing punch data 描述含 "This dataset contains IMU (Inertial
+    # Measurement Unit)..."）时仍能按语义放行真实命中的记录。
+    sd = getattr(item, "source_description", "") or ""
+    if sd:
+        parts.append(str(sd)[:200])
     prov = getattr(item, "provenance", None)
     url = getattr(prov, "source_url", "") or ""
     if url:
@@ -220,12 +246,38 @@ def _term_in(text: str, term: str) -> bool:
 
     匹配前把 ``-``/``_`` 规范化为空格：资产/仓库命名惯例用下划线/连字符
     代替空格（franka_panda ⇔ 需求词 "franka panda"），不规范化会漏匹配。
+    2026-08-23 真实重放：领域词经常无缝粘连进标识（unidexgrasp、dexgraspnet），
+    整词边界漏匹配导致 ms_014/ss_github_004 误判"内容与需求语义不符"；
+    对 ≥5 字符术语追加子串兜底（长术语产生 "cup in cupboard" 式误命中的
+    风险远低于粘连语义漏匹配），短术语保持边界防误命中。
     """
     if any(ord(c) > 127 for c in term):
         return term in text
     norm_text = re.sub(r"[-_]", " ", text)
     norm_term = re.sub(r"[-_]", " ", term)
-    return re.search(rf"\b{re.escape(norm_term)}\b", norm_text) is not None
+    if re.search(rf"\b{re.escape(norm_term)}\b", norm_text):
+        return True
+    # 粘连复合词兜底：领域词常无缝粘连进标识（unidexgrasp、dexgraspnet），
+    # 整词边界漏匹配导致误判"内容与需求语义不符"（ms_014/ss_github_004）；短语
+    # 术语（"grasp policy"）逐词兜底（"grasp" 命中 unidexgrasp），单/短语均限
+    # ≥5 字符词，短术语（cup）保持边界防误命中。
+    if " " in norm_term:
+        words = [w for w in norm_term.split() if len(w) >= 5]
+        if not words:
+            return False
+        # fix4c: ≥3 词短语要求全部词命中——"force torque sensor" 不能被
+        # "Force-torque measurements"（缺 sensor）误放行：Zenodo keywords
+        # 拼入候选描述文本后，"force torque" 两个词独立出现会导致 2 词命中
+        # 即算整短语命中，把语义全无关的 RBO 记录（1036660，RGB-D 视频序列）
+        # 评成 2 分压过真实力觉记录（11096791/11078469，1 分）。短语含 3+
+        # 实义词时缺失任一都不算命中；2 词短语保留逐词兜底（粘连标识
+        # unidexgrasp 场景需要单实义词 "grasp" 命中即代表 "grasp policy"）。
+        if len(words) >= 3:
+            return all(w in norm_text for w in words)
+        return any(w in norm_text for w in words)
+    if len(norm_term) >= 5:
+        return norm_term in norm_text
+    return False
 
 
 def semantic_score(req: Any, name: str = "", url: str = "", desc: str = "") -> int:
@@ -247,9 +299,16 @@ def semantic_score(req: Any, name: str = "", url: str = "", desc: str = "") -> i
 
 
 def _semantic_mismatch(req: Any, item: Any) -> str:
-    """目标-内容语义匹配：需求目标实体词与资产标识零重叠时返回原因。
+    """目标-内容语义匹配：需求目标实体词与资产标识证据不足时返回原因。
 
     仅对 ``_SEMANTIC_REQ_TYPES`` 启用；目标术语为空（无具体物体/机器人）跳过。
+    fix4：匹配文本含 name + source_url 尾段 + ``source_title`` + data 标题/描述——
+    源标题经 RawData.metadata.title → ParsedItem.source_title 透传，此前 Skill 产物
+    （SensorDataset 等）无标题使匹配文本只剩 record id，标题含 Force/Torque Sensor
+    的真实记录被误判"语义不符"。判定规则：需求含 robot 系锚词时，锚词必须以边界
+    形式命中（robot 词族含变体 robot/robots/robotic）且
+    至少一个非锚实义词命中（区分"机器人末端力觉数据"与"机器人市场报告"）；
+    无锚词时维持 score≥1（unidexgrasp 等粘连真实标识不被误杀）。
     ponytail: 轻量规则（词表 + 整词重叠），中文泛词可能误判；升级路径为接入
     LLM 深度语义校验替换本规则。
     """
@@ -270,12 +329,52 @@ def _semantic_mismatch(req: Any, item: Any) -> str:
             desc = payload
     elif isinstance(data, str):
         desc = data
-    if semantic_score(req, getattr(item, "name", "") or "", url, desc) > 0:
+    st = getattr(item, "source_title", "") or ""
+    # fix4b: 来源描述与标题同参打分（无锚词时走 score≥1，缺失会误判
+    # Boxing punch data 这类"标题无关但描述含 IMU"的真实命中记录）
+    sd = getattr(item, "source_description", "") or ""
+    score = semantic_score(
+        req, getattr(item, "name", "") or "", url, f"{desc} {st} {sd}".strip()
+    )
+    text = _item_identity_text(item)
+    anchor_terms = {t for t in terms if _is_anchor_term(t)}
+    anchor_hit = any(
+        _anchor_word_hit(text, w)
+        for t in anchor_terms
+        for w in re.sub(r"[-_]", " ", t).lower().split()
+    )
+    substantive_hit = any(
+        t not in anchor_terms and _term_in(text, t) for t in terms
+    )
+    if anchor_terms:
+        ok = anchor_hit and substantive_hit
+    else:
+        ok = score >= 1
+    if ok:
         return ""
     return (
         f"内容与需求语义不符（需求目标: {'、'.join(sorted(terms))}，"
         f"实际: {getattr(item, 'name', '')}）"
     )
+
+
+def _is_anchor_term(term: str) -> bool:
+    """需求术语是否含 robot 系锚词（robot/robotic/manipulator/机械臂/机器人…，含短语）。"""
+    norm = re.sub(r"[-_]", " ", term).lower()
+    return any(w in _SEMANTIC_ANCHOR_WORDS for w in norm.split())
+
+
+def _anchor_word_hit(text: str, word: str) -> bool:
+    """锚词（robot 词族带变形 robot/robots/robotic）在匹配文本中以单词边界命中。
+
+    见 ``_semantic_mismatch``：锚词命中只是必要条件，还需非锚实义词命中——因此
+    "US Robotic Sensors Market" 类记录即使 robotic 命中锚词，也会因无实义词被拦。
+    """
+    if not word:
+        return False
+    if word in ("robot", "robots", "robotic", "robotics") or word.startswith("robot"):
+        return re.search(r"\brobot\w*\b", text) is not None
+    return re.search(rf"\b{re.escape(word)}\b", text) is not None
 
 
 def _missing_urdf_assets(urdf_bytes: bytes, base_dir: str) -> list[str]:

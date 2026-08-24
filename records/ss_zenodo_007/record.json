@@ -83,5 +83,6 @@
   "failure_reason": "命中目标源 zenodo 但未检索到真实传感器数据：降级产出 68B 占位元数据（仅 metadata.reason，无 signals 键），置信度 0.6、完整度 60%，LLM 自评严重高估为'基本可用'",
   "notes": "二轮新题执行（2026-08-22，run_id=20260822-095117-e823f402，包 package-20260822-095157，前端真实流程 qwen3.7-plus）。题设（ss_zenodo_007）为 Zenodo 机械臂关节传感器数据集（single_source/sensor_data，source=[zenodo]）。命中目标源 zenodo.org/records/22051891，但 parse_convert 因'JSON dict 缺少 signals 键'降级为 68B 占位（is_fallback=true 已显式标记）→ P2_RETRIEVE。与 D 二轮 ss_sensor_zenodo_002 同属 zenodo 源弱命中/占位问题。另暴露：LLM 自评与真实内容严重不符（自评'基本可用'，实际 0 数据）。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "命中目标源 zenodo，但降级产出 68B 占位元数据，无任何真实传感器数据（仅 {\"metadata\": {\"reason\": \"JSON dict 缺少 signals 键\"}}）"
 }

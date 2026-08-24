@@ -87,5 +87,6 @@
   "failure_reason": "URDF 内容不可用：检索命中目标源 github，但产出为 xacro 宏模板 ur_common.xacro（369 处宏/属性表达式引用，仅宏定义无 UR5 机器人链接结构），未展开为有效 URDF；yourdfpy 加载报 KeyError: 'name'，runtime_check failed",
   "notes": "二轮新题执行（2026-08-22，run_id=20260822-093830-70029d29，包 package-20260822-094052，前端真实流程 qwen3.7-plus）。题设（ss_urdf_github_001）为 GitHub 上 UR5 机械臂 URDF（single_source/robot_urdf，source=[github]）。命中目标源（UniversalRobots 官方 ROS2 Description），但检索到 ur_common.xacro 宏库（非 UR5 具体 URDF，xacro 未展开），3 轮检索内容一致 → P4_FORMAT。与 ms_012（xacro 1430B）、ss_kinova_001（URDF 但 mesh 缺失）同属 URDF/xacro 处理链缺陷：检索规划未筛选具体 UR5 模型文件、parse_convert 无 xacro 展开。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "命中目标源（source=[github]），但检索到的是 xacro 宏模板 ur_common.xacro（xmlns:xacro，369 处宏/属性表达式引用，仅宏定义无 UR5 机器人链接结构），未展开为可用 URDF"
 }

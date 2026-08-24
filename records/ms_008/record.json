@@ -104,5 +104,6 @@
   "failure_reason": "真实流程 3 轮检索-校验迭代全部未命中：LLM 将 fallback 源解析为 allegro/robotiq/kinova（题设源为 franka/mujoco/github），三源均有源但未收录 Franka Panda URDF，validate errors=1，数据包 failed（0 文件），无法通过验收。",
   "notes": "本次为前端真实流程运行结果（run_id=20260818-200031-4a35c1ee，包 package-20260818-200512），替换原 F 的 P7_ENV 记录；executor=F+A（F 曾于 14:48 首次执行卡在凭据检查，A 于 20:00 补跑前端真实流程）。旁证：同输入脚本直跑（探针）命中 github 兜底产出 PWF 包 package-20260818-192816（UT-Austin-RPL/deoxys_control panda.urdf + 18 mesh，19 文件），与前端结果差异集中在 parse_goal 对 fallback 源的解析不稳定（LLM 随机性），已建议纳入 Day6 复盘改进清单。本次如实 FAIL 且不静默降级，符合合规要求。（A 2026-08-18 复核）",
   "reviewer": "A",
-  "reviewed_at": "2026-08-18T21:36:00+08:00"
+  "reviewed_at": "2026-08-18T21:36:00+08:00",
+  "error": "allegro 源仅收录 4 个已知目标，未收录 Franka Panda 机器人 URDF（有源但未收录）；robotiq 源仅收录 4 个已知目标，未收录 Franka Panda 机器人 URDF（有源但未收录）；kinova 源仅收录 2 个已知目标，未收录 Franka Panda 机器人 URDF（有源但未收录）"
 }

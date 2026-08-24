@@ -307,8 +307,13 @@ class TestGitHubDataChain:
             ),
         ):
             raw = await adapter.fetch("acme/robot_control", req_type=DataReqType.POLICY_MODEL)
-        assert raw.format == "pt"
-        assert raw.data == fake_bytes
+        # POLICY_MODEL 成功下载与 HF 同构：data 为 meta JSON（downloaded=true +
+        # download_guide），不传裸权重字节（权重内容不在本地解析）
+        assert raw.format == "json"
+        payload = json.loads(raw.data.decode("utf-8"))
+        assert payload["downloaded"] is True
+        assert payload["file_path"] == "checkpoints/policy.pt"
+        assert "download_guide" in payload
         assert raw.reference is None
         assert raw.metadata["downloaded"] is True
         assert raw.url == dl_url
@@ -378,6 +383,8 @@ class TestGitHubDataChain:
             raw = await adapter.fetch("acme/robot_control", req_type=DataReqType.DATASET)
         assert raw.format == "markdown"
         assert raw.data == b"# repo readme"
+        # P1-A：无数据候选回退 README 显式标记 degraded，供 retrieve_data 判定本源失败
+        assert raw.metadata.get("degraded") == "readme_fallback"
 
     @pytest.mark.asyncio
     async def test_data_fetch_tree_api_failure_falls_back_to_readme(self) -> None:
@@ -438,8 +445,11 @@ class TestGitHubDataChain:
             ),
         ):
             raw = await adapter.fetch("acme/robot_control", req_type=DataReqType.POLICY_MODEL)
-        assert raw.format == "bin"
-        assert raw.data == fake_bytes
+        assert raw.format == "json"
+        payload = json.loads(raw.data.decode("utf-8"))
+        assert payload["downloaded"] is True
+        assert payload["file_path"] == "checkpoints/actuator_model.bin"
+        assert "download_guide" in payload
         assert raw.url == dl_url
         assert raw.metadata["downloaded"] is True
 

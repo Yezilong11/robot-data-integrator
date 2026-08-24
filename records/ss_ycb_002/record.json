@@ -116,5 +116,6 @@
   "failure_reason": "YCB apple mesh 检索失败：ycb 适配器已知目标列表（20 项）未收录 apple；google_scanned 无对应 apple 模型；graspnet 仅 2 个已知目标。全部数据源未命中，0 文件交付，包 status=failed。",
   "notes": "前端真实流程测试（2026-08-20，run_id=20260820-164552-1c24108f，包 package-20260820-165238）。YCB apple mesh 请求全源失败，与 ss_ycb_001（banana）模式完全一致：ycb 适配器已知目标列表未收录 apple、google_scanned 无对应收录、graspnet 仅 2 个已知目标。0 文件交付、missing=1、1 error，包 status=failed。注意：进入 human_review 时任务已在中断态，resume 依赖内存 checkpoint 成功执行（_TASKS 表 10 分钟清理后 /api/status 返回 not found，但 resume 仍可用）。判定 FAIL（P2_RETRIEVE）。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "ycb: 该源仅收录 20 个已知目标，未收录 'YCB apple mesh'（有源但未收录）；google_scanned 源检索未命中 apple 模型；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB apple mesh'"
 }

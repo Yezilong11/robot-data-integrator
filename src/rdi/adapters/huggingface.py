@@ -131,7 +131,10 @@ class HuggingFaceAdapter(BaseAdapter):
         if candidate is None:
             return self._policy_meta_raw(item_id, meta_payload, meta_url)
         path = str(candidate.get("path") or candidate.get("name") or "")
-        ref_url = f"https://huggingface.co/{item_id}/resolve/main/{path.lstrip('/')}"
+        # 2026-08-23 真实重放：huggingface.co 直连在本环境 TCP 层超时
+        # （WinError 121，无 HTTP 响应 → 归类 network），权重 resolve 必须走
+        # 与 meta 相同的下载镜像（settings.huggingface_download_base_url）。
+        ref_url = f"{download_base}/{item_id}/resolve/main/{path.lstrip('/')}"
         # 3) HEAD 预检：超限 → RawReference；未知/未超限 → 真实下载落盘
         size = await self._head_content_length(ref_url)
         if size is not None and size > settings.max_fetch_bytes:

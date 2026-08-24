@@ -62,7 +62,23 @@ _REQ_EXPECTED_FORMATS: dict[DataReqType, tuple[str, ...]] = {
     DataReqType.ROBOT_URDF: ("urdf", "xacro", "zip", "json"),
     DataReqType.MESH: ("obj", "stl", "ply", "dae", "glb", "gltf", "zip", "json"),
     DataReqType.SIM_CONFIG: ("xml", "mjcf", "mujoco", "json", "py", "python", "yaml"),
-    DataReqType.POLICY_MODEL: ("json",),
+    DataReqType.POLICY_MODEL: (
+        "json",
+        "safetensors",
+        "bin",
+        "pt",
+        "pth",
+        "onnx",
+        "npy",
+        "npz",
+        "ckpt",
+        "gguf",
+        "pkl",
+        "zip",
+        "tar",
+        "tar.gz",
+        "tgz",
+    ),
     DataReqType.SENSOR_DATA: ("csv", "json", "markdown", "md", "txt", "readme", "bag"),
     DataReqType.DATASET: ("json", "zip", "tar", "tar.gz", "tgz", "md", "markdown", "txt"),
 }
@@ -73,7 +89,7 @@ _REQ_EXPECTED_LABELS: dict[DataReqType, str] = {
     DataReqType.ROBOT_URDF: "CanonicalRobot（URDF/xacro）",
     DataReqType.MESH: "mesh（obj/stl/ply/dae/glb/gltf）",
     DataReqType.SIM_CONFIG: "XML（MJCF 场景 xml/mjcf）",
-    DataReqType.POLICY_MODEL: "策略元数据（model_info/config json）",
+    DataReqType.POLICY_MODEL: "策略元数据（model_info/config json）或权重（safetensors/pt/bin/onnx）",
     DataReqType.SENSOR_DATA: "传感器时序（csv/json）",
     DataReqType.DATASET: "数据集（json/zip/tar）",
 }
@@ -250,6 +266,12 @@ class SkillRegistry:
             req_id=result.req_id,
             req_type=req.req_type,
             name=name,
+            # fix4: 透传源标题（raw.metadata.title，zenodo/github adapter 写入），
+            # 供装配期语义校验匹配来源标题，避免 Skill 产物无标题导致误判。
+            source_title=str(raw.metadata.get("title") or ""),
+            # fix4b: 透传源描述（raw.metadata.description，zenodo adapter 写入），
+            # 标题无需求词但描述含词（Boxing punch data 描述含 IMU）时补齐匹配文本。
+            source_description=str(raw.metadata.get("description") or ""),
             canonical_format=res.canonical_format,
             output_path=res.output_path or "",
             data=res.data,

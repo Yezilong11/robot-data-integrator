@@ -249,7 +249,7 @@ class TestHuggingFacePolicyModelChain:
         assert raw.reference is not None
         assert (
             raw.reference.url
-            == "https://huggingface.co/lerobot/act_aloha/resolve/main/policy_weights.bin"
+            == f"{settings.huggingface_download_base_url}/lerobot/act_aloha/resolve/main/policy_weights.bin"
         )
         assert raw.reference.download_hint.startswith("wget ")
         assert raw.reference.file_size == big_size

@@ -95,5 +95,6 @@
   "failure_reason": "google_scanned 适配器搜索命中 'Banana for Scale' 但 fuel.gazebosim tip/files 接口返回 404（模型文件树不可得），且连续 3 轮迭代（google_scanned/ycb 各 60s 超时）均无法获取任何 GSO 物体 mesh → 必需需求缺失、0 文件落盘、包 status=failed。",
   "notes": "前端真实流程测试（2026-08-20，run_id=20260820-154539-3bea8763，包 package-20260820-155134，前端耗时约 6 分钟）。历史经验库中同类任务曾以 google_scanned（6-9s）或 zenodo（3.5s）成功，本次 3 次迭代全部失败：第 1 轮 google_scanned 命中 Banana for Scale 但 tip/files 404 + 60s 超时；第 2/3 轮 google_scanned/ycb 均 60s 超时。暴露问题：① fuel.gazebosim /tip/files 文件树接口 404，google_scanned 适配器对已命中模型仍无法获取文件（P2_RETRIEVE）；② 迭代重试机制对同一失败源重复 60s 超时，单题耗时 6 分钟、无快速失败（P5_ROBUSTNESS）。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "google_scanned 搜索命中 'Banana for Scale'，但 fuel.gazebosim tip/files 接口返回 404（Failed GET /models/Banana for Scale/tip/files）；随后源级超时（60s）；ycb 源级检索超时（60s）；graspnet 未收录 'Google Scanned Objects' 类目标"
 }

@@ -48,6 +48,11 @@ from rdi.models import (
 )
 from rdi.models.retrieval import RawData, SearchResult
 
+# 该文件为真实全链路联调（mock 检索但 assemble/explain 阶段真实调用 LLM，单例耗时
+# 70s+），与同目录 test_workflow.py 一致标记为 integration：默认 `pytest`（-m 'not
+# integration'）不执行，需显式 `pytest -m integration`（LLM 可用时）运行。
+pytestmark = pytest.mark.integration
+
 _SAMPLE_DIR = Path(__file__).parent.parent / "unit" / "skills" / "sample_data"
 
 # ─── 真实感样本字节（避免网络，同时可被各 Skill 真实解析） ───

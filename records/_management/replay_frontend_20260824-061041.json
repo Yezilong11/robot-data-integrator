@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-24T06:10:41",
+    "elapsed_total_sec": 1020.4,
+    "summary": {
+      "total": 7,
+      "pass": 5,
+      "pass_with_fallback": 0,
+      "fail": 2,
+      "run_failed": 0,
+      "strict_pass_rate_pct": 71.4,
+      "usable_rate_pct": 71.4
+    }
+  },
+  "results": {
+    "ss_github_005": {
+      "case_id": "ss_github_005",
+      "target": "检索机械臂关节数据集",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 145.9
+    },
+    "ss_zenodo_002": {
+      "case_id": "ss_zenodo_002",
+      "target": "检索机械臂关节数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 155.2
+    },
+    "ss_zenodo_004": {
+      "case_id": "ss_zenodo_004",
+      "target": "检索机械臂力觉传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "必需需求缺失: 检索失败[error]: 所有候选源均失败: zenodo:unknown; github:degraded_delivery"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 135.7
+    },
+    "ss_sensor_github_001": {
+      "case_id": "ss_sensor_github_001",
+      "target": "帮我找 GitHub 上的机械臂关节力矩传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 142.9
+    },
+    "ss_sensor_github_002": {
+      "case_id": "ss_sensor_github_002",
+      "target": "Find joint position/velocity sensor log data on GitHub",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 138.9
+    },
+    "ss_sensor_zenodo_001": {
+      "case_id": "ss_sensor_zenodo_001",
+      "target": "帮我找 Zenodo 上的 IMU 传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 118.4
+    },
+    "ss_sensor_zenodo_002": {
+      "case_id": "ss_sensor_zenodo_002",
+      "target": "Find a force-torque sensor dataset for a robotic gripper on Zenodo",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "必需需求缺失: 检索失败[error]: 所有候选源均失败: zenodo:unknown; github:degraded_delivery"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 183.3
+    }
+  }
+}

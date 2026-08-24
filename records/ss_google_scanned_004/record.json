@@ -87,5 +87,6 @@
   "failure_reason": "mesh 检索全部失败（missing=1，0 文件空包）：LLM retrieval_plan 仅规划执行 ycb/graspnet 两个源（ycb 仅收录 20 目标、graspnet 仅 2 目标，均未收录 'Google Scanned Objects chair' 相关查询词），未检索题设对应源 google_scanned（历史经验含该源 success 46.6s 参考）；且 ycb 3 轮源级检索均超时（>60s）",
   "notes": "二轮新题执行（2026-08-22，run_id=20260822-083513-fd31185e，包 package-20260822-084002，前端真实流程 qwen3.7-plus）。题设（ss_google_scanned_004）为 Google Scanned Objects 椅子 mesh（single_source/mesh，source=[google_scanned]，expected.req_types=[mesh]、format=[glb,obj]）。parse_goal 成功（1 req mesh），但检索阶段 LLM 源规划错误：仅走 ycb/graspnet（均未收录），未用 google_scanned；ycb 3 次源级超时（60s each）→ mesh 缺失 → 空包。llm_usage 3 次 retrieval_plan 均 ok（LLM 调用成功，决策错误）。建议组长 B：检索规划需优先匹配题设 source，并将 ycb 等小型受限源（仅 20 目标）纳入源选择约束。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "ycb 源级检索超时（>60s = per_req_timeout/3）且未收录目标：该源仅收录 20 个已知目标，未收录 'Google Scanned Objects chair mesh' 等 6 个查询词；3 轮检索均失败"
 }

@@ -116,5 +116,6 @@
   "failure_reason": "YCB banana mesh 检索失败：ycb 源级超时（60s）且适配器已知目标列表未收录 banana；google_scanned 对 'Banana for Scale' tip/files 接口 404；graspnet 仅收录 2 个已知目标。全部数据源未命中，0 文件交付，包 status=failed。",
   "notes": "前端真实流程测试（2026-08-20，run_id=20260820-163813-edc17a8b，包 package-20260820-164240）。YCB banana mesh 请求全源失败：ycb 适配器 60s 超时且已知目标列表（20 项）未收录 banana（历史经验显示同类任务曾成功 38.4s，本次不稳定）；google_scanned 'Banana for Scale' tip/files 404（与 ss_google_scanned_001 同源缺陷）；graspnet 仅 2 个已知目标。0 文件交付、missing=1、1 error，包 status=failed。整流程约 4.5 分钟（含迭代重试），缺快速失败。判定 FAIL（P2_RETRIEVE）。",
   "reviewer": null,
-  "reviewed_at": null
+  "reviewed_at": null,
+  "error": "ycb: 该源仅收录 20 个已知目标，未收录 'YCB banana mesh'（有源但未收录）；无法获取模型文件树: Failed GET /models/Banana for Scale/tip/files: 404（与 ss_google_scanned_001 同源缺陷）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB banana mesh'"
 }

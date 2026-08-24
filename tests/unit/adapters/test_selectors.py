@@ -136,6 +136,20 @@ class TestSelectTargetFile:
         assert result[0]["url"] == "https://x/policy.pt"
         assert result[0]["size"] == 42
 
+    def test_sensor_data_skips_metadata_json(self) -> None:
+        """SENSOR_DATA：跳过 metadata/readme 命名，避免选中 68B 元数据占位。
+
+        2026-08-23 重放：zenodo 记录的 files[] 常含 metadata.json，按 size 优先
+        可能压过真实 csv 导致"数据过小疑似占位"（ss_sensor_zenodo_001/002 根因）。
+        """
+        tree = [
+            _file("metadata.json", size=999),  # 元数据占位，必须跳过
+            _file("data.csv", size=50),
+            _file("readme.md", size=200),
+        ]
+        result = select_target_file(tree, DataReqType.SENSOR_DATA)
+        assert [e["name"] for e in result] == ["data.csv"]
+
 
 class TestBuildDownloadGuide:
     """build_download_guide 单元测试。"""

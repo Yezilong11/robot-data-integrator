@@ -84,6 +84,11 @@ def _to_retrieval_error(req_id: str, source: DataSource, exc: AdapterError) -> R
         error_type = "not_found"
     elif isinstance(exc, AdapterAuthError) or exc.status_code in (401, 403):
         error_type = "auth"
+    elif exc.status_code is None:
+        # 网络层连接失败（DNS/握手/连接被拒）：status_code 缺失即无 HTTP 响应，
+        # 一揽子记 unknown 无法诊断（2026-08-23 重放 8 题 huggingface:unknown
+        # 实为 huggingface.co 直连不通）。细分 network 便于后续归因。
+        error_type = "network"
     else:
         error_type = "unknown"
     return RetrievalError(
@@ -115,15 +120,19 @@ def _first_candidate_source(req_type: str) -> DataSource:
 
 def _pick_semantic_candidate(
     search_results: list[SearchResult], req_type: str, req: Any
-) -> tuple[SearchResult, str | None]:
+) -> tuple[SearchResult | None, str | None]:
     """检索候选语义预筛：优先选择命中需求目标实体的候选。
 
     对启用语义匹配的类型（``SEMANTIC_REQ_TYPES``）且需求含具体实体词时，
-    对 ``search_results[:5]`` 按 title/url/description 用 ``semantic_score``
-    打分，最高分 > 0 选该候选（避免 fetch 首个无关候选）；否则维持首个候选
-    并返回诊断文本（并入 missing 审计）。非启用类型或术语为空直接返回首个
-    候选且诊断为 None。``req`` 为含 description/keywords/object_name 的对象
-    （dict 输入自动转换为命名空间对象）。
+    对全部 search_results 按 title/url/description 用 ``semantic_score``
+    打分，最高分 > 0 选该候选（避免 fetch 首个无关候选）；全部零重叠时返回
+    ``(None, 诊断)``，由调用方跳过该 query/源而非 fetch 首个无关候选——
+    fix4 前 fetch 首个零重叠候选会被装配期语义校验拦截成 FAIL（
+    ss_sensor_zenodo_001 取到 "Boxing punch data"、ss_sensor_github_002 取到
+    教室通风 CO2 研究），而同一 query 结果中后面就排着真实命中的 IMU/关节
+    记录；跳过零重叠后下一个 query（或源）有机会命中。非启用类型或术语为空
+    直接返回首个候选且诊断为 None。``req`` 为含 description/keywords/object_name
+    的对象（dict 输入自动转换为命名空间对象）。
     """
     try:
         req_type_enum = DataReqType(req_type)
@@ -134,19 +143,19 @@ def _pick_semantic_candidate(
     req_obj = SimpleNamespace(**req) if isinstance(req, dict) else req
     if not _extract_semantic_terms(req_obj):
         return search_results[0], None
-    best_idx = 0
+    best_idx = -1
     best_score = 0
-    for i, hit in enumerate(search_results[:5]):
+    for i, hit in enumerate(search_results):
         metadata = hit.metadata or {}
         desc = str(metadata.get("description") or metadata.get("summary") or "")
         score = semantic_score(req_obj, hit.title, hit.url, desc)
         if score > best_score:
             best_score = score
             best_idx = i
-    if best_score > 0:
-        return search_results[best_idx], None
-    first = search_results[0]
-    return first, f"{first.source.value}: 候选语义零重叠（{first.title}）"
+    if best_idx < 0:
+        first = search_results[0]
+        return None, f"{first.source.value}: 候选语义零重叠（{first.title}）"
+    return search_results[best_idx], None
 
 
 def _compute_source_cap(source_budget: float, deadline: float, now: float) -> float:
@@ -261,6 +270,7 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
                     "req_type": req.req_type.value,
                     "description": req.description,
                     "keywords": req.keywords,
+                    "semantic_terms": getattr(req, "semantic_terms", []) or [],
                     "fallback_sources": [s.value for s in req.fallback_sources],
                     "context_keywords": context_keywords,
                     "object_name": str(getattr(req, "object_name", "") or ""),
@@ -455,11 +465,16 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     last_source = ""
     # C2: 累积各源「清单外目标」诊断（跨 adapter 保留），用于 missing 的 error_message
     search_failures: list[str] = []
-    # 候选语义预筛的 req 视图（与 validate._extract_semantic_terms 的字段契约一致）
+    # 候选语义预筛的 req 视图（与 validate._extract_semantic_terms 的字段契约一致）。
+    # fix4: 透传 LLM semantic_terms——此前仅 description/keywords/object_name，
+    # 中文需求（"帮我找 Zenodo 上的 IMU 传感器数据"）的 keyword 全被 stopwords
+    # 滤空后预筛直接直通首个候选（Boxing punch data），与装配期用 semantic_terms
+    # 的语义校验脱节；现在两处同源，检索期即能识别真实 IMU/惯性记录。
     req_view = SimpleNamespace(
         description=description,
         keywords=keywords,
         object_name=object_name,
+        semantic_terms=payload.get("semantic_terms") or [],
     )
 
     # E6: 每源子预算 = per_req_timeout / 候选源数。首源挂起不再占满整个
@@ -487,26 +502,69 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                 # mypy 无法推导子类重载，此处忽略构造参数检查。
                 adapter = adapter_cls()  # type: ignore[call-arg]
                 search_results: list[SearchResult] = []
+                candidate: SearchResult | None = None
+                best_score = 0
                 for q in queries:
                     try:
-                        search_results = await adapter.search(q)
+                        # P1-A: 支持 req_type 的 Adapter（Zenodo）按需求类型
+                        # 追加 filetype 过滤；其余保持单参调用。用 `is True`
+                        # 探测：Mock 自动属性恒非 True（测试不误触发），真实
+                        # 类属性为 True（与 fetch 的 kwargs 降级互补）。
+                        if (
+                            getattr(adapter_cls, "accepts_req_type_search", False)
+                            is True
+                        ):
+                            hits = await adapter.search(
+                                q, req_type=DataReqType(req_type)
+                            )
+                        else:
+                            hits = await adapter.search(q)
                     except AdapterCatalogError as exc:
                         # C2: 清单外目标——收集可诊断语义，继续尝试剩余 query（如物体名）
                         search_failures.append(f"{adapter_cls.source.value}: {exc.message}")
                         continue
-                    if search_results:
+                    except AdapterError as exc:
+                        # 单 query 搜索的瞬态失败（如 Zenodo 偶发 5xx）不判本源失败：
+                        # 记录诊断后继续尝试本源剩余 query（500 是服务端瞬时抖动，
+                        # 后续 query 可能成功）；全部 query 均失败时源才整体判失败
+                        # （候选为空走 missing 分支，错误明细可定位）。
+                        search_failures.append(
+                            f"{adapter_cls.source.value}: 搜索 {q[:40]!r} 失败: "
+                            f"{str(exc)[:120]}"
+                        )
+                        continue
+                    if not hits:
+                        continue
+                    # fix4: 语义候选预筛零重叠不再 fetch 首个无关候选（会被装配期
+                    # 语义校验拦截成 FAIL），而是继续下一 query 给真实命中记录
+                    # （如 IMU/UR5 关节数据）机会；并对所有 query 的结果做语义
+                    # argmax——弱泛词命中（"Web robot detection"）不再压过后续
+                    # query 才出现的强命中（"UR5 robot dataset ... joint angles"）。
+                    picked, semantic_diag = _pick_semantic_candidate(
+                        hits, req_type, req_view
+                    )
+                    if picked is None:
+                        if semantic_diag:
+                            search_failures.append(semantic_diag)
+                        continue
+                    metadata = picked.metadata or {}
+                    desc = str(metadata.get("description") or metadata.get("summary") or "")
+                    score = semantic_score(req_view, picked.title, picked.url, desc)
+                    # 非语义类型/术语为空的直通候选 score=0：首个非空 query 即选定
+                    # （与旧行为一致）；语义候选按分值 argmax 择优。
+                    if score == 0 and candidate is None:
+                        search_results = hits
+                        candidate = picked
                         break
-                if not search_results:
+                    if score > best_score:
+                        best_score = score
+                        search_results = hits
+                        candidate = picked
+                        if score == 0:
+                            break
+                if candidate is None:
                     had_empty_search = True
                     continue
-                # C6: 检索候选语义预筛——多候选时优先选命中需求目标实体的那个，
-                # 避免 fetch 首个无关候选后由 C4 格式/装配期语义校验兜底重试；
-                # 全部零重叠时维持首个候选并记录诊断供 missing 审计。
-                candidate, semantic_diag = _pick_semantic_candidate(
-                    search_results, req_type, req_view
-                )
-                if semantic_diag:
-                    search_failures.append(semantic_diag)
                 # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
                 # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
                 fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
@@ -523,6 +581,44 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
                     except TypeError:
                         # 兼容旧 Adapter 的 fetch(item_id) 签名
                         raw = await adapter.fetch(candidate.item_id)
+                # P1-A (2026-08-24): 传感器需求禁用"仅元数据/README 降级"交付。
+                # 源显式标记 degraded（Zenodo 无文件候选 → record 元数据 JSON；
+                # GitHub 无数据候选 → README markdown）时，SensorDataSkill 会把
+                # 它消费成 <200B 占位（validate._is_metadata_proxy 拦截）。此类
+                # 交付视为本源失败并 continue：传感器需求的 GitHub README 失败后
+                # Zenodo 才有机会用 filetype 过滤命中真实 csv。带真实文件引用的
+                # _file_reference（downloaded=False + reference）不标记 degraded，
+                # 保持"引用=完整交付"口径不受影响。
+                if (
+                    DataReqType(req_type) == DataReqType.SENSOR_DATA
+                    and raw.metadata.get("degraded")
+                ):
+                    elapsed = time.monotonic() - start
+                    message = (
+                        f"源仅返回{'元数据 JSON' if raw.format == 'json' else 'README 文档'}"
+                        f"（{raw.metadata['degraded']}），无实际传感器数据文件，"
+                        "视为本源失败，继续下一候选源"
+                    )
+                    retrieval_errors.append(
+                        RetrievalError(
+                            req_id=req_id,
+                            source=adapter_cls.source,
+                            error_type="degraded_delivery",
+                            error_message=message,
+                        )
+                    )
+                    provenance.append(
+                        f"[{datetime.now().isoformat()}] retrieve_data: "
+                        f"{adapter_cls.source.value} {message}"
+                    )
+                    logger.warning(
+                        "retrieve.degraded_delivery",
+                        req_id=req_id,
+                        source=adapter_cls.source.value,
+                        fmt=raw.format,
+                        elapsed_seconds=round(elapsed, 3),
+                    )
+                    continue
                 # C4-pre: 检索期即校验格式白名单（与装配期 C4 同源，is_format_allowed）。
                 # GitHub 等通用源对 robot_urdf 需求常返回 markdown README，检索循环此前
                 # 视为"成功"即停止，专用源（robotiq/franka）再无机会，装配期 C4 才拦截
@@ -617,9 +713,12 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         error_message = "；".join(search_failures)
     else:
         status = "error"
+        # 诊断：error_message 透出各源 AdapterError 明细（截断防超长），
+        # 缺失原因可直接定位是 5xx/404/网络还是降级交付。
         error_message = "所有候选源均失败: " + "; ".join(
-            f"{e.source.value}:{e.error_type}" for e in retrieval_errors
-        )
+            f"{e.source.value}:{e.error_type}:{str(e.error_message)[:100]}"
+            for e in retrieval_errors
+        )[:400]
     if status == "missing":
         logger.warning(
             "retrieve.missing",
@@ -636,6 +735,11 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
             req_type=req_type,
             status=status,
             error_types=[e.error_type for e in retrieval_errors],
+            # 诊断明细：每个源的 error_message（截断），供排障定位 AdapterError 根因
+            error_details=[
+                f"{e.source.value}:{e.error_type}:{str(e.error_message)[:160]}"
+                for e in retrieval_errors
+            ],
             elapsed_seconds=round(elapsed, 3),
         )
     sources_used = [last_source] if last_source else []
