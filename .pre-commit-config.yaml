@@ -11,8 +11,10 @@ repos:
     rev: v1.17.1
     hooks:
       - id: mypy
-        additional_dependencies: [pydantic, pydantic-settings]
-        args: [--strict, --ignore-missing-imports]
+        language: system
+        entry: uv run mypy  # 无论从哪个环境触发（含 git hook），都经 uv 使用项目 venv 的 mypy
+        args: [--strict]
+        files: ^src/  # 与 CI 的 `mypy src` 口径一致，tests 不做严格类型检查
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

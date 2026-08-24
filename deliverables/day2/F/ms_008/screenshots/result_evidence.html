@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>ms_008 真实流程结果证据</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; margin: 48px; color: #1f2937; }
+    h1 { border-bottom: 3px solid #f97316; padding-bottom: 14px; }
+    section { border: 1px solid #cbd5e1; margin: 22px 0; padding: 20px; }
+    h2 { margin-top: 0; color: #9a3412; }
+    pre { white-space: pre-wrap; background: #f8fafc; padding: 16px; }
+    .error { color: #b91c1c; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Robot Data Integrator: ms_008 真实流程结果</h1>
+  <p>目标: 只要 Franka Panda 的 URDF</p>
+  <p>执行模式: 真实流程; 执行人: F; 结果: <span class="error">FAIL / P7_ENV</span></p>
+
+  <section id="progress">
+    <h2>阶段进度</h2>
+    <pre>目标解析: 未开始
+数据检索: 未开始
+解析转换: 未开始
+质量校验: 未开始
+整合打包: 未开始
+human_review: not_reached</pre>
+  </section>
+
+  <section id="package">
+    <h2>数据包审查</h2>
+    <pre>数据包目录: not_generated_due_to_p7_env
+manifest: not_generated_due_to_p7_env
+missing_items: backend-runtime
+说明: 未生成数据包，未使用演示包替代。</pre>
+  </section>
+
+  <section id="validation">
+    <h2>校验与缺失项</h2>
+    <pre>validation_issues: Missing credentials
+runtime_check: not_run
+missing_items: backend-runtime</pre>
+  </section>
+
+  <section id="error">
+    <h2>报错</h2>
+    <pre class="error">Missing credentials. Please pass an api_key, workload_identity, admin_api_key,
+or set the OPENAI_API_KEY or OPENAI_ADMIN_KEY environment variable.</pre>
+  </section>
+</body>
+</html>

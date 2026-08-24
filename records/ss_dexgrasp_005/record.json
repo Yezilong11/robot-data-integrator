@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_dexgrasp_005",
+  "input": "获取 scissors 的 DexGrasp 抓取文件",
+  "executor": "C",
+  "executed_at": "2026-08-20T15:43:41+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "grasp"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['grasp']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "grasp",
+        "source": "dexgrasp",
+        "status": "success",
+        "format": "CanonicalGrasp",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "非首选源/元数据降级回退（is_fallback=true）",
+        "note": "真实流程命中 dexgrasp（CanonicalGrasp，quality=fallback，is_fallback=true），url=https://huggingface.co/datasets/lhrlhr/DexGraspNet2.0"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 3,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=3（0 error, 3 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-154335",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-154335/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "grasps/req_000.json",
+          "format": "CanonicalGrasp",
+          "source_url": "https://huggingface.co/datasets/lhrlhr/DexGraspNet2.0",
+          "is_fallback": true,
+          "completeness": 60.0,
+          "downloaded": true,
+          "size_bytes": 114
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.6,
+        "avg_completeness": 60.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项"
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=获取 scissors 的 DexGrasp 抓取文件，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260820-154313-d6014bad；按要求未截图，screenshots 置空",
+  "reviewer": null,
+  "reviewed_at": null
+}

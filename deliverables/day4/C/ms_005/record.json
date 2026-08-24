@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_005",
+  "input": "Franka Panda stacks YCB blocks in PyBullet",
+  "executor": "C",
+  "executed_at": "2026-08-15T15:58:12",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": ["ROBOT_URDF", "MESH"],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "github",
+        "quality": "unknown",
+        "error": null,
+        "error_type": "none",
+        "format": "urdf",
+        "is_fallback": true
+      },
+      {
+        "req_id": "req_001",
+        "source": "fuel",
+        "quality": "unknown",
+        "error": null,
+        "error_type": "none",
+        "format": "stl",
+        "is_fallback": true
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "empty"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-155903",
+      "status": "complete",
+      "file_count": 2,
+      "missing_items": 0
+    }
+  },
+  "screenshots": [
+    { "file": "screenshots/intermediate/01_parse_goal.png", "desc": "中间态-目标输入" },
+    { "file": "screenshots/intermediate/02_retrieve.png", "desc": "中间态-进度展示" },
+    { "file": "screenshots/intermediate/03_validate.png", "desc": "中间态-校验与缺失项" },
+    { "file": "screenshots/intermediate/04_package.png", "desc": "中间态-数据包审查" },
+    { "file": "screenshots/final/01_parse_goal.png", "desc": "最终态-目标输入" },
+    { "file": "screenshots/final/02_retrieve.png", "desc": "最终态-进度展示" },
+    { "file": "screenshots/final/03_validate.png", "desc": "最终态-校验与缺失项" },
+    { "file": "screenshots/final/04_package.png", "desc": "最终态-数据包审查" },
+    { "file": "screenshots/backend/backend_01_manifest.png", "desc": "后端产物-manifest.json 完整内容" },
+    { "file": "screenshots/backend/backend_02_package_tree.png", "desc": "后端产物-数据包目录结构与附属文件" },
+    { "file": "screenshots/backend/backend_03_urdf.png", "desc": "后端产物-robots/req_000.urdf 内容" },
+    { "file": "screenshots/backend/backend_04_stl.png", "desc": "后端产物-objects/req_001.stl 文件信息" }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "去重修复（parse_goal _dedupe_requirements）后重跑：LLM 重复生成的 ROBOT_URDF 已合并，2 需求（ROBOT_URDF + MESH）全部落包，pkg=complete、missing=0。文件 is_fallback=true（URDF 经 github 兜底、mesh 经 fuel 兜底），显式降级标记 → PASS_WITH_FALLBACK。证据 evidence_v2.json（首轮 failed 证据见 evidence.json）。"
+}

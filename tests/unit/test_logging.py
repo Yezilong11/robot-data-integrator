@@ -125,6 +125,9 @@ async def test_retrieve_data_logs_success_json(
     )
     mock_cls = Mock(return_value=mock_adapter)
     monkeypatch.setattr("rdi.graph.nodes.retrieve_data.select_adapter", lambda req_type: [mock_cls])
+    # 该测试只关心日志点；mock 掉检索策略决策层（真实 adapter 的 source.value 为 str，
+    # 此处 Mock 的 source.value 不是 str，且避免触发真实 LLM 请求）
+    monkeypatch.setattr("rdi.intelligence.decisions.plan_retrieval", lambda **kwargs: None)
 
     payload = {"req_id": "req_log", "req_type": "code", "description": "d", "keywords": []}
     await retrieve_data.node_retrieve_single(payload)

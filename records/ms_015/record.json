@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_015",
+  "input": "结合 Zenodo 传感器数据与 GitHub 代码做机械臂力控",
+  "executor": "E",
+  "executed_at": "2026-08-20T20:58:01+08:00",
+  "completed_at": "2026-08-20T20:58:26+08:00",
+  "run_id": "20260820-205801-1a7121d7",
+  "package_id": "package-20260820-205826",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "d3018f4"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sensor_data",
+        "code"
+      ],
+      "vs_expected": "match",
+      "notes": "目标被解析为 Zenodo 传感器数据与 GitHub 代码两类需求，符合 ms_015 预期 req_types。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sensor_data",
+        "source": "zenodo",
+        "quality": "fallback",
+        "status": "success",
+        "format": "SensorDataset",
+        "is_fallback": true,
+        "source_url": "https://zenodo.org/records/22029816",
+        "downloaded": true,
+        "file_size": 68,
+        "notes": "Zenodo 返回轻量 JSON 结构，内容提示缺少 signals 键，属于可追溯显式降级。"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "code",
+        "source": "github",
+        "quality": "unknown",
+        "status": "success",
+        "format": "CodeRepoSummary",
+        "is_fallback": false,
+        "source_url": "https://github.com/chrisneagu/FTC-Skystone-Dark-Angels-Romania-2020/blob/main/README.md",
+        "downloaded": true,
+        "file_size": 59505,
+        "notes": "GitHub README 已落盘，但内容偏 FTC SDK / 控制系统说明，与机械臂力控语义相关性偏弱，需人工复核。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "质量报告显示 2 个 warning，平均置信度 0.8，平均完整度 80.0%。"
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-205826",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-205826\\manifest.json",
+      "package_id": "package-20260820-205826",
+      "status": "complete",
+      "file_count": 3,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "输出包 complete，manifest 中包含 2 个业务文件和 1 个 quality_explanation.md，无 missing_items。"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_package_dir.png",
+      "desc": "输出包目录截图，展示 package-20260820-205826 的实际落盘文件"
+    },
+    {
+      "file": "screenshots/02_explorer.png",
+      "desc": "前端资源/数据包查看截图，展示 ms_015 产包结果"
+    },
+    {
+      "file": "screenshots/03_provenance.png",
+      "desc": "前端 provenance / 执行日志截图，展示流程追踪记录"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "ms_015 二轮执行已生成完整输出包，满足 min_files=2 且无缺失项。由于 Zenodo 传感器数据为轻量 fallback，且 GitHub 代码与机械臂力控语义相关性偏弱，按二轮口径判 PASS_WITH_FALLBACK，并建议人工复核数据可用性。",
+  "reviewer": null,
+  "reviewed_at": null
+}

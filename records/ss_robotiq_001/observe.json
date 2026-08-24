@@ -1,0 +1,80 @@
+{
+  "case_id": "ss_robotiq_001",
+  "input": "获取 Robotiq 2F-85 夹爪的 URDF 模型",
+  "executed_at": "2026-08-17T12:45:17",
+  "thread_id": "20260817-124517-12fb557c",
+  "run_id": "20260817-124517-12fb557c",
+  "package_id": "package-20260817-124542",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "ROBOT_URDF"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Robotiq 2F-85 夹爪的 URDF 描述文件",
+          "expected_format": "URDF"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "robotiq",
+        "data_format": "urdf",
+        "data_size": 14123,
+        "data_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-124542",
+      "package_id": "package-20260817-124542",
+      "status": "complete",
+      "file_count": 11,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 11,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "runtime_check": {}
+    },
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260817-124542\n- checksums.txt\n- manifest.json\n- provenance.log\n- robots\n  - meshes\n    - collision\n      - robotiq_arg2f_85_inner_finger.dae\n      - robotiq_arg2f_85_inner_knuckle.dae\n      - robotiq_arg2f_85_outer_finger.dae\n      - robotiq_arg2f_85_outer_knuckle.dae\n      - robotiq_arg2f_base_link.stl\n    - visual\n      - robotiq_arg2f_85_base_link.dae\n      - robotiq_arg2f_85_inner_finger.dae\n      - robotiq_arg2f_85_inner_knuckle.dae\n      - robotiq_arg2f_85_outer_finger.dae\n      - robotiq_arg2f_85_outer_knuckle.dae\n  - req_000.urdf\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-124542",
+    "checks": {
+      "urdf": {
+        "status": "passed",
+        "detail": "robots/req_000.urdf yourdfpy 可加载，11 links/10 joints，10 处 mesh 引用全部随相对路径解析"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "10/10 mesh 可加载（visual 5 DAE + collision 4 DAE + 1 STL）"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "provenance.log",
+      "robots/req_000.urdf",
+      "units.json"
+    ]
+  }
+}

@@ -53,11 +53,34 @@ def _dataset_name_from_source(source: DataSource) -> str:
 # - SIM_CONFIG: mujoco xml、isaac python（IsaacLab 资产为 Python 配置）、
 #   isaac yaml（Isaac Sim 场景 YAML 配置）；SimConfigSkill 对非 MJCF 格式
 #   （python/yaml/py 等）生成最小 MJCF，故这些均为合法输入
+# - POLICY_MODEL: adapter 元数据/引用/成功下载均产 json（审查问题 1 统一后
+#   不再出现裸权重格式）；语义上不允许 csv 等非策略数据混入
+# - SENSOR_DATA/DATASET: csv/json 为真实时序/元数据形态；markdown 系为
+#   github 数据链路"无候选回退 README"的显式降级形态（skill 有对应分支）
 _REQ_EXPECTED_FORMATS: dict[DataReqType, tuple[str, ...]] = {
     DataReqType.GRASP: ("npz", "pkl", "npy", "mat", "json", "h5", "hdf5"),
     DataReqType.ROBOT_URDF: ("urdf", "xacro", "zip", "json"),
     DataReqType.MESH: ("obj", "stl", "ply", "dae", "glb", "gltf", "zip", "json"),
     DataReqType.SIM_CONFIG: ("xml", "mjcf", "mujoco", "json", "py", "python", "yaml"),
+    DataReqType.POLICY_MODEL: (
+        "json",
+        "safetensors",
+        "bin",
+        "pt",
+        "pth",
+        "onnx",
+        "npy",
+        "npz",
+        "ckpt",
+        "gguf",
+        "pkl",
+        "zip",
+        "tar",
+        "tar.gz",
+        "tgz",
+    ),
+    DataReqType.SENSOR_DATA: ("csv", "json", "markdown", "md", "txt", "readme", "bag"),
+    DataReqType.DATASET: ("json", "zip", "tar", "tar.gz", "tgz", "md", "markdown", "txt"),
 }
 
 # C4: 期望格式的语义描述（供 MissingItem.reason 呈现）
@@ -66,14 +89,23 @@ _REQ_EXPECTED_LABELS: dict[DataReqType, str] = {
     DataReqType.ROBOT_URDF: "CanonicalRobot（URDF/xacro）",
     DataReqType.MESH: "mesh（obj/stl/ply/dae/glb/gltf）",
     DataReqType.SIM_CONFIG: "XML（MJCF 场景 xml/mjcf）",
+    DataReqType.POLICY_MODEL: "策略元数据（model_info/config json）或权重（safetensors/pt/bin/onnx）",
+    DataReqType.SENSOR_DATA: "传感器时序（csv/json）",
+    DataReqType.DATASET: "数据集（json/zip/tar）",
 }
+
+
+def is_format_allowed(req_type: DataReqType, fmt: str) -> bool:
+    """返回原始格式是否属于该需求类型的合法格式白名单；未约束类型恒 True。"""
+    expected = _REQ_EXPECTED_FORMATS.get(req_type)
+    return expected is None or fmt.lower() in expected
 
 
 def _format_mismatch_reason(req: DataReq, raw_fmt: str) -> str | None:
     """返回类型错配的 MissingItem reason；格式合法返回 None。"""
-    expected = _REQ_EXPECTED_FORMATS.get(req.req_type)
-    if expected is None or raw_fmt.lower() in expected:
+    if is_format_allowed(req.req_type, raw_fmt):
         return None
+    expected = _REQ_EXPECTED_FORMATS.get(req.req_type)
     label = _REQ_EXPECTED_LABELS.get(req.req_type, str(expected))
     return f"需求类型 {req.req_type.value} 期望 {label}，实际返回 {raw_fmt}（类型错配）"
 
@@ -175,7 +207,16 @@ class SkillRegistry:
             extra["dataset_name"] = _dataset_name_from_source(src)
 
         try:
-            res = skill.process(raw.data, fmt=fmt, name=name, url=raw.url, **extra)
+            # 透传 reference（RawData.reference，未下载大文件引用），供 skill 降级产物
+            # 在存在下载候选时附加 download_guide（Task 8）
+            res = skill.process(
+                raw.data,
+                fmt=fmt,
+                name=name,
+                url=raw.url,
+                reference=raw.reference,
+                **extra,
+            )
         except Exception as exc:  # noqa: BLE001 — 防御性：Skill 应自身降级，但仍兜底
             return MissingItem(
                 req_id=result.req_id,
@@ -198,6 +239,7 @@ class SkillRegistry:
                 reason=reason,
                 alternatives=alternatives,
                 fallback_sources=[],
+                llm_usage=res.llm_usage,
             )
 
         # confidence 由 Skill 自身报告；is_inferred 据此推断
@@ -224,11 +266,18 @@ class SkillRegistry:
             req_id=result.req_id,
             req_type=req.req_type,
             name=name,
+            # fix4: 透传源标题（raw.metadata.title，zenodo/github adapter 写入），
+            # 供装配期语义校验匹配来源标题，避免 Skill 产物无标题导致误判。
+            source_title=str(raw.metadata.get("title") or ""),
+            # fix4b: 透传源描述（raw.metadata.description，zenodo adapter 写入），
+            # 标题无需求词但描述含词（Boxing punch data 描述含 IMU）时补齐匹配文本。
+            source_description=str(raw.metadata.get("description") or ""),
             canonical_format=res.canonical_format,
             output_path=res.output_path or "",
             data=res.data,
             raw_bytes=raw_bytes,
             assets=assets,
+            assets_missing=list(raw.metadata.get("assets_missing") or []),
             reference=raw.reference,  # P0-4：未下载大文件引用无条件透传（已下载为 None）
             provenance=provenance,
             completeness_pct=res.completeness_pct,
@@ -241,6 +290,8 @@ class SkillRegistry:
             units=res.units,
             coordinate_frame=res.coordinate_frame,
             timestamp_epoch=res.timestamp_epoch,
+            semantic_convention=res.semantic_convention,
+            llm_usage=res.llm_usage,
         )
 
 

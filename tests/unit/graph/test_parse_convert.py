@@ -145,7 +145,96 @@ def test_node_empty_state_returns_empty_dicts() -> None:
     out = node_parse_convert(state)
     assert out["parsed_data"] == {}
     assert out["missing_items"] == []
+    assert out["semantic_map"] == {}
     assert "errors" not in out
+
+
+def test_node_semantic_map_filled_from_parsed_item(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ParsedItem 携带 semantic_convention → semantic_map 装配 + provenance 标注 LLM 识别。"""
+    from rdi.intelligence.schemas import SemanticConvention
+    from rdi.skills import default_registry
+
+    conv = SemanticConvention(
+        dataset_name="mygrid",
+        semantic_type="grasp_pose",
+        rotation="quaternion_xyzw",
+        origin="object_center",
+        unit="millimeter",
+        field_map={"trans": "position"},
+        confidence=0.85,
+    )
+    item = ParsedItem(
+        req_id="r1",
+        req_type=DataReqType.GRASP,
+        name="grasp",
+        canonical_format="CanonicalGrasp",
+        output_path="grasps/r1.json",
+        data={"grasps": []},
+        provenance=ProvenanceEntry(
+            source=DataSource.LOCAL,
+            source_url="local://f",
+            retrieved_at=_FIXED_TIME,
+            original_format="json",
+        ),
+        semantic_convention=conv.model_dump(),
+        llm_usage={
+            "decision": "unify_semantics",
+            "status": "ok",
+            "model": "mock",
+            "elapsed": 0.1,
+        },
+    )
+    monkeypatch.setattr(default_registry, "process_retrieval_result", lambda *a, **k: item)
+
+    req = DataReq(
+        req_id="r1",
+        req_type=DataReqType.GRASP,
+        description="grasp",
+        priority=Priority.REQUIRED,
+    )
+    raw = RawData(
+        source=DataSource.LOCAL,
+        item_id="f",
+        format="json",
+        data=b"[]",
+        url="local://f",
+    )
+    state = _make_state([req], {"r1": RetrievalResult(req_id="r1", data=raw, status="success")})
+
+    out = node_parse_convert(state)
+
+    assert out["semantic_map"]["r1"].semantic_type == "grasp_pose"
+    assert out["semantic_map"]["r1"].field_map == {"trans": "position"}
+    assert any("语义由 LLM 识别" in line for line in out["provenance"])
+    # 语义统一决策调用记录装配进 llm_usage（补充 req_id）
+    assert out["llm_usage"] == [
+        {
+            "decision": "unify_semantics",
+            "status": "ok",
+            "model": "mock",
+            "elapsed": 0.1,
+            "req_id": "r1",
+        }
+    ]
+
+
+def test_node_semantic_map_empty_without_convention() -> None:
+    """常规 MESH（无 LLM 语义约定）→ semantic_map 为空 dict。"""
+    data = (_SAMPLE_DIR / "hand.stl").read_bytes()
+    req = DataReq(
+        req_id="r1",
+        req_type=DataReqType.MESH,
+        description="mesh",
+        priority=Priority.REQUIRED,
+    )
+    state = _make_state(
+        [req],
+        {"r1": RetrievalResult(req_id="r1", data=_mesh_raw(data), status="success")},
+    )
+
+    out = node_parse_convert(state)
+
+    assert out["semantic_map"] == {}
 
 
 def test_node_local_file_injection(tmp_path: Path) -> None:
@@ -293,8 +382,10 @@ def test_node_passes_urdf_mesh_paths_to_sim_config() -> None:
     assert sim_item.output_path == "sim_config/scene.xml"
     assert b"<mujoco" in sim_item.data
     assert b"robots/panda.urdf" in sim_item.data
-    assert b"objects/hand.stl" in sim_item.data
-    assert b'<mesh file="objects/hand.stl" name="hand"/>' in sim_item.data
+    # D4 修复：mesh 引用必须与 assemble 落盘名一致（objects/{req_id}.stl），
+    # 而非 MeshSkill 原始 output_path（原始 item_id 文件名）。
+    assert b"objects/r_mesh.stl" in sim_item.data
+    assert b'<mesh file="objects/r_mesh.stl" name="r_mesh"/>' in sim_item.data
 
 
 def test_mesh_item_is_checkpoint_msgpack_serializable() -> None:
@@ -366,5 +457,5 @@ def test_strip_numpy_handles_containers(nested: object) -> None:
     JsonPlusSerializer().dumps_typed(cleaned)
     assert not any(
         isinstance(v, np.generic)
-        for v in (cleaned if isinstance(cleaned, (list, tuple)) else cleaned.values())
+        for v in (cleaned if isinstance(cleaned, list | tuple) else cleaned.values())
     )

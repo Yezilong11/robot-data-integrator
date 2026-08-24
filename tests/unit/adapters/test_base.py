@@ -429,7 +429,7 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"mesh-data"
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/panda.urdf", xml
             )
         assert assets == {"meshes/base.stl": b"mesh-data"}
@@ -442,7 +442,7 @@ class TestBaseAdapterXmlAssets:
         """异常情况：XML 解析失败返回空 dict（降级策略，不抛异常）。"""
         adapter = _StubAdapter()
         with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/panda.urdf", b"not <xml"
             )
         assert assets == {}
@@ -465,7 +465,7 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/panda.urdf", xml
             )
         # package:// 的 rest 与相对路径 c 均被下载，且前导 ./ 已规范化；https:// 跳过
@@ -482,7 +482,7 @@ class TestBaseAdapterXmlAssets:
         """无 mesh/texture 引用时不额外调用 _download_bytes。"""
         adapter = _StubAdapter()
         with patch.object(adapter, "_download_bytes", new_callable=AsyncMock) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/panda.urdf", b'<robot name="panda"/>'
             )
         assert assets == {}
@@ -509,7 +509,7 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/panda.urdf", main_xml
             )
         # include 文件本身 + 子 XML 中的 mesh 均被下载，mesh 以子 XML 所在目录为基准
@@ -536,7 +536,7 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/a.urdf", a_xml
             )
         assert assets == {"b.urdf": b_xml, "a.urdf": a_xml}
@@ -569,7 +569,7 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/a.urdf", xmls["a.urdf"]
             )
         # 深度 0..3 的 include（a/b/c/d）与其 mesh d.stl 下载；e.urdf（第 4 层）终止
@@ -593,7 +593,7 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"pkg-mesh"
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/repos/panda.urdf", xml
             )
         assert assets == {"panda_description/meshes/hand.stl": b"pkg-mesh"}
@@ -617,13 +617,60 @@ class TestBaseAdapterXmlAssets:
         with patch.object(
             adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
         ) as mock_dl:
-            assets = await adapter._download_xml_with_assets(
+            assets, missing_assets = await adapter._download_xml_with_assets(
                 "https://example.com/models/panda.urdf", xml
             )
         # 仅有效 package:// 被下载
         assert assets == {"pkg/good.stl": b"x"}
         assert mock_dl.await_count == 1
         assert mock_dl.call_args.args[0] == "https://example.com/models/pkg/good.stl"
+
+    @pytest.mark.asyncio
+    async def test_mjcf_compiler_meshdir_prefixes_mesh_refs(self) -> None:
+        """MJCF compiler meshdir：mesh 以 meshdir 子目录为基准下载，texture 不受影响。"""
+        adapter = _StubAdapter()
+        xml = (
+            b'<mujoco model="panda"><compiler angle="radian" meshdir="assets"/>'
+            b'<asset><mesh name="link0" file="link0.stl"/>'
+            b'<texture type="2d" name="t" file="tex.png"/></asset></mujoco>'
+        )
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, return_value=b"x"
+        ) as mock_dl:
+            assets, missing_assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/scene.xml", xml
+            )
+        # mesh 引用带 meshdir 前缀（数据包内 assets/ 下），texture 无 texturedir 不前缀
+        assert assets == {"assets/link0.stl": b"x", "tex.png": b"x"}
+        assert mock_dl.await_count == 2
+        assert mock_dl.call_args_list[0].args[0] == ("https://example.com/models/assets/link0.stl")
+        assert mock_dl.call_args_list[1].args[0] == "https://example.com/models/tex.png"
+
+    @pytest.mark.asyncio
+    async def test_mjcf_meshdir_applies_in_include_chain(self) -> None:
+        """include 链中子 XML 自己的 compiler meshdir 同样生效（franka_emika_panda 场景）。"""
+        adapter = _StubAdapter()
+        scene_xml = b'<mujoco model="scene"><include file="panda.xml"/></mujoco>'
+        panda_xml = (
+            b'<mujoco model="panda"><compiler meshdir="assets"/>'
+            b'<asset><mesh file="link0.stl"/></asset></mujoco>'
+        )
+
+        def fake_download(url: str) -> bytes:
+            if url.endswith("/models/panda.xml"):
+                return panda_xml
+            if url.endswith("/models/assets/link0.stl"):
+                return b"mesh"
+            raise AssertionError(f"unexpected url: {url}")
+
+        with patch.object(
+            adapter, "_download_bytes", new_callable=AsyncMock, side_effect=fake_download
+        ) as mock_dl:
+            assets, missing_assets = await adapter._download_xml_with_assets(
+                "https://example.com/models/scene.xml", scene_xml
+            )
+        assert assets == {"panda.xml": panda_xml, "assets/link0.stl": b"mesh"}
+        assert mock_dl.await_count == 2
 
 
 # ─── 本地文件缓存测试 ───
@@ -824,19 +871,22 @@ class TestBaseAdapterLocalDatasets:
         (tmp_path / "robot" / "meshes" / "base.stl").write_bytes(b"stl-data")
         xml = b'<robot name="r"><mesh filename="meshes/base.stl"/></robot>'
         adapter = _StubAdapter()
-        assets = adapter._local_assets_from_xml(xml, "robot")
+        assets, missing = adapter._local_assets_from_xml(xml, "robot")
         assert assets == {"robot/meshes/base.stl": b"stl-data"}
+        assert missing == []
 
-    def test_local_assets_from_xml_missing_asset_skipped(self, tmp_path, monkeypatch) -> None:
-        """本地缺失的资产跳过，不报错。"""
+    def test_local_assets_from_xml_missing_asset_reported(self, tmp_path, monkeypatch) -> None:
+        """本地缺失的资产路径显性化返回（不再静默跳过）。"""
         monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
         (tmp_path / "robot").mkdir()
         xml = b'<robot name="r"><mesh filename="meshes/missing.stl"/></robot>'
         adapter = _StubAdapter()
-        assert adapter._local_assets_from_xml(xml, "robot") == {}
+        assets, missing = adapter._local_assets_from_xml(xml, "robot")
+        assert assets == {}
+        assert missing == ["robot/meshes/missing.stl"]
 
     def test_local_assets_from_xml_invalid_xml_returns_empty(self, tmp_path, monkeypatch) -> None:
-        """非法 XML 返回空 dict（与网络版降级一致）。"""
+        """非法 XML 返回空资产与空缺失（与网络版降级一致）。"""
         monkeypatch.setattr(settings, "local_datasets", {"arxiv": str(tmp_path)})
         adapter = _StubAdapter()
-        assert adapter._local_assets_from_xml(b"not xml at all", "robot") == {}
+        assert adapter._local_assets_from_xml(b"not xml at all", "robot") == ({}, [])

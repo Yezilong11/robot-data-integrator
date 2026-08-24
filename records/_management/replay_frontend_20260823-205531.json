@@ -1,0 +1,161 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-23T21:30:44",
+    "elapsed_total_sec": 2113.9
+  },
+  "results": {
+    "ss_github_004": {
+      "case_id": "ss_github_004",
+      "target": "检索抓取策略权重仓库",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "内容与需求语义不符（需求目标: checkpoint、grasp policy、policy weights、抓取策略、权重，实际: PKU-EPIC/UniDexGrasp）"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 431.8
+    },
+    "ss_huggingface_002": {
+      "case_id": "ss_huggingface_002",
+      "target": "检索 ACT 机器人操作策略",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "必需需求缺失: 检索失败[error]: 所有候选源均失败: github:format_mismatch; huggingface:network"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 213.6
+    },
+    "ss_huggingface_005": {
+      "case_id": "ss_huggingface_005",
+      "target": "检索灵巧操作策略权重",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "必需需求缺失: 检索失败[error]: 所有候选源均失败: huggingface:network; github:format_mismatch"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 208.1
+    },
+    "ss_policy_hf_001": {
+      "case_id": "ss_policy_hf_001",
+      "target": "获取一个 Hugging Face 上的机械臂抓取策略模型权重",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "必需需求缺失: 检索失败[error]: 所有候选源均失败: huggingface:network; github:format_mismatch"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 250.8
+    },
+    "ss_policy_github_001": {
+      "case_id": "ss_policy_github_001",
+      "target": "Find a GitHub repo releasing a learned manipulation policy checkpoint",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_000",
+          "message": "必需需求缺失: 检索失败[error]: 所有候选源均失败: github:format_mismatch; huggingface:network"
+        }
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 259.5
+    },
+    "ms_014": {
+      "case_id": "ms_014",
+      "target": "找一个机械臂抓取策略的开源代码并加载其 Hugging Face 权重",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "code",
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个非引用型 ERROR"
+      ],
+      "error_summary": [
+        {
+          "issue_type": "",
+          "req_id": "req_001",
+          "message": "内容与需求语义不符（需求目标: grasp policy、hugging face、model weights、抓取策略、预训练权重，实际: PKU-EPIC/UniDexGrasp）"
+        }
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 750.0
+    }
+  }
+}

@@ -19,6 +19,7 @@ from rdi.exceptions import LLMUnavailableError
 from rdi.graph.edges import route_after_review
 from rdi.graph.nodes import human_review
 from rdi.graph.nodes.assemble import node_assemble
+from rdi.intelligence.schemas import ReviewSuggestions
 from rdi.models import DataReq, DataReqType, MissingItem, Priority, RetrievalError
 from rdi.models.common import DataSource
 
@@ -388,6 +389,7 @@ def test_interrupt_review_waits_for_resume_decision(monkeypatch: pytest.MonkeyPa
     """interrupt_review=True 时调用 interrupt 等待用户决策，且不读 state.review_decision。"""
     fake = _FakeLLMClient()
     _patch_llm(monkeypatch, fake)
+    monkeypatch.setattr(human_review.decisions, "suggest_review", lambda **kwargs: None)
     calls: list[Any] = []
 
     def _fake_interrupt(payload: Any) -> dict[str, Any]:
@@ -416,6 +418,7 @@ def test_interrupt_review_waits_for_resume_decision(monkeypatch: pytest.MonkeyPa
 
 def test_interrupt_review_uses_requirements_for_req_ids(monkeypatch: pytest.MonkeyPatch) -> None:
     """interrupt 的 payload.req_ids 从 data_requirements 提取（兼容 pydantic 对象与 dict）。"""
+    monkeypatch.setattr(human_review.decisions, "suggest_review", lambda **kwargs: None)
     calls: list[Any] = []
     monkeypatch.setattr(
         human_review,
@@ -437,6 +440,77 @@ def test_interrupt_review_uses_requirements_for_req_ids(monkeypatch: pytest.Monk
     _run(state)
 
     assert calls[0]["req_ids"] == ["req_001", "req_002"]
+
+
+# ─── interrupt + LLM 审查建议（⑦ 审查建议） ───
+
+
+def test_interrupt_payload_includes_llm_suggestions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """suggest_review 返回 LLM 建议：payload.suggestions.source=llm，update 写入 ReviewSuggestions 实例。"""
+    monkeypatch.setattr(
+        human_review.decisions,
+        "suggest_review",
+        lambda **kwargs: ReviewSuggestions(
+            verdict="revised", issues=["缺 X"], rationale="r", confidence=0.9
+        ),
+    )
+    calls: list[Any] = []
+    monkeypatch.setattr(
+        human_review,
+        "interrupt",
+        lambda payload: calls.append(payload) or {"decision": "satisfied", "feedback": []},
+    )
+
+    _, update = _run(_base_state("satisfied", interrupt_review=True))
+
+    payload = calls[0]
+    assert payload["suggestions"]["verdict"] == "revised"
+    assert payload["suggestions"]["source"] == "llm"
+    assert payload["suggestions"]["issues"] == ["缺 X"]
+    assert payload["suggestions"]["confidence"] == 0.9
+    assert update["review_suggestions"].verdict == "revised"
+    assert update["review_suggestions"].issues == ["缺 X"]
+    expected = {
+        "decision": "review_suggestions",
+        "status": "ok",
+        "model": settings.llm_model,
+    }
+    assert expected.items() <= update["llm_usage"][0].items()
+    assert isinstance(update["llm_usage"][0]["elapsed"], float)
+
+
+def test_interrupt_payload_falls_back_to_rule_suggestions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """suggest_review 返回 None：payload.suggestions.source=rule，规则兜底判定（有缺失→revised）。"""
+    monkeypatch.setattr(human_review.decisions, "suggest_review", lambda **kwargs: None)
+    calls: list[Any] = []
+    monkeypatch.setattr(
+        human_review,
+        "interrupt",
+        lambda payload: calls.append(payload) or {"decision": "satisfied", "feedback": []},
+    )
+
+    state = _base_state(
+        "satisfied",
+        interrupt_review=True,
+        missing_items=[
+            MissingItem(
+                req_id="req_001",
+                req_type=DataReqType.MESH,
+                description="banana mesh",
+                reason="未找到",
+            )
+        ],
+    )
+    _, update = _run(state)
+
+    payload = calls[0]
+    assert payload["suggestions"]["source"] == "rule"
+    assert payload["suggestions"]["verdict"] == "revised"
+    assert any("缺失 req_001: 未找到" in i for i in payload["suggestions"]["issues"])
+    assert payload["suggestions"]["confidence"] == 0.5
+    assert update["review_suggestions"].verdict == "revised"
+    assert update["llm_usage"][0]["status"] == "fallback"
+    assert update["llm_usage"][0]["decision"] == "review_suggestions"
 
 
 # ─── unsatisfied 反馈写回 data_requirements ───

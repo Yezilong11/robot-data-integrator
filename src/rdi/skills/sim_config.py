@@ -20,6 +20,12 @@ from lxml import etree
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
 from rdi.skills.base import BaseSkill
 
+# 降级场景诚实标记（Task 3: extend-kinova-isaac-format-coverage）。
+# 语义：最小 MJCF 占位场景仅含地面+相机，不含真实机器人/任务语义。
+# graph/nodes/validate.py 按 "降级场景：" 前缀检测该标记并呈现为独立 WARNING，
+# 与装配后的 ParsedItem.warnings 一起透传（不新增 Schema 字段）。
+DEGRADED_SCENE_NOTE = "降级场景：最小 MJCF 仅含地面+相机，不含真实机器人/任务语义"
+
 # ─── 中间表示（dataclass） ───
 
 
@@ -323,6 +329,7 @@ class SimConfigSkill(BaseSkill):
         warnings = [
             f"未找到真实 MuJoCo MJCF: {reason}",
             "已根据 URDF/Mesh 生成最小 MJCF 占位文件",
+            DEGRADED_SCENE_NOTE,
         ]
         if urdf_path:
             warnings.append(f"参考 URDF: {urdf_path}")

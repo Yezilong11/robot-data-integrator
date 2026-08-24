@@ -30,6 +30,7 @@ class DataSource(StrEnum):
     FRANKA = "franka"
     ALLEGRO = "allegro"
     ROBOTIQ = "robotiq"
+    KINOVA = "kinova"
     MUJOCO = "mujoco"
     ISAAC = "isaac"
     LOCAL = "local"  # 本地文件注入（前端上传路径，跳过外部检索）
@@ -43,7 +44,9 @@ class DataReqType(StrEnum):
     内置数据源（检索链路返回 missing + 「该类型暂无内置数据源」）。
     """
 
-    def __new__(cls, value: str, zh: str) -> "DataReqType":
+    zh: str  # 成员的中文描述，在 __new__ 中赋值
+
+    def __new__(cls, value: str, zh: str = "") -> "DataReqType":
         obj = str.__new__(cls, value)
         obj._value_ = value
         obj.zh = zh
@@ -194,6 +197,14 @@ class StandardResult(BaseModel):
     timestamp_epoch: float | None = Field(
         default=None,
         description="数据对应的时间戳（Unix epoch 秒），None=无",
+    )
+    semantic_convention: dict[str, Any] | None = Field(
+        default=None,
+        description="LLM 生成的语义约定（SemanticConvention.model_dump()），None=无",
+    )
+    llm_usage: dict[str, Any] | None = Field(
+        default=None,
+        description="本次处理中的 LLM 决策调用记录（decision/status/model/elapsed），None=无",
     )
     data: Any = Field(
         default=None,

@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_github_006",
+  "input": "帮我找一个机械臂控制的 GitHub 开源项目（中文描述）",
+  "executor": "A",
+  "executed_at": "2026-08-22T08:25:00",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "code"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 code 单一需求，与题设 expected.req_types=[code] 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "code",
+        "source": "github",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "CodeRepoSummary",
+        "data_size_bytes": 1213,
+        "data_url": "https://github.com/Abhinavgandhi09/RoboticArm/blob/master/README.md",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "真实命中 GitHub 机械臂项目 RoboticArm（Abhinavgandhi09，Arduino 群体控制机械臂）README；产出为 CodeRepoSummary json 摘要（1213B），README 为英文（题设要求中文描述未满足）；摘要字段 file_tree/framework/installation 均为空；quality 无人工标注（unknown）",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_run",
+      "notes": "manifest validation_issues=0；但产出格式 CodeRepoSummary(json) 与题设 expected.format=[markdown] 不符、'中文描述'未满足（英文 README）、摘要字段不完整（file_tree/framework/installation 为空），均未被 manifest 校验捕获"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-082500",
+      "manifest_path": "data/output_packages/package-20260822-082500/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "notes": "manifest status=complete，落盘 1 个数据文件（resources/req_000.json，1213B）+ quality_explanation.md；quality_report total=1 fulfilled=1"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest"
+    },
+    {
+      "file": "screenshots/01_manifest_2.png",
+      "desc": "manifest-2"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "产出格式为 CodeRepoSummary json 摘要（1213B），不符合题设 expected.format=[markdown]（未提供 README 原文）；README 为英文，未满足题设'中文描述'要求；摘要字段 file_tree/framework/installation 全空，信息不完整",
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-082333-31a5fc03，包 package-20260822-082500，前端真实流程 qwen3.7-plus）。题设（ss_github_006）为找机械臂控制 GitHub 开源项目（中文描述，single_source/code，expected.req_types=[code]、format=[markdown]、min_files=1）。数据真实（RoboticArm 机械臂项目 README 摘要，is_fallback=false），但格式（json 摘要非 markdown）、语言（英文非中文）、摘要完整性（file_tree/framework/installation 空）三项与题设不符 → P4_FORMAT。quality 无人工标注（unknown）。",
+  "reviewer": null,
+  "reviewed_at": null
+}

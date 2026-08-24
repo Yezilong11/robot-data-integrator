@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_kinova_003",
+  "input": "帮我找 Kinova 协作机械臂的 URDF 文件",
+  "executor": "D",
+  "executed_at": "2026-08-21T18:52:03+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 robot_urdf 需求，与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "elapsed": null,
+        "format": "urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "data_url": "https://raw.githubusercontent.com/KelvinLauMiau/Kinova7DoF-MuJoCo/master/Kinova_description/urdf/Kinova_description.urdf",
+        "note": "命中 github 仓库 KelvinLauMiau/Kinova7DoF-MuJoCo 的 7-DoF Kinova URDF（11KB，置信度 1.0、完整度 100%）。但 9 个关键 STL 网格文件（meshes 目录）未随包落盘，URDF 依赖缺失"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "failed",
+      "notes": "validation_issues=1 error：URDF 解析失败，9 个关键 STL 网格文件全部缺失，机器人几何模型不可用。无法进行抓取规划与仿真验证"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-185316",
+      "manifest_path": "data/output_packages/package-20260821-185316/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "notes": "包 status=complete、0 missing（清单层面），仅 1 个 URDF 文件，mesh 依赖未打包。URDF 本体真实（github 源），但模型不可加载"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P4_FORMAT",
+  "failure_reason": "命中真实 Kinova 7-DoF URDF（github），但 9 个关键 STL 网格文件未随包落盘，URDF 解析失败、模型不可用",
+  "notes": "与 ms_009 req_000 同源问题：github URDF 源的 mesh 依赖未自动收集打包，validate 报 error 但包仍 status=complete、0 missing，清单层面掩盖不可用性。URDF 外部资源依赖收集是普遍缺口。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

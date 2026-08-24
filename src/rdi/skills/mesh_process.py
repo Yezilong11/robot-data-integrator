@@ -9,6 +9,7 @@
 """
 
 import io
+import json
 import warnings
 import zipfile
 from typing import Any
@@ -138,6 +139,21 @@ class MeshSkill(BaseSkill):
             ``StandardResult``，失败时 ``success=False``、``data=None``，不抛异常
         """
         fmt = self._infer_fmt(kwargs)
+        # fetch 显式降级的 metadata JSON（无真实 mesh）：按 Day2 fmt=json 降级消费
+        # 契约装配为可用结果并标记 is_fallback（PASS_WITH_FALLBACK 语义）
+        if fmt == "json":
+            metadata = self._parse_metadata_json(data)
+            if metadata is not None:
+                return StandardResult(
+                    success=True,
+                    canonical_format=_CANONICAL_FORMAT,
+                    data=metadata,
+                    completeness_pct=60.0,
+                    confidence_score=0.6,
+                    data_source_quality="fallback",
+                    is_fallback=True,
+                    warnings=["Mesh 不可用，返回元数据（fetch 显式降级）"],
+                )
         try:
             mesh = self._load_zip_mesh(data) if fmt == "zip" else self.parse(data, fmt)
             # trimesh 对损坏输入常返回空 mesh（0 面）而非抛错，视作解析失败
@@ -175,6 +191,19 @@ class MeshSkill(BaseSkill):
             completeness_pct=100.0,
             warnings=warnings_list,
         )
+
+    @staticmethod
+    def _parse_metadata_json(data: bytes) -> dict[str, Any] | None:
+        """解析 fetch 降级的 metadata JSON；非 metadata payload 返回 None。"""
+        try:
+            decoded = json.loads(data.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            return None
+        if not isinstance(decoded, dict) or not (
+            "dataset_id" in decoded or "reason" in decoded or "source" in decoded
+        ):
+            return None
+        return decoded
 
     def validate(self, result: StandardResult) -> ValidationReport:
         """校验 Mesh 处理结果：水密性与面数。

@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_ycb_003",
+  "input": "获取 YCB 数据集中的马克杯（mug）mesh 模型",
+  "executor": "D",
+  "executed_at": "2026-08-20T17:30:41",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "mesh"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "description": "YCB mug 的 3D 网格模型",
+          "priority": "required",
+          "expected_format": "STL",
+          "object_name": "mug"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "stl",
+        "data_size_bytes": 561284,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/ACE_Coffee_Mug_Kristen_16_oz_cup/tip/files/meshes/model.obj",
+        "quality": "unknown",
+        "is_fallback": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "ycb 源级检索超时（60.00s = per_req_timeout/3）后降级 google_scanned，命中 ACE_Coffee_Mug_Kristen_16_oz_cup（model.obj 548KB → 转为 STL），1 文件落盘，0 缺失、0 校验问题；置信度 1.0/完整度 100",
+        "fallback_reason": "ycb 源级检索超时（>60.00s = per_req_timeout/3），显式降级走 google_scanned"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_required",
+      "errors_detail": [],
+      "warnings_detail": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-173041",
+      "manifest_path": "data/output_packages/package-20260820-173041/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": true,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-172925-f0753e34，包 package-20260820-173041）。YCB mug mesh 请求：ycb 源级检索超时（60s）后显式降级 google_scanned，命中 ACE_Coffee_Mug_Kristen_16_oz_cup 的 mesh（model.obj→STL 548KB），1 文件、0 缺失、0 校验问题，置信度 1.0/完整度 100。与 ss_ycb_001/002（banana/apple 全源失败）对比，mug 因 google_scanned 有对应杯具收录而成功降级；YCB 适配器已知目标列表覆盖不全仍是根因（P3/P5 类）。判定 PASS_WITH_FALLBACK。",
+  "reviewer": null,
+  "reviewed_at": null
+}

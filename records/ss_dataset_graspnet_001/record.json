@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_dataset_graspnet_001",
+  "input": "获取 GraspNet 数据集中某个物体的点云与标注（中文）",
+  "executor": "F",
+  "executed_at": "2026-08-22T19:09:53+08:00",
+  "completed_at": "2026-08-22T19:09:57.330632",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "dataset",
+  "priority": "P2",
+  "variant": "中文（点云）",
+  "expected": {
+    "req_types": [
+      "dataset"
+    ],
+    "sources": [
+      "graspnet"
+    ],
+    "formats": [
+      "npz",
+      "json"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：获取 GraspNet 数据集中某个物体的点云与标注（中文）"
+  },
+  "source_package": {
+    "package_id": "package-20260822-190957",
+    "run_id": "20260822-190953-70f4b10d",
+    "manifest_path": "data/output_packages/package-20260822-190957/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-190957",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "huggingface",
+        "status": "metadata_only_or_missing_file",
+        "format": "DatasetSummary",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.85,
+        "completeness": 75,
+        "downloaded": false,
+        "file_count": 1,
+        "output_paths": [
+          "resources/req_000.json"
+        ],
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "notes": "manifest 仅有摘要/元数据，未落盘可直接使用的数据文件。"
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 2,
+      "runtime_check": "not_recorded",
+      "missing_items": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-190957",
+      "manifest_path": "data/output_packages/package-20260822-190957/manifest.json",
+      "package_id": "package-20260822-190957",
+      "run_id": "20260822-190953-70f4b10d",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "files": [
+        "resources/req_000.json"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.85,
+        "avg_completeness": 75
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T19:09:57.330632] assemble_package: 生成数据包 package-20260822-190957，落盘 1 个文件，缺失 0 项",
+      "[2026-08-22T19:09:57.330632] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-190957 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-190957 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_FORMAT",
+  "failure_reason": "实际仅得到 Hugging Face GraspNet 摘要元数据，未下载点云/NPZ 或标注文件，不能视为完整数据集交付。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:09:57.330632，run_id=20260822-190953-70f4b10d，包 package-20260822-190957）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 实际仅得到 Hugging Face GraspNet 摘要元数据，未下载点云/NPZ 或标注文件，不能视为完整数据集交付。",
+  "reviewer": null,
+  "reviewed_at": null
+}

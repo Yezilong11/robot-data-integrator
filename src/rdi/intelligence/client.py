@@ -6,8 +6,10 @@
 ``LLMUnavailableError``；结构化输出的 JSON 解析失败抛 ``LLMParseError``。
 """
 
+import json
+import re
 import time
-from typing import Any, TypeVar, cast
+from typing import Any, TypeVar, cast, get_args, get_origin
 
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
@@ -40,6 +42,14 @@ class LLMClient:
         self._model = model if model is not None else settings.llm_model
         self._max_retries = max_retries if max_retries is not None else settings.llm_max_retries
         self._temperature = temperature if temperature is not None else settings.llm_temperature
+        # API Key 缺失时抛 LLMUnavailableError（而非让 OpenAI SDK 抛原始报错），
+        # 使上层降级逻辑能统一捕获。
+        if not self._api_key:
+            raise LLMUnavailableError(
+                "LLM API Key 未配置（settings.llm_api_key 为空，请检查 .env 的 LLM_API_KEY）",
+                model=self._model,
+                retry_count=0,
+            )
         # SDK 自带 max_retries=2 会与我们的手写重试叠加，故关闭内置重试
         self._client = OpenAI(
             api_key=self._api_key,
@@ -71,11 +81,44 @@ class LLMClient:
         try:
             return schema.model_validate_json(raw)
         except PydanticValidationError as e:
+            normalized = self._split_list_fields(raw, schema)
+            if normalized is not None:
+                try:
+                    return schema.model_validate_json(normalized)
+                except PydanticValidationError:
+                    pass  # 拆分后仍失败，走原降级路径
             raise LLMParseError(
                 f"LLM 返回的 JSON 不符合 schema: {e}; raw={raw[:200]}",
                 model=self._model,
                 retry_count=0,
             ) from e
+
+    @staticmethod
+    def _split_list_fields(raw: str, schema: type[T]) -> str | None:
+        """P1-C：把 list[str] 字段的字符串输出拆分为数组后重组 JSON。
+
+        qwen-max 等模型对 ``keywords: [\"...\"]`` 常输出 ``"apple,banana"``
+         字符串导致 pydantic 校验失败；命中 schema 中类型为 list[str] 的字段时
+         按 ``[，,、;;；\\s]+`` 拆分重试一次（仍失败走原降级）。无 list[str] 字段、
+        JSON 无法解析或没有可拆分字段时返回 None。
+        """
+        try:
+            obj = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+        changed = False
+        for name, field in schema.model_fields.items():
+            args = get_args(field.annotation)
+            if get_origin(field.annotation) is not list or not args or args[0] is not str:
+                continue
+            val = obj.get(name)
+            if not isinstance(val, str):
+                continue
+            parts = [p.strip() for p in re.split(r"[，,、;;；\s]+", val) if p.strip()]
+            if parts:
+                obj[name] = parts
+                changed = True
+        return json.dumps(obj, ensure_ascii=False) if changed else None
 
     @staticmethod
     def _build_messages(prompt: str, system: str | None) -> list[dict[str, str]]:
@@ -123,7 +166,7 @@ class LLMClient:
                         model=self._model,
                         retry_count=attempt,
                     )
-                return content
+                return str(content)
             except OpenAIError as e:
                 last_err = e
                 if attempt < self._max_retries:

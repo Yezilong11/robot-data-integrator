@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_kinova_002",
+  "input": "获取 Kinova Gen3 Lite 机械臂 URDF，并确认其自由度",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:29:51+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['robot_urdf']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "format": "urdf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 robot_urdf 命中非题设源 github（Joajibola/Kinova-Gen3-lite），经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 github（urdf，quality=fallback，is_fallback=true），url=https://raw.githubusercontent.com/Joajibola/Kinova-Gen3-lite-robot-visualisation-with-rviz/main/kortex_description/urdf/kortex.urdf",
+        "data_url": "https://raw.githubusercontent.com/Joajibola/Kinova-Gen3-lite-robot-visualisation-with-rviz/main/kortex_description/urdf/kortex.urdf"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 3,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=3（提示级：完整度 90%、外部资源缺失提示、LLM 审查建议），无 error"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-162509",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-162509\\manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "CanonicalRobot",
+          "source_url": "https://raw.githubusercontent.com/Joajibola/Kinova-Gen3-lite-robot-visualisation-with-rviz/main/kortex_description/urdf/kortex.urdf",
+          "is_fallback": false,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 3120
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.9,
+        "avg_completeness": 90.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项（已同步前端运行包 package-20260821-162509）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=获取 Kinova Gen3 Lite 机械臂 URDF，并确认其自由度，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260821-102918-b0865a7a；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-161258；package 已同步前端运行包 package-20260821-162214；package 已同步前端运行包 package-20260821-162509",
+  "reviewer": null,
+  "reviewed_at": null
+}

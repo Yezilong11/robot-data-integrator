@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_arxiv_003",
+  "input": "检索 robot grasping 仿真的论文",
+  "executor": "C",
+  "executed_at": "2026-08-15T08:26:30",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/arch-langgraph",
+    "git_commit": "C 执行环境（commit 未提供）"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "paper"
+      ],
+      "vs_expected": "match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "source": "arxiv.org",
+        "quality": "fallback",
+        "error": null,
+        "error_type": "none",
+        "format": "json",
+        "is_fallback": true,
+        "status": "success",
+        "req_type": "PAPER",
+        "fallback_reason": "源未产出真实数据文件，显式降级（元数据/summary）"
+      }
+    ],
+    "validate": {
+      "errors": 3,
+      "warnings": 0,
+      "runtime_check": "not_applicable"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082640",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": 0,
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260815-082640/manifest.json",
+      "missing_items_count": 0,
+      "fallback_explicit": true
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/intermediate/01_parse_goal.png",
+      "desc": "中间态-目标输入"
+    },
+    {
+      "file": "screenshots/intermediate/02_retrieve.png",
+      "desc": "中间态-进度展示"
+    },
+    {
+      "file": "screenshots/intermediate/03_validate.png",
+      "desc": "中间态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/intermediate/04_package.png",
+      "desc": "中间态-数据包审查"
+    },
+    {
+      "file": "screenshots/final/01_parse_goal.png",
+      "desc": "最终态-目标输入"
+    },
+    {
+      "file": "screenshots/final/02_retrieve.png",
+      "desc": "最终态-进度展示"
+    },
+    {
+      "file": "screenshots/final/03_validate.png",
+      "desc": "最终态-校验与缺失项"
+    },
+    {
+      "file": "screenshots/final/04_package.png",
+      "desc": "最终态-数据包审查"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "Day3-C 重跑（项目优化后）。"
+}

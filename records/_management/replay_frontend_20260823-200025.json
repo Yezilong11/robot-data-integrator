@@ -1,0 +1,890 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-23T20:00:25",
+    "elapsed_total_sec": 2471.4,
+    "summary": {
+      "total": 48,
+      "pass": 7,
+      "pass_with_fallback": 0,
+      "fail": 41,
+      "run_failed": 0,
+      "strict_pass_rate_pct": 14.6,
+      "usable_rate_pct": 14.6
+    }
+  },
+  "results": {
+    "ss_github_003": {
+      "case_id": "ss_github_003",
+      "target": "检索 YCB 抓取数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 2 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 2,
+      "validation_error_count": 2,
+      "run_status": "运行完成",
+      "elapsed_sec": 272.6
+    },
+    "ss_github_004": {
+      "case_id": "ss_github_004",
+      "target": "检索抓取策略权重仓库",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 211.5
+    },
+    "ss_github_005": {
+      "case_id": "ss_github_005",
+      "target": "检索机械臂关节数据集",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 170.5
+    },
+    "ss_huggingface_001": {
+      "case_id": "ss_huggingface_001",
+      "target": "检索 robot grasp dataset",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 147.9
+    },
+    "ss_huggingface_002": {
+      "case_id": "ss_huggingface_002",
+      "target": "检索 ACT 机器人操作策略",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 184.4
+    },
+    "ss_huggingface_004": {
+      "case_id": "ss_huggingface_004",
+      "target": "检索 robot manipulation 数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 341.3
+    },
+    "ss_huggingface_005": {
+      "case_id": "ss_huggingface_005",
+      "target": "检索灵巧操作策略权重",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 181.2
+    },
+    "ss_zenodo_001": {
+      "case_id": "ss_zenodo_001",
+      "target": "检索 robot grasp dataset",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 172.3
+    },
+    "ss_zenodo_002": {
+      "case_id": "ss_zenodo_002",
+      "target": "检索机械臂关节数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 173.3
+    },
+    "ss_zenodo_003": {
+      "case_id": "ss_zenodo_003",
+      "target": "检索机器人操作仿真数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 271.8
+    },
+    "ss_zenodo_004": {
+      "case_id": "ss_zenodo_004",
+      "target": "检索机械臂力觉传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 146.1
+    },
+    "ss_zenodo_005": {
+      "case_id": "ss_zenodo_005",
+      "target": "检索抓取姿态标注数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 165.8
+    },
+    "ss_dexgrasp_001": {
+      "case_id": "ss_dexgrasp_001",
+      "target": "获取 banana 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 255.5
+    },
+    "ss_dexgrasp_002": {
+      "case_id": "ss_dexgrasp_002",
+      "target": "获取 apple 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 2 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 2,
+      "validation_error_count": 2,
+      "run_status": "运行完成",
+      "elapsed_sec": 349.7
+    },
+    "ss_dexgrasp_003": {
+      "case_id": "ss_dexgrasp_003",
+      "target": "获取 mug 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 38.0
+    },
+    "ss_dexgrasp_004": {
+      "case_id": "ss_dexgrasp_004",
+      "target": "获取 bottle 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_dexgrasp_005": {
+      "case_id": "ss_dexgrasp_005",
+      "target": "获取 scissors 的 DexGrasp 抓取文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ss_graspnet_001": {
+      "case_id": "ss_graspnet_001",
+      "target": "检索 GraspNet 数据集",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 144.9
+    },
+    "ss_graspnet_002": {
+      "case_id": "ss_graspnet_002",
+      "target": "获取 banana 的单个 grasp 文件",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 262.5
+    },
+    "ss_ycb_004": {
+      "case_id": "ss_ycb_004",
+      "target": "获取 banana 的 grasp 数据",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 159.1
+    },
+    "ss_ycb_005": {
+      "case_id": "ss_ycb_005",
+      "target": "获取 mug 的 grasp 数据",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 253.3
+    },
+    "ss_graspnet_003": {
+      "case_id": "ss_graspnet_003",
+      "target": "获取 GraspNet-1Billion 中物体 camera_0 的抓取数据",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 167.2
+    },
+    "ss_graspnet_004": {
+      "case_id": "ss_graspnet_004",
+      "target": "我要做抓取规划，帮我找 GraspNet 数据集的抓取标签",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 2 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 2,
+      "validation_error_count": 2,
+      "run_status": "运行完成",
+      "elapsed_sec": 242.9
+    },
+    "ss_graspnet_005": {
+      "case_id": "ss_graspnet_005",
+      "target": "获取 GraspNet-1Billion 数据集的说明和目录结构",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 173.5
+    },
+    "ss_huggingface_006": {
+      "case_id": "ss_huggingface_006",
+      "target": "帮我找 Hugging Face 上的机器人操作数据集（中文描述）",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 263.6
+    },
+    "ss_zenodo_006": {
+      "case_id": "ss_zenodo_006",
+      "target": "帮我找 Zenodo 上机器人抓取数据集（中文描述）",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 123.3
+    },
+    "ss_dexgrasp_006": {
+      "case_id": "ss_dexgrasp_006",
+      "target": "帮我找 DexGraspNet 数据集的抓取标注（中文描述）",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 37.3
+    },
+    "ss_zenodo_007": {
+      "case_id": "ss_zenodo_007",
+      "target": "Find a robotic arm joint sensor dataset on Zenodo",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 163.6
+    },
+    "ss_sensor_github_001": {
+      "case_id": "ss_sensor_github_001",
+      "target": "帮我找 GitHub 上的机械臂关节力矩传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 153.7
+    },
+    "ss_sensor_github_002": {
+      "case_id": "ss_sensor_github_002",
+      "target": "Find joint position/velocity sensor log data on GitHub",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 161.3
+    },
+    "ss_sensor_zenodo_001": {
+      "case_id": "ss_sensor_zenodo_001",
+      "target": "帮我找 Zenodo 上的 IMU 传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 152.2
+    },
+    "ss_sensor_zenodo_002": {
+      "case_id": "ss_sensor_zenodo_002",
+      "target": "Find a force-torque sensor dataset for a robotic gripper on Zenodo",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 162.0
+    },
+    "ss_policy_hf_001": {
+      "case_id": "ss_policy_hf_001",
+      "target": "获取一个 Hugging Face 上的机械臂抓取策略模型权重",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 248.5
+    },
+    "ss_policy_github_001": {
+      "case_id": "ss_policy_github_001",
+      "target": "Find a GitHub repo releasing a learned manipulation policy checkpoint",
+      "category": "policy",
+      "expected_req_types": [
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 228.3
+    },
+    "ss_grasp_ycb_001": {
+      "case_id": "ss_grasp_ycb_001",
+      "target": "获取 YCB 数据集中马克杯的抓取标注",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 238.2
+    },
+    "ss_grasp_dexgrasp_002": {
+      "case_id": "ss_grasp_dexgrasp_002",
+      "target": "获取 DexGraspNet 中 bowl 的抓取文件（中文）",
+      "category": "grasp",
+      "expected_req_types": [
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 299.6
+    },
+    "ss_dataset_hf_002": {
+      "case_id": "ss_dataset_hf_002",
+      "target": "Find a robot manipulation dataset with action labels on Hugging Face",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 241.4
+    },
+    "ss_dataset_graspnet_001": {
+      "case_id": "ss_dataset_graspnet_001",
+      "target": "获取 GraspNet 数据集中某个物体的点云与标注（中文）",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 189.2
+    },
+    "ms_001": {
+      "case_id": "ms_001",
+      "target": "Franka Panda grasps YCB banana in MuJoCo",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 53.3
+    },
+    "ms_002": {
+      "case_id": "ms_002",
+      "target": "我想在 MuJoCo 里用 Franka Panda 机器人抓取 YCB 香蕉",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 91,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 163.5
+    },
+    "ms_004": {
+      "case_id": "ms_004",
+      "target": "UR5 with Robotiq 2F-85 grasps YCB apple",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    },
+    "ms_006": {
+      "case_id": "ms_006",
+      "target": "用 Franka 在 MuJoCo 里抓取香蕉（无 YCB 关键词）",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 91,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 139.5
+    },
+    "ms_007": {
+      "case_id": "ms_007",
+      "target": "抓取 YCB 香蕉（未指定仿真器）",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "mesh",
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 246.6
+    },
+    "ms_009": {
+      "case_id": "ms_009",
+      "target": "Kinova Gen3 grasps YCB bottle in MuJoCo",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 26,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 255.6
+    },
+    "ms_010": {
+      "case_id": "ms_010",
+      "target": "用 Franka Panda 抓取 YCB 马克杯（无仿真器指定）",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "mesh",
+        "grasp"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 21,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 91.4
+    },
+    "ms_013": {
+      "case_id": "ms_013",
+      "target": "用 Franka Panda 在 MuJoCo 里执行抓取，并加载一个策略模型权重",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "robot_urdf",
+        "sim_config",
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 19.9
+    },
+    "ms_014": {
+      "case_id": "ms_014",
+      "target": "找一个机械臂抓取策略的开源代码并加载其 Hugging Face 权重",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "code",
+        "policy_model"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 1 个 ERROR"
+      ],
+      "file_count": 2,
+      "missing_count": 1,
+      "validation_error_count": 1,
+      "run_status": "运行完成",
+      "elapsed_sec": 270.6
+    },
+    "ms_015": {
+      "case_id": "ms_015",
+      "target": "结合 Zenodo 传感器数据与 GitHub 代码做机械臂力控",
+      "category": "end_to_end",
+      "expected_req_types": [
+        "sensor_data",
+        "code"
+      ],
+      "ok": true,
+      "verdict": "FAIL",
+      "reasons": [
+        "validation_issues 含 2 个 ERROR"
+      ],
+      "file_count": 1,
+      "missing_count": 2,
+      "validation_error_count": 2,
+      "run_status": "运行完成",
+      "elapsed_sec": 285.0
+    }
+  }
+}

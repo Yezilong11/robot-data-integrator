@@ -1,0 +1,92 @@
+{
+  "case_id": "ss_google_scanned_002",
+  "input": "获取 Google Scanned Objects 中的水壶（kettle）mesh 模型",
+  "executed_at": "2026-08-17T08:16:00",
+  "thread_id": "20260817-081548-cd95ce61",
+  "run_id": "20260817-081548-cd95ce61",
+  "package_id": "package-20260817-081600",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "MESH"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "mesh",
+          "description": "Google Scanned Objects 中的水壶（kettle）3D 网格模型",
+          "expected_format": "obj",
+          "object_name": "kettle"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "google_scanned",
+        "elapsed_seconds": 12.0,
+        "data_format": "stl",
+        "data_size": 416284,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/Threshold_Porcelain_Teapot_White/tip/files/meshes/model.obj"
+      }
+    ],
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-081600",
+      "package_id": "package-20260817-081600",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "files": [
+        {
+          "path": "objects/req_000.stl",
+          "format": "stl",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 1.0,
+          "completeness": 100.0
+        }
+      ],
+      "runtime_check": {}
+    },
+    "validation_issues": [],
+    "runtime_check": {},
+    "missing_items": [],
+    "tree": "package-20260817-081600\n- checksums.txt\n- manifest.json\n- provenance.log\n- objects\n  - req_000.stl\n- units.json"
+  },
+  "loadability": {
+    "package_dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260817-081600",
+    "checks": {
+      "urdf": {
+        "status": "not_applicable"
+      },
+      "mesh": {
+        "status": "passed",
+        "detail": "1/1 trimesh 可加载；主体网格 watertight（4160 verts/8320 faces），另含 2 个退化小三角面片（3 verts/2 faces），整体 is_watertight=False"
+      }
+    },
+    "files": [
+      "checksums.txt",
+      "manifest.json",
+      "objects/req_000.stl",
+      "provenance.log",
+      "units.json"
+    ]
+  }
+}

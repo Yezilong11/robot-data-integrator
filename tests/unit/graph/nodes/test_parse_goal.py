@@ -14,7 +14,11 @@ import logging
 
 import pytest
 
-from rdi.graph.nodes.parse_goal import _extract_object_name_from_text, _normalize_datareq
+from rdi.graph.nodes.parse_goal import (
+    _dedupe_requirements,
+    _extract_object_name_from_text,
+    _normalize_datareq,
+)
 from rdi.models import DataReq, DataReqType, Priority
 
 
@@ -276,3 +280,108 @@ def test_normalize_new_types_do_not_misclassify_existing() -> None:
     # GRASP 描述含"轨迹"（抓取姿态）不应被 TEACHING_TRAJECTORY 转走
     g = _req("grasp pose 轨迹数据", None, DataReqType.GRASP)
     assert _normalize_datareq(g).req_type == DataReqType.GRASP
+
+
+# ─── D4: _dedupe_requirements 重复需求去重 ───
+
+
+def _req_full(
+    req_type: DataReqType,
+    description: str,
+    object_name: str = "",
+) -> DataReq:
+    """构造带 req_id/object_name 的 DataReq（用于去重测试）。"""
+    return DataReq(
+        req_id="req_000",
+        req_type=req_type,
+        description=description,
+        priority=Priority.REQUIRED,
+        object_name=object_name,
+    )
+
+
+def test_dedupe_merges_same_type_same_object() -> None:
+    """同一目标内相同 (req_type, object_name) 的重复需求合并为 1 条，保留第一条。"""
+    reqs = [
+        _req_full(DataReqType.ROBOT_URDF, "Franka Panda 机器人 URDF 描述文件"),
+        _req_full(DataReqType.MESH, "YCB blocks 的 3D 网格模型", object_name="blocks"),
+        _req_full(DataReqType.ROBOT_URDF, "Franka Panda 的 URDF（重复生成）"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 2
+    assert [r.req_type for r in out] == [DataReqType.ROBOT_URDF, DataReqType.MESH]
+    assert out[0].description == "Franka Panda 机器人 URDF 描述文件"  # 保留第一条
+    # 去重后 req_id 重编号为连续
+    assert [r.req_id for r in out] == ["req_000", "req_001"]
+
+
+def test_dedupe_keeps_different_objects() -> None:
+    """不同物体的同类型需求（banana/apple GRASP）不应被合并。"""
+    reqs = [
+        _req_full(DataReqType.GRASP, "YCB banana 的抓取姿态数据", object_name="banana"),
+        _req_full(DataReqType.GRASP, "YCB apple 的抓取姿态数据", object_name="apple"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 2
+
+
+def test_dedupe_keeps_different_types() -> None:
+    """不同类型需求（ROBOT_URDF + MESH + SIM_CONFIG）全部保留。"""
+    reqs = [
+        _req_full(DataReqType.ROBOT_URDF, "UR5 机器人 URDF 模型"),
+        _req_full(DataReqType.MESH, "YCB mug 的 3D 网格模型", object_name="mug"),
+        _req_full(DataReqType.SIM_CONFIG, "PyBullet 仿真场景配置"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 3
+    assert [r.req_id for r in out] == ["req_000", "req_001", "req_002"]
+
+
+def test_dedupe_object_name_case_insensitive() -> None:
+    """object_name 大小写不敏感：'Banana' 与 'banana' 视为同一物体。"""
+    reqs = [
+        _req_full(DataReqType.MESH, "Banana 的 mesh", object_name="Banana"),
+        _req_full(DataReqType.MESH, "banana 的 mesh", object_name="banana"),
+    ]
+    out = _dedupe_requirements(reqs)
+    assert len(out) == 1
+
+
+# ─── F 审计：POLICY_MODEL / SENSOR_DATA 强词兜底（修复 CODE/DATASET 抢占） ───
+
+
+@pytest.mark.parametrize(
+    ("description", "expected"),
+    [
+        # POLICY_MODEL：含"权重/仓库"等词，不应被 CODE 的"仓库"吸走
+        ("检索抓取策略权重仓库", DataReqType.POLICY_MODEL),
+        ("检索策略权重", DataReqType.POLICY_MODEL),
+        ("获取模型权重文件", DataReqType.POLICY_MODEL),
+        ("policy weight 仓库", DataReqType.POLICY_MODEL),
+        # SENSOR_DATA：含"关节/传感器"等词，不应被 DATASET 的"数据集"吸走
+        ("检索机械臂关节数据", DataReqType.SENSOR_DATA),
+        ("检索机械臂关节数据集", DataReqType.SENSOR_DATA),
+        ("获取关节角度数据", DataReqType.SENSOR_DATA),
+        ("力觉传感器数据", DataReqType.SENSOR_DATA),
+    ],
+)
+def test_normalize_audit_policy_sensor_strong_keywords(
+    description: str,
+    expected: DataReqType,
+) -> None:
+    """F 审计：LLM 把策略权重/关节数据误判为 CODE/DATASET 时，强词兜底修正。"""
+    out = _normalize_datareq(_req(description, None, DataReqType.CODE))
+    assert out.req_type == expected
+
+
+def test_normalize_audit_no_misclassify_existing() -> None:
+    """F 审计不回归：新增强词不误伤既有类型。"""
+    # "robot grasp dataset"（DATASET 题）不含策略权重/关节词 → 仍 DATASET
+    d = _req("retrieve robot grasp dataset", None, DataReqType.CODE)
+    assert _normalize_datareq(d).req_type == DataReqType.DATASET
+    # 抓取策略（GRASP 语义）无"权重/仓库"词 → 不转 POLICY_MODEL
+    g = _req("抓取姿态数据", None, DataReqType.GRASP)
+    assert _normalize_datareq(g).req_type == DataReqType.GRASP
+    # "传感器代码"（CODE 语义）无"关节数据"整词 → 不转 SENSOR_DATA
+    c = _req("机械臂传感器读取代码", None, DataReqType.CODE)
+    assert _normalize_datareq(c).req_type == DataReqType.CODE

@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_franka_002",
+  "input": "我需要 Franka Panda 的完整 URDF 模型，包含碰撞网格与视觉网格",
+  "executor": "D",
+  "executed_at": "2026-08-20T15:42:25",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "robot_urdf"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 的完整 URDF 模型，包含碰撞网格与视觉网格",
+          "priority": "required",
+          "expected_format": "URDF"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "franka",
+        "status": "success",
+        "elapsed_seconds": 25.9,
+        "format": "urdf",
+        "data_size_bytes": 11043,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "franka 适配器命中 erwincoumans/pybullet_robots（jsdelivr CDN）panda.urdf，随包抓齐 18 个 OBJ mesh（含 visual 与 collision 网格）共 19 文件；置信度/完整度 0.8/80（2 条 warning）",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_required",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%",
+        "req_000: 置信度不足 0.80"
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-154225",
+      "manifest_path": "data/output_packages/package-20260820-154225/manifest.json",
+      "status": "complete",
+      "file_count": 19,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-154145-93882e05，包 package-20260820-154225）。franka 适配器命中 pybullet_robots panda.urdf（含 visual+collision 网格），19 文件全量落盘、0 缺失、0 error；仅 2 条 warning（置信度/完整度 0.8/80），判定 PASS。",
+  "reviewer": null,
+  "reviewed_at": null
+}

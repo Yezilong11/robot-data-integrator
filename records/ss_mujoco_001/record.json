@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mujoco_001",
+  "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:07:55",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "sim_config"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置文件",
+          "priority": "required",
+          "expected_format": "XML"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sim_config",
+        "source": "mujoco",
+        "status": "success",
+        "elapsed_seconds": 62.2,
+        "format": "xml",
+        "data_size_bytes": 819,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "mujoco 适配器命中 google-deepmind/mujoco_menagerie franka_emika_panda 场景：scene.xml（819B）+ panda.xml（14.4KB）+ 67 个 STL mesh 资产，共 69 文件全量落盘",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_required",
+      "errors_detail": [],
+      "warnings_detail": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-160755",
+      "manifest_path": "data/output_packages/package-20260820-160755/manifest.json",
+      "status": "complete",
+      "file_count": 69,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-160641-37794e59，包 package-20260820-160755）。mujoco_menagerie Franka Panda 场景直连命中（scene.xml + panda.xml + 67 STL，69 文件），0 缺失、0 校验问题，quality=real、无降级，判定 PASS。",
+  "reviewer": null,
+  "reviewed_at": null
+}

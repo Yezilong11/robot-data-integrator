@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_code_hf_001",
+  "input": "Find a Hugging Face Space/Repo with robot grasping inference code",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:36:05+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "code"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['code']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "code",
+        "source": "github",
+        "status": "success",
+        "format": "markdown",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 code 命中非题设源 github，经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 github（markdown，quality=fallback，is_fallback=true），url=https://github.com/huggingface/agents-course/blob/main/README.md"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-191120",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-191120\\manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "CodeRepoSummary",
+          "source_url": "https://github.com/huggingface/agents-course/blob/main/README.md",
+          "is_fallback": true,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 5538
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项（已同步前端运行包 package-20260821-191120）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=Find a Hugging Face Space/Repo with robot grasping inference code，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260821-103454-a3def014；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-191120",
+  "reviewer": null,
+  "reviewed_at": null
+}

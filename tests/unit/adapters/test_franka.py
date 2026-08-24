@@ -84,6 +84,24 @@ class TestFrankaAdapter:
         assert f"仅收录 {len(_FALLBACK_MODELS)}" in exc_info.value.message
 
     @pytest.mark.asyncio
+    async def test_search_fallback_robot_generic_word_does_not_match(self) -> None:
+        """D4 回归：泛词 "机器人" 不得经描述子串误命中 Franka。
+
+        emika_panda 描述"协作机器人"含 "机器人"，原实现 `query_lower in
+        description` 让任意带独立 "机器人" query（如 Kinova 类请求）误命中
+        Franka Panda。收紧后应抛 AdapterCatalogError（未收录）。
+        """
+        adapter = FrankaAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.FRANKA.value
+            )
+            with pytest.raises(AdapterCatalogError):
+                await adapter.search("机器人")
+            with pytest.raises(AdapterCatalogError):
+                await adapter.search("URDF")
+
+    @pytest.mark.asyncio
     async def test_fetch_primary_success(self) -> None:
         """路径 A 成功：mock _download_bytes 返回数据，format 为 urdf。"""
         adapter = FrankaAdapter()
@@ -224,7 +242,7 @@ class TestFrankaAdapter:
                 adapter,
                 "_download_xml_with_assets",
                 new_callable=AsyncMock,
-                return_value={},
+                return_value=({}, []),
             ),
         ):
             raw_primary = await adapter._fetch_primary("panda")

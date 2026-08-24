@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-24T06:16:20",
+    "elapsed_total_sec": 151.7
+  },
+  "results": {
+    "ss_zenodo_004": {
+      "case_id": "ss_zenodo_004",
+      "target": "检索机械臂力觉传感器数据",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": false,
+      "error": "api/resume 失败: [WinError 10054] 远程主机强迫关闭了一个现有的连接。",
+      "elapsed_sec": 151.5
+    }
+  }
+}

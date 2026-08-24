@@ -6,7 +6,7 @@ Skill，把 ``RawData.data`` 字节解析标准化为 ``ParsedItem``；处理失
 Skill 时装配 ``MissingItem``。``data_requirements`` 缺失某 ``req_id`` 时由原始
 数据格式兜底推断 ``req_type``，推断失败则跳过并记 warning。
 
-返回 state 字段：``parsed_data`` / ``missing_items`` / ``provenance``。
+返回 state 字段：``parsed_data`` / ``missing_items`` / ``provenance`` / ``semantic_map``。
 """
 
 import os
@@ -16,7 +16,10 @@ from typing import Any
 
 import numpy as np
 
+# noqa: I001 — 复用 assemble 的打包命名（req_id → 文件名），避免双份清洗逻辑漂移
+from rdi.graph.nodes.assemble import _safe_filename
 from rdi.graph.state import SystemState
+from rdi.intelligence.schemas import SemanticConvention
 from rdi.logging import get_logger
 from rdi.models import (
     DataReq,
@@ -114,19 +117,31 @@ def _normalize_for_checkpoint(item: ParsedItem) -> ParsedItem:
 def _build_sim_config_context(
     requirements: list[DataReq], parsed_data: dict[str, ParsedItem]
 ) -> dict[str, Any]:
-    """为 sim_config 构建上下文：从已成功解析的项中提取 URDF/Mesh 输出路径。"""
+    """为 sim_config 构建上下文：从已成功解析的项中提取 URDF/Mesh 输出路径。
+
+    D4 修复（资源名回写一致性）：MeshSkill 的 ``output_path`` 用原始 item_id
+    （如 ``objects/ACE_Coffee_Mug_Kristen_16_oz_cup.stl``），而 assemble 节点按
+    ``{subdir}/{_safe_filename(req_id)}{ext}`` 实际落盘（如 ``objects/req_001.stl``）。
+    若沿用 ``output_path``，生成的降级 MJCF 引用的资源名与包内实际文件名不一致，
+    MuJoCo 运行时验证报 'Error opening file ...'（ms_003 req_003 资源引用未解析
+    根因）。此处显式构造与落盘一致的 mesh 相对路径，并把 mesh 字节一并传入，
+    使 SIM_CONFIG 项的 assets 携带该引用（validate 的临时目录运行时验证可解析）。
+    """
     context: dict[str, Any] = {}
-    type_to_key = {
-        DataReqType.ROBOT_URDF: "urdf_path",
-        DataReqType.MESH: "mesh_path",
-    }
     for req in requirements:
-        key = type_to_key.get(req.req_type)
-        if key is None:
-            continue
-        parsed = parsed_data.get(req.req_id)
-        if parsed and parsed.output_path:
-            context[key] = parsed.output_path
+        if req.req_type == DataReqType.ROBOT_URDF:
+            parsed = parsed_data.get(req.req_id)
+            if parsed and parsed.output_path:
+                context["urdf_path"] = parsed.output_path
+        elif req.req_type == DataReqType.MESH:
+            parsed = parsed_data.get(req.req_id)
+            if parsed is None:
+                continue
+            # 与 assemble 的 _serialize_item_data 分支一致：MESH 归一化后为 STL bytes
+            mesh_path = f"objects/{_safe_filename(req.req_id)}.stl"
+            context["mesh_path"] = mesh_path
+            if isinstance(parsed.data, bytes):
+                context["mesh_bytes"] = parsed.data
     return context
 
 
@@ -174,6 +189,10 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
     parsed_data: dict[str, ParsedItem] = {}
     missing_items: list[MissingItem] = []
     provenance: list[str] = []
+    # D2: LLM 语义统一 —— 未知数据集约定经 LLM 识别后按 req_id 登记（assemble 落盘 semantic_map.json）
+    semantic_map: dict[str, SemanticConvention] = {}
+    # D2: 语义统一的 LLM 决策调用记录，装配进 state.llm_usage（成功与降级都记录）
+    llm_usage_entries: dict[str, dict[str, Any]] = {}
 
     # 预先解析/推断所有 req_id，避免多遍循环重复记录跳过日志
     resolved: dict[str, DataReq] = {}
@@ -211,6 +230,9 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
         start = time.monotonic()
         outcome = registry.process_retrieval_result(result, req, context=context)
         elapsed = time.monotonic() - start
+        usage = getattr(outcome, "llm_usage", None)
+        if usage:
+            llm_usage_entries[req_id] = {**usage, "req_id": req_id}
         skill = registry.get_skill(req.req_type)
         skill_name = skill.skill_name if skill is not None else "no-skill"
         if isinstance(outcome, ParsedItem):
@@ -219,6 +241,15 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
             provenance.append(
                 f"[{now.isoformat()}] parse_convert: {skill_name} 处理 {req_id} → 成功"
             )
+            # D2: 该 req 的语义约定由 LLM 识别 → 登记 state.semantic_map 供 assemble 落盘
+            sc = getattr(outcome, "semantic_convention", None)
+            if sc:
+                convention = SemanticConvention.model_validate(sc)
+                semantic_map[req_id] = convention
+                provenance.append(
+                    f"[{now.isoformat()}] parse_convert: {skill_name} 处理 {req_id} "
+                    f"→ 语义由 LLM 识别（{convention.semantic_type}）"
+                )
         else:
             missing_items.append(outcome)
             status = "missing"
@@ -251,10 +282,28 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
 
     # 第二遍：解析 sim_config，传入已成功解析的 URDF/Mesh 路径
     sim_config_context = _build_sim_config_context(requirements, parsed_data)
+    mesh_path = sim_config_context.get("mesh_path")
+    mesh_bytes = sim_config_context.get("mesh_bytes")
     for req_id, result in retrieval_results.items():
         req = resolved.get(req_id)
         if req is None or req.req_type != DataReqType.SIM_CONFIG:
             continue
+        # D4 修复：把 MESH 项的字节注入 SIM_CONFIG 的 assets（键为落盘一致的
+        # 相对路径）。降级 MJCF 引用该 mesh，注入后 validate 的临时目录运行时
+        # 验证能解析引用（runtime_check skipped → passed），数据包自包含。
+        if mesh_path and mesh_bytes and result.data is not None:
+            result = result.model_copy(
+                update={
+                    "data": result.data.model_copy(
+                        update={
+                            "assets": {
+                                **(result.data.assets or {}),
+                                mesh_path: mesh_bytes,
+                            }
+                        }
+                    )
+                }
+            )
         _process_one(req_id, result, context=sim_config_context)
 
     logger.info(
@@ -267,4 +316,6 @@ def node_parse_convert(state: SystemState) -> dict[str, Any]:
         "parsed_data": parsed_data,
         "missing_items": missing_items,
         "provenance": provenance,
+        "semantic_map": semantic_map,
+        "llm_usage": list(llm_usage_entries.values()),
     }

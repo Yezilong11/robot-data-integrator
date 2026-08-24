@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ms_011",
+  "input": "Allegro dexterous hand manipulates YCB cup in Isaac Sim",
+  "executor": "F",
+  "executed_at": "2026-08-22T19:10:04+08:00",
+  "completed_at": "2026-08-22T19:13:52.682320",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "multi_source",
+  "category": "end_to_end",
+  "priority": "P2",
+  "variant": null,
+  "expected": {
+    "req_types": [
+      "robot_urdf",
+      "mesh",
+      "sim_config"
+    ],
+    "sources": [
+      "allegro",
+      "ycb",
+      "isaac"
+    ],
+    "formats": [
+      "urdf",
+      "obj",
+      "stl",
+      "python",
+      "mjcf",
+      "xml"
+    ],
+    "min_files": 3,
+    "notes": "题目要求：Allegro dexterous hand manipulates YCB cup in Isaac Sim"
+  },
+  "source_package": {
+    "package_id": "package-20260822-191352",
+    "run_id": "20260822-191004-1f4dfedd",
+    "manifest_path": "data/output_packages/package-20260822-191352/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-191352",
+    "package_status": "failed"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "sim_config"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "allegro",
+        "status": "success",
+        "format": "CanonicalRobot",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 1,
+        "completeness": 100,
+        "downloaded": true,
+        "file_count": 12,
+        "output_paths": [
+          "robots/req_000.urdf",
+          "robots/meshes/visual/base_link.obj",
+          "robots/meshes/visual/link_0.0.obj",
+          "robots/meshes/visual/link_1.0.obj",
+          "robots/meshes/visual/link_2.0.obj",
+          "robots/meshes/visual/link_3.0.obj",
+          "robots/meshes/visual/link_tip.obj",
+          "robots/meshes/collision/link_tip.obj",
+          "robots/meshes/visual/link_12.0_right.obj",
+          "robots/meshes/visual/link_13.0.obj",
+          "robots/meshes/visual/link_14.0.obj",
+          "robots/meshes/visual/link_15.0.obj"
+        ],
+        "data_url": "https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900/robots/hands/allegro_hand/allegro_hand_right.urdf",
+        "notes": null
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "sim_config",
+        "source": "huggingface",
+        "status": "metadata_only_or_missing_file",
+        "format": "CanonicalGrasp",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60,
+        "downloaded": false,
+        "file_count": 1,
+        "output_paths": [
+          "grasps/req_002.json"
+        ],
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "notes": "manifest 仅有摘要/元数据，未落盘可直接使用的数据文件。"
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success_with_fallback",
+        "format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80,
+        "downloaded": true,
+        "file_count": 1,
+        "output_paths": [
+          "sim_config/req_003.py"
+        ],
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "notes": null
+      }
+    ],
+    "validate": {
+      "errors": 7,
+      "warnings": 7,
+      "runtime_check": "not_run",
+      "missing_items": [
+        {
+          "req_id": "req_001",
+          "reason": "ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup mesh STL'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup 3D model mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup google_scanned mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup graspnet mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup 杯子 mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup mesh STL'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup 3D model mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup google_scanned mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup graspnet mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup 杯子 mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'cup'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '杯子'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'mesh'（有源但未收录）",
+          "alternatives": []
+        }
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-191352",
+      "manifest_path": "data/output_packages/package-20260822-191352/manifest.json",
+      "package_id": "package-20260822-191352",
+      "run_id": "20260822-191004-1f4dfedd",
+      "status": "failed",
+      "file_count": 14,
+      "missing_items_count": 1,
+      "fallback_explicit": true,
+      "files": [
+        "robots/req_000.urdf",
+        "robots/meshes/visual/base_link.obj",
+        "robots/meshes/visual/link_0.0.obj",
+        "robots/meshes/visual/link_1.0.obj",
+        "robots/meshes/visual/link_2.0.obj",
+        "robots/meshes/visual/link_3.0.obj",
+        "robots/meshes/visual/link_tip.obj",
+        "robots/meshes/collision/link_tip.obj",
+        "robots/meshes/visual/link_12.0_right.obj",
+        "robots/meshes/visual/link_13.0.obj",
+        "robots/meshes/visual/link_14.0.obj",
+        "robots/meshes/visual/link_15.0.obj",
+        "grasps/req_002.json",
+        "sim_config/req_003.py"
+      ],
+      "missing_items": [
+        {
+          "req_id": "req_001",
+          "reason": "ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup mesh STL'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup 3D model mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup google_scanned mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup graspnet mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB cup 杯子 mesh'（有源但未收录）；ycb: 该源仅收录 20 个已知目标，未收录 'YCB'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup mesh STL'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup 3D model mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup google_scanned mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup graspnet mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB cup 杯子 mesh'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'YCB'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'cup'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 '杯子'（有源但未收录）；graspnet: 该源仅收录 2 个已知目标，未收录 'mesh'（有源但未收录）",
+          "alternatives": []
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 4,
+        "fulfilled": 14,
+        "missing": 1,
+        "validation_issues": 7,
+        "avg_confidence": 0.9571428571428572,
+        "avg_completeness": 95.71428571428571
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T19:13:52.682320] assemble_package: 生成数据包 package-20260822-191352，落盘 14 个文件，缺失 1 项",
+      "[2026-08-22T19:13:52.682320] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-191352 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-191352 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "Allegro URDF 与 IsaacLab 配置落盘，但 YCB cup mesh 缺失；多源需求 1 项缺失，不能作为完整端到端包。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:13:52.682320，run_id=20260822-191004-1f4dfedd，包 package-20260822-191352）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 Allegro URDF 与 IsaacLab 配置落盘，但 YCB cup mesh 缺失；多源需求 1 项缺失，不能作为完整端到端包。",
+  "reviewer": null,
+  "reviewed_at": null
+}

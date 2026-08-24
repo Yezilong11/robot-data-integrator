@@ -94,7 +94,7 @@ class TestGoogleScannedAdapter:
 
     @pytest.mark.asyncio
     async def test_google_scanned_fetch_metadata_when_no_mesh(self) -> None:
-        """Task 3 修订后：文件树无支持格式时返回 metadata JSON，不抛异常。"""
+        """D3 修复：文件树无支持格式时抛 AdapterError（携带 zip 引用），让检索循环继续下一候选源。"""
         adapter = GoogleScannedAdapter()
         file_tree_info = {
             "file_tree": [
@@ -102,17 +102,17 @@ class TestGoogleScannedAdapter:
                 {"path": "/textures/foo.png"},
             ]
         }
-        with patch.object(adapter, "_request", new_callable=AsyncMock, return_value=file_tree_info):
-            raw = await adapter.fetch("ACE_Coffee_Mug")
-        assert raw.source == DataSource.GOOGLE_SCANNED
-        assert raw.format == "json"
-        payload = __import__("json").loads(raw.data)
-        assert payload["item_id"] == "ACE_Coffee_Mug"
-        assert "mesh" in payload["reason"]
+        with (
+            patch.object(adapter, "_request", new_callable=AsyncMock, return_value=file_tree_info),
+            pytest.raises(AdapterError) as exc_info,
+        ):
+            await adapter.fetch("ACE_Coffee_Mug")
+        assert "zip 供手动下载" in exc_info.value.message
+        assert "ACE_Coffee_Mug.zip" in exc_info.value.message
 
     @pytest.mark.asyncio
     async def test_google_scanned_fetch_metadata_when_download_fails(self) -> None:
-        """Task 3 修订后：单个 mesh 下载失败时返回明确 metadata。"""
+        """D3 修复：单个 mesh 下载失败时抛 AdapterError（携带 zip 引用），不返回误导性的 metadata JSON。"""
         adapter = GoogleScannedAdapter()
         file_tree_info = {
             "file_tree": [
@@ -127,12 +127,11 @@ class TestGoogleScannedAdapter:
                 new_callable=AsyncMock,
                 side_effect=AdapterError("timeout", source="google_scanned"),
             ),
+            pytest.raises(AdapterError) as exc_info,
         ):
-            raw = await adapter.fetch("ACE_Coffee_Mug")
-        assert raw.format == "json"
-        payload = __import__("json").loads(raw.data)
-        assert payload["mesh_path"] == "/meshes/cup.obj"
-        assert "下载失败" in payload["reason"]
+            await adapter.fetch("ACE_Coffee_Mug")
+        assert "mesh 文件下载失败" in exc_info.value.message
+        assert "zip 供手动下载" in exc_info.value.message
 
     @pytest.mark.asyncio
     async def test_google_scanned_fetch_returns_trimesh_loadable_obj(self) -> None:
@@ -157,23 +156,21 @@ class TestGoogleScannedAdapter:
 
     @pytest.mark.asyncio
     async def test_google_scanned_metadata_fallback_sets_reference(self) -> None:
-        """P0-4：文件树获取失败触发 _metadata_fallback，携带 RawReference（zip 地址）。
+        """D3 修复：文件树获取失败时抛 AdapterError，错误信息携带 zip 下载地址供手动获取。
 
-        reference.download_hint 应指向完整 zip 下载地址，供用户手动获取。
+        不再返回 metadata JSON（原实现会让 MeshSkill 解析失败且检索循环误判"成功"），
+        zip 引用通过异常 message 带出。
         """
         adapter = GoogleScannedAdapter()
-        with patch.object(
-            adapter,
-            "_request",
-            new_callable=AsyncMock,
-            side_effect=AdapterError("network down", source="google_scanned"),
+        with (
+            patch.object(
+                adapter,
+                "_request",
+                new_callable=AsyncMock,
+                side_effect=AdapterError("network down", source="google_scanned"),
+            ),
+            pytest.raises(AdapterError) as exc_info,
         ):
-            raw = await adapter.fetch("ACE_Coffee_Mug")
-        assert raw.format == "json"
-        assert raw.reference is not None
-        assert raw.reference.url.endswith(".zip")
-        assert ".zip" in raw.reference.download_hint
-        assert raw.reference.reason
-        # payload 中的 zip_url 与 reference.url 一致
-        payload = __import__("json").loads(raw.data)
-        assert payload["zip_url"] == raw.reference.url
+            await adapter.fetch("ACE_Coffee_Mug")
+        assert "zip 供手动下载" in exc_info.value.message
+        assert ".zip" in exc_info.value.message

@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_graspnet_003",
+  "input": "获取 GraspNet-1Billion 中物体 camera_0 的抓取数据",
+  "executor": "A",
+  "executed_at": "2026-08-22T08:57:00",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5fffe267879a6b262cbf67715dbc5ee765a4af9c",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset",
+        "grasp"
+      ],
+      "vs_expected": "partial",
+      "notes": "parse_goal 生成 2 条需求（dataset+grasp），题设 expected.req_types=[grasp] 仅 1 条 → 多解析出 dataset（题设外补充需求）"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "graspnet",
+        "status": "error",
+        "elapsed_seconds": null,
+        "format": "DatasetSummary",
+        "data_size_bytes": 106,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.85,
+        "completeness": 75.0,
+        "error": "空摘要占位（title/description 全空，download_url=null，file_tree=[]），106B 无实际内容",
+        "error_type": "P2_RETRIEVE",
+        "note": "题设外补充需求（expected 仅 grasp）；数据源 GraspNet 的 HF 镜像 DravenALG/GraspNet-1Billion，仅产出空 DatasetSummary 占位",
+        "fallback_reason": null
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "grasp",
+        "source": "graspnet",
+        "status": "error",
+        "elapsed_seconds": null,
+        "format": "json",
+        "data_size_bytes": 116,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "error": "未找到真实 npz，返回元数据占位 JSON",
+        "error_type": "P2_RETRIEVE",
+        "note": "核心需求 grasp 降级产出 116B 元数据占位（内容仅 {metadata: {source: GraspNet, reason: 返回元数据 JSON（未找到真实 npz）}}），无抓取姿态；题设 expected.format=[npz,json]，产出格式不符",
+        "fallback_reason": "graspnet 未检索到 camera_0 真实抓取 npz，降级为元数据 JSON"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 5,
+      "runtime_check": "not_run",
+      "notes": "validate: 检查 2 项解析数据、0 项缺失，发现 5 个问题（0 error, 5 warning）；manifest validation_issues=5（两 req 均为占位、置信度/完整度低）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-085700",
+      "manifest_path": "data/output_packages/package-20260822-085700/manifest.json",
+      "status": "complete",
+      "file_count": 2,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "manifest status=complete、missing=0，但落盘 2 个数据文件均为占位 json（resources/req_000.json 106B 空摘要 + grasps/req_001.json 116B 元数据占位）+ quality_explanation.md；avg_confidence 0.725、avg_completeness 67.5"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest"
+    },
+    {
+      "file": "screenshots/01_manifest_2.png",
+      "desc": "manifest-2"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log"
+    },
+    {
+      "file": "screenshots/04_req_file.png",
+      "desc": "req-status"
+    },
+    {
+      "file": "screenshots/05_explorer.png",
+      "desc": "explorer-panel"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "核心需求 grasp 未检索到 GraspNet-1Billion camera_0 真实抓取数据（expected.format=[npz,json]），降级产出 116B 元数据占位 json（无抓取姿态）；另多解析出 dataset 需求产出 106B 空摘要占位",
+  "notes": "二轮新题执行（2026-08-22，run_id=20260822-085548-ea5bf835，包 package-20260822-085700，前端真实流程 qwen3.7-plus）。题设（ss_graspnet_003）为 GraspNet-1Billion camera_0 抓取数据（single_source/grasp，source=[graspnet]，expected.req_types=[grasp]、format=[npz,json]）。parse_goal 多解析出 dataset（题设外，vs_expected=partial）；grasp 检索失败降级 116B 元数据占位（is_fallback=true），dataset 空摘要占位 → P2_RETRIEVE。validate 5 warning。历史经验含 graspnet success（1.3-56s）但本次未产出真实数据。",
+  "reviewer": null,
+  "reviewed_at": null,
+  "error": "空摘要占位（title/description 全空，download_url=null，file_tree=[]），106B 无实际内容；未找到真实 npz，返回元数据占位 JSON"
+}

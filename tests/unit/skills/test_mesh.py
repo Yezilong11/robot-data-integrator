@@ -127,6 +127,19 @@ def test_parse_invalid_bytes_degrades() -> None:
     assert result.data is None
 
 
+def test_metadata_json_degrades_to_fallback() -> None:
+    """fetch 显式降级的 metadata JSON → success + is_fallback（PASS_WITH_FALLBACK 语义）。"""
+    import json
+
+    payload = {"dataset_id": "ycb-1", "reason": "no single mesh file available"}
+    result = MeshSkill().process(json.dumps(payload).encode("utf-8"), fmt="json", name="banana")
+    assert result.success is True
+    assert result.is_fallback is True
+    assert result.data_source_quality == "fallback"
+    assert result.data is not None
+    assert any("元数据" in w for w in result.warnings)
+
+
 # ─── validate 契约 ───
 
 

@@ -10,11 +10,13 @@
 - validate 对 framework=unknown 的 WARNING
 """
 
+import json
 from pathlib import Path
 
 import pytest
 
 from rdi.models.common import Severity, StandardResult
+from rdi.models.retrieval import RawReference
 from rdi.skills.policy_interface import (
     PolicyInterfaceDoc,
     PolicyInterfaceSkill,
@@ -42,6 +44,14 @@ def test_metadata_only_dir_generates_doc() -> None:
     assert result.completeness_pct < 100.0
     assert result.confidence_score < 1.0
     assert any("权重未本地化" in w or "推断" in w for w in result.warnings)
+
+
+def test_metadata_only_marks_is_fallback() -> None:
+    """仅元数据（无真实权重本地化）→ is_fallback=True（fetch 降级消费契约）。"""
+    result = PolicyInterfaceSkill().process(b"", model_dir=str(_MINIMAL_META))
+    assert result.success is True
+    assert result.is_fallback is True
+    assert result.data_source_quality == "fallback"
 
 
 # ─── Scenario: 框架检测 ───
@@ -160,6 +170,39 @@ def test_manifest_bytes_path() -> None:
     assert any("权重未本地化" in w for w in result.warnings)
 
 
+def test_manifest_bytes_downloaded_flag_not_fallback() -> None:
+    """审查问题 1：data 含 downloaded=true（adapter 成功下载分支）→ 非 fallback、保留 meta。
+
+    成功下载的权重经 adapter 同构为 meta JSON（downloaded=true + download_guide），
+    skill 不得再按"权重未本地化"降级，防止已交付数据被标为降级。
+    """
+    data = json.dumps(
+        {
+            "modelId": "foo/bar",
+            "tags": ["policy"],
+            "downloaded": True,
+            "file_path": "model.safetensors",
+            "file_size": 4096,
+            "download_guide": {
+                "status": "not_downloaded",
+                "reason": "权重已自动下载",
+                "source_file_url": "https://huggingface.co/foo/bar/resolve/main/model.safetensors",
+                "method_hint": "wget https://huggingface.co/foo/bar/resolve/main/model.safetensors -O model.safetensors",
+                "file_size_bytes": 4096,
+            },
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+    result = PolicyInterfaceSkill().process(data)
+    assert result.success is True
+    assert result.is_fallback is False
+    assert result.data_source_quality != "fallback"
+    doc: PolicyInterfaceDoc = result.data
+    assert doc.model_id == "foo/bar"
+    assert doc.download_guide is not None
+    assert any("已自动下载" in w for w in result.warnings)
+
+
 # ─── output_path 通过 name kwarg 生成 ───
 
 
@@ -170,12 +213,80 @@ def test_output_path_from_name_kwarg() -> None:
     assert result.output_path == "policies/test-policy.json"
 
 
-# ─── 损坏 model_info.json 字节 → 失败 ───
+# ─── 损坏 model_info.json 字节 → 降级 ───
 
 
 def test_corrupt_manifest_bytes_fails() -> None:
-    """data 为非法 JSON → success=False，不抛异常。"""
+    """data 为非法 JSON（fetch 降级场景）→ 降级成功 is_fallback（PASS_WITH_FALLBACK）。"""
     result = PolicyInterfaceSkill().process(b"not json{")
-    assert result.success is False
-    assert result.data is None
-    assert any("解析失败" in e for e in result.errors)
+    assert result.success is True
+    assert result.is_fallback is True
+    assert result.data_source_quality == "fallback"
+    assert result.data is not None
+    assert any("降级" in w for w in result.warnings)
+
+
+class TestPolicyFallbackDownloadGuide:
+    """降级产物 download_guide 结构扩展（Task 8）。"""
+
+    def test_manifest_json_with_inline_download_guide(self) -> None:
+        """data 内嵌 download_guide（hf adapter 元数据 payload）→ doc.download_guide 复用。"""
+        guide = {
+            "status": "not_downloaded",
+            "reason": "超过 max_fetch_bytes 自动下载上限",
+            "source_file_url": "https://huggingface.co/foo/model/resolve/main/model.safetensors",
+            "file_size_bytes": 999,
+            "method_hint": (
+                "wget https://huggingface.co/foo/model/resolve/main/model.safetensors "
+                "-O model.safetensors"
+            ),
+            "selected_by": "ext=.safetensors; signals=model",
+            "alternatives": [],
+        }
+        payload = {
+            "id": "foo",
+            "modelId": "foo/model",
+            "tags": ["test"],
+            "downloaded": False,
+            "download_guide": guide,
+        }
+        result = PolicyInterfaceSkill().process(json.dumps(payload).encode("utf-8"), name="p1")
+        assert result.is_fallback is True
+        doc = result.data
+        assert doc.download_guide == guide
+        assert doc.model_id == "foo/model"
+
+    def test_metadata_only_with_reference_kwarg(self) -> None:
+        """目录元数据路径 + registry 透传 reference → doc.download_guide 由引用构造。"""
+        ref = RawReference(
+            url="https://huggingface.co/foo/model/resolve/main/model.safetensors",
+            local_path="model.safetensors",
+            file_size=1234,
+            reason="超过自动下载上限",
+        )
+        result = PolicyInterfaceSkill().process(b"", model_dir=str(_MINIMAL_META), reference=ref)
+        assert result.is_fallback is True
+        doc = result.data
+        assert doc.download_guide is not None
+        assert doc.download_guide["status"] == "not_downloaded"
+        assert doc.download_guide["source_file_url"] == ref.url
+        assert doc.download_guide["file_size_bytes"] == 1234
+        assert doc.download_guide["method_hint"].startswith("wget ")
+
+    def test_corrupt_json_with_reference_kwarg(self) -> None:
+        """JSON 非法降级 + reference → doc.download_guide 由引用构造。"""
+        ref = RawReference(
+            url="https://huggingface.co/foo/model/resolve/main/model.safetensors",
+            file_size=1234,
+            reason="超过自动下载上限",
+        )
+        result = PolicyInterfaceSkill().process(b"not json{", name="p", reference=ref)
+        assert result.is_fallback is True
+        assert result.data.download_guide["source_file_url"] == ref.url
+        assert result.data.download_guide["method_hint"].startswith("wget ")
+
+    def test_fallback_without_reference_keeps_none(self) -> None:
+        """无引用 → doc.download_guide 为 None（不附加指引，不回归）。"""
+        result = PolicyInterfaceSkill().process(b"not json{", name="p")
+        assert result.is_fallback is True
+        assert result.data.download_guide is None

@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_franka_005",
+  "input": "Franka Panda URDF with 7-DOF joint limits",
+  "executor": "F",
+  "executed_at": "2026-08-22T19:04:33+08:00",
+  "completed_at": "2026-08-22T19:05:12.069639",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "robot_urdf",
+  "priority": "P2",
+  "variant": "英文组合",
+  "expected": {
+    "req_types": [
+      "robot_urdf"
+    ],
+    "sources": [
+      "franka"
+    ],
+    "formats": [
+      "urdf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：Franka Panda URDF with 7-DOF joint limits"
+  },
+  "source_package": {
+    "package_id": "package-20260822-190512",
+    "run_id": "20260822-190433-5968f602",
+    "manifest_path": "data/output_packages/package-20260822-190512/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-190512",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "franka_mirror",
+        "status": "success",
+        "format": "urdf",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.8,
+        "completeness": 80,
+        "downloaded": true,
+        "file_count": 19,
+        "output_paths": [
+          "robots/req_000.urdf",
+          "robots/meshes/collision/link0.obj",
+          "robots/meshes/visual/link1.obj",
+          "robots/meshes/collision/link1.obj",
+          "robots/meshes/visual/link2.obj",
+          "robots/meshes/collision/link2.obj",
+          "robots/meshes/visual/link3.obj",
+          "robots/meshes/collision/link3.obj",
+          "robots/meshes/visual/link4.obj",
+          "robots/meshes/collision/link4.obj",
+          "robots/meshes/visual/link5.obj",
+          "robots/meshes/collision/link5.obj",
+          "robots/meshes/visual/link6.obj",
+          "robots/meshes/collision/link6.obj",
+          "robots/meshes/collision/link7.obj",
+          "robots/meshes/visual/hand.obj",
+          "robots/meshes/collision/hand.obj",
+          "robots/meshes/visual/finger.obj",
+          "robots/meshes/collision/finger.obj"
+        ],
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "notes": null
+      }
+    ],
+    "validate": {
+      "errors": 3,
+      "warnings": 3,
+      "runtime_check": "not_recorded",
+      "missing_items": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-190512",
+      "manifest_path": "data/output_packages/package-20260822-190512/manifest.json",
+      "package_id": "package-20260822-190512",
+      "run_id": "20260822-190433-5968f602",
+      "status": "complete",
+      "file_count": 19,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "files": [
+        "robots/req_000.urdf",
+        "robots/meshes/collision/link0.obj",
+        "robots/meshes/visual/link1.obj",
+        "robots/meshes/collision/link1.obj",
+        "robots/meshes/visual/link2.obj",
+        "robots/meshes/collision/link2.obj",
+        "robots/meshes/visual/link3.obj",
+        "robots/meshes/collision/link3.obj",
+        "robots/meshes/visual/link4.obj",
+        "robots/meshes/collision/link4.obj",
+        "robots/meshes/visual/link5.obj",
+        "robots/meshes/collision/link5.obj",
+        "robots/meshes/visual/link6.obj",
+        "robots/meshes/collision/link6.obj",
+        "robots/meshes/collision/link7.obj",
+        "robots/meshes/visual/hand.obj",
+        "robots/meshes/collision/hand.obj",
+        "robots/meshes/visual/finger.obj",
+        "robots/meshes/collision/finger.obj"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 19,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T19:05:12.069639] assemble_package: 生成数据包 package-20260822-190512，落盘 19 个文件，缺失 0 项",
+      "[2026-08-22T19:05:12.069639] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-190512 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-190512 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": "Franka 专用源未直接命中，实际使用 PyBullet robots/jsDelivr 镜像；URDF 与 18 个 mesh 均落盘，但 yourdfpy 未安装。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:05:12.069639，run_id=20260822-190433-5968f602，包 package-20260822-190512）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 Franka 专用源未直接命中，实际使用 PyBullet robots/jsDelivr 镜像；URDF 与 18 个 mesh 均落盘，但 yourdfpy 未安装。",
+  "reviewer": null,
+  "reviewed_at": null
+}

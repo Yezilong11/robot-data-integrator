@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_mujoco_008",
+  "input": "MuJoCo tabletop manipulation scene with a single object",
+  "executor": "F",
+  "executed_at": "2026-08-22T18:57:46+08:00",
+  "completed_at": "2026-08-22T18:57:58.366350",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "sim_config",
+  "priority": "P2",
+  "variant": "英文特定场景",
+  "expected": {
+    "req_types": [
+      "sim_config"
+    ],
+    "sources": [
+      "mujoco"
+    ],
+    "formats": [
+      "xml",
+      "mjcf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：MuJoCo tabletop manipulation scene with a single object"
+  },
+  "source_package": {
+    "package_id": "package-20260822-185758",
+    "run_id": "20260822-185746-1a3d2cc5",
+    "manifest_path": "data/output_packages/package-20260822-185758/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-185758",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success_with_fallback",
+        "format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80,
+        "downloaded": true,
+        "file_count": 1,
+        "output_paths": [
+          "sim_config/req_000.py"
+        ],
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+        "notes": null
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 2,
+      "runtime_check": "not_run",
+      "missing_items": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-185758",
+      "manifest_path": "data/output_packages/package-20260822-185758/manifest.json",
+      "package_id": "package-20260822-185758",
+      "run_id": "20260822-185746-1a3d2cc5",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "sim_config/req_000.py"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8,
+        "avg_completeness": 80
+      },
+      "notes": "manifest 存在质量校验问题，结合题目语义人工判定 verdict。"
+    },
+    "provenance": [
+      "[2026-08-22T18:57:58.366350] assemble_package: 生成数据包 package-20260822-185758，落盘 1 个文件，缺失 0 项",
+      "[2026-08-22T18:57:58.366350] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-185758 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-185758 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "实际落盘为 IsaacLab Ant Python 配置，非 MuJoCo tabletop XML/MJCF 场景。",
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T18:57:58.366350，run_id=20260822-185746-1a3d2cc5，包 package-20260822-185758）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。 实际落盘为 IsaacLab Ant Python 配置，非 MuJoCo tabletop XML/MJCF 场景。",
+  "reviewer": null,
+  "reviewed_at": null
+}

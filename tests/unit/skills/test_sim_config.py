@@ -264,3 +264,39 @@ def test_validate_success_path_clean() -> None:
     report = skill.validate(result)
     assert report.is_valid is True
     assert report.issues == []
+
+
+# ─── Scenario: fallback 引用 URDF/Mesh 路径（Task 2 场景组装接线锁定） ───
+
+
+def test_fallback_python_references_tmp_urdf_and_mesh(tmp_path: Path) -> None:
+    """fmt=python 降级产物引用 URDF/Mesh 路径，output_path 由 name 派生。
+
+    锁定当前实现行为：generate_minimal_mjcf 不读取 urdf/mesh 文件内容
+    （URDF 仅写入 XML 注释、mesh 写入 <mesh file> 引用），传真实存在的临时
+    文件路径即可验证引用正确落进 XML；output_path 由 name 派生为
+    ``sim_config/{name}.xml``。
+    """
+    skill = SimConfigSkill()
+    urdf_file = tmp_path / "panda.urdf"
+    urdf_file.write_bytes(b"<robot name='panda'/>")
+    mesh_file = tmp_path / "cup.stl"
+    mesh_file.write_bytes(b"solid cup\nendsolid cup\n")
+
+    result = skill.process(
+        b"import numpy as np\ncfg = {'name': 'scene'}\n",
+        fmt="python",
+        name="scene",
+        urdf_path=str(urdf_file),
+        mesh_path=str(mesh_file),
+    )
+
+    assert result.success is True
+    assert result.canonical_format == "mjcf"
+    assert result.is_fallback is True
+    assert result.output_path == "sim_config/scene.xml"
+    text = result.data.decode("utf-8")
+    assert str(urdf_file) in text  # URDF 参考（XML 注释）
+    assert str(mesh_file) in text  # mesh 引用（<mesh file>）
+    assert f'<mesh file="{mesh_file}" name="{mesh_file.stem}"/>' in text
+    assert f'<geom name="object_geom" type="mesh" mesh="{mesh_file.stem}"' in text

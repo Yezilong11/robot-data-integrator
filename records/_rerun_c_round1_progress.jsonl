@@ -1,0 +1,55 @@
+{"case_id": "ss_arxiv_001", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:17:43+08:00"}
+{"case_id": "ss_arxiv_001", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:19:19+08:00"}
+{"case_id": "ss_arxiv_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:19:50+08:00"}
+{"case_id": "ss_arxiv_003", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:20:19+08:00"}
+{"case_id": "ss_arxiv_004", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:20:48+08:00"}
+{"case_id": "ss_arxiv_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:21:19+08:00"}
+{"case_id": "ss_ieee_001", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:21:45+08:00"}
+{"case_id": "ss_paperswithcode_001", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:22:15+08:00"}
+{"case_id": "ss_paperswithcode_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:23:18+08:00"}
+{"case_id": "ss_paperswithcode_003", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:23:45+08:00"}
+{"case_id": "ss_github_001", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T15:24:10+08:00"}
+{"case_id": "ss_github_002", "status": "fail", "error": "LLMUnavailableError: Embedding 调用失败: Request timed out. | model=text-embedding-v3"}
+{"case_id": "ss_github_003", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:26:07+08:00"}
+{"case_id": "ss_github_004", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:26:45+08:00"}
+{"case_id": "ss_github_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:27:18+08:00"}
+{"case_id": "ss_huggingface_001", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:27:56+08:00"}
+{"case_id": "ss_huggingface_002", "status": "ok", "verdict": "FAIL", "executed_at": "2026-08-20T15:34:10+08:00"}
+{"case_id": "ss_huggingface_003", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T15:34:36+08:00"}
+{"case_id": "ss_huggingface_004", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:35:23+08:00"}
+{"case_id": "ss_huggingface_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:36:06+08:00"}
+{"case_id": "ss_zenodo_001", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:36:41+08:00"}
+{"case_id": "ss_zenodo_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:37:21+08:00"}
+{"case_id": "ss_zenodo_003", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T15:37:53+08:00"}
+{"case_id": "ss_zenodo_004", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:38:28+08:00"}
+{"case_id": "ss_zenodo_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:38:59+08:00"}
+{"case_id": "ss_graspnet_001", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T15:39:38+08:00"}
+{"case_id": "ss_graspnet_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:40:11+08:00"}
+{"case_id": "ss_dexgrasp_001", "status": "ok", "verdict": "FAIL", "executed_at": "2026-08-20T15:41:12+08:00"}
+{"case_id": "ss_dexgrasp_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:41:43+08:00"}
+{"case_id": "ss_dexgrasp_003", "status": "ok", "verdict": "FAIL", "executed_at": "2026-08-20T15:42:41+08:00"}
+{"case_id": "ss_dexgrasp_004", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:43:13+08:00"}
+{"case_id": "ss_dexgrasp_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:43:41+08:00"}
+{"case_id": "ss_ycb_004", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:44:14+08:00"}
+{"case_id": "ss_ycb_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:44:47+08:00"}
+{"case_id": "ms_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T15:46:40+08:00"}
+{"case_id": "ss_github_002", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_github_001", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_huggingface_002", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_huggingface_003", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_paperswithcode_002", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_zenodo_003", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_graspnet_001", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_dexgrasp_001", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_dexgrasp_003", "status": "fail", "error": "KeyError: 'source'"}
+{"case_id": "ss_github_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T16:02:17+08:00"}
+{"case_id": "ss_github_001", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T16:02:40+08:00"}
+{"case_id": "ss_huggingface_002", "status": "ok", "verdict": "FAIL", "executed_at": "2026-08-20T16:08:44+08:00"}
+{"case_id": "ss_huggingface_003", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T16:09:48+08:00"}
+{"case_id": "ss_paperswithcode_002", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T16:10:50+08:00"}
+{"case_id": "ss_zenodo_003", "status": "fail", "error": "LLMUnavailableError: Embedding 调用失败: Request timed out. | model=text-embedding-v3"}
+{"case_id": "ss_graspnet_001", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T16:11:49+08:00"}
+{"case_id": "ss_dexgrasp_001", "status": "ok", "verdict": "FAIL", "executed_at": "2026-08-20T16:12:54+08:00"}
+{"case_id": "ss_dexgrasp_003", "status": "ok", "verdict": "FAIL", "executed_at": "2026-08-20T16:13:59+08:00"}
+{"case_id": "ms_005", "status": "ok", "verdict": "PASS_WITH_FALLBACK", "executed_at": "2026-08-20T16:15:52+08:00"}
+{"case_id": "ss_zenodo_003", "status": "ok", "verdict": "PASS", "executed_at": "2026-08-20T16:17:17+08:00"}

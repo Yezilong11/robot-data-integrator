@@ -1,0 +1,195 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ms_010",
+  "input": "用 Franka Panda 抓取 YCB 马克杯（无仿真器指定）",
+  "executor": "E",
+  "executed_at": "2026-08-20T20:44:54+08:00",
+  "completed_at": "2026-08-20T20:46:37+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "multi_source",
+  "category": "end_to_end",
+  "priority": "P1",
+  "expected": {
+    "req_types": [
+      "robot_urdf",
+      "mesh",
+      "grasp"
+    ],
+    "sources": [
+      "franka",
+      "ycb"
+    ],
+    "formats": [
+      "urdf",
+      "obj",
+      "stl",
+      "mat"
+    ],
+    "min_files": 3
+  },
+  "source_package": {
+    "package_id": "package-20260820-204637",
+    "run_id": "20260820-204454-c7d1d803",
+    "manifest_path": "data/output_packages/package-20260820-204637/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-204637",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp"
+      ],
+      "vs_expected": "match",
+      "notes": "根据 package manifest 反推，本次运行产出 robot_urdf、mesh、grasp 三类需求，与 ms_010 expected.req_types 匹配；题目未指定仿真器，因此未生成 sim_config 符合预期。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人 URDF 描述文件",
+        "source": "github",
+        "status": "success",
+        "elapsed": null,
+        "format": "CanonicalRobot",
+        "quality": "unknown",
+        "is_fallback": true,
+        "data_url": "https://raw.githubusercontent.com/AndrejOrsula/panda_gz_moveit2/master/panda_description/urdf/panda.urdf",
+        "output_path": "robots/req_000.urdf",
+        "file_size": 20800,
+        "downloaded": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "checksum_sha256": "f52225a0534064eaa872d2d8905a600dc3b00e889ceae5ee6dab6c4637cd4c42",
+        "notes": "Franka Panda URDF 已落盘，manifest 标记 is_fallback=true；来源为 GitHub raw 链接，非 franka 官方源直取，按显式 fallback 记录。"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "description": "YCB 马克杯的 3D mesh",
+        "source": "google_scanned",
+        "status": "success",
+        "elapsed": null,
+        "format": "stl",
+        "quality": "unknown",
+        "is_fallback": true,
+        "data_url": "https://fuel.gazebosim.org/1.0/GoogleResearch/models/ACE_Coffee_Mug_Kristen_16_oz_cup/tip/files/meshes/model.obj",
+        "output_path": "objects/req_001.stl",
+        "file_size": 561284,
+        "downloaded": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "checksum_sha256": "b044bee17ac89d3fbee223de4e25cc36d216650b7b87689847e8b256ebbc8076",
+        "notes": "mesh 已落盘为 STL，source_url 为 Coffee Mug 模型，语义上与“马克杯/mug”匹配；但并非明确 YCB 官方来源，manifest 标记 is_fallback=true，按显式 fallback 记录。"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "description": "马克杯抓取姿态数据",
+        "source": "graspnet",
+        "status": "success",
+        "elapsed": null,
+        "format": "CanonicalGrasp",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://huggingface.co/datasets/DravenALG/GraspNet-1Billion",
+        "output_path": "grasps/req_002.json",
+        "file_size": 0,
+        "downloaded": false,
+        "confidence": 0.6,
+        "completeness": 60.0,
+        "checksum_sha256": "e0adf344e562fadaa70cdea908b9af206c0fc3f6a4482b665158058810578545",
+        "notes": "GraspNet 真实 NPZ/MAT 未下载，产物为 CanonicalGrasp fallback JSON；manifest 标记 is_fallback=true，可追溯。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 3,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "grasp fallback 数据完整度仅 60.0%，低于推荐阈值。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "grasp fallback 数据置信度仅 0.60，显著低于整体均值。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_002",
+          "message": "grasp manifest local_path 为空，可能导致下游执行失败。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据包基本可用但存在局部风险，所有需求均已满足，但 req_002 存在完整度、置信度和输出路径三项警告。",
+        "manifest_validation_issues": 3,
+        "avg_confidence": 0.8666666666666667,
+        "avg_completeness": 86.66666666666667
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-204637",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260820-204637\\manifest.json",
+      "package_id": "package-20260820-204637",
+      "run_id": "20260820-204454-c7d1d803",
+      "status": "complete",
+      "file_count": 4,
+      "requirement_file_count": 3,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "robots/req_000.urdf",
+        "objects/req_001.stl",
+        "grasps/req_002.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 3,
+        "fulfilled": 3,
+        "missing": 0,
+        "validation_issues": 3,
+        "avg_confidence": 0.8666666666666667,
+        "avg_completeness": 86.66666666666667
+      },
+      "notes": "package 层面 complete，3 个需求均有产物，missing_items=0；所有需求均存在显式 fallback 或 unknown quality，需要按 PASS_WITH_FALLBACK 而非纯 PASS 归档。"
+    },
+    "provenance": [
+      "2026-08-20T20:46:37.267200 assemble_package: 生成数据包 package-20260820-204637，落盘 3 个文件，缺失 0 项",
+      "2026-08-20T20:46:37.267200 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260820-204637 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260820-204637 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "本 record 根据 package-20260820-204637 的 manifest、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。ms_010 目标为 Franka Panda 抓取 YCB 马克杯（无仿真器指定），本次解析与 expected.req_types 匹配，数据包 complete，3 个需求产物均已落盘或结构化生成，missing_items=0。但 robot_urdf 来源为 GitHub fallback、mesh 为 Coffee Mug fallback 而非明确 YCB 官方源、grasp 为低置信度 CanonicalGrasp fallback JSON，因此按二轮口径判 PASS_WITH_FALLBACK。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

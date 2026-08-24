@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mujoco_006",
+  "input": "我要在 MuJoCo 里搭建 Franka 抓取场景，帮我找场景配置",
+  "executor": "D",
+  "executed_at": "2026-08-21T20:51:27+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 sim_config 需求（MuJoCo 中 Franka 抓取场景），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "sim_config",
+        "source": "mujoco",
+        "status": "error",
+        "elapsed": null,
+        "format": "mjcf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "note": "mujoco 源级检索超时（per_req_timeout/3=90s，跳过触发降级）；降级 isaac 命中 IsaacLab robots/franka.py（5.1KB mjcf，Franka Panda 机器人资产，内容正确）。注意：与一轮 ss_mujoco_001 同目标 mujoco_menagerie 场景 62s 成功对比，本次 90s 超时——mujoco 源稳定性波动"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "notes": "validation_issues=2 全为 warning：完整度 80.0% 压临界、置信度 0.8 未达 0.85。runtime_check passed（MuJoCo 加载 franka.py 一步仿真成功）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-205327",
+      "manifest_path": "data/output_packages/package-20260821-205327/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "notes": "包 status=complete、0 missing、1 文件 sim_config/req_000.py。仅 Franka 机器人资产，不含抓取物体/桌面等场景元素，完整度 80%"
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "内容正确（Franka，mjcf 可仿真），mujoco 源 90s 超时后降级 isaac 显式标记。两个观察点：① mujoco 源稳定性波动（同目标一轮 62s 成功、本次超时），重试机制可复现性差；② 交付仅为机器人资产，非完整'抓取场景'（缺物体/桌面）。题设允许 fallback 且 mjcf 在 expected 格式内，判 PASS_WITH_FALLBACK",
+  "reviewer": null,
+  "reviewed_at": null
+}

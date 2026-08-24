@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_001",
+  "input": "Franka Panda grasps YCB banana in MuJoCo",
+  "executor": "A",
+  "executed_at": "2026-08-21T22:34:04",
+  "env": {
+    "llm_model": "qwen3.7-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "5ec31d7",
+    "review_decision": "satisfied"
+  },
+  "layer": "multi_source",
+  "expected_req_types": [
+    "robot_urdf",
+    "mesh",
+    "grasp",
+    "sim_config"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "mesh",
+        "grasp",
+        "sim_config"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析成功，生成 4 条数据需求（robot_urdf/mesh/grasp/sim_config），与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "elapsed_seconds": null,
+        "format": "urdf",
+        "data_size_bytes": 20800,
+        "data_url": "https://raw.githubusercontent.com/AndrejOrsula/panda_gz_moveit2/master/panda_description/urdf/panda.urdf",
+        "quality": "unknown",
+        "is_fallback": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "franka 源级检索超时（36s），降级 github 命中 AndrejOrsula/panda_gz_moveit2 panda.urdf（CanonicalRobot，20.8KB）",
+        "fallback_reason": "franka 源级检索超时（per_req_timeout/5）"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "mesh",
+        "source": "ycb",
+        "status": "missing",
+        "elapsed_seconds": null,
+        "format": null,
+        "data_size_bytes": null,
+        "data_url": null,
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.0,
+        "completeness": 0.0,
+        "error": "YCB banana mesh 检索未命中：ycb 未收录（google_scanned 404、graspnet 未收录）",
+        "error_type": "retrieve_miss",
+        "note": "YCB banana 网格缺失：ycb 源仅收录 20 个已知目标未收录 banana（有源但未收录）；google_scanned 'Banana for Scale' 文件树 404；graspnet 仅收录 2 个已知目标未收录。0 文件落盘",
+        "fallback_reason": null
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "grasp",
+        "source": "dexgrasp",
+        "status": "missing",
+        "elapsed_seconds": null,
+        "format": null,
+        "data_size_bytes": null,
+        "data_url": null,
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 0.0,
+        "completeness": 0.0,
+        "error": "DexGraspNet pkl 反序列化失败: unpickling stack underflow",
+        "error_type": "parse_error",
+        "note": "graspnet 源级检索超时（60s）；dexgrasp 命中 pkl 但反序列化失败（unpickling stack underflow），0 文件落盘",
+        "fallback_reason": null
+      },
+      {
+        "req_id": "req_003",
+        "req_type": "sim_config",
+        "source": "mujoco",
+        "status": "success",
+        "elapsed_seconds": 71.4,
+        "format": "xml",
+        "data_size_bytes": null,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml",
+        "quality": "real",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "mujoco 适配器真实命中 mujoco_menagerie franka_emika_panda scene.xml + panda.xml + 66 个 STL/OBJ mesh assets（共 68 文件），quality=real",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 2,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "errors_detail": [],
+      "warnings_detail": [],
+      "notes": "validation_issues=2：mesh、grasp 两条必要需求缺失；runtime_check req_003 skipped（mujoco 未安装，仅 XML 语法校验）"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-224303",
+      "manifest_path": "data/output_packages/package-20260821-224303/manifest.json",
+      "status": "partial",
+      "file_count": 70,
+      "missing_items_count": 2,
+      "validation_issues_error": 2,
+      "fallback_explicit": true,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0,
+      "notes": "包 status=failed，fulfilled=70、missing=2。URDF（fallback）+ sim_config 落盘，mesh/grasp 完全缺失"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "YCB banana mesh 与抓取姿态数据均检索失败：ycb/graspnet 未收录 banana（google_scanned 404）、dexgrasp pkl 反序列化失败（unpickling stack underflow），包 status=failed、缺失 2 项必要需求",
+  "notes": "一轮复测（2026-08-21，run_id=20260821-223404-4c1099f1，包 package-20260821-224303，前端真实流程 qwen3.7-plus）。对比一轮（2026-08-17，PASS_WITH_FALLBACK）：本轮 franka 源超时降级 github 拿到 URDF（fallback）、mujoco 真实命中 sim_config，但 mesh 与 grasp 均缺失，降级为 FAIL。",
+  "reviewer": null,
+  "reviewed_at": null,
+  "error": "YCB banana mesh 检索未命中：ycb 未收录（google_scanned 404、graspnet 未收录）；DexGraspNet pkl 反序列化失败: unpickling stack underflow"
+}

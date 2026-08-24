@@ -33,11 +33,11 @@ class TestRobotiqAdapter:
         assert adapter.source == DataSource.ROBOTIQ
 
     def test_adapter_base_url(self) -> None:
-        """正常情况：base_url 设置正确（C8 修复后走 ros-industrial-attic）。"""
+        """D3 修复：base_url 默认走 jsdelivr 镜像（raw.githubusercontent 主链本环境偶发挂起）。"""
         adapter = RobotiqAdapter()
         assert (
             adapter.base_url
-            == "https://raw.githubusercontent.com/ros-industrial-attic/robotiq/45196f6558fe8ba9d89bc8a105396c68c3e7e892"
+            == "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892"
         )
 
     def test_adapter_rate_limit(self) -> None:
@@ -125,7 +125,7 @@ class TestRobotiqAdapter:
 
     @pytest.mark.asyncio
     async def test_fetch_fallback_2f_xacro_format(self) -> None:
-        """C2 修复：robotiq_2f_85 实际为 xacro，format 标记为 xacro。"""
+        """D3 修复：robotiq_2f_85 的 xacro 在 adapter 层内联展开为纯 URDF，format 标记为 urdf。"""
         adapter = RobotiqAdapter()
         fake_xacro = b'<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotiq_2f_85"/>'
         with (
@@ -139,11 +139,11 @@ class TestRobotiqAdapter:
             )
             raw = await adapter.fetch("robotiq_2f_85")
         assert raw.source == DataSource.ROBOTIQ
-        assert raw.format == "xacro"
+        assert raw.format == "urdf"
         assert raw.url.endswith(".xacro")
-        assert raw.data == fake_xacro
+        assert isinstance(raw.data, bytes) and b"robotiq_2f_85" in raw.data
         mock_primary.assert_awaited_once()
-        mock_dl.assert_awaited_once()
+        assert mock_dl.await_count >= 2  # 本体 + xacro include 展开下载
 
     @pytest.mark.asyncio
     async def test_fetch_both_paths_fail_raises(self) -> None:

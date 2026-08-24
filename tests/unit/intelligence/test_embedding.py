@@ -80,3 +80,12 @@ def test_get_embedding_uses_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
         respx.post(EMBEDDINGS_URL).mock(return_value=_ok_response())
         get_embedding("world")
         assert emb_module._embedding_client is before
+
+
+def test_local_hash_embedding_is_deterministic() -> None:
+    """Local mode supports providers such as DeepSeek without embeddings API."""
+    client = EmbeddingClient(api_key="", base_url="", model="local-hash")
+    first = client.embed("hello")
+    assert first == client.embed("hello")
+    assert first != client.embed("world")
+    assert len(first) == 32

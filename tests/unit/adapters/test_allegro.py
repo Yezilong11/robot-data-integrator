@@ -77,6 +77,53 @@ class TestAllegroAdapter:
         assert f"仅收录 {len(_FALLBACK_MODELS)}" in exc_info.value.message
 
     @pytest.mark.asyncio
+    async def test_search_fallback_kinova_query_does_not_match(self) -> None:
+        """D4 回归：Kinova 查询不得误命中 Allegro（描述含英文 "urdf" 曾导致误命中）。
+
+        原实现 query 词元与模型任一字段词元有交集即命中，带 "urdf" 的任意查询
+        （如 "kinova gen3 urdf"）会匹配 right/left 型号 → ms_003 req_000 拿到
+        Allegro 手而非 Kinova Gen3。收紧后应抛 AdapterCatalogError（未收录）。
+        """
+        adapter = AllegroAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ALLEGRO.value
+            )
+            with pytest.raises(AdapterCatalogError):
+                await adapter.search("kinova gen3 urdf")
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_urdf_token_does_not_match(self) -> None:
+        """D4 二次回归：独立 "URDF" 格式词不得经归一化子串误命中。
+
+        原 D4 收紧后，归一化子串检查的匹配文本仍含 description——"URDF" 是
+        描述 "Allegro 右手 URDF 模型" 的子串，绕过 token 收紧规则再次误命中
+        （ms_003 复测 req_000 又拿到 Allegro 手）。子串文本收紧为 id/title
+        后，"URDF" 应抛 AdapterCatalogError。
+        """
+        adapter = AllegroAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ALLEGRO.value
+            )
+            with pytest.raises(AdapterCatalogError):
+                await adapter.search("URDF")
+            with pytest.raises(AdapterCatalogError):
+                await adapter.search("机器人 URDF")
+
+    @pytest.mark.asyncio
+    async def test_search_fallback_allegro_hand_urdf_still_matches(self) -> None:
+        """D4 回归：allegro 自身查询（含通用词 urdf）仍命中（标识性 token 交集）。"""
+        adapter = AllegroAdapter()
+        with patch.object(adapter, "_scrape_html", new_callable=AsyncMock) as mock_scrape:
+            mock_scrape.side_effect = AdapterError(
+                message="primary failed", source=DataSource.ALLEGRO.value
+            )
+            results = await adapter.search("allegro hand urdf")
+        assert len(results) > 0
+        assert results[0].source == DataSource.ALLEGRO
+
+    @pytest.mark.asyncio
     async def test_fetch_v4_plain_urdf(self) -> None:
         """C2 修复：allegro_hand_v4 返回 dexsuite 已展开纯 URDF。"""
         adapter = AllegroAdapter()

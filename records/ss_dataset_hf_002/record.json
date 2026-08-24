@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_dataset_hf_002",
+  "input": "Find a robot manipulation dataset with action labels on Hugging Face",
+  "executor": "E",
+  "executed_at": "2026-08-21T09:10:23+08:00",
+  "completed_at": "2026-08-21T09:11:14+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "dataset",
+  "priority": "P2",
+  "variant": "英文（带动作标注）",
+  "expected": {
+    "req_types": [
+      "dataset"
+    ],
+    "sources": [
+      "huggingface"
+    ],
+    "formats": [
+      "json"
+    ],
+    "min_files": 1,
+    "notes": "题目明确要求 Hugging Face 上的 robot manipulation dataset，并且需要 action labels。"
+  },
+  "source_package": {
+    "package_id": "package-20260821-091114",
+    "run_id": "20260821-091023-e6b82577",
+    "manifest_path": "data/output_packages/package-20260821-091114/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-091114",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "type_match",
+      "notes": "流程形成 1 条 dataset 需求，类型和 expected.req_types 匹配；但后续检索结果没有满足 Hugging Face、robot manipulation、action labels 三个语义约束。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "description": "带动作标注的机器人操作数据集",
+        "source": "zenodo",
+        "status": "wrong_source",
+        "elapsed": null,
+        "format": "DatasetSummary",
+        "quality": "unknown",
+        "is_fallback": true,
+        "data_url": "https://zenodo.org/records/22035840",
+        "download_url": "https://zenodo.org/api/records/22035840",
+        "output_path": "resources/req_000.json",
+        "file_size": 26199,
+        "downloaded": true,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "checksum_sha256": "7e629155e002a302e18c3f8c817618cae5a94ef9f65952c3cf106f505c05c9ea",
+        "metadata": {
+          "title": "2024-04-08 Total Solar Eclipse ESID#078",
+          "source_url": "https://zenodo.org/records/22035840",
+          "top_level_keys": [
+            "title",
+            "description",
+            "download_url",
+            "file_tree",
+            "license"
+          ]
+        },
+        "notes": "实际产物是 Zenodo 上的 Eclipse Soundscapes 日食音频数据记录，不是 Hugging Face 数据集，也不是 robot manipulation/action labels 数据；manifest 的高置信度与人工语义复核结论冲突。"
+      }
+    ],
+    "validate": {
+      "errors": 3,
+      "warnings": 1,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "题目 source 限定为 Hugging Face，但实际 source_url 为 Zenodo record。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "数据主题为 Total Solar Eclipse soundscapes audio data，和 robot manipulation dataset 不匹配。"
+        },
+        {
+          "severity": "error",
+          "req_id": "req_000",
+          "message": "未发现 action labels 相关字段或说明，未满足带动作标注的要求。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "manifest quality_report 显示 validation_issues=0、confidence=1.0、completeness=100.0，但该结论未捕获来源和主题错配问题。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "quality_explanation.md 声称数据包完全可用且无风险，但人工复核发现数据源和语义均不符合题设。",
+        "manifest_validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-091114",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-091114\\manifest.json",
+      "package_id": "package-20260821-091114",
+      "run_id": "20260821-091023-e6b82577",
+      "status": "complete",
+      "file_count": 2,
+      "requirement_file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "files": [
+        "resources/req_000.json",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "notes": "package 层面 complete，且 min_files=1 的数量条件表面满足；但人工按 problem_set 的 source 与语义约束复核，产物不符合题目要求。"
+    },
+    "provenance": [
+      "2026-08-21T09:11:14.457249 assemble_package: 生成数据包 package-20260821-091114，落盘 1 个文件，缺失 0 项",
+      "2026-08-21T09:11:14.457249 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260821-091114 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260821-091114 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "题目要求 Hugging Face 上的带 action labels 的 robot manipulation dataset，但实际产物是 Zenodo 上的 Total Solar Eclipse soundscapes audio dataset，来源和主题均不符合要求。",
+  "notes": "本 record 根据 package-20260821-091114 的 manifest、resources/req_000.json、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。虽然 manifest 显示 complete 且 validation_issues=0，但人工复核发现 source_url/download_url 指向 Zenodo，标题为 2024-04-08 Total Solar Eclipse ESID#078，未体现 Hugging Face、robot manipulation 或 action labels，因此按二轮人工验收口径判 FAIL/P3_SOURCE。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

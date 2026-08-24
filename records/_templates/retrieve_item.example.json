@@ -1,0 +1,11 @@
+{
+  "req_id": "req_000",
+  "req_type": "robot_urdf",
+  "source": "franka",
+  "quality": "real",
+  "status": "success",
+  "format": "urdf",
+  "is_fallback": false,
+  "fallback_reason": null,
+  "error": null
+}

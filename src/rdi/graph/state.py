@@ -8,6 +8,12 @@
 import operator
 from typing import Annotated, Any, TypedDict
 
+from rdi.intelligence.schemas import (
+    QualityExplanation,
+    RetrievalPlan,
+    ReviewSuggestions,
+    SemanticConvention,
+)
 from rdi.models import (
     DataReq,
     GoalSpec,
@@ -58,6 +64,15 @@ class SystemState(TypedDict, total=False):
     interrupt_review: bool  # 真实流程是否在 human_review 前中断等待用户决策
     review_iteration: int  # 用户审查/修订轮次（独立于 validate 的 validate_iteration）
     local_files: dict[str, str]  # req_id → 本地文件路径（前端注入，跳过外部检索）
+
+    # ─── LLM 决策层（intelligence/decisions 写入） ───
+    retrieval_plan: dict[str, RetrievalPlan]  # key=req_id，检索策略规划结果
+    semantic_map: dict[str, SemanticConvention]  # key=req_id，语义约定
+    quality_explanation: QualityExplanation | None  # 质量报告自然语言解释
+    review_suggestions: ReviewSuggestions | None  # 审查建议
+    llm_usage: Annotated[
+        list[dict[str, Any]], operator.add
+    ]  # LLM 决策调用记录（decision/model/status/elapsed），各决策节点追加累积
 
     # ─── 元数据（各节点共享） ───
     iteration_count: int  # 历史字段，保留兼容；validate 使用 validate_iteration

@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_allegro_006",
+  "input": "Allegro hand URDF with 4-finger tactile layout",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:30:07+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['robot_urdf']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "success",
+        "format": "urdf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 robot_urdf 命中非题设源 github（simlabrobotics/allegro_hand_model_v4），经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 allegro（urdf，quality=real），url=https://raw.githubusercontent.com/dexsuite/dex-urdf/f5e7132f22108164577fea4c25ef99b5cc0e1900/robots/hands/allegro_hand/allegro_hand_right.urdf",
+        "data_url": "https://raw.githubusercontent.com/simlabrobotics/allegro_hand_model_v4/main/src/allegro_hand_model/urdf/allegro_hand_r.urdf"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-190759",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-190759\\manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "CanonicalRobot",
+          "source_url": "https://raw.githubusercontent.com/simlabrobotics/allegro_hand_model_v4/main/src/allegro_hand_model/urdf/allegro_hand_r.urdf",
+          "is_fallback": true,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 20566
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项（已同步前端运行包 package-20260821-190759）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=Allegro hand URDF with 4-finger tactile layout，verdict=PASS，retrieve=['req_000:success']，run_id=rerun-20260821-102951-ccc945ca；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-190759",
+  "reviewer": null,
+  "reviewed_at": null
+}

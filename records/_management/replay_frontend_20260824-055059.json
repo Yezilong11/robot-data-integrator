@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-24T05:53:32",
+    "elapsed_total_sec": 153.3
+  },
+  "results": {
+    "ss_github_005": {
+      "case_id": "ss_github_005",
+      "target": "检索机械臂关节数据集",
+      "category": "sensor",
+      "expected_req_types": [
+        "sensor_data"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 2,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成",
+      "elapsed_sec": 153.1
+    }
+  }
+}

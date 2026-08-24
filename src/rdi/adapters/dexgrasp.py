@@ -70,6 +70,14 @@ class DexGraspAdapter(BaseAdapter):
             "/datasets",
             params={"search": f"dexgrasp {query}", "sort": "downloads", "direction": "-1"},
         )
+        # HF 全文匹配对多词组合敏感（实测 "dexgrasp banana grasp" 组合返回 0 条），
+        # 关键词组合搜索为空时降级为只搜 "dexgrasp"，保证检索不空手而归
+        if not data:
+            data = await self._request(
+                "GET",
+                "/datasets",
+                params={"search": "dexgrasp", "sort": "downloads", "direction": "-1"},
+            )
         results: list[SearchResult] = []
         for item in data:
             item_id = item.get("id", "")

@@ -32,7 +32,9 @@ dependencies = [
     # PDF
     "pymupdf>=1.24.0",
     # 前端
-    "gradio>=4.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+    "python-multipart>=0.0.9",
     # 配置与日志
     "structlog>=24.0.0",
     "python-dotenv>=1.0.0",
@@ -90,6 +92,8 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 explicit_package_bases = true
+# 与 CI（uv run mypy src）口径一致：仅对 src 做严格类型检查，tests 由 CI 的 ruff/pytest 覆盖
+exclude = "tests/"
 
 [[tool.mypy.overrides]]
 module = "trimesh.*"
@@ -109,6 +113,11 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "lxml.*"
+ignore_missing_imports = true
+
+# mujoco 为可选依赖（runtime extra），CI 环境不安装，import 缺失由 override 放行
+[[tool.mypy.overrides]]
+module = "mujoco"
 ignore_missing_imports = true
 
 # ─── pytest 配置 ───
@@ -136,4 +145,3 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
-

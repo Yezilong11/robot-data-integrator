@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ms_013",
+  "input": "用 Franka Panda 在 MuJoCo 里执行抓取，并加载一个策略模型权重",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:39:46+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "sim_config",
+        "policy_model"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 3 条需求；题设 expected=['robot_urdf', 'sim_config', 'policy_model']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "franka",
+        "status": "success",
+        "format": "urdf",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": null,
+        "note": "真实流程命中 franka（urdf，quality=real），url=https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf"
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "format": "python",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 sim_config 命中非题设源 isaac，经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 isaac（python，quality=fallback，is_fallback=true），url=https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "policy_model",
+        "source": "github",
+        "status": "success",
+        "format": "markdown",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "核心需求 policy_model 命中非题设源 github，经兜底获取（源偏移显式标记）",
+        "note": "真实流程命中 github（markdown，quality=fallback，is_fallback=true），url=https://github.com/Aryia-Behroziuan/neurons/blob/main/README.md"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 7,
+      "runtime_check": "passed",
+      "notes": "validation_issues=7（0 error, 7 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-200015",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-200015\\manifest.json",
+      "status": "complete",
+      "file_count": 3,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "CanonicalRobot",
+          "source_url": "https://raw.githubusercontent.com/AndrejOrsula/panda_gz_moveit2/master/panda_description/urdf/panda.urdf",
+          "is_fallback": true,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 20800
+        },
+        {
+          "req_id": "req_002",
+          "path": "policies/req_002.json",
+          "format": "PolicyInterfaceDoc",
+          "source_url": "https://github.com/Aryia-Behroziuan/neurons/blob/main/README.md",
+          "is_fallback": true,
+          "completeness": 60.0,
+          "downloaded": true,
+          "size_bytes": 126
+        },
+        {
+          "req_id": "req_001",
+          "path": "sim_config/req_001.py",
+          "format": "mjcf",
+          "source_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/ant.py",
+          "is_fallback": true,
+          "completeness": 80.0,
+          "downloaded": true,
+          "size_bytes": 1772
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 3,
+        "fulfilled": 3,
+        "missing": 0,
+        "validation_issues": 5,
+        "avg_confidence": 0.7999999999999999,
+        "avg_completeness": 80.0
+      },
+      "notes": "包状态 complete，落盘 3 个文件，缺失 0 项（已同步前端运行包 package-20260821-200015）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=用 Franka Panda 在 MuJoCo 里执行抓取，并加载一个策略模型权重，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success', 'req_001:success', 'req_002:success']，run_id=rerun-20260821-103753-6d902abb；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-200015",
+  "reviewer": null,
+  "reviewed_at": null
+}

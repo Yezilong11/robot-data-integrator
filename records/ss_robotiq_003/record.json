@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_robotiq_003",
+  "input": "抓取实验要装 Robotiq 夹爪，我需要它的模型",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:34:29",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "robot_urdf"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Robotiq 2F-85 夹爪的 URDF 描述文件",
+          "priority": "required",
+          "expected_format": "URDF"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "robotiq",
+        "status": "success",
+        "elapsed_seconds": 14.5,
+        "format": "urdf",
+        "data_size_bytes": 14123,
+        "data_url": "https://cdn.jsdelivr.net/gh/ros-industrial-attic/robotiq@45196f6558fe8ba9d89bc8a105396c68c3e7e892/robotiq_2f_85_gripper_visualization/urdf/robotiq_arg2f_85_model.xacro",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 1.0,
+        "completeness": 100.0,
+        "error": null,
+        "error_type": null,
+        "note": "robotiq 适配器命中 ros-industrial-attic/robotiq（jsdelivr CDN）robotiq_arg2f_85_model.xacro：URDF（14.1KB）+ 10 个 DAE/STL mesh，共 11 文件全量落盘，无校验问题；口语化输入（'抓取实验要装 Robotiq 夹爪，我需要它的模型'）被正确解析为 Robotiq 夹爪 URDF 需求",
+        "fallback_reason": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_required",
+      "errors_detail": [],
+      "warnings_detail": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-163429",
+      "manifest_path": "data/output_packages/package-20260820-163429/manifest.json",
+      "status": "complete",
+      "file_count": 11,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": false,
+      "avg_confidence": 1.0,
+      "avg_completeness": 100.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-163353-4326480f，包 package-20260820-163429）。口语化输入被正确解析为 Robotiq 2F-85 夹爪 URDF 需求，robotiq 适配器命中（与 ss_robotiq_001/002 同源同文件），11 文件、0 缺失、0 校验问题、无降级、检索 14.5s。Robotiq 专用源命中稳定（3/3）。判定 PASS。",
+  "reviewer": null,
+  "reviewed_at": null
+}

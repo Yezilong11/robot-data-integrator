@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_franka_004",
+  "input": "帮我找 Franka Panda 的 URDF，并确认末端抓爪型号",
+  "executor": "E",
+  "executed_at": "2026-08-21T09:17:40+08:00",
+  "completed_at": "2026-08-21T09:18:13+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "未记录"
+  },
+  "layer": "single_source",
+  "category": "robot_urdf",
+  "priority": "P1",
+  "variant": "组合需求（模型+末端）",
+  "expected": {
+    "req_types": [
+      "robot_urdf"
+    ],
+    "sources": [
+      "franka"
+    ],
+    "formats": [
+      "urdf"
+    ],
+    "min_files": 1,
+    "notes": "题目要求找到 Franka Panda 的 URDF，并确认末端抓爪型号。"
+  },
+  "source_package": {
+    "package_id": "package-20260821-091813",
+    "run_id": "20260821-091740-5dce889a",
+    "manifest_path": "data/output_packages/package-20260821-091813/manifest.json",
+    "output_dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-091813",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "流程形成 1 条 robot_urdf 需求，与 ss_franka_004 expected.req_types 匹配；末端抓爪型号需要通过 URDF 内容人工复核确认。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "description": "Franka Panda 机器人 URDF 与关联 mesh",
+        "source": "franka_mirror",
+        "status": "success_with_source_warning",
+        "elapsed": null,
+        "format": "urdf",
+        "quality": "unknown",
+        "is_fallback": false,
+        "data_url": "https://cdn.jsdelivr.net/gh/erwincoumans/pybullet_robots@cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf",
+        "output_path": "robots/req_000.urdf",
+        "file_size": 11043,
+        "downloaded": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "checksum_sha256": "0f989e1e04ce34c5a5abee58f3f683ea8861a459248bbd6bb64e39ced8ba61d0",
+        "related_files": {
+          "mesh_file_count": 18,
+          "examples": [
+            "robots/meshes/visual/hand.obj",
+            "robots/meshes/collision/hand.obj",
+            "robots/meshes/visual/finger.obj",
+            "robots/meshes/collision/finger.obj"
+          ]
+        },
+        "end_effector_check": {
+          "status": "confirmed",
+          "model": "Franka Panda Hand / two-finger parallel gripper",
+          "evidence": [
+            "URDF includes link panda_hand.",
+            "URDF includes links panda_leftfinger and panda_rightfinger.",
+            "URDF includes prismatic joints panda_finger_joint1 and panda_finger_joint2.",
+            "panda_finger_joint2 mimics panda_finger_joint1, matching a coupled two-finger gripper."
+          ]
+        },
+        "notes": "URDF 和关联 mesh 已落盘；末端抓爪可由 panda_hand、panda_leftfinger、panda_rightfinger、panda_finger_joint1/2 确认。来源是 PyBullet robots 的 jsDelivr 镜像，不是 Franka 官方站点直连，因此保留来源提醒。"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 3,
+      "runtime_check": "not_applicable",
+      "issues": [
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均置信度为 0.80，低于推荐阈值 0.85。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "平均完整度为 80.0%，处于边缘阈值，需要人工复核。"
+        },
+        {
+          "severity": "warning",
+          "req_id": "req_000",
+          "message": "URDF 来源为第三方镜像 pybullet_robots/jsDelivr，而非 Franka 官方源；但题目 expected.quality 允许 real/fallback。"
+        }
+      ],
+      "quality_explanation": {
+        "summary": "数据基本可用但存在质量风险，平均置信度和完整度均处于阈值边缘。",
+        "manifest_validation_issues": 2,
+        "avg_confidence": 0.8000000000000003,
+        "avg_completeness": 80.0
+      }
+    },
+    "package": {
+      "dir": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-091813",
+      "manifest_path": "D:\\glass\\trae\\robot-data-integrator-arch-langgraph\\data\\output_packages\\package-20260821-091813\\manifest.json",
+      "package_id": "package-20260821-091813",
+      "run_id": "20260821-091740-5dce889a",
+      "status": "complete",
+      "manifest_file_entries": 20,
+      "requirement_file_count": 19,
+      "actual_package_file_count": 24,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "files": [
+        "robots/req_000.urdf",
+        "robots/meshes/collision/finger.obj",
+        "robots/meshes/collision/hand.obj",
+        "robots/meshes/collision/link0.obj",
+        "robots/meshes/collision/link1.obj",
+        "robots/meshes/collision/link2.obj",
+        "robots/meshes/collision/link3.obj",
+        "robots/meshes/collision/link4.obj",
+        "robots/meshes/collision/link5.obj",
+        "robots/meshes/collision/link6.obj",
+        "robots/meshes/collision/link7.obj",
+        "robots/meshes/visual/finger.obj",
+        "robots/meshes/visual/hand.obj",
+        "robots/meshes/visual/link1.obj",
+        "robots/meshes/visual/link2.obj",
+        "robots/meshes/visual/link3.obj",
+        "robots/meshes/visual/link4.obj",
+        "robots/meshes/visual/link5.obj",
+        "robots/meshes/visual/link6.obj",
+        "quality_explanation.md"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 19,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.8000000000000003,
+        "avg_completeness": 80.0
+      },
+      "semantic_map": {
+        "req_000": {
+          "units": "meter",
+          "coordinate_frame": "unknown",
+          "is_llm": false
+        }
+      },
+      "notes": "package 层面 complete，URDF 与 mesh 依赖均已落盘，missing_items=0。题目最小文件数 min_files=1 已满足，且末端抓爪型号已由 URDF link/joint 命名确认。"
+    },
+    "provenance": [
+      "2026-08-21T09:18:13.089438 assemble_package: 生成数据包 package-20260821-091813，落盘 19 个文件，缺失 0 项",
+      "2026-08-21T09:18:13.089438 assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "二轮证据 1：Windows 系统资源管理器打开 data/output_packages/package-20260821-091813 的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "二轮证据 2：前端 explorer 面板展示 package-20260821-091813 文件树的全屏截图（待补）"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "二轮证据 3：前端 log/provenance 面板运行日志长截图（待补）"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "本 record 根据 package-20260821-091813 的 manifest、robots/req_000.urdf、provenance.log、quality_explanation.md、semantic_map.json 和文件树生成。该 case 目标为找到 Franka Panda URDF 并确认末端抓爪型号；本次 URDF 和 18 个 mesh 文件已落盘，URDF 中可确认末端为 Franka Panda Hand 双指平行夹爪。但来源为 PyBullet robots/jsDelivr 镜像，且质量报告存在置信度与完整度边缘警告，因此按二轮口径判 PASS_WITH_FALLBACK。截图字段已按二轮 SOP 登记为 3 张，实际 png 仍需按同名文件补入 screenshots/final/。",
+  "reviewer": null,
+  "reviewed_at": null
+}

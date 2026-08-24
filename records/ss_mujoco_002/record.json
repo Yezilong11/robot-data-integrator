@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_mujoco_002",
+  "input": "获取 mujoco_menagerie 中 Franka Panda 的抓取操作场景配置",
+  "executor": "D",
+  "executed_at": "2026-08-20T16:12:57",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "layer": "single_source",
+  "expected_req_types": [
+    "sim_config"
+  ],
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "sim_config"
+      ],
+      "vs_expected": "exact",
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的抓取操作场景配置文件（XML）",
+          "priority": "required",
+          "expected_format": "XML"
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "sim_config",
+        "source": "isaac",
+        "status": "success",
+        "elapsed_seconds": 10.9,
+        "format": "mjcf",
+        "data_size_bytes": 5243,
+        "data_url": "https://raw.githubusercontent.com/isaac-sim/IsaacLab/release/3.0.0-beta2/source/isaaclab_assets/isaaclab_assets/robots/franka.py",
+        "quality": "fallback",
+        "is_fallback": true,
+        "confidence": 0.8,
+        "completeness": 80.0,
+        "error": null,
+        "error_type": null,
+        "note": "mujoco 适配器源级检索超时（90.00s = per_req_timeout/2，16:12:46 记录）后回退 isaac，命中 IsaacLab robots/franka.py（mjcf 兜底），仅 1 个资产文件、无场景 mesh 资产；runtime_check 通过（MuJoCo 加载与一步仿真成功）",
+        "fallback_reason": "mujoco 源级检索超时（>90.00s = per_req_timeout/2），显式降级走 isaac"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "passed",
+      "errors_detail": [],
+      "warnings_detail": [
+        "req_000: 完整度不足 80.0%",
+        "req_000: 置信度不足 0.80"
+      ]
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260820-161257",
+      "manifest_path": "data/output_packages/package-20260820-161257/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "validation_issues_error": 0,
+      "fallback_explicit": true,
+      "avg_confidence": 0.8,
+      "avg_completeness": 80.0
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "前端真实流程测试（2026-08-20，run_id=20260820-161102-59344423，包 package-20260820-161257）。mujoco 适配器对'抓取操作场景'检索超时（90s，per_req_timeout/2）→ 显式降级 isaac 命中 IsaacLab franka.py（mjcf 兜底，置信度 0.8/完整度 80），0 缺失、0 error、2 warning，runtime_check 通过。注意：同为目标 Franka Panda，ss_mujoco_001（仅'场景配置'）mujoco 源 62s 直连命中 69 文件，本用例（含'抓取操作'语义）mujoco 源却 90s 超时，疑因抓取场景检索逻辑更重/命中路径不同，存在检索稳定性差异（P5 类隐患）。判定 PASS_WITH_FALLBACK。",
+  "reviewer": null,
+  "reviewed_at": null
+}

@@ -6,6 +6,7 @@
 无需 API Key，直接 HTTP 下载。
 """
 
+import asyncio
 from typing import cast
 
 from rdi.adapters.base import BaseAdapter
@@ -86,6 +87,10 @@ class MuJoCoAdapter(BaseAdapter):
 
     source = DataSource.MUJOCO
 
+    # 国外主路径（readthedocs）访问国内常挂起，主尝试用短超时快速放弃，
+    # 转走 fallback（命中集合不变，只缩短耗时）。
+    _PRIMARY_FAST_TIMEOUT_S = 10.0
+
     def __init__(self) -> None:
         super().__init__(
             base_url=settings.mujoco_base_url,
@@ -96,8 +101,9 @@ class MuJoCoAdapter(BaseAdapter):
     async def search(self, query: str) -> list[SearchResult]:
         """搜索 MuJoCo 示例场景。优先文档解析，失败降级硬编码列表。"""
         try:
-            return await self._search_primary(query)
-        except AdapterError:
+            async with asyncio.timeout(self._PRIMARY_FAST_TIMEOUT_S):
+                return await self._search_primary(query)
+        except (AdapterError, TimeoutError):
             return await self._search_fallback(query)
 
     async def _search_primary(self, query: str) -> list[SearchResult]:
@@ -192,7 +198,7 @@ class MuJoCoAdapter(BaseAdapter):
             )
         xml_url = f"{self.base_url}/{rel_path}"
         content = await self._download_bytes(xml_url)
-        assets = await self._download_xml_with_assets(xml_url, content)
+        assets, missing_assets = await self._download_xml_with_assets(xml_url, content)
         return RawData(
             source=DataSource.MUJOCO,
             item_id=item_id,
@@ -201,6 +207,7 @@ class MuJoCoAdapter(BaseAdapter):
             url=xml_url,
             size_bytes=len(content),
             assets=assets,
+            metadata={"assets_missing": missing_assets} if missing_assets else {},
         )
 
     def _local_candidates(self, item_id: str) -> list[tuple[str, str]]:

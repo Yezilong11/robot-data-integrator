@@ -6,12 +6,13 @@
 
 import io
 import json
+import re
 import tarfile
 import zipfile
 from typing import Any
 
 from rdi.models.common import Severity, StandardResult, ValidationReport, ValIssue
-from rdi.skills.base import BaseSkill
+from rdi.skills.base import BaseSkill, extract_download_guide
 
 _CANONICAL_FORMAT = "DatasetSummary"
 
@@ -147,7 +148,9 @@ class DatasetSkill(BaseSkill):
                                 lower.endswith("metadata.json")
                                 or lower.endswith("dataset_info.json")
                             ):
-                                metadata_bytes = tf.extractfile(member).read()
+                                metadata_file = tf.extractfile(member)
+                                if metadata_file is not None:
+                                    metadata_bytes = metadata_file.read()
         except (zipfile.BadZipFile, tarfile.TarError, OSError) as exc:
             return StandardResult(
                 success=False,
@@ -211,6 +214,12 @@ class DatasetSkill(BaseSkill):
             archive_fmt = "tar" if fmt.startswith("tar") or fmt == "tgz" else "zip"
             return self._parse_archive(data, archive_fmt, kwargs)
 
+        if fmt in ("markdown", "md"):
+            return self._parse_markdown(data, kwargs)
+
+        if not fmt and self._is_markdown_text(data):
+            return self._parse_markdown(data, kwargs)
+
         return StandardResult(
             success=False,
             canonical_format=_CANONICAL_FORMAT,
@@ -263,3 +272,54 @@ class DatasetSkill(BaseSkill):
         if isinstance(name, str) and name:
             return f"datasets/{name}.json"
         return None
+
+    def _parse_markdown(self, data: bytes, kwargs: dict[str, Any]) -> StandardResult:
+        """解析 markdown 格式的数据集摘要，仅提取标题与描述（占位/降级结果）。
+
+        存在下载引用（数据内嵌 download_guide 或 registry 透传 ``reference``，见
+        ``extract_download_guide``）时，产物 data 顶层附加 download_guide（含 wget
+        命令）；无引用时保持原结构（不回归）。
+        """
+        text = data.decode("utf-8", errors="replace")
+        lines = text.splitlines()
+
+        title = ""
+        for line in lines:
+            if line.startswith("# ") and line[2:].strip():
+                title = line[2:].strip()
+                break
+
+        description = ""
+        for line in lines:
+            stripped = line.strip()
+            if stripped and not stripped.startswith("#"):
+                description = stripped
+                break
+
+        result_data: dict[str, Any] = {
+            "title": title,
+            "description": description,
+            "download_url": None,
+            "file_tree": [],
+            "license": None,
+        }
+        guide = extract_download_guide(data, kwargs)
+        if guide is not None:
+            result_data["download_guide"] = guide
+        return StandardResult(
+            success=True,
+            canonical_format=_CANONICAL_FORMAT,
+            data=result_data,
+            output_path=self._output_path(kwargs),
+            is_fallback=True,
+            data_source_quality="fallback",
+            completeness_pct=55,
+            confidence_score=0.6,
+            warnings=["仅数据集摘要（markdown），未下载数据文件"],
+        )
+
+    @staticmethod
+    def _is_markdown_text(data: bytes) -> bool:
+        """粗略嗅探内容是否为 markdown 文本（以 # 标题行开头）。"""
+        head = data.decode("utf-8", errors="ignore").lstrip()
+        return bool(re.match(r"^#{1,6}\s", head))

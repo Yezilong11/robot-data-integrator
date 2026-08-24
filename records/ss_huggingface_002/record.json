@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_huggingface_002",
+  "input": "检索 ACT 机器人操作策略",
+  "executor": "C",
+  "executed_at": "2026-08-20T16:08:44+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "policy_model",
+        "dataset"
+      ],
+      "vs_expected": "partial",
+      "notes": "LLM 解析出 3 条需求；题设 expected=['policy_model']，判定 partial"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "github",
+        "status": "missing",
+        "format": null,
+        "quality": "unknown",
+        "is_fallback": false,
+        "error": "franka: 该源仅收录 3 个已知目标，未收录 'ACT Action Chunking with Transformers robot manipulation GitHub official implementation'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'ACT robot policy model weights checkpoint PyTorch .pt .pth'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'ACT BridgeData RT-1 ALFRED demonstration dataset GitHub'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'ACT Action Chunking robot manipulation 策略代码 GitHub'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'ACT'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'Action Chunking'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'robot manipulation'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 '策略代码'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'GitHub'（有源但未收录）；allegro: 该源仅收录 4 个已知目标，未收录 'ACT Action Chunking with Transformers robot manipulation GitHub official implementation'（有源但未收录）；allegro: 该源仅收录 4 个已知目标，未收录 'ACT robot policy model weights checkpoint PyTorch .pt .pth'（有源但未收录）；allegro: 该源仅收录 4 个已知目标，未收录 'ACT BridgeData RT-1 ALFRED demonstration dataset GitHub'（有源但未收录）；allegro: 该源仅收录 4 个已知目标，未收录 'ACT Action Chunking robot manipulation 策略代码 GitHub'（有源但未收录）；allegro: 该源仅收录 4 个已知目标，未收录 'ACT'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'ACT Action Chunking with Transformers robot manipulation GitHub official implementation'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'ACT robot policy model weights checkpoint PyTorch .pt .pth'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'ACT BridgeData RT-1 ALFRED demonstration dataset GitHub'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'ACT Action Chunking robot manipulation 策略代码 GitHub'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'ACT'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'Action Chunking'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'robot manipulation'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 '策略代码'（有源但未收录）；robotiq: 该源仅收录 4 个已知目标，未收录 'GitHub'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'ACT Action Chunking with Transformers robot manipulation GitHub official implementation'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'ACT robot policy model weights checkpoint PyTorch .pt .pth'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'ACT BridgeData RT-1 ALFRED demonstration dataset GitHub'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'ACT Action Chunking robot manipulation 策略代码 GitHub'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'ACT'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'Action Chunking'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'robot manipulation'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 '策略代码'（有源但未收录）；kinova: 该源仅收录 2 个已知目标，未收录 'GitHub'（有源但未收录）",
+        "error_type": "format_mismatch",
+        "fallback_reason": null,
+        "note": ""
+      },
+      {
+        "req_id": "req_001",
+        "req_type": "policy_model",
+        "source": "huggingface",
+        "status": "success",
+        "format": "json",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "非首选源/元数据降级回退（is_fallback=true）",
+        "note": "真实流程命中 huggingface（json，quality=fallback，is_fallback=true），url=https://huggingface.co/pyannote/voice-activity-detection"
+      },
+      {
+        "req_id": "req_002",
+        "req_type": "dataset",
+        "source": "zenodo",
+        "status": "success",
+        "format": "json",
+        "quality": "real",
+        "is_fallback": false,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": null,
+        "note": "真实流程命中 zenodo（json，quality=real），url=https://zenodo.org/records/20540826"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=3（1 error, 2 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-160834",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-160834/manifest.json",
+      "status": "error",
+      "file_count": 2,
+      "missing_items_count": 1,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_001",
+          "path": "policies/req_001.json",
+          "format": "PolicyInterfaceDoc",
+          "source_url": "https://huggingface.co/pyannote/voice-activity-detection",
+          "is_fallback": true,
+          "completeness": 60.0,
+          "downloaded": true,
+          "size_bytes": 126
+        },
+        {
+          "req_id": "req_002",
+          "path": "resources/req_002.json",
+          "format": "DatasetSummary",
+          "source_url": "https://zenodo.org/records/20540826",
+          "is_fallback": false,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 3191
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 3,
+        "fulfilled": 2,
+        "missing": 1,
+        "validation_issues": 3,
+        "avg_confidence": 0.9,
+        "avg_completeness": 80.0
+      },
+      "notes": "包状态 failed，落盘 2 个文件，缺失 1 项"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P2_RETRIEVE",
+  "failure_reason": "检索失败：req_000:missing",
+  "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=检索 ACT 机器人操作策略，verdict=FAIL，retrieve=['req_000:missing', 'req_001:success', 'req_002:success']，run_id=rerun-20260820-160240-835223ff；按要求未截图，screenshots 置空",
+  "reviewer": null,
+  "reviewed_at": null,
+  "error": "franka: 该源仅收录 3 个已知目标，未收录 'ACT Action Chunking with Transformers robot manipulation GitHub official implementation'（有源但未收录）；franka: 该源仅收录 3 个已知目标，未收录 'ACT robot policy model weights checkpoint PyTorch…"
+}

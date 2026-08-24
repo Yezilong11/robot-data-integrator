@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "round": "round2",
+  "case_id": "ss_ycb_007",
+  "input": "获取 YCB 数据集中的香蕉 mesh 模型并确认是闭合流形",
+  "executor": "F",
+  "executed_at": "2026-08-22T19:08:28+08:00",
+  "completed_at": "2026-08-22T19:09:20.675147",
+  "env": {
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "working-tree"
+  },
+  "layer": "single_source",
+  "category": "mesh",
+  "priority": "P1",
+  "variant": "组合需求（mesh+可加载性）",
+  "expected": {
+    "req_types": [
+      "mesh"
+    ],
+    "sources": [
+      "ycb"
+    ],
+    "formats": [
+      "obj",
+      "stl",
+      "ply"
+    ],
+    "min_files": 1,
+    "notes": "题目要求：获取 YCB 数据集中的香蕉 mesh 模型并确认是闭合流形"
+  },
+  "source_package": {
+    "package_id": "package-20260822-190920",
+    "run_id": "20260822-190828-8e5e731e",
+    "manifest_path": "data/output_packages/package-20260822-190920/manifest.json",
+    "output_dir": "data/output_packages/package-20260822-190920",
+    "package_status": "complete"
+  },
+  "observations": {
+    "parse_goal": {
+      "status": "success",
+      "req_list": [
+        "mesh"
+      ],
+      "vs_expected": "recorded",
+      "notes": "本次通过真实流程运行，记录以 package manifest 的实际需求与落盘结果为准。"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "mesh",
+        "source": "ycb",
+        "status": "success",
+        "format": "stl",
+        "quality": "unknown",
+        "is_fallback": false,
+        "confidence": 1,
+        "completeness": 100,
+        "downloaded": true,
+        "file_count": 1,
+        "output_paths": [
+          "objects/req_000.stl"
+        ],
+        "data_url": "https://hf-mirror.com/datasets/ll4ma-lab/ycb-fixed-meshes/resolve/main/011_banana/google_16k/textured.obj",
+        "notes": null
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_recorded",
+      "missing_items": []
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260822-190920",
+      "manifest_path": "data/output_packages/package-20260822-190920/manifest.json",
+      "package_id": "package-20260822-190920",
+      "run_id": "20260822-190828-8e5e731e",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": false,
+      "files": [
+        "objects/req_000.stl"
+      ],
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1,
+        "avg_completeness": 100
+      },
+      "notes": "manifest 无质量校验问题。"
+    },
+    "provenance": [
+      "[2026-08-22T19:09:20.675147] assemble_package: 生成数据包 package-20260822-190920，落盘 1 个文件，缺失 0 项",
+      "[2026-08-22T19:09:20.675147] assemble_package: 质量解释已生成（LLM 生成）"
+    ]
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/final/01_package_dir.png",
+      "desc": "真实 Edge/Chromium 打开 package-20260822-190920 本地 package 目录索引截图。"
+    },
+    {
+      "file": "screenshots/final/02_explorer.png",
+      "desc": "真实前端工作区 Explorer 面板展开 package-20260822-190920 文件树截图。"
+    },
+    {
+      "file": "screenshots/final/03_provenance.png",
+      "desc": "真实前端工作区 Log 面板展示本次运行 provenance 截图。"
+    }
+  ],
+  "verdict": "PASS",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "F 执行人二轮真实流程回放（2026-08-22T19:09:20.675147，run_id=20260822-190828-8e5e731e，包 package-20260822-190920）。截图由本地 Edge 无头浏览器实际打开目录和前端面板生成；结果严格按 manifest、missing_items 与题目期望判定。",
+  "reviewer": null,
+  "reviewed_at": null
+}

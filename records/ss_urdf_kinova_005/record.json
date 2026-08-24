@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_urdf_kinova_005",
+  "input": "Find a Kinova Gen3 URDF with gripper for ROS",
+  "executor": "C",
+  "executed_at": "2026-08-21T10:37:53+08:00",
+  "env": {
+    "llm_model": "qwen-turbo",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "2bf507a"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['robot_urdf']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "robot_urdf",
+        "source": "kinova",
+        "status": "success",
+        "format": "urdf",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "非首选源/元数据降级回退（is_fallback=true）",
+        "note": "真实流程命中 kinova（urdf，quality=fallback，is_fallback=true），url=https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 2,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=2（0 error, 2 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-194832",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260821-194832\\manifest.json",
+      "status": "complete",
+      "file_count": 8,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "robots/req_000.urdf",
+          "format": "CanonicalRobot",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 8089
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/bracelet_with_vision_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 2636684
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/shoulder_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 476984
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/spherical_wrist_1_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 546484
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/spherical_wrist_2_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 516984
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/forearm_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 456284
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/bicep_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 783384
+        },
+        {
+          "req_id": "req_000",
+          "path": "robots/kortex_description/arms/gen3/6dof/meshes/base_link.STL",
+          "format": "mesh",
+          "source_url": "https://raw.githubusercontent.com/Kinovarobotics/ros_kortex/noetic-devel/kortex_description/arms/gen3/6dof/urdf/GEN3-6DOF_VISION_URDF_ARM_V01.urdf",
+          "is_fallback": true,
+          "completeness": 90.0,
+          "downloaded": true,
+          "size_bytes": 209784
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 8,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.9,
+        "avg_completeness": 90.0
+      },
+      "notes": "包状态 complete，落盘 8 个文件，缺失 0 项（已同步前端运行包 package-20260821-194832）"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/01_manifest.png",
+      "desc": "manifest-content"
+    },
+    {
+      "file": "screenshots/02_provenance_log.png",
+      "desc": "provenance-log-file"
+    },
+    {
+      "file": "screenshots/03_req_file.png",
+      "desc": "req-file-content"
+    },
+    {
+      "file": "screenshots/04_explorer.png",
+      "desc": "explorer-panel"
+    },
+    {
+      "file": "screenshots/05_provenance_panel.png",
+      "desc": "provenance-log-panel"
+    }
+  ],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色二轮题真实流程执行：input=Find a Kinova Gen3 URDF with gripper for ROS，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260821-103701-63626cae；截图已按新口径重采集并登记 screenshots[]（5 张）；package 已同步前端运行包 package-20260821-194832",
+  "reviewer": null,
+  "reviewed_at": null
+}

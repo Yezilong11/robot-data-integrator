@@ -114,8 +114,11 @@ class TestRetrieveSingleAllFail:
         result = await node_retrieve_single(_payload())
 
         retrieval = result["retrieval_results"]["req_001"]
-        assert retrieval.status == "error"
-        assert retrieval.error_message != ""
+        # fix4 容错：单 query 搜索失败不再当场中断，记录诊断后继续剩余 query；
+        # 所有 query/候选源全部失败时降级为 missing 并透出各源 AdapterError 明细。
+        assert retrieval.status == "missing"
+        assert "fail1" in retrieval.error_message
+        assert "fail2" in retrieval.error_message
 
 
 class TestRetrieveSingleNoResults:

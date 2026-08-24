@@ -8,7 +8,8 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import Any
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any
 
 from rdi.adapters.registry import select_adapter
 from rdi.config.settings import settings
@@ -20,10 +21,20 @@ from rdi.exceptions import (
     AdapterRateLimitError,
     AdapterTimeoutError,
 )
+from rdi.graph.nodes.validate import (
+    SEMANTIC_REQ_TYPES,
+    _extract_semantic_terms,
+    semantic_score,
+)
 from rdi.graph.state import SystemState
 from rdi.hermes.engine import HermesEngine
+from rdi.intelligence import decisions
 from rdi.logging import get_logger
 from rdi.models import DataReqType, DataSource, RetrievalError, RetrievalResult, SearchResult
+from rdi.skills.registry import is_format_allowed
+
+if TYPE_CHECKING:
+    from rdi.intelligence.schemas import RetrievalPlan
 
 # 模块级懒加载 HermesEngine 单例，便于测试 monkeypatch
 _hermes_engine: HermesEngine | None = None
@@ -73,6 +84,11 @@ def _to_retrieval_error(req_id: str, source: DataSource, exc: AdapterError) -> R
         error_type = "not_found"
     elif isinstance(exc, AdapterAuthError) or exc.status_code in (401, 403):
         error_type = "auth"
+    elif exc.status_code is None:
+        # 网络层连接失败（DNS/握手/连接被拒）：status_code 缺失即无 HTTP 响应，
+        # 一揽子记 unknown 无法诊断（2026-08-23 重放 8 题 huggingface:unknown
+        # 实为 huggingface.co 直连不通）。细分 network 便于后续归因。
+        error_type = "network"
     else:
         error_type = "unknown"
     return RetrievalError(
@@ -100,6 +116,56 @@ def _first_candidate_source(req_type: str) -> DataSource:
     # 兜底：该需求没有注册任何候选源（异常路径），正常流程不会走到；
     # 取 GITHUB 仅用于满足 RetrievalError.source 必填约束。
     return DataSource.GITHUB
+
+
+def _pick_semantic_candidate(
+    search_results: list[SearchResult], req_type: str, req: Any
+) -> tuple[SearchResult | None, str | None]:
+    """检索候选语义预筛：优先选择命中需求目标实体的候选。
+
+    对启用语义匹配的类型（``SEMANTIC_REQ_TYPES``）且需求含具体实体词时，
+    对全部 search_results 按 title/url/description 用 ``semantic_score``
+    打分，最高分 > 0 选该候选（避免 fetch 首个无关候选）；全部零重叠时返回
+    ``(None, 诊断)``，由调用方跳过该 query/源而非 fetch 首个无关候选——
+    fix4 前 fetch 首个零重叠候选会被装配期语义校验拦截成 FAIL（
+    ss_sensor_zenodo_001 取到 "Boxing punch data"、ss_sensor_github_002 取到
+    教室通风 CO2 研究），而同一 query 结果中后面就排着真实命中的 IMU/关节
+    记录；跳过零重叠后下一个 query（或源）有机会命中。非启用类型或术语为空
+    直接返回首个候选且诊断为 None。``req`` 为含 description/keywords/object_name
+    的对象（dict 输入自动转换为命名空间对象）。
+    """
+    try:
+        req_type_enum = DataReqType(req_type)
+    except ValueError:
+        return search_results[0], None
+    if req_type_enum not in SEMANTIC_REQ_TYPES:
+        return search_results[0], None
+    req_obj = SimpleNamespace(**req) if isinstance(req, dict) else req
+    if not _extract_semantic_terms(req_obj):
+        return search_results[0], None
+    best_idx = -1
+    best_score = 0
+    for i, hit in enumerate(search_results):
+        metadata = hit.metadata or {}
+        desc = str(metadata.get("description") or metadata.get("summary") or "")
+        score = semantic_score(req_obj, hit.title, hit.url, desc)
+        if score > best_score:
+            best_score = score
+            best_idx = i
+    if best_idx < 0:
+        first = search_results[0]
+        return None, f"{first.source.value}: 候选语义零重叠（{first.title}）"
+    return search_results[best_idx], None
+
+
+def _compute_source_cap(source_budget: float, deadline: float, now: float) -> float:
+    """计算本源实际可用执行上限：``min(source_budget, deadline - now)``，低于 0 夹到 0。
+
+    本源上限（source_budget）与需求级 deadline 剩余预算取小：快源释放时剩余
+    充裕则上限不被削减；慢源拖时间后剩余收紧；remaining <= 0（总预算到点）
+    返回 0，调用方跳过该源。
+    """
+    return max(0.0, min(source_budget, deadline - now))
 
 
 async def _retrieve_single_with_timeout(payload: dict[str, Any]) -> dict[str, Any]:
@@ -186,6 +252,9 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
     retrieval_results: dict[str, RetrievalResult] = dict(existing)  # 以既有结果起步，保留成功项
     provenance: list[str] = []
     retrieval_errors: list[RetrievalError] = []
+    # ② 合并各需求的检索策略规划与 LLM 调用记录（单需求超时路径不产生，取空）
+    retrieval_plan: dict[str, RetrievalPlan] = {}
+    llm_usage: list[dict[str, Any]] = []
     for req in to_skip:
         provenance.append(
             f"[{datetime.now().isoformat()}] retrieve_data: 沿用上一轮结果，不重拉 ({req.req_id})"
@@ -201,6 +270,7 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
                     "req_type": req.req_type.value,
                     "description": req.description,
                     "keywords": req.keywords,
+                    "semantic_terms": getattr(req, "semantic_terms", []) or [],
                     "fallback_sources": [s.value for s in req.fallback_sources],
                     "context_keywords": context_keywords,
                     "object_name": str(getattr(req, "object_name", "") or ""),
@@ -214,11 +284,15 @@ async def node_retrieve_data(state: SystemState) -> dict[str, Any]:
         retrieval_results.update(update.get("retrieval_results", {}))
         provenance.extend(update.get("provenance", []))
         retrieval_errors.extend(update.get("retrieval_errors", []))
+        retrieval_plan.update(update.get("retrieval_plan", {}))
+        llm_usage.extend(update.get("llm_usage", []))
 
     return {
         "retrieval_results": retrieval_results,
         "provenance": provenance,
         "retrieval_errors": retrieval_errors,
+        "retrieval_plan": retrieval_plan,
+        "llm_usage": llm_usage,
     }
 
 
@@ -245,7 +319,12 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     query = " ".join(str(k) for k in keywords) if keywords else description
 
     hermes = _get_hermes_engine()
-    experience_hint = hermes.inject_experience(description, req_type)
+    # D3 修复：embedding 服务偶发超时不应拖垮整个检索（此前 LLMUnavailableError
+    # 直接冒泡使 retrieve_data 崩溃）。经验提示是优化项，降级为无提示继续。
+    try:
+        experience_hint = hermes.inject_experience(description, req_type)
+    except Exception:  # noqa: BLE001
+        experience_hint = ""
 
     provenance = [f"[{datetime.now().isoformat()}] retrieve_data: 查找 {req_id} (type={req_type})"]
     if experience_hint:
@@ -298,20 +377,59 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     priority_index = {src: i for i, src in enumerate(priority_sources)}
     fallback_sources = payload.get("fallback_sources") or []
     fallback_index = {src: i for i, src in enumerate(fallback_sources)}
-    # fallback_sources 顺序为第一优先级；其余源按 Hermes 优先级（priority_index 越小越靠前）排序，
-    # 不在 Hermes 候选列表中的源排最后。
+    # ② 检索策略规划（LLM 决策层）。此时 adapter_classes 必非空（空源已在 D2 路径
+    # 提前返回 missing），LLM 失败返回 None 时走规则兜底：queries/源排序不变，
+    # 仅 provenance 记录降级（decisions 内部已记录具体错误类型日志）。
+    _start = time.monotonic()
+    retrieval_plan = decisions.plan_retrieval(
+        req_type=req_type,
+        description=description,
+        keywords=[str(k) for k in keywords],
+        object_name=str(payload.get("object_name", "") or ""),
+        context_keywords=[str(k) for k in (payload.get("context_keywords") or [])],
+        fallback_sources=fallback_sources,
+        candidate_sources=[cls.source.value for cls in adapter_classes],
+    )
+    llm_usage_entry = {
+        "decision": "retrieval_plan",
+        "req_id": req_id,
+        "status": "ok" if retrieval_plan else "fallback",
+        "model": settings.llm_model,
+        "elapsed": round(time.monotonic() - _start, 3),
+    }
+    if retrieval_plan is None:
+        provenance.append(
+            f"[{datetime.now().isoformat()}] retrieve_data: 检索策略 LLM 降级，使用规则兜底"
+        )
+    # LLM 偏好源为第二优先级（fallback_sources 之后），其余源按 Hermes 优先级排序；
+    # plan 为空时 llm_pref_index 为空 dict，全部取 0 并列，行为与现状完全一致。
+    llm_pref_index = (
+        {src: i for i, src in enumerate(retrieval_plan.preferred_sources)} if retrieval_plan else {}
+    )
+    # fallback_sources 顺序为第一优先级；其次 LLM 偏好源；其余源按 Hermes 优先级
+    # （priority_index 越小越靠前），不在 Hermes 候选列表中的源排最后。
     sorted_adapters = sorted(
         adapter_classes,
         key=lambda cls: (
             fallback_index.get(cls.source.value, len(fallback_sources)),
+            llm_pref_index.get(cls.source.value, len(llm_pref_index)),
             priority_index.get(cls.source.value, len(priority_sources)),
         ),
     )
 
     # C2-fix: Adapter fallback 搜索多使用单 token 匹配，直接传整句中文+英文
     # 会导致无匹配。先尝试完整 query，再逐个尝试 keyword/英文 token。
-    queries = [query]
     seen: set[str] = {query.lower()}
+    # ② LLM 搜索词置前（plan 为空时不产生，行为与现状一致），
+    # 确定性 query/keywords 兜底追加在尾部，全程用 seen 去重。
+    queries: list[str] = []
+    if retrieval_plan and retrieval_plan.queries:
+        for q in retrieval_plan.queries:
+            q_str = str(q).strip()
+            if q_str and q_str.lower() not in seen:
+                seen.add(q_str.lower())
+                queries.append(q_str)
+    queries.append(query)
     if keywords:
         for kw in keywords:
             kw_str = str(kw).strip()
@@ -347,73 +465,231 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
     last_source = ""
     # C2: 累积各源「清单外目标」诊断（跨 adapter 保留），用于 missing 的 error_message
     search_failures: list[str] = []
+    # 候选语义预筛的 req 视图（与 validate._extract_semantic_terms 的字段契约一致）。
+    # fix4: 透传 LLM semantic_terms——此前仅 description/keywords/object_name，
+    # 中文需求（"帮我找 Zenodo 上的 IMU 传感器数据"）的 keyword 全被 stopwords
+    # 滤空后预筛直接直通首个候选（Boxing punch data），与装配期用 semantic_terms
+    # 的语义校验脱节；现在两处同源，检索期即能识别真实 IMU/惯性记录。
+    req_view = SimpleNamespace(
+        description=description,
+        keywords=keywords,
+        object_name=object_name,
+        semantic_terms=payload.get("semantic_terms") or [],
+    )
+
+    # E6: 每源子预算 = per_req_timeout / 候选源数。首源挂起不再占满整个
+    # per_req_timeout（GitHub 慢源占满预算导致 Zenodo/HF 无执行机会），
+    # 超时即记录 timeout 错误并跳过，后续候选源仍有机会执行。
+    source_budget = settings.per_req_timeout / max(len(sorted_adapters), 1)
+    # spec-3/Task1: 需求级 deadline 在源循环外固定，循环内每源按剩余预算动态
+    # 收紧本源上限（min(source_budget, remaining)），总预算到点后跳过剩余源。
+    deadline = time.monotonic() + settings.per_req_timeout
 
     for idx, adapter_cls in enumerate(sorted_adapters):
         is_fallback = idx > 0
         last_source = adapter_cls.source.value
+        now = time.monotonic()
+        remaining = deadline - now
+        per_source_cap = _compute_source_cap(source_budget, deadline, now)
+        if per_source_cap <= 0:
+            search_failures.append(f"{adapter_cls.source.value}: 预算耗尽：总预算已到点，跳过该源")
+            continue
         try:
-            # ponytail: type[BaseAdapter] 的 __init__ 签名包含 base_url，但各子类均为无参构造；
-            # mypy 无法推导子类重载，此处忽略构造参数检查。
-            adapter = adapter_cls()  # type: ignore[call-arg]
-            search_results: list[SearchResult] = []
-            for q in queries:
-                try:
-                    search_results = await adapter.search(q)
-                except AdapterCatalogError as exc:
-                    # C2: 清单外目标——收集可诊断语义，继续尝试剩余 query（如物体名）
-                    search_failures.append(f"{adapter_cls.source.value}: {exc.message}")
+            async with asyncio.timeout(per_source_cap):
+                # ponytail: type[BaseAdapter] 的 __init__ 签名包含 base_url，但各子类均为无参构造；
+                # mypy 无法推导子类重载，此处忽略构造参数检查。
+                adapter = adapter_cls()  # type: ignore[call-arg]
+                search_results: list[SearchResult] = []
+                candidate: SearchResult | None = None
+                best_score = 0
+                for q in queries:
+                    try:
+                        # P1-A: 支持 req_type 的 Adapter（Zenodo）按需求类型
+                        # 追加 filetype 过滤；其余保持单参调用。用 `is True`
+                        # 探测：Mock 自动属性恒非 True（测试不误触发），真实
+                        # 类属性为 True（与 fetch 的 kwargs 降级互补）。
+                        if getattr(adapter_cls, "accepts_req_type_search", False) is True:
+                            hits = await adapter.search(q, req_type=DataReqType(req_type))
+                        else:
+                            hits = await adapter.search(q)
+                    except AdapterCatalogError as exc:
+                        # C2: 清单外目标——收集可诊断语义，继续尝试剩余 query（如物体名）
+                        search_failures.append(f"{adapter_cls.source.value}: {exc.message}")
+                        continue
+                    except AdapterError as exc:
+                        # 单 query 搜索的瞬态失败（如 Zenodo 偶发 5xx）不判本源失败：
+                        # 记录诊断后继续尝试本源剩余 query（500 是服务端瞬时抖动，
+                        # 后续 query 可能成功）；全部 query 均失败时源才整体判失败
+                        # （候选为空走 missing 分支，错误明细可定位）。
+                        search_failures.append(
+                            f"{adapter_cls.source.value}: 搜索 {q[:40]!r} 失败: {str(exc)[:120]}"
+                        )
+                        continue
+                    if not hits:
+                        continue
+                    # fix4: 语义候选预筛零重叠不再 fetch 首个无关候选（会被装配期
+                    # 语义校验拦截成 FAIL），而是继续下一 query 给真实命中记录
+                    # （如 IMU/UR5 关节数据）机会；并对所有 query 的结果做语义
+                    # argmax——弱泛词命中（"Web robot detection"）不再压过后续
+                    # query 才出现的强命中（"UR5 robot dataset ... joint angles"）。
+                    picked, semantic_diag = _pick_semantic_candidate(hits, req_type, req_view)
+                    if picked is None:
+                        if semantic_diag:
+                            search_failures.append(semantic_diag)
+                        continue
+                    metadata = picked.metadata or {}
+                    desc = str(metadata.get("description") or metadata.get("summary") or "")
+                    score = semantic_score(req_view, picked.title, picked.url, desc)
+                    # 非语义类型/术语为空的直通候选 score=0：首个非空 query 即选定
+                    # （与旧行为一致）；语义候选按分值 argmax 择优。
+                    if score == 0 and candidate is None:
+                        search_results = hits
+                        candidate = picked
+                        break
+                    if score > best_score:
+                        best_score = score
+                        search_results = hits
+                        candidate = picked
+                        if score == 0:
+                            break
+                if candidate is None:
+                    had_empty_search = True
                     continue
-                if search_results:
-                    break
-            if not search_results:
-                had_empty_search = True
-                continue
-            # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
-            # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
-            fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
-            if object_name:
-                fetch_kwargs["object_name"] = object_name
-            try:
-                raw = await adapter.fetch(search_results[0].item_id, **fetch_kwargs)
-            except TypeError:
+                # C1: object_name 为 GraspNet/DexGrasp 扩展参数，优先整包透传；
+                # 旧 Adapter 不接受时逐级降级到 req_type / 无参签名。
+                fetch_kwargs: dict[str, Any] = {"req_type": DataReqType(req_type)}
+                if object_name:
+                    fetch_kwargs["object_name"] = object_name
                 try:
-                    raw = await adapter.fetch(
-                        search_results[0].item_id, req_type=DataReqType(req_type)
-                    )
+                    raw = await adapter.fetch(candidate.item_id, **fetch_kwargs)
                 except TypeError:
-                    # 兼容旧 Adapter 的 fetch(item_id) 签名
-                    raw = await adapter.fetch(search_results[0].item_id)
+                    try:
+                        # 兼容旧 Adapter 的 fetch(item_id, req_type=...) 签名
+                        raw = await adapter.fetch(  # type: ignore[call-arg]
+                            candidate.item_id, req_type=DataReqType(req_type)
+                        )
+                    except TypeError:
+                        # 兼容旧 Adapter 的 fetch(item_id) 签名
+                        raw = await adapter.fetch(candidate.item_id)
+                # P1-A (2026-08-24): 传感器需求禁用"仅元数据/README 降级"交付。
+                # 源显式标记 degraded（Zenodo 无文件候选 → record 元数据 JSON；
+                # GitHub 无数据候选 → README markdown）时，SensorDataSkill 会把
+                # 它消费成 <200B 占位（validate._is_metadata_proxy 拦截）。此类
+                # 交付视为本源失败并 continue：传感器需求的 GitHub README 失败后
+                # Zenodo 才有机会用 filetype 过滤命中真实 csv。带真实文件引用的
+                # _file_reference（downloaded=False + reference）不标记 degraded，
+                # 保持"引用=完整交付"口径不受影响。
+                if DataReqType(req_type) == DataReqType.SENSOR_DATA and raw.metadata.get(
+                    "degraded"
+                ):
+                    elapsed = time.monotonic() - start
+                    message = (
+                        f"源仅返回{'元数据 JSON' if raw.format == 'json' else 'README 文档'}"
+                        f"（{raw.metadata['degraded']}），无实际传感器数据文件，"
+                        "视为本源失败，继续下一候选源"
+                    )
+                    retrieval_errors.append(
+                        RetrievalError(
+                            req_id=req_id,
+                            source=adapter_cls.source,
+                            error_type="degraded_delivery",
+                            error_message=message,
+                        )
+                    )
+                    provenance.append(
+                        f"[{datetime.now().isoformat()}] retrieve_data: "
+                        f"{adapter_cls.source.value} {message}"
+                    )
+                    logger.warning(
+                        "retrieve.degraded_delivery",
+                        req_id=req_id,
+                        source=adapter_cls.source.value,
+                        fmt=raw.format,
+                        elapsed_seconds=round(elapsed, 3),
+                    )
+                    continue
+                # C4-pre: 检索期即校验格式白名单（与装配期 C4 同源，is_format_allowed）。
+                # GitHub 等通用源对 robot_urdf 需求常返回 markdown README，检索循环此前
+                # 视为"成功"即停止，专用源（robotiq/franka）再无机会，装配期 C4 才拦截
+                # （ss_robotiq_001/002、ms_005 在 fallback_sources 顺序波动时的失败根因）。
+                # 格式不在白名单内视为本源失败，记 retrieval_errors 并继续下一候选源。
+                if not is_format_allowed(DataReqType(req_type), raw.format):
+                    elapsed = time.monotonic() - start
+                    message = (
+                        f"返回格式 {raw.format} 不属于 {req_type} 期望格式白名单，"
+                        "视为本源失败，继续下一候选源"
+                    )
+                    retrieval_errors.append(
+                        RetrievalError(
+                            req_id=req_id,
+                            source=adapter_cls.source,
+                            error_type="format_mismatch",
+                            error_message=message,
+                        )
+                    )
+                    provenance.append(
+                        f"[{datetime.now().isoformat()}] retrieve_data: "
+                        f"{adapter_cls.source.value} {message}"
+                    )
+                    logger.warning(
+                        "retrieve.format_mismatch",
+                        req_id=req_id,
+                        source=adapter_cls.source.value,
+                        fmt=raw.format,
+                        elapsed_seconds=round(elapsed, 3),
+                    )
+                    continue
+                elapsed = time.monotonic() - start
+                logger.info(
+                    "retrieve.success",
+                    req_id=req_id,
+                    req_type=req_type,
+                    status="success",
+                    source=raw.source.value,
+                    is_fallback=is_fallback,
+                    elapsed_seconds=round(elapsed, 3),
+                )
+                result = RetrievalResult(
+                    req_id=req_id,
+                    status="success",
+                    data=raw,
+                    source=raw.source,
+                    is_fallback=is_fallback,
+                    search_results=search_results,
+                    elapsed_seconds=elapsed,
+                )
+                hermes.record_experience(
+                    task_desc=description,
+                    req_type=req_type,
+                    result_status="success",
+                    sources_used=[raw.source.value],
+                    elapsed_seconds=elapsed,
+                )
+                return {
+                    "retrieval_results": {req_id: result},
+                    "provenance": provenance,
+                    "retrieval_errors": retrieval_errors,
+                    "retrieval_plan": {req_id: retrieval_plan} if retrieval_plan else {},
+                    "llm_usage": [llm_usage_entry] if llm_usage_entry else [],
+                }
+        except TimeoutError:
             elapsed = time.monotonic() - start
-            logger.info(
-                "retrieve.success",
-                req_id=req_id,
-                req_type=req_type,
-                status="success",
-                source=raw.source.value,
-                is_fallback=is_fallback,
-                elapsed_seconds=round(elapsed, 3),
+            message = f"源级检索超时（本源上限 {source_budget:.2f}s / 剩余 {remaining:.2f}s）"
+            retrieval_errors.append(
+                RetrievalError(
+                    req_id=req_id,
+                    source=adapter_cls.source,
+                    error_type="timeout",
+                    error_message=message,
+                )
             )
-            result = RetrievalResult(
-                req_id=req_id,
-                status="success",
-                data=raw,
-                source=raw.source,
-                is_fallback=is_fallback,
-                search_results=search_results,
-                elapsed_seconds=elapsed,
+            provenance.append(
+                f"[{datetime.now().isoformat()}] retrieve_data: "
+                f"{adapter_cls.source.value} {message}，已跳过继续下一源"
             )
-            hermes.record_experience(
-                task_desc=description,
-                req_type=req_type,
-                result_status="success",
-                sources_used=[raw.source.value],
-                elapsed_seconds=elapsed,
-            )
-            return {
-                "retrieval_results": {req_id: result},
-                "provenance": provenance,
-                "retrieval_errors": retrieval_errors,
-            }
+            # E6: 单源超时不中断整个需求，记录错误后跳过后继候选源；
+            # 需求级超时由 _retrieve_single_with_timeout 统一兜底。
+            continue
         except AdapterError as exc:
             retrieval_errors.append(_to_retrieval_error(req_id, adapter_cls.source, exc))
             continue
@@ -424,8 +700,14 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         error_message = "；".join(search_failures)
     else:
         status = "error"
-        error_message = "所有候选源均失败: " + "; ".join(
-            f"{e.source.value}:{e.error_type}" for e in retrieval_errors
+        # 诊断：error_message 透出各源 AdapterError 明细（截断防超长），
+        # 缺失原因可直接定位是 5xx/404/网络还是降级交付。
+        error_message = (
+            "所有候选源均失败: "
+            + "; ".join(
+                f"{e.source.value}:{e.error_type}:{str(e.error_message)[:100]}"
+                for e in retrieval_errors
+            )[:400]
         )
     if status == "missing":
         logger.warning(
@@ -443,6 +725,11 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
             req_type=req_type,
             status=status,
             error_types=[e.error_type for e in retrieval_errors],
+            # 诊断明细：每个源的 error_message（截断），供排障定位 AdapterError 根因
+            error_details=[
+                f"{e.source.value}:{e.error_type}:{str(e.error_message)[:160]}"
+                for e in retrieval_errors
+            ],
             elapsed_seconds=round(elapsed, 3),
         )
     sources_used = [last_source] if last_source else []
@@ -464,4 +751,6 @@ async def node_retrieve_single(payload: dict[str, Any]) -> dict[str, Any]:
         "retrieval_results": {req_id: result},
         "provenance": provenance,
         "retrieval_errors": retrieval_errors,
+        "retrieval_plan": {req_id: retrieval_plan} if retrieval_plan else {},
+        "llm_usage": [llm_usage_entry] if llm_usage_entry else [],
     }

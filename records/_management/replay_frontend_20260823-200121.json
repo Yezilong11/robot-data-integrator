@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "name": "replay_frontend",
+    "scope": "口径2（四类非几何 38 + 含非几何 end_to_end 10 = 48）",
+    "created_at": "2026-08-23T20:01:34",
+    "elapsed_total_sec": 13.4
+  },
+  "results": {
+    "ss_dataset_hf_002": {
+      "case_id": "ss_dataset_hf_002",
+      "target": "Find a robot manipulation dataset with action labels on Hugging Face",
+      "category": "dataset",
+      "expected_req_types": [
+        "dataset"
+      ],
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [],
+      "error_summary": [],
+      "file_count": 1,
+      "missing_count": 0,
+      "validation_error_count": 0,
+      "run_status": "运行完成，但存在错误",
+      "elapsed_sec": 13.2
+    }
+  }
+}

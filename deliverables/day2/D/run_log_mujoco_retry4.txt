@@ -1,0 +1,252 @@
+﻿
+===== ss_mujoco_001: 获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置 =====
+.venv\Scripts\python.exe : HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/
+1.1 200 OK"
+At line:15 char:5408
++ ... EOUT="180"; .venv\Scripts\python.exe deliverables\day2\D\run_day2_d_c ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (HTTP Request: P...TTP/1.1 200 OK":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+{"req_id": "req_000", "req_type": "robot_urdf", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:39:30.746073"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "event": "retrieve.start", "level": "info", "timestamp": "2026-08-14T15
+:39:34.236966"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "status": "success", "source": "franka", "is_fallback": false, "elapsed
+_seconds": 81.576, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:40:55.758740"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_001", "req_type": "sim_config", "status": "success", "source": "mujoco", "is_fallback": false, "elapsed
+_seconds": 91.439, "event": "retrieve.success", "level": "info", "timestamp": "2026-08-14T15:41:06.349749"}
+HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+{"req_id": "req_000", "req_type": "robot_urdf", "skill": "urdf", "status": "success", "elapsed_seconds": 0.32, "event":
+ "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:41:08.698770"}
+{"req_id": "req_001", "req_type": "sim_config", "skill": "sim_config", "status": "success", "elapsed_seconds": 0.001, "
+event": "parse_convert.item", "level": "info", "timestamp": "2026-08-14T15:41:08.700415"}
+{"parsed": 2, "missing": 0, "skipped": 0, "event": "parse_convert.done", "level": "info", "timestamp": "2026-08-14T15:4
+1:08.700774"}
+Unable to resolve filename: package://meshes/collision/link0.obj
+Can't find package://meshes/collision/link0.obj
+Unable to resolve filename: package://meshes/visual/link1.obj
+Can't find package://meshes/visual/link1.obj
+Unable to resolve filename: package://meshes/visual/link2.obj
+Can't find package://meshes/visual/link2.obj
+Unable to resolve filename: package://meshes/visual/link3.obj
+Can't find package://meshes/visual/link3.obj
+Unable to resolve filename: package://meshes/visual/link4.obj
+Can't find package://meshes/visual/link4.obj
+Unable to resolve filename: package://meshes/visual/link5.obj
+Can't find package://meshes/visual/link5.obj
+Unable to resolve filename: package://meshes/visual/link6.obj
+Can't find package://meshes/visual/link6.obj
+Unable to resolve filename: package://meshes/collision/link7.obj
+Can't find package://meshes/collision/link7.obj
+Unable to resolve filename: package://meshes/visual/hand.obj
+Can't find package://meshes/visual/hand.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+{"req_id": "req_000", "req_type": "robot_urdf", "status": "issues", "issue_count": 2, "error_count": 0, "event": "valid
+ate.item", "level": "info", "timestamp": "2026-08-14T15:41:09.438133"}
+{"req_id": "req_001", "req_type": "sim_config", "status": "pass", "issue_count": 0, "error_count": 0, "event": "validat
+e.item", "level": "info", "timestamp": "2026-08-14T15:41:10.925356"}
+{"parsed": 2, "missing": 0, "issues": 2, "errors": 0, "iteration": 1, "elapsed_seconds": 2.223, "event": "validate.done
+", "level": "info", "timestamp": "2026-08-14T15:41:10.925958"}
+{"package_id": "package-20260814-154110", "files": 88, "missing": 0, "status": "complete", "elapsed_seconds": 0.78, "ev
+ent": "assemble.done", "level": "info", "timestamp": "2026-08-14T15:41:11.709397"}
+Deserializing unregistered type rdi.models.goal.GoalSpec from checkpoint. This will be blocked in a future version. Set
+ LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal'
+, 'GoalSpec')]
+Deserializing unregistered type rdi.models.common.DataReqType from checkpoint. This will be blocked in a future version
+. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.
+common', 'DataReqType')]
+Deserializing unregistered type rdi.models.common.Priority from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Priority')]
+Deserializing unregistered type rdi.models.common.DataSource from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.c
+ommon', 'DataSource')]
+Deserializing unregistered type rdi.models.goal.DataReq from checkpoint. This will be blocked in a future version. Set
+LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.goal',
+ 'DataReq')]
+Deserializing unregistered type rdi.models.retrieval.RetrievalResult from checkpoint. This will be blocked in a future
+version. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.
+models.retrieval', 'RetrievalResult')]
+Deserializing unregistered type rdi.models.parsed.ParsedItem from checkpoint. This will be blocked in a future version.
+ Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.p
+arsed', 'ParsedItem')]
+Deserializing unregistered type rdi.models.common.Severity from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'Severity')]
+Deserializing unregistered type rdi.models.common.ValIssue from checkpoint. This will be blocked in a future version. S
+et LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.models.com
+mon', 'ValIssue')]
+Deserializing unregistered type rdi.models.manifest.PackageManifest from checkpoint. This will be blocked in a future v
+ersion. Set LANGGRAPH_STRICT_MSGPACK=true to block now, or add to allowed_msgpack_modules to allow explicitly: [('rdi.m
+odels.manifest', 'PackageManifest')]
+interrupted: True
+{"decision": "satisfied", "iteration": 0, "forced": false, "feedback_count": 0, "event": "human_review.decision", "leve
+l": "info", "timestamp": "2026-08-14T15:41:12.119845"}
+Unable to resolve filename: package://meshes/collision/link0.obj
+Can't find package://meshes/collision/link0.obj
+Unable to resolve filename: package://meshes/visual/link1.obj
+Can't find package://meshes/visual/link1.obj
+Unable to resolve filename: package://meshes/visual/link2.obj
+Can't find package://meshes/visual/link2.obj
+Unable to resolve filename: package://meshes/visual/link3.obj
+Can't find package://meshes/visual/link3.obj
+Unable to resolve filename: package://meshes/visual/link4.obj
+Can't find package://meshes/visual/link4.obj
+Unable to resolve filename: package://meshes/visual/link5.obj
+Can't find package://meshes/visual/link5.obj
+Unable to resolve filename: package://meshes/visual/link6.obj
+Can't find package://meshes/visual/link6.obj
+Unable to resolve filename: package://meshes/collision/link7.obj
+Can't find package://meshes/collision/link7.obj
+Unable to resolve filename: package://meshes/visual/hand.obj
+Can't find package://meshes/visual/hand.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+Unable to resolve filename: package://meshes/visual/finger.obj
+Can't find package://meshes/visual/finger.obj
+{
+  "case_id": "ss_mujoco_001",
+  "input": "获取 mujoco_menagerie 中 Franka Panda 的 MuJoCo 场景配置",
+  "executed_at": "2026-08-14T15:41:15",
+  "thread_id": "4005c127-a5ba-4368-baba-37e24ef1ab3b",
+  "intermediate": {
+    "parse_goal": {
+      "req_list": [
+        "robot_urdf",
+        "sim_config"
+      ],
+      "requirements": [
+        {
+          "req_id": "req_000",
+          "req_type": "robot_urdf",
+          "description": "Franka Panda 机器人 URDF 描述文件（用于 mujoco_menagerie 转换）",
+          "expected_format": "URDF",
+          "object_name": ""
+        },
+        {
+          "req_id": "req_001",
+          "req_type": "sim_config",
+          "description": "mujoco_menagerie 中 Franka Panda 的 MuJoCo XML 场景配置文件",
+          "expected_format": "XML",
+          "object_name": ""
+        }
+      ]
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "status": "success",
+        "source": "franka",
+        "elapsed_seconds": 81.58,
+        "data_format": "urdf",
+        "data_size": 11263,
+        "data_url": "https://raw.githubusercontent.com/erwincoumans/pybullet_robots/cea68420a249544210c0f02eaafc144a4487b47f/data/franka_panda/panda.urdf"
+      },
+      {
+        "req_id": "req_001",
+        "status": "success",
+        "source": "mujoco",
+        "elapsed_seconds": 91.44,
+        "data_format": "xml",
+        "data_size": 819,
+        "data_url": "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/da76818e269b82289eba39808e2fb91d679d6994/franka_emika_panda/scene.xml"
+      }
+    ],
+    "validation_issues": [
+      {
+        "severity": "warning",
+        "req_id": "req_000",
+        "message": "完整度不足 80.0%",
+        "suggestion": "",
+        "auto_fixable": false,
+        "context": {
+          "completeness_pct": 80.0
+        }
+      },
+      {
+        "severity": "warning",
+        "req_id": "req_000",
+        "message": "置信度不足 0.80",
+        "suggestion": "",
+        "auto_fixable": false,
+        "context": {
+          "confidence_score": 0.8
+        }
+      }
+    ],
+    "runtime_check": {
+      "req_001": {
+        "status": "passed",
+        "detail": "MuJoCo 加载与一步仿真成功"
+      }
+    },
+    "missing_items": [],
+    "interrupted": true
+  },
+  "final": {
+    "frontend_status": "运行完成",
+    "package": {
+      "dir": "D:\\robot-data-integrator-latest\\data\\output_packages\\package-20260814-154110",
+      "package_id": "package-20260814-154110",
+      "status": "complete",
+      "file_count": 88,
+      "missing_items": [],
+      "quality_report": {
+        "total_requirements": 2,
+        "fulfilled": 88,
+        "missing": 0,
+        "validation_issues": 2,
+        "avg_confidence": 0.9568181818181819,
+        "avg_completeness": 95.68181818181819
+      },
+      "files": [
+        {
+          "path": "robots/req_000.urdf",
+          "format": "urdf",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 0.8,
+          "completeness": 80.0
+        },
+        {
+          "path": "robots/meshes/collision/link0.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 0.8,
+          "completeness": 80.0
+        },
+        {
+          "path": "robots/meshes/visual/link1.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 0.8,
+          "completeness": 80.0
+        },
+        {
+          "path": "robots/meshes/collision/link1.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": true,
+          "confidence": 0.8,
+          "completeness": 80.0
+        },
+        {
+          "path": "robots/meshes/visual/link2.obj",
+          "format": "mesh",
+          "data_source_quality": "unknown",
+          "is_fallback": false,
+          "downloaded": t
+[ok] ss_mujoco_001 observe.json saved

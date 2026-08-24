@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_huggingface_004",
+  "input": "检索 robot manipulation 数据集",
+  "executor": "C",
+  "executed_at": "2026-08-20T15:35:23+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "review_decision": "satisfied",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "ce59f02"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "dataset"
+      ],
+      "vs_expected": "match",
+      "notes": "LLM 解析出 1 条需求；题设 expected=['dataset']，判定 match"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "req_type": "dataset",
+        "source": "zenodo",
+        "status": "success",
+        "format": "DatasetSummary",
+        "quality": "fallback",
+        "is_fallback": true,
+        "error": null,
+        "error_type": "none",
+        "fallback_reason": "非首选源/元数据降级回退（is_fallback=true）",
+        "note": "真实流程命中 zenodo（DatasetSummary，quality=fallback，is_fallback=true），url=https://zenodo.org/records/22024387"
+      }
+    ],
+    "validate": {
+      "errors": 0,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=0（0 error, 0 warning）"
+    },
+    "package": {
+      "dir": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-153516",
+      "manifest_path": "D:\\tiaozhanbei\\robot-data-integrator\\data\\output_packages\\package-20260820-153516/manifest.json",
+      "status": "complete",
+      "file_count": 1,
+      "missing_items_count": 0,
+      "fallback_explicit": true,
+      "file_info": [
+        {
+          "req_id": "req_000",
+          "path": "resources/req_000.json",
+          "format": "DatasetSummary",
+          "source_url": "https://zenodo.org/records/22024387",
+          "is_fallback": true,
+          "completeness": 100.0,
+          "downloaded": true,
+          "size_bytes": 1823
+        }
+      ],
+      "quality_report": {
+        "total_requirements": 1,
+        "fulfilled": 1,
+        "missing": 0,
+        "validation_issues": 0,
+        "avg_confidence": 1.0,
+        "avg_completeness": 100.0
+      },
+      "notes": "包状态 complete，落盘 1 个文件，缺失 0 项"
+    }
+  },
+  "screenshots": [],
+  "verdict": "PASS_WITH_FALLBACK",
+  "failure_category": null,
+  "failure_reason": null,
+  "notes": "2026-08-20 C 角色一轮题真实流程重跑：input=检索 robot manipulation 数据集，verdict=PASS_WITH_FALLBACK，retrieve=['req_000:success']，run_id=rerun-20260820-153436-365e4fbd；按要求未截图，screenshots 置空",
+  "reviewer": null,
+  "reviewed_at": null
+}

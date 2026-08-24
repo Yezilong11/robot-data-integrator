@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "case_id": "ss_dexgrasp_006",
+  "input": "帮我找 DexGraspNet 数据集的抓取标注（中文描述）",
+  "executor": "D",
+  "executed_at": "2026-08-21T15:11:34+08:00",
+  "env": {
+    "llm_model": "qwen-plus",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "mode": "real",
+    "git_branch": "feat/integration-v3",
+    "git_commit": "bbaffb7",
+    "review_decision": "satisfied"
+  },
+  "observations": {
+    "parse_goal": {
+      "req_list": [
+        "grasp"
+      ],
+      "vs_expected": "match",
+      "notes": "解析出 1 条 grasp（数据集）需求，与题设 expected.req_types 一致"
+    },
+    "retrieve": [
+      {
+        "req_id": "req_000",
+        "type": "grasp",
+        "source": "dexgrasp",
+        "status": "error",
+        "elapsed": null,
+        "format": "markdown",
+        "quality": "fallback",
+        "is_fallback": true,
+        "data_url": null,
+        "note": "主源 dexgrasp 源级检索超时（per_req_timeout/6=30s，共 3 轮自动重试均超时）；降级 github 后返回不支持的数据集格式 markdown，未产出任何 grasp 数据。0 文件落盘，置信度/完整度均为 0.0"
+      }
+    ],
+    "validate": {
+      "errors": 1,
+      "warnings": 0,
+      "runtime_check": "not_applicable",
+      "notes": "validation_issues=1 error：必需需求缺失，数据集格式不支持（markdown）。auto_fixable=false。无数据可运行时校验"
+    },
+    "package": {
+      "dir": "data/output_packages/package-20260821-151337",
+      "manifest_path": "data/output_packages/package-20260821-151337/manifest.json",
+      "status": "failed",
+      "file_count": 0,
+      "missing_items_count": 1,
+      "fallback_explicit": true,
+      "notes": "包 status=failed、fulfilled=0、missing=1。仅生成 quality_explanation.md 等元数据，无任何数据文件。DexGraspNet 抓取标注需求完全未满足"
+    }
+  },
+  "screenshots": [],
+  "verdict": "FAIL",
+  "failure_category": "P3_SOURCE",
+  "failure_reason": "dexgrasp 源级检索 3 轮均超时（30s/轮），降级 github 后返回'数据集格式不支持: markdown'错误，0 文件产出，包 status=failed",
+  "notes": "中文描述正确触发 dexgrasp 源，但源超时无快速失败，且降级链路把不支持的 markdown 格式当作交付、无格式白名单校验（error 由校验阶段兜住但内容已不可用）。expected.format 为 pkl/json 均未命中。判定 FAIL",
+  "reviewer": null,
+  "reviewed_at": null
+}

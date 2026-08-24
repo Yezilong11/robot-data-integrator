@@ -22,7 +22,10 @@ from rdi.exceptions import AdapterCatalogError, AdapterError
 from rdi.models.common import DataSource
 from rdi.models.retrieval import RawData, SearchResult
 
-# 降级回退：Isaac Sim 已知示例（C11 修复：isaac-sim/IsaacLab 的资产配置是 Python 文件）
+# 降级回退：Isaac Sim 已知示例（C11 修复：isaac-sim/IsaacLab 的资产配置是 Python 文件。
+# T4 核实：release/3.0.0-beta2 robots/ 目录经 GitHub API+raw 探活实证，
+# 无 ur5/ur5e 等独立文件；UR 工业臂载体为 universal_robots.py（仅 UR10/UR10e），
+# kinova.py 为 Gen3 7-Dof 与 Jaco2。仅补实际存在型号，id 与 fetch URL robots/{id}.py 对齐。）
 _FALLBACK_EXAMPLES: list[dict[str, str]] = [
     {
         "id": "franka",
@@ -34,6 +37,16 @@ _FALLBACK_EXAMPLES: list[dict[str, str]] = [
     {"id": "cassie", "title": "Agility Cassie", "description": "Cassie 双足机器人 USD 资产配置"},
     {"id": "anymal", "title": "ANYmal", "description": "ANYmal 四足机器人 USD 资产配置"},
     {"id": "cartpole", "title": "Cartpole", "description": "倒立摆经典场景 USD 资产配置"},
+    {
+        "id": "universal_robots",
+        "title": "Universal Robots UR10/UR10e",
+        "description": "UR10/UR10e 工业机械臂 USD 资产配置（含 Robotiq/吸入式夹爪变体）",
+    },
+    {
+        "id": "kinova",
+        "title": "Kinova Gen3 / Jaco2",
+        "description": "Kinova Gen3 7-Dof 与 Jaco2 协作机械臂 USD 资产配置",
+    },
 ]
 
 
